@@ -100,7 +100,7 @@ async def run_quiz(area):
 
     while True:
         try:
-            antwort = await bot.wait_for('message', timeout=60.0, check=check)
+            antwort = await bot.wait_for('message', timeout=180.0, check=check)
             if antwort.content.strip().lower() == frage['antwort'].strip().lower():
                 await channel.send(f'Richtig, {antwort.author.mention}!')
                 user_id = antwort.author.id
