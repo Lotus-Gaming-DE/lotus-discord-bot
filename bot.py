@@ -2,6 +2,9 @@ import discord
 from discord.ext import commands, tasks
 import asyncio
 import random
+import json  # Für das Arbeiten mit JSON-Dateien
+
+SCORES_FILE = 'scores.json'  # Dateiname für die Punkte
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -36,7 +39,19 @@ areas_config = {
     # Weitere Bereiche hinzufügen
 }
 
-user_scores = {}  # Struktur: {user_id: score}
+# Lade die Benutzerpunkte aus der Datei
+try:
+    with open(SCORES_FILE, 'r') as f:
+        user_scores = json.load(f)
+        # Konvertiere die Schlüssel von Strings zu Integers
+        user_scores = {int(k): v for k, v in user_scores.items()}
+except FileNotFoundError:
+    user_scores = {}
+
+
+def save_scores():
+    with open(SCORES_FILE, 'w') as f:
+        json.dump(user_scores, f)
 
 
 @bot.event
@@ -88,6 +103,7 @@ async def run_quiz(area):
                 await channel.send(f'Richtig, {antwort.author.mention}!')
                 user_id = antwort.author.id
                 user_scores[user_id] = user_scores.get(user_id, 0) + 1
+                save_scores()  # Speichere die Punkte nach der Änderung
                 break
             else:
                 await channel.send(f'Leider falsch, {antwort.author.mention}. Versuche es erneut!')
