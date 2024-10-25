@@ -16,25 +16,87 @@ questions_by_area = {
     'warcraft_rumble': [
         {'frage': 'Wer ist der Hauptantagonist in Warcraft Rumble?',
             'antwort': 'Morton der Unbezwingbare'},
-        # Weitere Fragen hinzufügen
+        {'frage': 'Welche Einheit wird oft als „Tank“ bezeichnet?', 'antwort': 'Golem'},
+        {'frage': 'In welchem Gebiet kämpft man gegen Hogger?',
+            'antwort': 'Elwynn Forest'},
+        {'frage': 'Welche Talentwahl wird im PvP oft für die Banshee genutzt?',
+            'antwort': 'Will of the Necropolis'},
+        {'frage': 'Wie heißt der Anführer der Skeletteinheiten?',
+            'antwort': 'Baron Rivendare'},
+        {'frage': 'Welche Einheit kann die Fähigkeit „Blizzard“ nutzen?',
+            'antwort': 'Frostmage'},
+        {'frage': 'Welcher Talentpunkt wird oft im PvE für „Flammendes Fass“ gewählt?',
+            'antwort': 'Enchanted Vials'},
+        {'frage': 'Welche Einheit ist bekannt für „Snackrifice“?',
+            'antwort': 'Angry Chickens'},
+        {'frage': 'Welche Einheit kann sich in eine „Schutzkiste“ verwandeln?',
+            'antwort': 'Walking Crate'},
+        {'frage': 'Wer ist der Anführer im Gebiet „Stranglethorn Vale“?',
+            'antwort': 'King Mukla'},
+        {'frage': 'Welche Einheit nutzt die Fähigkeit „Lavawelle“?',
+            'antwort': 'Lava Elemental'},
+        {'frage': 'Welche Einheit hat die Fähigkeit „Seelenexplosion“?',
+            'antwort': 'Banshee'},
+        {'frage': 'Wie heißt das Talent, das Skeletten „Blutrausch“ verleiht?',
+            'antwort': 'Skeletal Frenzy'},
+        {'frage': 'Welche Einheit ist im PvP als „Support-Einheit“ beliebt?',
+            'antwort': 'Blizzard Frostmage'},
+        {'frage': 'Wie heißt das Gebiet, in dem Gazlowe als Gegner vorkommt?',
+            'antwort': 'The Barrens'},
+        {'frage': 'Welche Kreatur kann durch „Polymorph“ verwandelt werden?',
+            'antwort': 'Schafe'},
+        {'frage': 'Welche Einheit setzt auf das Talent „Feuriger Überschuss“?',
+            'antwort': 'Bat Rider'},
+        {'frage': 'Welche Einheit ist besonders gegen Gargoyles effektiv?',
+            'antwort': 'Banshee'},
+        {'frage': 'Wie heißt die Eliteeinheit, die in „Westfall“ gefunden wird?',
+            'antwort': 'Marshal Redpaw'},
+        {'frage': 'Wer ist der berühmte Schurke im Gebiet „Duskwood“?',
+            'antwort': 'Morbent Fel'},
     ],
-    'diablo': [
-        {'frage': 'Wie heißt der Endgegner in Diablo III?', 'antwort': 'Diablo'},
-        # Weitere Fragen hinzufügen
+    'diablo_iv': [
+        {'frage': 'Wer ist der Hauptantagonist in Diablo IV?', 'antwort': 'Lilith'},
+        {'frage': 'Welche Klasse kann als Werwolf kämpfen?', 'antwort': 'Druide'},
+        {'frage': 'In welcher Zone steht der „Altar von Lilith“?',
+            'antwort': 'Sanctuary'},
+        {'frage': 'Welche Klasse beschwört Skelette?', 'antwort': 'Totenbeschwörer'},
+        {'frage': 'Wie viele Hauptakte hat Diablo IV?', 'antwort': 'Fünf'},
+        {'frage': 'Welche Klasse verwendet Elementarmagie?', 'antwort': 'Zauberin'},
+        {'frage': 'Welche Kreatur ist Liliths Vater?', 'antwort': 'Mephisto'},
+        {'frage': 'In welchem Jahr erschien Diablo IV?', 'antwort': '2023'},
+        {'frage': 'Welche Klasse benutzt das „Blut“-Skill-Set?',
+            'antwort': 'Totenbeschwörer'},
+        {'frage': 'Wie heißt die Stadt, die als Hauptquartier dient?',
+            'antwort': 'Kyovashad'},
+        {'frage': 'Wer ist der Erzengel des Mutes?', 'antwort': 'Imperius'},
+        {'frage': 'Welche Klasse benutzt Bogen und Fallen?', 'antwort': 'Jägerin'},
+        {'frage': 'Wie nennt sich das saisonale Event in Diablo IV Saison 2?',
+            'antwort': 'Blutsaison'},
+        {'frage': 'Wie lautet Liliths Beziehung zu Inarius?', 'antwort': 'Geliebte'},
+        {'frage': 'Welche Klasse besitzt die Fähigkeit „Blitzkette“?',
+            'antwort': 'Zauberin'},
+        {'frage': 'Welches Land ist von Festungen umgeben?', 'antwort': 'Kehjistan'},
+        {'frage': 'Wer zerstörte den Schwarzen Seelenstein?', 'antwort': 'Malthael'},
+        {'frage': 'Welche Klasse kann ein Wolf begleiten?', 'antwort': 'Druide'},
+        {'frage': 'Wie nennt man die Schatzkiste-Events im Spiel?',
+            'antwort': 'Höllenflut'},
+        {'frage': 'Welches Symbol repräsentiert Lilith?',
+            'antwort': 'Schlangensymbol'},
     ],
     # Weitere Bereiche hinzufügen
 }
+
 
 # Konfiguration der Bereiche
 areas_config = {
     'warcraft_rumble': {
         # Ersetze durch die Kanal-ID für Warcraft Rumble
-        'channel_id': 123456789012345678,
-        'interval_hours': 2,  # Intervall in Stunden
+        'channel_id': 1290804058281607189,
+        'interval_hours': 0.1,  # Intervall in Stunden
     },
     'diablo': {
-        'channel_id': 987654321098765432,  # Ersetze durch die Kanal-ID für Diablo
-        'interval_hours': 3,
+        'channel_id': 1290804058281607189,  # Ersetze durch die Kanal-ID für Diablo
+        'interval_hours': 0.1,
     },
     # Weitere Bereiche hinzufügen
 }
