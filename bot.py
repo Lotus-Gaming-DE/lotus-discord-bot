@@ -4,7 +4,7 @@ import asyncio
 import random
 import json  # Für das Arbeiten mit JSON-Dateien
 
-SCORES_FILE = 'scores.json'  # Dateiname für die Punkte
+SCORES_FILE = 'scores_live.json'  # Dateiname für die Punkte
 QUESTIONS_FILE = 'questions.json'  # Dateiname für die Fragen
 
 intents = discord.Intents.default()
