@@ -17,8 +17,17 @@ async def load_cogs():
 
 @bot.event
 async def on_ready():
-    await bot.tree.sync()
-    print(f'Bot ist online als {bot.user}')
+    # Server-ID aus den Umgebungsvariablen lesen
+    server_id = os.getenv('server_id')
+    if server_id is None:
+        print("Server ID nicht gefunden. Stelle sicher, dass die Environment-Variable 'server_id' gesetzt ist.")
+        return
+
+    # ID in eine Ganzzahl konvertieren
+    guild = discord.Object(id=int(server_id))
+    # Slash-Commands nur für diesen Server synchronisieren
+    await bot.tree.sync(guild=guild)
+    print(f'Bot ist online als {bot.user} und mit dem Server synchronisiert.')
 
 
 async def main():
