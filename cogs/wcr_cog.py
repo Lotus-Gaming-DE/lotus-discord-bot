@@ -29,6 +29,15 @@ class WCRCog(commands.Cog):
         unit_text = texts["units"].get(str(unit_id), {})
         return unit_text.get("name", "Unbekannt"), unit_text.get("description", "Beschreibung fehlt")
 
+    async def send_embed(self, interaction, title, description, fields):
+        embed = discord.Embed(
+            title=title, description=description, color=0x3498db)
+        embed.set_thumbnail(
+            url="https://i.ibb.co/GdWrTKT/Lotus-Gaming.jpg")  # Beispielbild
+        for name, value in fields:
+            embed.add_field(name=name, value=value, inline=False)
+        await interaction.response.send_message(embed=embed)
+
     @app_commands.command(name="cost", description="Zeigt alle Minis mit den angegebenen Kosten an.")
     async def cost(self, interaction: discord.Interaction, cost: int, lang: str = "de"):
         if lang not in self.languages:
@@ -40,12 +49,9 @@ class WCRCog(commands.Cog):
             await interaction.response.send_message(f"Keine Minis mit Kosten {cost} gefunden.")
             return
 
-        response = f"**Minis mit Kosten {cost}**:\n"
-        for unit in matching_units:
-            name, description = self.get_text_data(unit["id"], lang)
-            response += f"- **{name}**: {description}\n"
-
-        await interaction.response.send_message(response)
+        fields = [(self.get_text_data(unit["id"], lang)[0], self.get_text_data(
+            unit["id"], lang)[1]) for unit in matching_units]
+        await self.send_embed(interaction, f"Minis mit Kosten {cost}", "Liste der Minis:", fields)
 
     @app_commands.command(name="faction", description="Zeigt alle Minis der angegebenen Fraktion an.")
     async def faction(self, interaction: discord.Interaction, faction_id: int, lang: str = "de"):
@@ -59,12 +65,9 @@ class WCRCog(commands.Cog):
             await interaction.response.send_message(f"Keine Minis in Fraktion {faction_id} gefunden.")
             return
 
-        response = f"**Minis in Fraktion {faction_id}**:\n"
-        for unit in matching_units:
-            name, description = self.get_text_data(unit["id"], lang)
-            response += f"- **{name}**: {description}\n"
-
-        await interaction.response.send_message(response)
+        fields = [(self.get_text_data(unit["id"], lang)[0], self.get_text_data(
+            unit["id"], lang)[1]) for unit in matching_units]
+        await self.send_embed(interaction, f"Minis in Fraktion {faction_id}", "Liste der Minis:", fields)
 
     @app_commands.command(name="type", description="Zeigt alle Minis des angegebenen Typs an.")
     async def type(self, interaction: discord.Interaction, type_id: int, lang: str = "de"):
@@ -78,12 +81,9 @@ class WCRCog(commands.Cog):
             await interaction.response.send_message(f"Keine Minis mit Typ {type_id} gefunden.")
             return
 
-        response = f"**Minis vom Typ {type_id}**:\n"
-        for unit in matching_units:
-            name, description = self.get_text_data(unit["id"], lang)
-            response += f"- **{name}**: {description}\n"
-
-        await interaction.response.send_message(response)
+        fields = [(self.get_text_data(unit["id"], lang)[0], self.get_text_data(
+            unit["id"], lang)[1]) for unit in matching_units]
+        await self.send_embed(interaction, f"Minis vom Typ {type_id}", "Liste der Minis:", fields)
 
     @app_commands.command(name="speed", description="Zeigt alle Minis der angegebenen Geschwindigkeit an.")
     async def speed(self, interaction: discord.Interaction, speed_id: int, lang: str = "de"):
@@ -97,12 +97,9 @@ class WCRCog(commands.Cog):
             await interaction.response.send_message(f"Keine Minis mit Geschwindigkeit {speed_id} gefunden.")
             return
 
-        response = f"**Minis mit Geschwindigkeit {speed_id}**:\n"
-        for unit in matching_units:
-            name, description = self.get_text_data(unit["id"], lang)
-            response += f"- **{name}**: {description}\n"
-
-        await interaction.response.send_message(response)
+        fields = [(self.get_text_data(unit["id"], lang)[0], self.get_text_data(
+            unit["id"], lang)[1]) for unit in matching_units]
+        await self.send_embed(interaction, f"Minis mit Geschwindigkeit {speed_id}", "Liste der Minis:", fields)
 
     @app_commands.command(name="name", description="Zeigt Details zu einem Mini basierend auf dem Namen an.")
     async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
@@ -110,7 +107,6 @@ class WCRCog(commands.Cog):
             await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: de, en.")
             return
 
-        # Suche nach dem Namen in der Sprachdatei
         matching_unit = None
         for unit_id, unit_data in self.languages[lang]["units"].items():
             if unit_data["name"].lower() == name.lower():
@@ -124,12 +120,11 @@ class WCRCog(commands.Cog):
 
         unit_name, unit_description = self.get_text_data(
             matching_unit["id"], lang)
-        response = f"**{unit_name}**\n{unit_description}\n"
-        response += "Details:\n" + \
-            "\n".join([f"{key.capitalize()}: {value}" for key,
-                      value in matching_unit["stats"].items()])
+        stats = matching_unit["stats"]
+        fields = [(key.capitalize(), str(value))
+                  for key, value in stats.items()]
 
-        await interaction.response.send_message(response)
+        await self.send_embed(interaction, unit_name, unit_description, fields)
 
 
 async def setup(bot):
