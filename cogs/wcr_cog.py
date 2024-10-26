@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import json
 
@@ -24,28 +25,19 @@ class WCRCog(commands.Cog):
         return languages
 
     def get_text_data(self, unit_id, lang):
-        """Holt die Namen und Beschreibung basierend auf ID und Sprache."""
-        texts = self.languages.get(
-            lang, self.languages["de"])  # Fallback auf Deutsch
+        texts = self.languages.get(lang, self.languages["de"])
         unit_text = texts["units"].get(str(unit_id), {})
         return unit_text.get("name", "Unbekannt"), unit_text.get("description", "Beschreibung fehlt")
 
-    @commands.group(name="wcr")
-    async def wcr(self, ctx):
-        """Gibt Informationen über Warcraft Rumble Minis zurück."""
-        if ctx.invoked_subcommand is None:
-            await ctx.send("Verwende Unterbefehle wie `cost`, `faction`, `type`, `speed`, oder `name`.")
-
-    @wcr.command(name="cost")
-    async def cost(self, ctx, cost: int, lang: str = "de"):
-        """Zeigt alle Minis mit den angegebenen Kosten an."""
+    @app_commands.command(name="cost", description="Zeigt alle Minis mit den angegebenen Kosten an.")
+    async def cost(self, interaction: discord.Interaction, cost: int, lang: str = "de"):
         if lang not in self.languages:
-            await ctx.send("Sprache nicht unterstützt. Verfügbar: de, en.")
+            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: de, en.")
             return
 
         matching_units = [unit for unit in self.units if unit["cost"] == cost]
         if not matching_units:
-            await ctx.send(f"Keine Minis mit Kosten {cost} gefunden.")
+            await interaction.response.send_message(f"Keine Minis mit Kosten {cost} gefunden.")
             return
 
         response = f"**Minis mit Kosten {cost}**:\n"
@@ -53,19 +45,18 @@ class WCRCog(commands.Cog):
             name, description = self.get_text_data(unit["id"], lang)
             response += f"- **{name}**: {description}\n"
 
-        await ctx.send(response)
+        await interaction.response.send_message(response)
 
-    @wcr.command(name="faction")
-    async def faction(self, ctx, faction_id: int, lang: str = "de"):
-        """Zeigt alle Minis der angegebenen Fraktion an."""
+    @app_commands.command(name="faction", description="Zeigt alle Minis der angegebenen Fraktion an.")
+    async def faction(self, interaction: discord.Interaction, faction_id: int, lang: str = "de"):
         if lang not in self.languages:
-            await ctx.send("Sprache nicht unterstützt. Verfügbar: de, en.")
+            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: de, en.")
             return
 
         matching_units = [
             unit for unit in self.units if unit["faction_id"] == faction_id]
         if not matching_units:
-            await ctx.send(f"Keine Minis in Fraktion {faction_id} gefunden.")
+            await interaction.response.send_message(f"Keine Minis in Fraktion {faction_id} gefunden.")
             return
 
         response = f"**Minis in Fraktion {faction_id}**:\n"
@@ -73,19 +64,18 @@ class WCRCog(commands.Cog):
             name, description = self.get_text_data(unit["id"], lang)
             response += f"- **{name}**: {description}\n"
 
-        await ctx.send(response)
+        await interaction.response.send_message(response)
 
-    @wcr.command(name="type")
-    async def type(self, ctx, type_id: int, lang: str = "de"):
-        """Zeigt alle Minis des angegebenen Typs an."""
+    @app_commands.command(name="type", description="Zeigt alle Minis des angegebenen Typs an.")
+    async def type(self, interaction: discord.Interaction, type_id: int, lang: str = "de"):
         if lang not in self.languages:
-            await ctx.send("Sprache nicht unterstützt. Verfügbar: de, en.")
+            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: de, en.")
             return
 
         matching_units = [
             unit for unit in self.units if unit["type_id"] == type_id]
         if not matching_units:
-            await ctx.send(f"Keine Minis mit Typ {type_id} gefunden.")
+            await interaction.response.send_message(f"Keine Minis mit Typ {type_id} gefunden.")
             return
 
         response = f"**Minis vom Typ {type_id}**:\n"
@@ -93,19 +83,18 @@ class WCRCog(commands.Cog):
             name, description = self.get_text_data(unit["id"], lang)
             response += f"- **{name}**: {description}\n"
 
-        await ctx.send(response)
+        await interaction.response.send_message(response)
 
-    @wcr.command(name="speed")
-    async def speed(self, ctx, speed_id: int, lang: str = "de"):
-        """Zeigt alle Minis der angegebenen Geschwindigkeit an."""
+    @app_commands.command(name="speed", description="Zeigt alle Minis der angegebenen Geschwindigkeit an.")
+    async def speed(self, interaction: discord.Interaction, speed_id: int, lang: str = "de"):
         if lang not in self.languages:
-            await ctx.send("Sprache nicht unterstützt. Verfügbar: de, en.")
+            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: de, en.")
             return
 
         matching_units = [
             unit for unit in self.units if unit["speed_id"] == speed_id]
         if not matching_units:
-            await ctx.send(f"Keine Minis mit Geschwindigkeit {speed_id} gefunden.")
+            await interaction.response.send_message(f"Keine Minis mit Geschwindigkeit {speed_id} gefunden.")
             return
 
         response = f"**Minis mit Geschwindigkeit {speed_id}**:\n"
@@ -113,13 +102,12 @@ class WCRCog(commands.Cog):
             name, description = self.get_text_data(unit["id"], lang)
             response += f"- **{name}**: {description}\n"
 
-        await ctx.send(response)
+        await interaction.response.send_message(response)
 
-    @wcr.command(name="name")
-    async def name(self, ctx, name: str, lang: str = "de"):
-        """Zeigt Details zu einem Mini basierend auf dem Namen an."""
+    @app_commands.command(name="name", description="Zeigt Details zu einem Mini basierend auf dem Namen an.")
+    async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
         if lang not in self.languages:
-            await ctx.send("Sprache nicht unterstützt. Verfügbar: de, en.")
+            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: de, en.")
             return
 
         # Suche nach dem Namen in der Sprachdatei
@@ -131,7 +119,7 @@ class WCRCog(commands.Cog):
                 break
 
         if not matching_unit:
-            await ctx.send(f"Mini mit Namen '{name}' nicht gefunden.")
+            await interaction.response.send_message(f"Mini mit Namen '{name}' nicht gefunden.")
             return
 
         unit_name, unit_description = self.get_text_data(
@@ -141,7 +129,7 @@ class WCRCog(commands.Cog):
             "\n".join([f"{key.capitalize()}: {value}" for key,
                       value in matching_unit["stats"].items()])
 
-        await ctx.send(response)
+        await interaction.response.send_message(response)
 
 
 async def setup(bot):
