@@ -1,3 +1,9 @@
+import discord
+from discord.ext import commands, tasks
+import json
+import random
+
+
 class QuizCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -7,11 +13,11 @@ class QuizCog(commands.Cog):
         self.questions_by_area = self.load_questions()
         self.areas_config = {
             'wcr': {
-                'channel_id': 123456789012345678,  # Ersetze mit deiner Kanal-ID
+                'channel_id': 1290804058281607189,  # Ersetze mit deiner Kanal-ID
                 'interval_hours': 0.1,
             },
             'd4': {
-                'channel_id': 123456789012345678,  # Ersetze mit deiner Kanal-ID
+                'channel_id': 1290804058281607189,  # Ersetze mit deiner Kanal-ID
                 'interval_hours': 0.1,
             },
             # Weitere Bereiche hinzufügen
@@ -19,7 +25,15 @@ class QuizCog(commands.Cog):
         for area in self.areas_config:
             self.start_quiz_task(area)
 
-    # ... (load_scores und save_scores Funktionen)
+    # ... (Hier fügst du die Definitionen von load_scores und save_scores ein)
+
+    def load_scores(self):
+        # Implementiere diese Methode entsprechend deinen Anforderungen
+        pass
+
+    def save_scores(self):
+        # Implementiere diese Methode entsprechend deinen Anforderungen
+        pass
 
     def load_questions(self):
         try:
@@ -117,4 +131,8 @@ class QuizCog(commands.Cog):
 
         question_message = await channel.send(f"**Kategorie: {category}**\n{frage['frage']}")
 
-        # ... (Rest der Funktion bleibt unverändert)
+# Hier fügst du die setup-Funktion hinzu
+
+
+async def setup(bot):
+    await bot.add_cog(QuizCog(bot))
