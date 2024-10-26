@@ -1,10 +1,3 @@
-import discord
-from discord.ext import commands, tasks
-import random
-import json
-import asyncio
-
-
 class QuizCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -13,32 +6,20 @@ class QuizCog(commands.Cog):
         self.user_scores = self.load_scores()
         self.questions_by_area = self.load_questions()
         self.areas_config = {
-            'warcraft_rumble': {
-                'channel_id': 1290804058281607189,  # Ersetze mit deiner Kanal-ID
+            'wcr': {
+                'channel_id': 123456789012345678,  # Ersetze mit deiner Kanal-ID
                 'interval_hours': 0.1,
             },
-            'diablo_iv': {
-                'channel_id': 1290804058281607189,  # Ersetze mit deiner Kanal-ID
+            'd4': {
+                'channel_id': 123456789012345678,  # Ersetze mit deiner Kanal-ID
                 'interval_hours': 0.1,
             },
             # Weitere Bereiche hinzufügen
         }
-        # Starte die Tasks für alle Bereiche
         for area in self.areas_config:
             self.start_quiz_task(area)
 
-    def load_scores(self):
-        try:
-            with open(self.SCORES_FILE, 'r') as f:
-                user_scores = json.load(f)
-                user_scores = {int(k): v for k, v in user_scores.items()}
-        except FileNotFoundError:
-            user_scores = {}
-        return user_scores
-
-    def save_scores(self):
-        with open(self.SCORES_FILE, 'w') as f:
-            json.dump(self.user_scores, f)
+    # ... (load_scores und save_scores Funktionen)
 
     def load_questions(self):
         try:
@@ -48,6 +29,44 @@ class QuizCog(commands.Cog):
             print(f"Die Datei {self.QUESTIONS_FILE} wurde nicht gefunden.")
             questions_by_area = {}
         return questions_by_area
+
+    def get_asked_questions(self, area, category):
+        try:
+            with open('./data/asked_questions.json', 'r', encoding='utf-8') as f:
+                asked_questions = json.load(f)
+        except FileNotFoundError:
+            asked_questions = {}
+        return asked_questions.get(area, {}).get(category, [])
+
+    def mark_question_as_asked(self, area, category, question_text):
+        try:
+            with open('./data/asked_questions.json', 'r', encoding='utf-8') as f:
+                asked_questions = json.load(f)
+        except FileNotFoundError:
+            asked_questions = {}
+
+        if area not in asked_questions:
+            asked_questions[area] = {}
+        if category not in asked_questions[area]:
+            asked_questions[area][category] = []
+
+        asked_questions[area][category].append(question_text)
+
+        with open('./data/asked_questions.json', 'w', encoding='utf-8') as f:
+            json.dump(asked_questions, f, ensure_ascii=False)
+
+    def reset_asked_questions(self, area, category):
+        try:
+            with open('./data/asked_questions.json', 'r', encoding='utf-8') as f:
+                asked_questions = json.load(f)
+        except FileNotFoundError:
+            asked_questions = {}
+
+        if area in asked_questions and category in asked_questions[area]:
+            asked_questions[area][category] = []
+
+        with open('./data/asked_questions.json', 'w', encoding='utf-8') as f:
+            json.dump(asked_questions, f, ensure_ascii=False)
 
     def start_quiz_task(self, area):
         config = self.areas_config[area]
@@ -70,54 +89,32 @@ class QuizCog(commands.Cog):
             print(f"Konnte Kanal mit ID {config['channel_id']} nicht finden.")
             return
 
-        questions = self.questions_by_area.get(area)
-        if not questions:
+        area_questions = self.questions_by_area.get(area)
+        if not area_questions:
             print(f"Keine Fragen für den Bereich '{area}' gefunden.")
             return
 
-        frage = random.choice(questions)
-        question_message = await channel.send(frage['frage'])
+        # Auswahl einer Kategorie
+        category = random.choice(list(area_questions.keys()))
+        category_questions = area_questions[category]
 
-        def check(m):
-            return (
-                m.channel == channel and
-                m.author != self.bot.user and
-                m.reference and
-                m.reference.message_id == question_message.id
-            )
+        # Hole die Liste der bereits gestellten Fragen für diesen Bereich und Kategorie
+        asked_questions = self.get_asked_questions(area, category)
 
-        while True:
-            try:
-                antwort = await self.bot.wait_for('message', timeout=60.0, check=check)
-                if antwort.content.strip().lower() == frage['antwort'].strip().lower():
-                    await channel.send(f'Richtig, {antwort.author.mention}!')
-                    user_id = antwort.author.id
-                    self.user_scores[user_id] = self.user_scores.get(
-                        user_id, 0) + 1
-                    self.save_scores()
-                    break
-                else:
-                    await channel.send(f'Leider falsch, {antwort.author.mention}. Versuche es erneut!')
-            except asyncio.TimeoutError:
-                await channel.send('Zeit abgelaufen! Keine korrekte Antwort wurde gegeben.')
-                break
+        # Filtere die Fragen, die noch nicht gestellt wurden
+        remaining_questions = [
+            q for q in category_questions if q['frage'] not in asked_questions]
 
-    @commands.command()
-    async def punkte(self, ctx):
-        user_id = ctx.author.id
-        score = self.user_scores.get(user_id, 0)
-        await ctx.send(f'Du hast insgesamt {score} Punkt(e), {ctx.author.name}.')
+        if not remaining_questions:
+            # Alle Fragen in dieser Kategorie wurden gestellt, zurücksetzen
+            self.reset_asked_questions(area, category)
+            remaining_questions = category_questions.copy()
 
-    @commands.command()
-    async def rangliste(self, ctx):
-        sorted_scores = sorted(self.user_scores.items(),
-                               key=lambda x: x[1], reverse=True)
-        message = '🏆 **Rangliste:**\n'
-        for user_id, score in sorted_scores[:10]:
-            user = await self.bot.fetch_user(user_id)
-            message += f'{user.name}: {score} Punkt(e)\n'
-        await ctx.send(message)
+        frage = random.choice(remaining_questions)
 
+        # Markiere die Frage als gestellt
+        self.mark_question_as_asked(area, category, frage['frage'])
 
-async def setup(bot):
-    await bot.add_cog(QuizCog(bot))
+        question_message = await channel.send(f"**Kategorie: {category}**\n{frage['frage']}")
+
+        # ... (Rest der Funktion bleibt unverändert)
