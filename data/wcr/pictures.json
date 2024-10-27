@@ -1,7 +1,10 @@
 {
   "units": {
     "1": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Abomination_Pose.webp"
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Abomination_Pose.webp",
+      "talent_1": "https://warcraftrumble.gg/_ipx/s_36x36/rawimages/talent_noxiouspresence.webp",
+      "talent_2": "https://warcraftrumble.gg/_ipx/s_36x36/rawimages/talent_noxiouspresence.webp",
+      "talent_3": "https://warcraftrumble.gg/_ipx/s_36x36/rawimages/talent_noxiouspresence.webp"
     },
     "2": {
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_AngryChickens_Pose.webp"

@@ -126,13 +126,21 @@ class WCRCog(commands.Cog):
 
         # Inline-Felder für Talente vorbereiten
         inline_fields = []
-        for talent_id, talent_data in talents.items():
+        for i, (talent_id, talent_data) in enumerate(talents.items(), start=1):
             if len(inline_fields) >= 3:
                 break  # Begrenzt auf maximal 3 Talente
+
             talent_name = talent_data.get("name", "Unbekanntes Talent")
             talent_description = talent_data.get(
                 "description", "Beschreibung fehlt")
-            inline_fields.append((talent_name, talent_description))
+
+            # Änderung: Bild für das Talent laden und hinzufügen
+            talent_image_url = self.pictures["units"].get(
+                str(matching_unit["id"]), {}).get(f"talent_{i}", "")
+            talent_display = f"[{
+                talent_name}]({talent_image_url})" if talent_image_url else talent_name
+
+            inline_fields.append((talent_display, talent_description))
 
         # Sende das Embed
         await self.send_embed(
