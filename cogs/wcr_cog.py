@@ -55,7 +55,7 @@ class WCRCog(commands.Cog):
     def get_text_data(self, unit_id, lang):
         texts = self.languages.get(lang, self.languages["de"])
         unit_text = texts["units"].get(str(unit_id), {})
-        return unit_text.get("name", "Unbekannt"), unit_text.get("description", "Beschreibung fehlt")
+        return unit_text.get("name", "Unbekannt"), unit_text.get("description", "Beschreibung fehlt"), unit_text.get("talents", {})
 
     def get_pose_url(self, unit_id):
         """Gibt die pose-URL des Minis zurück, falls vorhanden."""
@@ -92,7 +92,7 @@ class WCRCog(commands.Cog):
             await interaction.response.send_message(f"Mini mit Namen '{name}' nicht gefunden.")
             return
 
-        unit_name, unit_description = self.get_text_data(
+        unit_name, unit_description, talents = self.get_text_data(
             matching_unit["id"], lang)
         stats = matching_unit["stats"]
 
@@ -125,11 +125,14 @@ class WCRCog(commands.Cog):
                 'syntax', '')} Dauer", str(stats["duration"])))
 
         # Inline-Felder für Talente vorbereiten
-        traits_ids = matching_unit.get("traits_ids", [])
         inline_fields = []
-        for trait_id in traits_ids[:3]:  # Beschränkung auf maximal 3 Talente
-            trait_name, trait_description = self.get_text_data(trait_id, lang)
-            inline_fields.append((trait_name, trait_description))
+        for talent_id, talent_data in talents.items():
+            if len(inline_fields) >= 3:
+                break  # Begrenzt auf maximal 3 Talente
+            talent_name = talent_data.get("name", "Unbekanntes Talent")
+            talent_description = talent_data.get(
+                "description", "Beschreibung fehlt")
+            inline_fields.append((talent_name, talent_description))
 
         # Sende das Embed
         await self.send_embed(
