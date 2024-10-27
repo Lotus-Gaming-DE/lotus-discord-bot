@@ -137,8 +137,8 @@ class WCRCog(commands.Cog):
             # Änderung: Bild für das Talent laden und hinzufügen
             talent_image_url = self.pictures["units"].get(
                 str(matching_unit["id"]), {}).get(f"talent_{i}", "")
-            talent_display = f"[{
-                talent_name}]({talent_image_url})" if talent_image_url else talent_name
+            talent_display = f"{talent_image_url} {
+                talent_name}" if talent_image_url else talent_name
 
             inline_fields.append((talent_display, talent_description))
 
