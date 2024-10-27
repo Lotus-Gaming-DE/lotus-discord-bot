@@ -134,13 +134,15 @@ class WCRCog(commands.Cog):
             talent_description = talent_data.get(
                 "description", "Beschreibung fehlt")
 
-            # Änderung: Bild für das Talent laden und hinzufügen
+            # Holen des Bild-URLs für das Talent und setzen als Embed-Thumbnail, falls vorhanden
             talent_image_url = self.pictures["units"].get(
                 str(matching_unit["id"]), {}).get(f"talent_{i}", "")
-            talent_display = f"{talent_image_url} {
-                talent_name}" if talent_image_url else talent_name
-
-            inline_fields.append((talent_display, talent_description))
+            if talent_image_url:
+                # Talentname und Bild in separaten Feldern hinzufügen
+                inline_fields.append(
+                    (f"[{talent_name}](<{talent_image_url}>)", talent_description))
+            else:
+                inline_fields.append((talent_name, talent_description))
 
         # Sende das Embed
         await self.send_embed(
