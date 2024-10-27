@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import os
+import json
 import asyncio
 
 intents = discord.Intents.default()
@@ -23,22 +24,25 @@ async def on_ready():
         print("Server ID nicht gefunden. Stelle sicher, dass die Environment-Variable 'server_id' gesetzt ist.")
         return
 
-    # ID in eine Ganzzahl konvertieren
     guild = bot.get_guild(int(server_id))
 
     if guild:
-        with open("server_emojis.txt", "w", encoding="utf-8") as f:
-            for emoji in guild.emojis:
-                # Schreibe die Emoji-Infos in die Datei
-                f.write(f"Name: {emoji.name}, ID: {
-                        emoji.id}, Animation: {emoji.animated}\n")
-                f.write(f"Syntax: {'<a:' if emoji.animated else '<:'}{
-                        emoji.name}:{emoji.id}>\n\n")
-        print("Emoji-Liste wurde erfolgreich in 'server_emojis.txt' gespeichert.")
-    else:
-        print("Guild konnte nicht gefunden werden.")
+        emojis_data = {}
+        for emoji in guild.emojis:
+            emojis_data[emoji.name] = {
+                "id": emoji.id,
+                "animated": emoji.animated,
+                "syntax": f"{'<a:' if emoji.animated else '<:'}{emoji.name}:{emoji.id}>"
+            }
 
-    # Slash-Commands nur für diesen Server synchronisieren
+        # Speichern in JSON-Datei im data-Ordner
+        os.makedirs("data", exist_ok=True)
+        with open("data/server_emojis.json", "w", encoding="utf-8") as f:
+            json.dump(emojis_data, f, indent=4, ensure_ascii=False)
+
+        print("Emoji-Liste wurde erfolgreich in 'data/server_emojis.json' gespeichert.")
+
+    # Synchronisiere Slash-Commands nur für diesen Server
     await bot.tree.sync(guild=discord.Object(id=int(server_id)))
     print(f'Bot ist online als {bot.user} und mit dem Server synchronisiert.')
 
