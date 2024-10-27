@@ -37,10 +37,10 @@ async def on_ready():
 
         # Speichern in JSON-Datei im data-Ordner
         os.makedirs("data", exist_ok=True)
-        with open("data/server_emojis.json", "w", encoding="utf-8") as f:
+        with open("data/emojis.json", "w", encoding="utf-8") as f:
             json.dump(emojis_data, f, indent=4, ensure_ascii=False)
 
-        print("Emoji-Liste wurde erfolgreich in 'data/server_emojis.json' gespeichert.")
+        print("Emoji-Liste wurde erfolgreich in 'data/emojis.json' gespeichert.")
 
     # Synchronisiere Slash-Commands nur für diesen Server
     await bot.tree.sync(guild=discord.Object(id=int(server_id)))
