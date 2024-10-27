@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
-import asyncio
 import os
+import asyncio
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -24,12 +24,8 @@ async def on_ready():
         return
 
     # ID in eine Ganzzahl konvertieren
-    guild = discord.Object(id=int(server_id))
-    # Slash-Commands nur für diesen Server synchronisieren
-    await bot.tree.sync(guild=guild)
-    print(f'Bot ist online als {bot.user} und mit dem Server synchronisiert.')
+    guild = bot.get_guild(int(server_id))
 
-    guild = bot.get_guild(server_id)
     if guild:
         with open("server_emojis.txt", "w", encoding="utf-8") as f:
             for emoji in guild.emojis:
@@ -39,7 +35,12 @@ async def on_ready():
                 f.write(f"Syntax: {'<a:' if emoji.animated else '<:'}{
                         emoji.name}:{emoji.id}>\n\n")
         print("Emoji-Liste wurde erfolgreich in 'server_emojis.txt' gespeichert.")
-    await bot.close()
+    else:
+        print("Guild konnte nicht gefunden werden.")
+
+    # Slash-Commands nur für diesen Server synchronisieren
+    await bot.tree.sync(guild=discord.Object(id=int(server_id)))
+    print(f'Bot ist online als {bot.user} und mit dem Server synchronisiert.')
 
 
 async def main():
@@ -52,22 +53,5 @@ async def main():
     async with bot:
         await load_cogs()
         await bot.start(bot_token)
-
-
-@bot.event
-async def on_ready():
-    print(f"Bot ist online als {bot.user}")
-    # Ersetze YOUR_SERVER_ID mit deiner Server-ID
-    guild = bot.get_guild(YOUR_SERVER_ID)
-    if guild:
-        with open("server_emojis.txt", "w", encoding="utf-8") as f:
-            for emoji in guild.emojis:
-                # Schreibe die Emoji-Infos in die Datei
-                f.write(f"Name: {emoji.name}, ID: {
-                        emoji.id}, Animation: {emoji.animated}\n")
-                f.write(f"Syntax: {'<a:' if emoji.animated else '<:'}{
-                        emoji.name}:{emoji.id}>\n\n")
-        print("Emoji-Liste wurde erfolgreich in 'server_emojis.txt' gespeichert.")
-    await bot.close()
 
 asyncio.run(main())
