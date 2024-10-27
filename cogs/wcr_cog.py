@@ -2,7 +2,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import json
-import os
 
 
 class WCRCog(commands.Cog):
@@ -54,7 +53,9 @@ class WCRCog(commands.Cog):
             "duration": "wcr_duration"
         }
         emoji_name = emoji_map.get(stat)
-        return self.emojis.get(emoji_name, {}).get("syntax", "")
+        if emoji_name and emoji_name in self.emojis:
+            return self.emojis[emoji_name]["syntax"]
+        return ""
 
     async def send_embed(self, interaction, title, description, fields, image_url=None):
         embed = discord.Embed(
