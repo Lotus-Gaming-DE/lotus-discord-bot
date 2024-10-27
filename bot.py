@@ -29,6 +29,18 @@ async def on_ready():
     await bot.tree.sync(guild=guild)
     print(f'Bot ist online als {bot.user} und mit dem Server synchronisiert.')
 
+    guild = bot.get_guild(server_id)
+    if guild:
+        with open("server_emojis.txt", "w", encoding="utf-8") as f:
+            for emoji in guild.emojis:
+                # Schreibe die Emoji-Infos in die Datei
+                f.write(f"Name: {emoji.name}, ID: {
+                        emoji.id}, Animation: {emoji.animated}\n")
+                f.write(f"Syntax: {'<a:' if emoji.animated else '<:'}{
+                        emoji.name}:{emoji.id}>\n\n")
+        print("Emoji-Liste wurde erfolgreich in 'server_emojis.txt' gespeichert.")
+    await bot.close()
+
 
 async def main():
     # Lies den Token aus der Environment-Variable
@@ -40,5 +52,22 @@ async def main():
     async with bot:
         await load_cogs()
         await bot.start(bot_token)
+
+
+@bot.event
+async def on_ready():
+    print(f"Bot ist online als {bot.user}")
+    # Ersetze YOUR_SERVER_ID mit deiner Server-ID
+    guild = bot.get_guild(YOUR_SERVER_ID)
+    if guild:
+        with open("server_emojis.txt", "w", encoding="utf-8") as f:
+            for emoji in guild.emojis:
+                # Schreibe die Emoji-Infos in die Datei
+                f.write(f"Name: {emoji.name}, ID: {
+                        emoji.id}, Animation: {emoji.animated}\n")
+                f.write(f"Syntax: {'<a:' if emoji.animated else '<:'}{
+                        emoji.name}:{emoji.id}>\n\n")
+        print("Emoji-Liste wurde erfolgreich in 'server_emojis.txt' gespeichert.")
+    await bot.close()
 
 asyncio.run(main())
