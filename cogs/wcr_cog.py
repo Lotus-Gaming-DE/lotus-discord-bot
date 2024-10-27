@@ -13,8 +13,13 @@ class WCRCog(commands.Cog):
         self.emojis = self.load_emojis()
 
     def load_units(self):
-        with open('./data/wcr/units.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
+        try:
+            with open('./data/wcr/units.json', 'r', encoding='utf-8') as f:
+                print("Units erfolgreich geladen.")
+                return json.load(f)
+        except Exception as e:
+            print(f"Fehler beim Laden von units.json: {e}")
+            return {}
 
     def load_languages(self):
         languages = {}
@@ -22,17 +27,30 @@ class WCRCog(commands.Cog):
             try:
                 with open(f'./data/wcr/locals/{lang}.json', 'r', encoding='utf-8') as f:
                     languages[lang] = json.load(f)
+                print(f"Sprachdatei für {lang} erfolgreich geladen.")
             except FileNotFoundError:
                 print(f"Sprachdatei {lang}.json nicht gefunden.")
+            except Exception as e:
+                print(f"Fehler beim Laden der Sprachdatei {lang}: {e}")
         return languages
 
     def load_pictures(self):
-        with open('./data/wcr/pictures.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
+        try:
+            with open('./data/wcr/pictures.json', 'r', encoding='utf-8') as f:
+                print("Pictures erfolgreich geladen.")
+                return json.load(f)
+        except Exception as e:
+            print(f"Fehler beim Laden von pictures.json: {e}")
+            return {}
 
     def load_emojis(self):
-        with open('./data/emojis.json', 'r', encoding='utf-8') as emoji_file:
-            return json.load(emoji_file)
+        try:
+            with open('./data/emojis.json', 'r', encoding='utf-8') as emoji_file:
+                print("Emojis erfolgreich geladen.")
+                return json.load(emoji_file)
+        except Exception as e:
+            print(f"Fehler beim Laden von emojis.json: {e}")
+            return {}
 
     def get_text_data(self, unit_id, lang):
         texts = self.languages.get(lang, self.languages["de"])
@@ -52,10 +70,14 @@ class WCRCog(commands.Cog):
             embed.add_field(name=name, value=value, inline=False)
         for name, value in inline_fields:
             embed.add_field(name=name, value=value, inline=True)
+        print("Embed wird gesendet.")
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="cost", description="Zeigt alle Minis mit den angegebenen Kosten an.")
     async def cost(self, interaction: discord.Interaction, cost: int, lang: str = "de"):
+        print(
+            f"Befehl /cost ausgeführt mit Kosten: {cost} und Sprache: {lang}")
+
         if lang not in self.languages:
             await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: de, en.")
             return
@@ -72,6 +94,9 @@ class WCRCog(commands.Cog):
 
     @app_commands.command(name="faction", description="Zeigt alle Minis der angegebenen Fraktion an.")
     async def faction(self, interaction: discord.Interaction, faction_id: int, lang: str = "de"):
+        print(
+            f"Befehl /faction ausgeführt mit Fraktion: {faction_id} und Sprache: {lang}")
+
         if lang not in self.languages:
             await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: de, en.")
             return
@@ -89,6 +114,8 @@ class WCRCog(commands.Cog):
 
     @app_commands.command(name="name", description="Zeigt Details zu einem Mini basierend auf dem Namen an.")
     async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
+        print(f"Befehl /name ausgeführt mit Name: {name} und Sprache: {lang}")
+
         if lang not in self.languages:
             await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: de, en.")
             return
@@ -111,33 +138,33 @@ class WCRCog(commands.Cog):
 
         # Erstelle reguläre Felder für die Statistiken
         fields = [
-            (f"{self.emojis['wcr_cost']['syntax']} Kosten",
-             str(matching_unit.get("cost", "N/A"))),
-            (f"{self.emojis['wcr_speed']['syntax']} Geschwindigkeit", str(
-                matching_unit.get("speed_id", "N/A"))),
-            (f"{self.emojis['wcr_health']['syntax']} Gesundheit", str(
-                stats.get("health", "N/A"))),
-            (f"{self.emojis['wcr_damage']['syntax']} Schaden",
-             str(stats.get("damage", "N/A"))),
-            (f"{self.emojis['wcr_dps']['syntax']} DPS",
+            (f"{self.emojis.get('wcr_cost', {}).get('syntax', '')
+                } Kosten", str(matching_unit.get("cost", "N/A"))),
+            (f"{self.emojis.get('wcr_speed', {}).get('syntax', '')
+                } Geschwindigkeit", str(matching_unit.get("speed_id", "N/A"))),
+            (f"{self.emojis.get('wcr_health', {}).get('syntax', '')
+                } Gesundheit", str(stats.get("health", "N/A"))),
+            (f"{self.emojis.get('wcr_damage', {}).get('syntax', '')
+                } Schaden", str(stats.get("damage", "N/A"))),
+            (f"{self.emojis.get('wcr_dps', {}).get('syntax', '')} DPS",
              str(stats.get("dps", "N/A"))),
-            (f"{self.emojis['wcr_attack_speed']['syntax']} Angriffsgeschwindigkeit", str(
-                stats.get("attack_speed", "N/A"))),
-            (f"{self.emojis['wcr_range']['syntax']} Reichweite",
-             str(stats.get("range", "N/A"))),
-            (f"{self.emojis['wcr_duration']['syntax']} Dauer",
-             str(stats.get("duration", "N/A"))),
+            (f"{self.emojis.get('wcr_attack_speed', {}).get('syntax', '')
+                } Angriffsgeschwindigkeit", str(stats.get("attack_speed", "N/A"))),
+            (f"{self.emojis.get('wcr_range', {}).get('syntax', '')
+                } Reichweite", str(stats.get("range", "N/A"))),
+            (f"{self.emojis.get('wcr_duration', {}).get('syntax', '')
+                } Dauer", str(stats.get("duration", "N/A"))),
         ]
 
         # Inline-Felder für Talente vorbereiten
         traits_ids = matching_unit.get("traits_ids", [])
         inline_fields = []
         for trait_id in traits_ids[:3]:  # Beschränkung auf maximal 3 Talente
-            trait_name, trait_description = self.get_text_data(
-                trait_id, lang)
+            trait_name, trait_description = self.get_text_data(trait_id, lang)
             inline_fields.append((trait_name, trait_description))
 
-        # Erstelle das Embed
+        # Sende das Embed
+        print("Erstelle das Embed für den Mini.")
         await self.send_embed(
             interaction,
             unit_name,
