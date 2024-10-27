@@ -130,26 +130,22 @@ class WCRCog(commands.Cog):
         ]
 
         # Inline-Felder für Talente vorbereiten
-        traits_ids = matching_unit["traits_ids"]
+        traits_ids = matching_unit.get("traits_ids", [])
         inline_fields = []
         for trait_id in traits_ids[:3]:  # Beschränkung auf maximal 3 Talente
             trait_name, trait_description = self.get_text_data(
-                trait_id, lang)  # Anpassung je nach Verfügbarkeit von Textdaten
+                trait_id, lang)
             inline_fields.append((trait_name, trait_description))
 
         # Erstelle das Embed
-        embed = discord.Embed(
-            title=unit_name, description=unit_description, color=0x3498db)
-        for name, value in fields:
-            embed.add_field(name=name, value=value, inline=False)
-        for name, value in inline_fields:
-            embed.add_field(name=name, value=value, inline=True)
-
-        pose_url = self.get_pose_url(matching_unit["id"])
-        if pose_url:
-            embed.set_thumbnail(url=pose_url)
-
-        await interaction.response.send_message(embed=embed)
+        await self.send_embed(
+            interaction,
+            unit_name,
+            unit_description,
+            fields,
+            inline_fields,
+            self.get_pose_url(matching_unit["id"])
+        )
 
 
 async def setup(bot):
