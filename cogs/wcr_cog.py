@@ -31,8 +31,8 @@ class WCRCog(commands.Cog):
             return json.load(f)
 
     def load_emojis(self):
-        with open('./data/server_emojis.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
+        with open('./data/emojis.json', 'r', encoding='utf-8') as emoji_file:
+            return json.load(emoji_file)
 
     def get_text_data(self, unit_id, lang):
         texts = self.languages.get(lang, self.languages["de"])
@@ -40,31 +40,52 @@ class WCRCog(commands.Cog):
         return unit_text.get("name", "Unbekannt"), unit_text.get("description", "Beschreibung fehlt")
 
     def get_pose_url(self, unit_id):
+        """Gibt die pose-URL des Minis zurück, falls vorhanden."""
         return self.pictures["units"].get(str(unit_id), {}).get("pose", "")
 
-    def get_stat_emoji(self, stat):
-        emoji_map = {
-            "damage": "wcr_damage",
-            "health": "wcr_health",
-            "dps": "wcr_dps",
-            "attack_speed": "wcr_attack_speed",
-            "range": "wcr_range",
-            "speed": "wcr_speed",
-            "duration": "wcr_duration"
-        }
-        emoji_name = emoji_map.get(stat)
-        if emoji_name and emoji_name in self.emojis:
-            return self.emojis[emoji_name]["syntax"]
-        return ""
-
-    async def send_embed(self, interaction, title, description, fields, image_url=None):
+    async def send_embed(self, interaction, title, description, fields, inline_fields, image_url=None):
         embed = discord.Embed(
             title=title, description=description, color=0x3498db)
         if image_url:
             embed.set_thumbnail(url=image_url)
         for name, value in fields:
             embed.add_field(name=name, value=value, inline=False)
+        for name, value in inline_fields:
+            embed.add_field(name=name, value=value, inline=True)
         await interaction.response.send_message(embed=embed)
+
+    @app_commands.command(name="cost", description="Zeigt alle Minis mit den angegebenen Kosten an.")
+    async def cost(self, interaction: discord.Interaction, cost: int, lang: str = "de"):
+        if lang not in self.languages:
+            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: de, en.")
+            return
+
+        matching_units = [unit for unit in self.units if unit["cost"] == cost]
+        if not matching_units:
+            await interaction.response.send_message(f"Keine Minis mit Kosten {cost} gefunden.")
+            return
+
+        fields = [(self.get_text_data(unit["id"], lang)[0], self.get_text_data(
+            unit["id"], lang)[1]) for unit in matching_units]
+        pose_url = self.get_pose_url(matching_units[0]["id"])
+        await self.send_embed(interaction, f"Minis mit Kosten {cost}", "Liste der Minis:", fields, [], pose_url)
+
+    @app_commands.command(name="faction", description="Zeigt alle Minis der angegebenen Fraktion an.")
+    async def faction(self, interaction: discord.Interaction, faction_id: int, lang: str = "de"):
+        if lang not in self.languages:
+            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: de, en.")
+            return
+
+        matching_units = [
+            unit for unit in self.units if unit["faction_id"] == faction_id]
+        if not matching_units:
+            await interaction.response.send_message(f"Keine Minis in Fraktion {faction_id} gefunden.")
+            return
+
+        fields = [(self.get_text_data(unit["id"], lang)[0], self.get_text_data(
+            unit["id"], lang)[1]) for unit in matching_units]
+        pose_url = self.get_pose_url(matching_units[0]["id"])
+        await self.send_embed(interaction, f"Minis in Fraktion {faction_id}", "Liste der Minis:", fields, [], pose_url)
 
     @app_commands.command(name="name", description="Zeigt Details zu einem Mini basierend auf dem Namen an.")
     async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
@@ -87,14 +108,48 @@ class WCRCog(commands.Cog):
         unit_name, unit_description = self.get_text_data(
             matching_unit["id"], lang)
         stats = matching_unit["stats"]
+
+        # Erstelle reguläre Felder für die Statistiken
         fields = [
-            (f"{self.get_stat_emoji(stat)} {
-             stat.replace('_', ' ').capitalize()}", str(value))
-            for stat, value in stats.items()
+            (f"{self.emojis['wcr_cost']['syntax']} Kosten",
+             str(matching_unit.get("cost", "N/A"))),
+            (f"{self.emojis['wcr_speed']['syntax']} Geschwindigkeit", str(
+                matching_unit.get("speed_id", "N/A"))),
+            (f"{self.emojis['wcr_health']['syntax']} Gesundheit", str(
+                stats.get("health", "N/A"))),
+            (f"{self.emojis['wcr_damage']['syntax']} Schaden",
+             str(stats.get("damage", "N/A"))),
+            (f"{self.emojis['wcr_dps']['syntax']} DPS",
+             str(stats.get("dps", "N/A"))),
+            (f"{self.emojis['wcr_attack_speed']['syntax']} Angriffsgeschwindigkeit", str(
+                stats.get("attack_speed", "N/A"))),
+            (f"{self.emojis['wcr_range']['syntax']} Reichweite",
+             str(stats.get("range", "N/A"))),
+            (f"{self.emojis['wcr_duration']['syntax']} Dauer",
+             str(stats.get("duration", "N/A"))),
         ]
 
+        # Inline-Felder für Talente vorbereiten
+        traits_ids = matching_unit["traits_ids"]
+        inline_fields = []
+        for trait_id in traits_ids[:3]:  # Beschränkung auf maximal 3 Talente
+            trait_name, trait_description = self.get_text_data(
+                trait_id, lang)  # Anpassung je nach Verfügbarkeit von Textdaten
+            inline_fields.append((trait_name, trait_description))
+
+        # Erstelle das Embed
+        embed = discord.Embed(
+            title=unit_name, description=unit_description, color=0x3498db)
+        for name, value in fields:
+            embed.add_field(name=name, value=value, inline=False)
+        for name, value in inline_fields:
+            embed.add_field(name=name, value=value, inline=True)
+
         pose_url = self.get_pose_url(matching_unit["id"])
-        await self.send_embed(interaction, unit_name, unit_description, fields, pose_url)
+        if pose_url:
+            embed.set_thumbnail(url=pose_url)
+
+        await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot):
