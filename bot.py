@@ -18,17 +18,19 @@ async def load_cogs():
 
 @bot.event
 async def on_ready():
-    # Server-ID aus den Umgebungsvariablen lesen
-    server_id = os.getenv('server_id')
-    if server_id is None:
-        print("Server ID nicht gefunden. Stelle sicher, dass die Environment-Variable 'server_id' gesetzt ist.")
+    # Server-IDs aus den Umgebungsvariablen lesen
+    main_server_id = os.getenv('server_id')
+    emoji_server_id = os.getenv('emoji_server_id')
+
+    if main_server_id is None or emoji_server_id is None:
+        print("Eine oder beide Server-IDs wurden nicht gefunden. Bitte stelle sicher, dass die Environment-Variablen 'server_id' und 'emoji_server_id' gesetzt sind.")
         return
 
-    guild = bot.get_guild(int(server_id))
-
-    if guild:
+    # Emoji-Laden für den Hauptserver
+    main_guild = bot.get_guild(int(main_server_id))
+    if main_guild:
         emojis_data = {}
-        for emoji in guild.emojis:
+        for emoji in main_guild.emojis:
             emojis_data[emoji.name] = {
                 "id": emoji.id,
                 "animated": emoji.animated,
@@ -40,10 +42,27 @@ async def on_ready():
         with open("data/emojis.json", "w", encoding="utf-8") as f:
             json.dump(emojis_data, f, indent=4, ensure_ascii=False)
 
-        print("Emoji-Liste wurde erfolgreich in 'data/emojis.json' gespeichert.")
+        print("Emoji-Liste vom Hauptserver wurde erfolgreich in 'data/emojis.json' gespeichert.")
 
-    # Synchronisiere Slash-Commands nur für diesen Server
-    await bot.tree.sync(guild=discord.Object(id=int(server_id)))
+    # Emoji-Laden für den neuen Server
+    emoji_guild = bot.get_guild(int(emoji_server_id))
+    if emoji_guild:
+        emojis_extension_data = {}
+        for emoji in emoji_guild.emojis:
+            emojis_extension_data[emoji.name] = {
+                "id": emoji.id,
+                "animated": emoji.animated,
+                "syntax": f"{'<a:' if emoji.animated else '<:'}{emoji.name}:{emoji.id}>"
+            }
+
+        # Speichern in separater JSON-Datei
+        with open("data/emojis_extension_01.json", "w", encoding="utf-8") as f:
+            json.dump(emojis_extension_data, f, indent=4, ensure_ascii=False)
+
+        print("Emoji-Liste vom Emoji-Server wurde erfolgreich in 'data/emojis_extension_01.json' gespeichert.")
+
+    # Synchronisiere Slash-Commands nur für den Hauptserver
+    await bot.tree.sync(guild=discord.Object(id=int(main_server_id)))
     print(f'Bot ist online als {bot.user} und mit dem Server synchronisiert.')
 
 
