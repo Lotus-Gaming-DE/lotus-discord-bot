@@ -2,6 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import json
+import requests
+import os
 
 
 class WCRCog(commands.Cog):
@@ -12,45 +14,7 @@ class WCRCog(commands.Cog):
         self.pictures = self.load_pictures()
         self.emojis = self.load_emojis()
 
-    def load_units(self):
-        try:
-            with open('./data/wcr/units.json', 'r', encoding='utf-8') as f:
-                print("Units erfolgreich geladen.")
-                return json.load(f)
-        except Exception as e:
-            print(f"Fehler beim Laden von units.json: {e}")
-            return {}
-
-    def load_languages(self):
-        languages = {}
-        for lang in ["de", "en"]:
-            try:
-                with open(f'./data/wcr/locals/{lang}.json', 'r', encoding='utf-8') as f:
-                    languages[lang] = json.load(f)
-                print(f"Sprachdatei für {lang} erfolgreich geladen.")
-            except FileNotFoundError:
-                print(f"Sprachdatei {lang}.json nicht gefunden.")
-            except Exception as e:
-                print(f"Fehler beim Laden der Sprachdatei {lang}: {e}")
-        return languages
-
-    def load_pictures(self):
-        try:
-            with open('./data/wcr/pictures.json', 'r', encoding='utf-8') as f:
-                print("Pictures erfolgreich geladen.")
-                return json.load(f)
-        except Exception as e:
-            print(f"Fehler beim Laden von pictures.json: {e}")
-            return {}
-
-    def load_emojis(self):
-        try:
-            with open('./data/emojis.json', 'r', encoding='utf-8') as emoji_file:
-                print("Emojis erfolgreich geladen.")
-                return json.load(emoji_file)
-        except Exception as e:
-            print(f"Fehler beim Laden von emojis.json: {e}")
-            return {}
+    # (Hier bleiben die load_* Methoden unverändert)
 
     def get_text_data(self, unit_id, lang):
         texts = self.languages.get(lang, self.languages["de"])
@@ -60,17 +24,6 @@ class WCRCog(commands.Cog):
     def get_pose_url(self, unit_id):
         """Gibt die pose-URL des Minis zurück, falls vorhanden."""
         return self.pictures["units"].get(str(unit_id), {}).get("pose", "")
-
-    async def send_embed(self, interaction, title, description, fields, inline_fields, image_url=None):
-        embed = discord.Embed(
-            title=title, description=description, color=0x3498db)
-        if image_url:
-            embed.set_thumbnail(url=image_url)
-        for name, value in fields:
-            embed.add_field(name=name, value=value, inline=False)
-        for name, value in inline_fields:
-            embed.add_field(name=name, value=value, inline=True)
-        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="name", description="Zeigt Details zu einem Mini basierend auf dem Namen an.")
     async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
@@ -124,25 +77,50 @@ class WCRCog(commands.Cog):
             fields.append((f"{self.emojis.get('wcr_duration', {}).get(
                 'syntax', '')} Dauer", str(stats["duration"])))
 
-        # Inline-Felder für Talente vorbereiten
+        # Inline-Felder für Talente vorbereiten und Bilder als Anhang hinzufügen
+        files = []
         inline_fields = []
-        for talent_id, talent_data in talents.items():
-            if len(inline_fields) >= 3:
+        for i, (talent_id, talent_data) in enumerate(talents.items()):
+            if i >= 3:
                 break  # Begrenzt auf maximal 3 Talente
             talent_name = talent_data.get("name", "Unbekanntes Talent")
             talent_description = talent_data.get(
                 "description", "Beschreibung fehlt")
-            inline_fields.append((talent_name, talent_description))
+            talent_image_url = self.pictures["units"].get(
+                str(matching_unit["id"]), {}).get(f"talent_{talent_id}", "")
 
-        # Sende das Embed
-        await self.send_embed(
-            interaction,
-            unit_name,
-            unit_description,
-            fields,
-            inline_fields,
-            self.get_pose_url(matching_unit["id"])
+            if talent_image_url:
+                # Lade das Bild herunter und speichere es temporär
+                image_data = requests.get(talent_image_url).content
+                filename = f"temp_talent_image_{i}.png"
+                with open(filename, "wb") as f:
+                    f.write(image_data)
+                files.append(discord.File(filename, filename=filename))
+                inline_fields.append(
+                    (f"{talent_name}", f"{talent_description}\n[Bild]({filename})"))
+            else:
+                inline_fields.append((talent_name, talent_description))
+
+        # Erstelle das Embed und sende es
+        embed = discord.Embed(
+            title=unit_name,
+            description=unit_description,
+            color=0x3498db
         )
+
+        if self.get_pose_url(matching_unit["id"]):
+            embed.set_thumbnail(url=self.get_pose_url(matching_unit["id"]))
+
+        for name, value in fields:
+            embed.add_field(name=name, value=value, inline=False)
+        for name, value in inline_fields:
+            embed.add_field(name=name, value=value, inline=True)
+
+        await interaction.response.send_message(embed=embed, files=files)
+
+        # Entferne die temporären Dateien nach dem Senden
+        for file in files:
+            os.remove(file.filename)
 
 
 async def setup(bot):

@@ -1,1370 +1,1846 @@
 {
-  "units": {
-    "1": {
-      "name": "Abomination",
-      "description": "This Tanky mass of flesh and steel will Hook ranged enemies, drawing them into his Cleave attack.",
-      "talents": {
-        "1": {
-          "name": "Noxius Presence",
-          "description": "Poison nearby enemies every 3 seconds."
-        },
-        "2": {
-          "name": "Cannonball",
-          "description": "On deploy and at 50 % health, stun nearby enemies for 5 seconds."
-        },
-        "3": {
-          "name": "Fresh Meat",
-          "description": "After hooking a target, deal double damage on the next attack."
-        }
-      }
-    },
-    "2": {
-      "name": "Angry Chickens",
-      "description": "A flock of feathered fowl that can overwhelm even the heartiest of Tanks and Towers.",
-      "talents": {
-        "1": {
-          "name": "Snackrifice",
-          "description": "Nearby Beast allies can consume a Chicken to heal themselves."
-        },
-        "2": {
-          "name": "Walking Crate",
-          "description": "Deploy in a protective crate. When destroyed, Chickens emerge."
-        },
-        "3": {
-          "name": "Furious Fowl",
-          "description": "Gain Fury."
-        }
-      }
-    },
-    "3": {
-      "name": "Arcane Blast",
-      "description": "This spell surges with power! Each extra tap increases Gold cost by 1 and doubles the Elemental damage!",
-      "talents": {
-        "1": {
-          "name": "Amplification",
-          "description": "Sequential taps increase radius by 1."
-        },
-        "2": {
-          "name": "Arcane Power",
-          "description": "Spell sequence starts at rank 3 and ends at rank 4."
-        },
-        "3": {
-          "name": "Torrent",
-          "description": "Gain a level after casting Rank 4."
-        }
-      }
-    },
-    "4": {
-      "name": "Banshee",
-      "description": "Shrieks in delight at nearby enemies, Possessing the first she sees to fight for you, permanently.",
-      "talents": {
-        "1": {
-          "name": "Soul Eruption",
-          "description": "Possessed targets detonate on death, damaging nearby enemies."
-        },
-        "2": {
-          "name": "Unholy Frenzy",
-          "description": "Possessed targets gain Bloodlust for 10 seconds."
-        },
-        "3": {
-          "name": "Will of the Necropolis",
-          "description": "Fully Heal the possessed target."
-        }
-      }
-    },
-    "5": {
-      "name": "Baron Rivendare",
-      "description": "Bane of the Scarlet Crusade.",
-      "talents": {
-        "1": {
-          "name": "Death Pact",
-          "description": "Periodically sacrifice a nearby Skeleton to be Healed."
-        },
-        "2": {
-          "name": "Skeletal Frenzy",
-          "description": "Nearby allied Skeletons gain Bloodlust."
-        },
-        "3": {
-          "name": "Chill Of The Grave",
-          "description": "Summon Skeletal Mages instead of Warriors."
-        }
-      }
-    },
-    "6": {
-      "name": "Bat Rider",
-      "description": "A cheap aerial unit that specializes in bathing the ground in flame while Flying above Melee enemies.",
-      "talents": {
-        "1": {
-          "name": "Flaming Pitch",
-          "description": "Flaming pool reduces enemy's speed by 30%."
-        },
-        "2": {
-          "name": "Enchanted Vials",
-          "description": "Increase the size of the flaming pool by 30%."
-        },
-        "3": {
-          "name": "Fiery Surplus",
-          "description": "\"Accidentally\" leave vials on the ground, Burning nearby enemies that touch them."
-        }
-      }
-    },
-    "7": {
-      "name": "Blizzard",
-      "description": "Rain down Frost shards from the sky! Slows and deals Elemental damage to all enemies in a large area.",
-      "talents": {
-        "1": {
-          "name": "Cold Snap",
-          "description": "Freeze enemy troops in place."
-        },
-        "2": {
-          "name": "Brittle Ice",
-          "description": "Enemies within take 30% additional damage from Physical sources."
-        },
-        "3": {
-          "name": "Icecrown",
-          "description": "Summons an additional Blizzard at your Base."
-        }
-      }
-    },
-    "8": {
-      "name": "Bloodmage Thalnos",
-      "description": "Blood magic is thicker than water magic.",
-      "talents": {
-        "1": {
-          "name": "Drain Life",
-          "description": "Gain Lifesteal."
-        },
-        "2": {
-          "name": "Bane",
-          "description": "Playing a spell increases attack speed by 30% for 5 seconds."
-        },
-        "3": {
-          "name": "Dominance",
-          "description": "Spells costing 4 or more grant an additional level."
-        }
-      }
-    },
-    "9": {
-      "name": "Cairne Bloodhoof",
-      "description": "The original Elite Tauren Chieftain.",
-      "talents": {
-        "1": {
-          "name": "Reincarnation",
-          "description": "After death, Resurrect at 50% Health once."
-        },
-        "2": {
-          "name": "Plainsrunning",
-          "description": "Move 50% faster and gain the Fast trait."
-        },
-        "3": {
-          "name": "Aftershock",
-          "description": "When Stun expires, affected enemies are Dazed for 5 seconds."
-        }
-      }
-    },
-    "10": {
-      "name": "Chain Lightning",
-      "description": "Swarmed by Squads of smaller foes? Send a surge of lightning sizzling through several enemies!",
-      "talents": {
-        "1": {
-          "name": "Brilliant Flash",
-          "description": "On deploy, Stun enemies within for 1 second."
-        },
-        "2": {
-          "name": "Reverberation",
-          "description": "Can be cast a second time."
-        },
-        "3": {
-          "name": "Storm's Reach",
-          "description": "Dramatically increase jump distance between targets."
-        }
-      }
-    },
-    "11": {
-      "name": "Charlga Razorflank",
-      "description": "Your Minis in hand share the same cost. What???",
-      "talents": {
-        "1": {
-          "name": "Spirit Passage",
-          "description": "Minis played for 5 Gold gain a level and deploy in Stealth."
-        },
-        "2": {
-          "name": "Cavernous Mists",
-          "description": "Deploy cost reduced by 1."
-        },
-        "3": {
-          "name": "Nature's Grasp",
-          "description": "Root two additional nearby targets, but deal half damage."
-        }
-      }
-    },
-    "12": {
-      "name": "Cheat Death",
-      "description": "Imbue your minions with one last breath of death, preventing them from dying for a precious few seconds.",
-      "talents": {
-        "1": {
-          "name": "Vampirism",
-          "description": "Affected minis are Healed when dealing damage."
-        },
-        "2": {
-          "name": "Apocalypse",
-          "description": "Affected Skeletons Resurrect at your base when they die."
-        },
-        "3": {
-          "name": "Seal Fate",
-          "description": "Affected minis gain Bloodlust, but die when the effect ends."
-        }
-      }
-    },
-    "13": {
-      "name": "Core Hounds",
-      "description": "This pair of Resistant Tanks is only dead when both are snuffed out. When one falls, the other rekindles it!",
-      "talents": {
-        "1": {
-          "name": "Eternal Bond",
-          "description": "Resurrection range is unlimited."
-        },
-        "2": {
-          "name": "Guard Dog",
-          "description": "Deal 50% additional damage near friendly towers and meeting stones."
-        },
-        "3": {
-          "name": "Fiery Rebirth",
-          "description": "On Resurrection, damage nearby enemies."
-        }
-      }
-    },
-    "14": {
-      "name": "Dark Iron Miner",
-      "description": "When there's more Gold than your Kobold can mine, hire another to mine behind enemy lines!",
-      "talents": {
-        "1": {
-          "name": "Gold Mine",
-          "description": "After Mining, drop a proximity mine. Damages nearby enemies when touched."
-        },
-        "2": {
-          "name": "Dark Iron Armaments",
-          "description": "After Mining, gain Armored."
-        },
-        "3": {
-          "name": "Dwarven Ambition",
-          "description": "Gain Fury."
-        }
-      }
-    },
-    "15": {
-      "name": "Darkspear Troll",
-      "description": "This headhunter deals massive damage with savage spear throws. Enemies in the air beware!",
-      "talents": {
-        "1": {
-          "name": "Big Bad Voodoo",
-          "description": "Regenerate 20% health every second."
-        },
-        "2": {
-          "name": "Headhunting",
-          "description": "On kill, increase Attack and Movement speed by 10%. Stacks to 50%."
-        },
-        "3": {
-          "name": "Serpent Sting",
-          "description": "Gain Poison."
-        }
-      }
-    },
-    "16": {
-      "name": "Deep Breath",
-      "description": "Strike with dragon's breath in any direction, dealing Elemental damage to enemies in the line of fire!",
-      "talents": {
-        "1": {
-          "name": "Attunement",
-          "description": "Allies caught in the effect gain Resist."
-        },
-        "2": {
-          "name": "Melting Point",
-          "description": "Damaging Armored enemies removes their Armor."
-        },
-        "3": {
-          "name": "Double Dragon",
-          "description": "Cast a second wave in the opposite direction."
-        }
-      }
-    },
-    "17": {
-      "name": "Defias Bandits",
-      "description": "Stealthy and weak on their own, but will sneak up and Stun enemies while your damage dealers open fire!",
-      "talents": {
-        "1": {
-          "name": "Pick Lock",
-          "description": "Earn an extra +2 Gold when opening chests."
-        },
-        "2": {
-          "name": "Deadly Poison",
-          "description": "Gain Poison."
-        },
-        "3": {
-          "name": "Last Resort",
-          "description": "On death, Stun the target for 3 seconds."
-        }
-      }
-    },
-    "18": {
-      "name": "Drake",
-      "description": "Flies over the battlefield with flaming breath, incinerating Flying and Ground enemies alike.",
-      "talents": {
-        "1": {
-          "name": "Mother Drake",
-          "description": "Periodically summon a Whelp Egg."
-        },
-        "2": {
-          "name": "Engulfing Flames",
-          "description": "Damaging enemies Burns them."
-        },
-        "3": {
-          "name": "Roost",
-          "description": "Perch on top of a nearby tower, staying there to defend it."
-        }
-      }
-    },
-    "19": {
-      "name": "Earth Elemental",
-      "description": "Drop this heavily Armored avalanche anywhere to Tank for your troops. Only punches Towers and Bosses.",
-      "talents": {
-        "1": {
-          "name": "Obsidian Shard",
-          "description": "On death, split into two smaller Earth Elementals."
-        },
-        "2": {
-          "name": "Ready to Rumble",
-          "description": "Taunt on deploy."
-        },
-        "3": {
-          "name": "Shrapnel Blast",
-          "description": "Destroying a tower deals damage to nearby enemies."
-        }
-      }
-    },
-    "20": {
-      "name": "Execute",
-      "description": "Savagely slice through enemies, chopping off half of their maximum Health in one swipe.",
-      "talents": {
-        "1": {
-          "name": "Bloodthirsty",
-          "description": "Bloodlust allies within spell area for 10 seconds."
-        },
-        "2": {
-          "name": "Overpower",
-          "description": "Knock enemies away from the cast location."
-        },
-        "3": {
-          "name": "Killing Spree",
-          "description": "If an enemy is killed, the next Horde mini costs 1 less."
-        }
-      }
-    },
-    "21": {
-      "name": "Fire Elemental",
-      "description": "Resistant to Elemental damage. Specializes in Cleaving through Armored enemies.",
-      "talents": {
-        "1": {
-          "name": "Immolation Aura",
-          "description": "Periodically damage nearby enemies."
-        },
-        "2": {
-          "name": "Molten Core",
-          "description": "On death, summon a pool of lava, damaging enemies within."
-        },
-        "3": {
-          "name": "Fan The Flames",
-          "description": "Taking Elemental damage increases damage dealt by 10%. Stacks to 30%."
-        }
-      }
-    },
-    "22": {
-      "name": "Firehammer",
-      "description": "Furiously flings fiery hammers at foes. Starts slow, but her Armor melting momentum can't be matched.",
-      "talents": {
-        "1": {
-          "name": "Moultin' Metal",
-          "description": "Deal 50% more damage to Flying enemies."
-        },
-        "2": {
-          "name": "Blazing Speed",
-          "description": "Fury builds up to 40% higher."
-        },
-        "3": {
-          "name": "Heightened Rage",
-          "description": "Level up upon reaching full Fury."
-        }
-      }
-    },
-    "23": {
-      "name": "Flamewaker",
-      "description": "Ignites the ground with waves of flame, incinerating supporting troops behind enemy Tanks.",
-      "talents": {
-        "1": {
-          "name": "Backdraft",
-          "description": "Successive attacks increase flame wave distance. Resets on movement."
-        },
-        "2": {
-          "name": "Engulf",
-          "description": "Damaging enemies Burns thems."
-        },
-        "3": {
-          "name": "Heat Stroke",
-          "description": "Damaging enemies Dazes them."
-        }
-      }
-    },
-    "24": {
-      "name": "Footmen",
-      "description": "An Armored phalanx Squad of steel, a great Tank for fragile allies, and can be split to defend two lanes at once!",
-      "talents": {
-        "1": {
-          "name": "Fortification",
-          "description": "Gain 30% extra empty Health."
-        },
-        "2": {
-          "name": "Shield Bash",
-          "description": "Periodically Stun the target for 1 second."
-        },
-        "3": {
-          "name": "Last Stand",
-          "description": "Armor increases to 75% damage reduction when no other Footmen are nearby."
-        }
-      }
-    },
-    "25": {
-      "name": "Frostwolf Shaman",
-      "description": "Why choose between Ranged damage and Healing when you can have both? Elemental mastery to heal and harm!",
-      "talents": {
-        "1": {
-          "name": "Earth Shield",
-          "description": "Grant Armored to a nearby ally. Ability has 1 charge."
-        },
-        "2": {
-          "name": "Lightning Mastery",
-          "description": "Ranged attack chains to 3 nearby targets."
-        },
-        "3": {
-          "name": "Earthwall Totem",
-          "description": "Once per deploy, place a totem that partially heals a nearby tower or base."
-        }
-      }
-    },
-    "26": {
-      "name": "Gargoyle",
-      "description": "A Flying fortress of Armor. This single-minded Tank attacks buildings and bosses, ignoring all other distractions.",
-      "talents": {
-        "1": {
-          "name": "Wing Buffet",
-          "description": "ncreases move speed by 33%."
-        },
-        "2": {
-          "name": "Aerial Superiority",
-          "description": "Incoming damage from Flying minis is reduced by 50%."
-        },
-        "3": {
-          "name": "Obsidian Statue",
-          "description": "On death, summon a statue with Taunt. Lasts until destroyed."
-        }
-      }
-    },
-    "27": {
-      "name": "General Drakkisath",
-      "description": "A cunning and ruthless strategist.",
-      "talents": {
-        "1": {
-          "name": "Chromatic Scales",
-          "description": "Grants nearby allies the Resistant trait."
-        },
-        "2": {
-          "name": "Piercing Blows",
-          "description": "Attacks pierce through enemies in a line."
-        },
-        "3": {
-          "name": "Lasting Legacy",
-          "description": "On death, drop a banner. Nearby enemies take 50% additional Elemental damage. Lasts 10 seconds."
-        }
-      }
-    },
-    "28": {
-      "name": "Ghoul",
-      "description": "A cheap but ravenous Tank, ready to feast on fallen enemies to replenish its Health.",
-      "talents": {
-        "1": {
-          "name": "Bone Shield",
-          "description": "Cannibalizing grants Armored for 10 seconds."
-        },
-        "2": {
-          "name": "Taste for Blood",
-          "description": "Deal 50% additional damage to enemies who are below 50% health."
-        },
-        "3": {
-          "name": "Ravenous",
-          "description": "Cannibalizing grants Bloodlust for 10 seconds."
-        }
-      }
-    },
-    "29": {
-      "name": "Gnoll Brute",
-      "description": "A tough Tank with a menacing mace. Cleaves through Squads of enemies, or clobbers with collateral damage.",
-      "talents": {
-        "1": {
-          "name": "Rabid",
-          "description": "Reduce deploy cost by 1 and gain the Cycle trait."
-        },
-        "2": {
-          "name": "Pillage",
-          "description": "Deal Siege damage."
-        },
-        "3": {
-          "name": "Thick Hide",
-          "description": "Gain Armor."
-        }
-      }
-    },
-    "30": {
-      "name": "Goblin Sapper",
-      "description": "Sappers sacrifice themselves to deliver superior Siege damage in seconds. Topple Towers with this tag team!",
-      "talents": {
-        "1": {
-          "name": "Rocket Powered Turbo Boots",
-          "description": "Move twice as fast and gain the Fast trait."
-        },
-        "2": {
-          "name": "Extra BOOM",
-          "description": "Deploy an additional +1 Goblin Sapper."
-        },
-        "3": {
-          "name": "Crude Gunpowder",
-          "description": "On death, Burn nearby enemies."
-        }
-      }
-    },
-    "31": {
-      "name": "Grommash Hellscream",
-      "description": "Don't call me Grom!",
-      "talents": {
-        "1": {
-          "name": "Bladestorm",
-          "description": "Gain an AOE bladespin ability that damages all nearby enemies."
-        },
-        "2": {
-          "name": "Savage Strikes",
-          "description": "Deal double damage to enemies who are below 50% health."
-        },
-        "3": {
-          "name": "Mirror Image",
-          "description": "Summon two fragile mirror images when entering combat."
-        }
-      }
-    },
-    "32": {
-      "name": "Gryphon Rider",
-      "description": "A sky-riding Flier that throws mighty dwarven hammers at aerial and ground troops alike.",
-      "talents": {
-        "1": {
-          "name": "Mighty Throw",
-          "description": "Gain +3 Range."
-        },
-        "2": {
-          "name": "Odyn's Fury",
-          "description": "Gain Fury."
-        },
-        "3": {
-          "name": "Air Drop",
-          "description": "Periodically drop a potion, leveling up the first ally to touch it."
-        }
-      }
-    },
-    "33": {
-      "name": "Harpies",
-      "description": "A trio of fragile Fliers, but if they can reach their target, they will shred it in seconds.",
-      "talents": {
-        "1": {
-          "name": "Infectious Swipes",
-          "description": "Gain Poison."
-        },
-        "2": {
-          "name": "Trinket Collectors",
-          "description": "Gain the Miner trait. Cost increased by 1."
-        },
-        "3": {
-          "name": "Talon Dive",
-          "description": "Deal double damage on the 1st attack."
-        }
-      }
-    },
-    "34": {
-      "name": "Harvest Golem",
-      "description": "A hearty Melee automaton with a trick up its sleeve - After its first death it will shock itself back to life!",
-      "talents": {
-        "1": {
-          "name": "Trojan Chickens",
-          "description": "On death, spawn 4 Angry Chickens."
-        },
-        "2": {
-          "name": "Unstable Core",
-          "description": "On death, Stun nearby enemies for 3 seconds."
-        },
-        "3": {
-          "name": "Bountiful Harvest",
-          "description": "On death, apply a Heal over time effect to nearby allies."
-        }
-      }
-    },
-    "35": {
-      "name": "Hogger",
-      "description": "The legendary terror of Elwynn Forest. Mercilessly CLEAVES aspiring adventurers and rallies Gnoll Brutes to his cause.",
-      "talents": {
-        "1": {
-          "name": "Ham Hock",
-          "description": "Hogger also gains +10% max health each time he is played."
-        },
-        "2": {
-          "name": "Spoiled Meat",
-          "description": "Gain Poison."
-        },
-        "3": {
-          "name": "Fatal Frenzy",
-          "description": "On death, Bloodlust nearby Beasts."
-        }
-      }
-    },
-    "36": {
-      "name": "Holy Nova",
-      "description": "Bathe friend and foe in holy light, Healing allies and damaging enemies to turn the tide of battle!",
-      "talents": {
-        "1": {
-          "name": "Inner Fire",
-          "description": "Affected allies gain Armored and Resist for 5 seconds."
-        },
-        "2": {
-          "name": "Amplify Magic",
-          "description": "Effects are doubled on all Elemental minis."
-        },
-        "3": {
-          "name": "Renew",
-          "description": "Also adds a heal over time to allies."
-        }
-      }
-    },
-    "37": {
-      "name": "Huntress",
-      "description": "A Fast and lethal Ranged rider. Her glaives slice through Squads, bouncing from foe to foe.",
-      "talents": {
-        "1": {
-          "name": "Elven Might",
-          "description": "Deal 50% additional damage to the initial target."
-        },
-        "2": {
-          "name": "Shadowmeld",
-          "description": "Gain Stealth and Ambush."
-        },
-        "3": {
-          "name": "Darnassian Steel",
-          "description": "Glaive bounces an additional 3 times."
-        }
-      }
-    },
-    "38": {
-      "name": "Jaina Proudmoore",
-      "description": "Jaina makes her own bling.",
-      "talents": {
-        "1": {
-          "name": "Clearcasting",
-          "description": "Spells cost 1 less (but no less than 1) if played immediately after Jaina."
-        },
-        "2": {
-          "name": "Flurry",
-          "description": "Frostbolts burst on impact, Frosting enemies near the target."
-        },
-        "3": {
-          "name": "Blink",
-          "description": "Periodically teleport away from attackers."
-        }
-      }
-    },
-    "39": {
-      "name": "Living Bomb",
-      "description": "Plant a bomb on a group of enemies that all blow up for excessive collateral damage. The more the flamier!",
-      "talents": {
-        "1": {
-          "name": "Chain Reaction",
-          "description": "Splash damage inflicts Living Bomb."
-        },
-        "2": {
-          "name": "Blast Radius",
-          "description": "Also burn enemies within 10 units."
-        },
-        "3": {
-          "name": "Burden Of Fate",
-          "description": "Affected enemies are Dazed."
-        }
-      }
-    },
-    "40": {
-      "name": "Maiev Shadowsong",
-      "description": "Wield the shadows and strike like the wind.",
-      "talents": {
-        "1": {
-          "name": "Remorseless",
-          "description": "Deal double damage for 2 seconds after killing an enemy."
-        },
-        "2": {
-          "name": "Enveloping Shadows",
-          "description": "Cast Smoke Bomb on deploy, Stealthing nearby allies."
-        },
-        "3": {
-          "name": "Shadowstep",
-          "description": "eriodically teleport to a ranged attacker when hit."
-        }
-      }
-    },
-    "41": {
-      "name": "Meat Wagon",
-      "description": "Sieges enemies with slabs of meat. Bombards from so far away that it outranges Towers!",
-      "talents": {
-        "1": {
-          "name": "Filet Trebuchet",
-          "description": "Increase Bombard range by +2."
-        },
-        "2": {
-          "name": "Meat And Bones",
-          "description": "Every other attack summons a Skeleton instead of dealing damage."
-        },
-        "3": {
-          "name": "Greased Gears",
-          "description": "Gain Fury."
-        }
-      }
-    },
-    "42": {
-      "name": "Molten Giant",
-      "description": "A wall of Armored obsidian. Slow and lumbering but devastating to Towers. The ultimate Melee Tank.",
-      "talents": {
-        "1": {
-          "name": "Bolster",
-          "description": "Heal when destroying a tower."
-        },
-        "2": {
-          "name": "Threatening Presence",
-          "description": "Gain Taunt."
-        },
-        "3": {
-          "name": "Blood Of The Mountain",
-          "description": "On death, explode, damaging nearby enemies."
-        }
-      }
-    },
-    "43": {
-      "name": "Mountaineer",
-      "description": "This inseparable Tank and Ranged pair cover each other for an instantly effective offensive!",
-      "talents": {
-        "1": {
-          "name": "Mend Pets",
-          "description": "Heal up to 3 additional nearby Beasts when healing the Bear."
-        },
-        "2": {
-          "name": "Intimidation",
-          "description": "Bear gains Taunt."
-        },
-        "3": {
-          "name": "Frenzied Spirit",
-          "description": "When the Bear or Mountaineer die, the other gains Bloodlust."
-        }
-      }
-    },
-    "44": {
-      "name": "Murloc Tidehunters",
-      "description": "Fast and cheap, great for supporting Tanks and taking Treasure Chests, but weak on their own.",
-      "talents": {
-        "1": {
-          "name": "Safety Bubble",
-          "description": "Deploy with a bubble that blocks the first attack."
-        },
-        "2": {
-          "name": "Morelocs",
-          "description": "Deploy with +1 additional Murloc."
-        },
-        "3": {
-          "name": "Careful Aim",
-          "description": "Gain +2 range."
-        }
-      }
-    },
-    "45": {
-      "name": "Necromancer",
-      "description": "Endlessly summons Skeletons for protection while piercing through Armor with Elemental shadow bolts.",
-      "talents": {
-        "1": {
-          "name": "Jeweled Skulls",
-          "description": "Summon Skeletal Mages instead of Skeletons."
-        },
-        "2": {
-          "name": "Cult of the Damned",
-          "description": "On kill, summon a Skeleton."
-        },
-        "3": {
-          "name": "Breath of the Dying",
-          "description": "On death, summon 5 Skeletons."
-        }
-      }
-    },
-    "46": {
-      "name": "Ogre Mage",
-      "description": "Hurling fireballs is always brutal, but this Magi also buffs nearby allies with Bloodlust. More bang for your buck!",
-      "talents": {
-        "1": {
-          "name": "Avarice",
-          "description": "Gain Bloodlust when Bloodlusting an ally."
-        },
-        "2": {
-          "name": "Frostfire Bolt",
-          "description": "Gain Frost."
-        },
-        "3": {
-          "name": "Ignite",
-          "description": "Burn enemy targets."
-        }
-      }
-    },
-    "47": {
-      "name": "Old Murk-Eye",
-      "description": "This seasoned Murloc has (and hasn't) seen plenty of battles. If you can shell out the Gold, his entourage of Tidehunters is shore to make waves on the battlefield.",
-      "talents": {
-        "1": {
-          "name": "Marathon Of The Murlocs",
-          "description": "March of the Murlocs lasts an additional 5 seconds longer after deploying."
-        },
-        "2": {
-          "name": "Electric Eels",
-          "description": "Attacks briefly Stun enemies."
-        },
-        "3": {
-          "name": "Tip of the Spear",
-          "description": "Tidehunters spawn at Old Murk Eye's location instead."
-        }
-      }
-    },
-    "48": {
-      "name": "Plague Farmer",
-      "description": "Bombards enemy ground troops with Poisonous pumpkins. Keep him alive and watch enemies rot!",
-      "talents": {
-        "1": {
-          "name": "Splashing Pumpkins",
-          "description": "Increase Range by +1 and double the Splash area."
-        },
-        "2": {
-          "name": "Parting Gift",
-          "description": "On death, summon a pumpkin. When touched, it Poisons nearby enemies."
-        },
-        "3": {
-          "name": "Virulence",
-          "description": "On kill, Poison enemies near the target."
-        }
-      }
-    },
-    "49": {
-      "name": "Polymorph",
-      "description": "Morphs your foes into fluffy yet feeble sheep, stripping them of their defenses and making them Vulnerable for a precious few seconds!",
-      "talents": {
-        "1": {
-          "name": "Golden Fleece",
-          "description": "One sheep becomes golden. Killing it grants +1 gold."
-        },
-        "2": {
-          "name": "Exploding Sheep",
-          "description": "Killing a sheep damages nearby enemies."
-        },
-        "3": {
-          "name": "Stable Transfiguration",
-          "description": "Lasts twice as long, but sheep regenerate health very quickly."
-        }
-      }
-    },
-    "50": {
-      "name": "Prowler",
-      "description": "A Fast and ferocious Melee Tank. Sprints ahead to protect slower troops, or defend a far away fight.",
-      "talents": {
-        "1": {
-          "name": "On The Prowl",
-          "description": "Gain Stealth, and stun the target when attacking from Stealth."
-        },
-        "2": {
-          "name": "Pack Leader",
-          "description": "Grants nearby Beast allies 30% additional damage."
-        },
-        "3": {
-          "name": "Predatory Instincts",
-          "description": "Deal double damage to enemies who are at more than 75% health."
-        }
-      }
-    },
-    "51": {
-      "name": "Pyromancer",
-      "description": "Sometimes you need to light an enemy on fire. She prefers to light them all on fire.",
-      "talents": {
-        "1": {
-          "name": "Conflagrate",
-          "description": "Splash area is doubled."
-        },
-        "2": {
-          "name": "Pyroblast",
-          "description": "Deal triple damage on the first attack."
-        },
-        "3": {
-          "name": "Blaze of Glory",
-          "description": "Damage and Burn nearby enemies on death."
-        }
-      }
-    },
-    "52": {
-      "name": "Quilboar",
-      "description": "Surprise your enemies with this Unbound Melee burrower! Slow to emerge but bristling for a fight.",
-      "talents": {
-        "1": {
-          "name": "Tunnel Vision",
-          "description": "Deploy much more quickly."
-        },
-        "2": {
-          "name": "Bristleback",
-          "description": "Deal a small amount of damage to Melee attackers."
-        },
-        "3": {
-          "name": "Bramble Burst",
-          "description": "Inflict Poison on nearby enemies when emerging."
-        }
-      }
-    },
-    "53": {
-      "name": "Raptors",
-      "description": "Fast savage slashers! Each extra tap increases Gold cost by 1 and deploys an additional Raptor.",
-      "talents": {
-        "1": {
-          "name": "Strength In Numbers",
-          "description": "Deal 10% more damage for each other Raptor nearby."
-        },
-        "2": {
-          "name": "Fast Food",
-          "description": "On kill, heal a small amount of damage."
-        },
-        "3": {
-          "name": "Motivation",
-          "description": "Gain Bloodlust while a chest or gold vein is nearby."
-        }
-      }
-    },
-    "54": {
-      "name": "Rend Blackhand",
-      "description": "Riding dragons before it was coool.",
-      "talents": {
-        "1": {
-          "name": "Scale and Steel",
-          "description": "Gain Resistant while flying and Armored while dismounted."
-        },
-        "2": {
-          "name": "Flaming Soul",
-          "description": "Cast Living Bomb upon dismounting, damaging nearby enemies."
-        },
-        "3": {
-          "name": "Legionnaire",
-          "description": "Dismount when first taking damage. The Drake continues fighting."
-        }
-      }
-    },
-    "55": {
-      "name": "S.A.F.E. Pilot",
-      "description": "A flexible Ranged unit. Crash her into enemies or land her behind your Tanks for Area Damage support.",
-      "talents": {
-        "1": {
-          "name": "Gnomish Cloaking Device",
-          "description": "Deploy from the explosion with Stealth and Ambush."
-        },
-        "2": {
-          "name": "Comin' In Hot!",
-          "description": "Deploy twice as fast and Burn nearby enemies."
-        },
-        "3": {
-          "name": "Gnomish Muttonizer",
-          "description": "Polymorph the first blaster target."
-        }
-      }
-    },
-    "56": {
-      "name": "Skeleton Party",
-      "description": "A Frosty surprise for any location! Raise a Squad of Ranged and Melee Skeletons to assist with any skirmish.",
-      "talents": {
-        "1": {
-          "name": "5-Man",
-          "description": "Summons a Skeleton Tank, Rogue, Priest, and 2 Mages."
-        },
-        "2": {
-          "name": "Corpse Run",
-          "description": "Gain +1 level for each deploy after the first. (Maximum +3 levels)"
-        },
-        "3": {
-          "name": "Ritual of Rime",
-          "description": "Summon 5 Skeleton Mages who guard the deploy location."
-        }
-      }
-    },
-    "57": {
-      "name": "Skeletons",
-      "description": "These Skeletons can arise anywhere on the map to distract enemies or claim a remote resource.",
-      "talents": {
-        "1": {
-          "name": "Questing Buddies",
-          "description": "One Skeleton gains Armor, one gains Resist, and one gains Stealth."
-        },
-        "2": {
-          "name": "Exhume",
-          "description": "If deployed near a Tower or Meeting Stone, deploy +2 additional Skeletons."
-        },
-        "3": {
-          "name": "Cackle",
-          "description": "Gain Taunt."
-        }
-      }
-    },
-    "58": {
-      "name": "Smoke Bomb",
-      "description": "Get the drop on your enemies by granting Stealth to nearby allies. Use in a skirmish to confuse the enemy!",
-      "talents": {
-        "1": {
-          "name": "Through The Shadows",
-          "description": "Affected minis move 50% faster until unstealthed."
-        },
-        "2": {
-          "name": "Band Of Thieves",
-          "description": "Grant +2 levels to Cycle minis within."
-        },
-        "3": {
-          "name": "Strangers in the Night",
-          "description": "Effects apply to enemies as well."
-        }
-      }
-    },
-    "59": {
-      "name": "Sneed",
-      "description": "When you are a buzzsaw, all your problems look like trees.",
-      "talents": {
-        "1": {
-          "name": "Lead With Greed",
-          "description": "Gain an additional +2 Gold when Sneed triggers Sneed Before Greed."
-        },
-        "2": {
-          "name": "Mine Is Money, Friend!",
-          "description": "Gain the Miner trait."
-        },
-        "3": {
-          "name": "Land Grab",
-          "description": "Gain a level whenever Sneed Before Greed."
-        }
-      }
-    },
-    "60": {
-      "name": "Spiderlings",
-      "description": "A Squad of Poisonous predators. Their venom will pierce Armor and down even the mightiest of Tanks.",
-      "talents": {
-        "1": {
-          "name": "Frostbite",
-          "description": "Gain Frost."
-        },
-        "2": {
-          "name": "Bloated Carapace",
-          "description": "Explode on death, Poisoning nearby enemies."
-        },
-        "3": {
-          "name": "Envenom",
-          "description": "Deal twice as much Poison damage."
-        }
-      }
-    },
-    "61": {
-      "name": "Stonehoof Tauren",
-      "description": "An exceptionally beefy bruiser that will Charge into battle, and even Charge while she's in battle!",
-      "talents": {
-        "1": {
-          "name": "Momentum",
-          "description": "After connecting a charge, immediately charge a second time if possible."
-        },
-        "2": {
-          "name": "Pummel",
-          "description": "After connecting a charge, Stun the target for 3 seconds."
-        },
-        "3": {
-          "name": "Provoke",
-          "description": "After connecting a charge, Taunt nearby enemies."
-        }
-      }
-    },
-    "62": {
-      "name": "Sylvannas Windrunner",
-      "description": "Sylvanas attacks with unrelenting arrow shots, and releases a Banshee when she dies.",
-      "talents": {
-        "1": {
-          "name": "Black Arrow",
-          "description": "Pierce through enemies in a line, dealing Elemental damage."
-        },
-        "2": {
-          "name": "Banshee's Wail",
-          "description": "Scream on Death, Stunning nearby enemies for 3 seconds."
-        },
-        "3": {
-          "name": "Forsaken Fury",
-          "description": "Nearby Horde and Undead Minis gain Fury."
-        }
-      }
-    },
-    "63": {
-      "name": "Tirion Fordring",
-      "description": "A hammer of CLEAVING , a hand of HEALING , and ARMOR of believing. What more do you need?",
-      "talents": {
-        "1": {
-          "name": "Divine Shield",
-          "description": "Gain a magical shield at 30% health, absorbing all damage for 5 seconds."
-        },
-        "2": {
-          "name": "By The Light",
-          "description": "Heal the primary target for twice as much."
-        },
-        "3": {
-          "name": "Consecrate",
-          "description": "Regularly consecrate the ground, damaging enemies within."
-        }
-      }
-    },
-    "64": {
-      "name": "Vultures",
-      "description": "A cheap pair of Flying scavengers. Two vultures are a nuisance, but each vulture victim adds to the flock!",
-      "talents": {
-        "1": {
-          "name": "Feeding Frenzy",
-          "description": "The flock gains Bloodlust for 5 seconds when spawning a new Vulture."
-        },
-        "2": {
-          "name": "Migration",
-          "description": "All additional Vultures spawn at your base."
-        },
-        "3": {
-          "name": "Tendon Rip",
-          "description": "Attacks Daze enemies for 3 seconds."
-        }
-      }
-    },
-    "65": {
-      "name": "Warsong Grunts",
-      "description": "While slow and steady at the start, this Squad of fighters will speed up, Furiously slashing at frightened foes.",
-      "talents": {
-        "1": {
-          "name": "Command",
-          "description": "Nearby Beast allies deal 30% additional damage."
-        },
-        "2": {
-          "name": "Blood Pact",
-          "description": "When a Grunt dies, the other gain Bloodlust."
-        },
-        "3": {
-          "name": "Guard Duty",
-          "description": "Remain at deploy location until entering combat."
-        }
-      }
-    },
-    "66": {
-      "name": "Warsong Raider",
-      "description": "This Fast rider smashes Towers with savage sustained Siege damage. Clear a path and she'll clear the rest.",
-      "talents": {
-        "1": {
-          "name": "Razing Focus",
-          "description": "Become a Siege unit, ignoring enemy Minis."
-        },
-        "2": {
-          "name": "Sunder Armor",
-          "description": "Damaging an Armored enemy removes their Armor."
-        },
-        "3": {
-          "name": "Saboteur",
-          "description": "Damaging a tower reduces its damage dealt by 50% for 3 seconds."
-        }
-      }
-    },
-    "67": {
-      "name": "Whelp Eggs",
-      "description": "Drop these eggs anywhere on the battlefield to surprise Melee enemies with many fiery Flying whelps!",
-      "talents": {
-        "1": {
-          "name": "Flame Burst",
-          "description": "Damage nearby enemies when hatching."
-        },
-        "2": {
-          "name": "Rookery",
-          "description": "When one egg hatches, the others hatch immediately."
-        },
-        "3": {
-          "name": "Chromatic Plating",
-          "description": "Eggs gain Taunt."
-        }
-      }
-    },
-    "68": {
-      "name": "Worgen",
-      "description": "This Stealthy predator assassinates annoying Ranged units. Play him anywhere and tear their support apart!",
-      "talents": {
-        "1": {
-          "name": "Premeditation",
-          "description": "Increase Ambush damage by 50%."
-        },
-        "2": {
-          "name": "Lone Wolf",
-          "description": "On deploy, grant +1 gold if no allies are nearby."
-        },
-        "3": {
-          "name": "Frenzy",
-          "description": "On kill, gain Bloodlust for 10 seconds."
-        }
-      }
-    },
-    "69": {
-      "name": "Chimaera",
-      "description": "A Flying malefic monstrosity that rains down Poison and Lightning on multiple miniscule minions.",
-      "talents": {
-        "1": {
-          "name": "Leviathan",
-          "description": "Gain 10% additional Health per deploy."
-        },
-        "2": {
-          "name": "Frost Shock",
-          "description": "Lightning Ball applies Frost on hit."
-        },
-        "3": {
-          "name": "Fiery Rebirth",
-          "description": "Poison Spit inflicts twice as much Poison."
-        }
-      }
-    },
-    "70": {
-      "name": "Emperor Thaurissan",
-      "description": "If Ragnaros was your boss, you'd be cranky too.",
-      "talents": {
-        "1": {
-          "name": "Moira's Wit",
-          "description": "Nearby Burning enemies Heal Thaurissan."
-        },
-        "2": {
-          "name": "Hubris",
-          "description": "After playing Thaurissan, your next non-Elemental Mini deploys with +2 levels."
-        },
-        "3": {
-          "name": "Incinerate",
-          "description": "Lava Spike's Burn is permanent."
-        }
-      }
-    },
-    "71": {
-      "name": "Witch Doctor",
-      "description": "A Cycle support caster. Channels an explosive Curse on an enemy, helping allies take out multiple foes!",
-      "talents": {
-        "1": {
-          "name": "Alchemist",
-          "description": "Periodically drop a potion, granting Bloodlust to the first ally who touches it."
-        },
-        "2": {
-          "name": "Amplify Curse",
-          "description": "Enemies killed by the Curse explosion also explode."
-        },
-        "3": {
-          "name": "Spirit Ward",
-          "description": "On kill, grant a shield to nearby allies, absorbing the next hit against them."
-        }
-      }
-    },
-    "72": {
-      "name": "Faerie Dragon",
-      "description": "This flying trickster can see through Stealth, and shakes off Poison, Burn, Stuns, and Slows!",
-      "talents": {
-        "1": {
-          "name": "Phase Shift",
-          "description": "Teleport backwards when attacked."
-        },
-        "2": {
-          "name": "Invisibility",
-          "description": "Gain Stealth."
-        },
-        "3": {
-          "name": "Fae Blessing",
-          "description": "Once per deploy, grant Resist to a nearby Ally."
-        }
-      }
+    "units": [
+        {
+            "id": 1,
+            "name": "Abomination",
+            "description": "This Tanky mass of flesh and steel will Hook ranged enemies, drawing them into his Cleave attack.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Noxius Presence",
+                    "description": "Poison nearby enemies every 3 seconds."
+                },
+                {
+                    "id": 2,
+                    "name": "Cannonball",
+                    "description": "On deploy and at 50 % health, stun nearby enemies for 5 seconds."
+                },
+                {
+                    "id": 3,
+                    "name": "Fresh Meat",
+                    "description": "After hooking a target, deal double damage on the next attack."
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "name": "Angry Chickens",
+            "description": "A flock of feathered fowl that can overwhelm even the heartiest of Tanks and Towers.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Snackrifice",
+                    "description": "Nearby Beast allies can consume a Chicken to heal themselves."
+                },
+                {
+                    "id": 2,
+                    "name": "Walking Crate",
+                    "description": "Deploy in a protective crate. When destroyed, Chickens emerge."
+                },
+                {
+                    "id": 3,
+                    "name": "Furious Fowl",
+                    "description": "Gain Fury."
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "name": "Arcane Blast",
+            "description": "This spell surges with power! Each extra tap increases Gold cost by 1 and doubles the Elemental damage!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Amplification",
+                    "description": "Sequential taps increase radius by 1."
+                },
+                {
+                    "id": 2,
+                    "name": "Arcane Power",
+                    "description": "Spell sequence starts at rank 3 and ends at rank 4."
+                },
+                {
+                    "id": 3,
+                    "name": "Torrent",
+                    "description": "Gain a level after casting Rank 4."
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "name": "Banshee",
+            "description": "Shrieks in delight at nearby enemies, Possessing the first she sees to fight for you, permanently.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Soul Eruption",
+                    "description": "Possessed targets detonate on death, damaging nearby enemies."
+                },
+                {
+                    "id": 2,
+                    "name": "Unholy Frenzy",
+                    "description": "Possessed targets gain Bloodlust for 10 seconds."
+                },
+                {
+                    "id": 3,
+                    "name": "Will of the Necropolis",
+                    "description": "Fully Heal the possessed target."
+                }
+            ]
+        },
+        {
+            "id": 5,
+            "name": "Baron Rivendare",
+            "description": "Bane of the Scarlet Crusade.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Death Pact",
+                    "description": "Periodically sacrifice a nearby Skeleton to be Healed."
+                },
+                {
+                    "id": 2,
+                    "name": "Skeletal Frenzy",
+                    "description": "Nearby allied Skeletons gain Bloodlust."
+                },
+                {
+                    "id": 3,
+                    "name": "Chill Of The Grave",
+                    "description": "Summon Skeletal Mages instead of Warriors."
+                }
+            ]
+        },
+        {
+            "id": 6,
+            "name": "Bat Rider",
+            "description": "A cheap aerial unit that specializes in bathing the ground in flame while Flying above Melee enemies.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Flaming Pitch",
+                    "description": "Flaming pool reduces enemy's speed by 30%."
+                },
+                {
+                    "id": 2,
+                    "name": "Enchanted Vials",
+                    "description": "Increase the size of the flaming pool by 30%."
+                },
+                {
+                    "id": 3,
+                    "name": "Fiery Surplus",
+                    "description": "\"Accidentally\" leave vials on the ground, Burning nearby enemies that touch them."
+                }
+            ]
+        },
+        {
+            "id": 7,
+            "name": "Blizzard",
+            "description": "Rain down Frost shards from the sky! Slows and deals Elemental damage to all enemies in a large area.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Cold Snap",
+                    "description": "Freeze enemy troops in place."
+                },
+                {
+                    "id": 2,
+                    "name": "Brittle Ice",
+                    "description": "Enemies within take 30% additional damage from Physical sources."
+                },
+                {
+                    "id": 3,
+                    "name": "Icecrown",
+                    "description": "Summons an additional Blizzard at your Base."
+                }
+            ]
+        },
+        {
+            "id": 8,
+            "name": "Bloodmage Thalnos",
+            "description": "Blood magic is thicker than water magic.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Drain Life",
+                    "description": "Gain Lifesteal."
+                },
+                {
+                    "id": 2,
+                    "name": "Bane",
+                    "description": "Playing a spell increases attack speed by 30% for 5 seconds."
+                },
+                {
+                    "id": 3,
+                    "name": "Dominance",
+                    "description": "Spells costing 4 or more grant an additional level."
+                }
+            ]
+        },
+        {
+            "id": 9,
+            "name": "Cairne Bloodhoof",
+            "description": "The original Elite Tauren Chieftain.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Reincarnation",
+                    "description": "After death, Resurrect at 50% Health once."
+                },
+                {
+                    "id": 2,
+                    "name": "Plainsrunning",
+                    "description": "Move 50% faster and gain the Fast trait."
+                },
+                {
+                    "id": 3,
+                    "name": "Aftershock",
+                    "description": "When Stun expires, affected enemies are Dazed for 5 seconds."
+                }
+            ]
+        },
+        {
+            "id": 10,
+            "name": "Chain Lightning",
+            "description": "Swarmed by Squads of smaller foes? Send a surge of lightning sizzling through several enemies!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Brilliant Flash",
+                    "description": "On deploy, Stun enemies within for 1 second."
+                },
+                {
+                    "id": 2,
+                    "name": "Reverberation",
+                    "description": "Can be cast a second time."
+                },
+                {
+                    "id": 3,
+                    "name": "Storm's Reach",
+                    "description": "Dramatically increase jump distance between targets."
+                }
+            ]
+        },
+        {
+            "id": 11,
+            "name": "Charlga Razorflank",
+            "description": "Your Minis in hand share the same cost. What???",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Spirit Passage",
+                    "description": "Minis played for 5 Gold gain a level and deploy in Stealth."
+                },
+                {
+                    "id": 2,
+                    "name": "Cavernous Mists",
+                    "description": "Deploy cost reduced by 1."
+                },
+                {
+                    "id": 3,
+                    "name": "Nature's Grasp",
+                    "description": "Root two additional nearby targets, but deal half damage."
+                }
+            ]
+        },
+        {
+            "id": 12,
+            "name": "Cheat Death",
+            "description": "Imbue your minions with one last breath of death, preventing them from dying for a precious few seconds.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Vampirism",
+                    "description": "Affected minis are Healed when dealing damage."
+                },
+                {
+                    "id": 2,
+                    "name": "Apocalypse",
+                    "description": "Affected Skeletons Resurrect at your base when they die."
+                },
+                {
+                    "id": 3,
+                    "name": "Seal Fate",
+                    "description": "Affected minis gain Bloodlust, but die when the effect ends."
+                }
+            ]
+        },
+        {
+            "id": 13,
+            "name": "Core Hounds",
+            "description": "This pair of Resistant Tanks is only dead when both are snuffed out. When one falls, the other rekindles it!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Eternal Bond",
+                    "description": "Resurrection range is unlimited."
+                },
+                {
+                    "id": 2,
+                    "name": "Guard Dog",
+                    "description": "Deal 50% additional damage near friendly towers and meeting stones."
+                },
+                {
+                    "id": 3,
+                    "name": "Fiery Rebirth",
+                    "description": "On Resurrection, damage nearby enemies."
+                }
+            ]
+        },
+        {
+            "id": 14,
+            "name": "Dark Iron Miner",
+            "description": "When there's more Gold than your Kobold can mine, hire another to mine behind enemy lines!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Gold Mine",
+                    "description": "After Mining, drop a proximity mine. Damages nearby enemies when touched."
+                },
+                {
+                    "id": 2,
+                    "name": "Dark Iron Armaments",
+                    "description": "After Mining, gain Armored."
+                },
+                {
+                    "id": 3,
+                    "name": "Dwarven Ambition",
+                    "description": "Gain Fury."
+                }
+            ]
+        },
+        {
+            "id": 15,
+            "name": "Darkspear Troll",
+            "description": "This headhunter deals massive damage with savage spear throws. Enemies in the air beware!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Big Bad Voodoo",
+                    "description": "Regenerate 20% health every second."
+                },
+                {
+                    "id": 2,
+                    "name": "Headhunting",
+                    "description": "On kill, increase Attack and Movement speed by 10%. Stacks to 50%."
+                },
+                {
+                    "id": 3,
+                    "name": "Serpent Sting",
+                    "description": "Gain Poison."
+                }
+            ]
+        },
+        {
+            "id": 16,
+            "name": "Deep Breath",
+            "description": "Strike with dragon's breath in any direction, dealing Elemental damage to enemies in the line of fire!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Attunement",
+                    "description": "Allies caught in the effect gain Resist."
+                },
+                {
+                    "id": 2,
+                    "name": "Melting Point",
+                    "description": "Damaging Armored enemies removes their Armor."
+                },
+                {
+                    "id": 3,
+                    "name": "Double Dragon",
+                    "description": "Cast a second wave in the opposite direction."
+                }
+            ]
+        },
+        {
+            "id": 17,
+            "name": "Defias Bandits",
+            "description": "Stealthy and weak on their own, but will sneak up and Stun enemies while your damage dealers open fire!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Pick Lock",
+                    "description": "Earn an extra +2 Gold when opening chests."
+                },
+                {
+                    "id": 2,
+                    "name": "Deadly Poison",
+                    "description": "Gain Poison."
+                },
+                {
+                    "id": 3,
+                    "name": "Last Resort",
+                    "description": "On death, Stun the target for 3 seconds."
+                }
+            ]
+        },
+        {
+            "id": 18,
+            "name": "Drake",
+            "description": "Flies over the battlefield with flaming breath, incinerating Flying and Ground enemies alike.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Mother Drake",
+                    "description": "Periodically summon a Whelp Egg."
+                },
+                {
+                    "id": 2,
+                    "name": "Engulfing Flames",
+                    "description": "Damaging enemies Burns them."
+                },
+                {
+                    "id": 3,
+                    "name": "Roost",
+                    "description": "Perch on top of a nearby tower, staying there to defend it."
+                }
+            ]
+        },
+        {
+            "id": 19,
+            "name": "Earth Elemental",
+            "description": "Drop this heavily Armored avalanche anywhere to Tank for your troops. Only punches Towers and Bosses.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Obsidian Shard",
+                    "description": "On death, split into two smaller Earth Elementals."
+                },
+                {
+                    "id": 2,
+                    "name": "Ready to Rumble",
+                    "description": "Taunt on deploy."
+                },
+                {
+                    "id": 3,
+                    "name": "Shrapnel Blast",
+                    "description": "Destroying a tower deals damage to nearby enemies."
+                }
+            ]
+        },
+        {
+            "id": 20,
+            "name": "Execute",
+            "description": "Savagely slice through enemies, chopping off half of their maximum Health in one swipe.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Bloodthirsty",
+                    "description": "Bloodlust allies within spell area for 10 seconds."
+                },
+                {
+                    "id": 2,
+                    "name": "Overpower",
+                    "description": "Knock enemies away from the cast location."
+                },
+                {
+                    "id": 3,
+                    "name": "Killing Spree",
+                    "description": "If an enemy is killed, the next Horde mini costs 1 less."
+                }
+            ]
+        },
+        {
+            "id": 21,
+            "name": "Fire Elemental",
+            "description": "Resistant to Elemental damage. Specializes in Cleaving through Armored enemies.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Immolation Aura",
+                    "description": "Periodically damage nearby enemies."
+                },
+                {
+                    "id": 2,
+                    "name": "Molten Core",
+                    "description": "On death, summon a pool of lava, damaging enemies within."
+                },
+                {
+                    "id": 3,
+                    "name": "Fan The Flames",
+                    "description": "Taking Elemental damage increases damage dealt by 10%. Stacks to 30%."
+                }
+            ]
+        },
+        {
+            "id": 22,
+            "name": "Firehammer",
+            "description": "Furiously flings fiery hammers at foes. Starts slow, but her Armor melting momentum can't be matched.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Moultin' Metal",
+                    "description": "Deal 50% more damage to Flying enemies."
+                },
+                {
+                    "id": 2,
+                    "name": "Blazing Speed",
+                    "description": "Fury builds up to 40% higher."
+                },
+                {
+                    "id": 3,
+                    "name": "Heightened Rage",
+                    "description": "Level up upon reaching full Fury."
+                }
+            ]
+        },
+        {
+            "id": 23,
+            "name": "Flamewaker",
+            "description": "Ignites the ground with waves of flame, incinerating supporting troops behind enemy Tanks.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Backdraft",
+                    "description": "Successive attacks increase flame wave distance. Resets on movement."
+                },
+                {
+                    "id": 2,
+                    "name": "Engulf",
+                    "description": "Damaging enemies Burns thems."
+                },
+                {
+                    "id": 3,
+                    "name": "Heat Stroke",
+                    "description": "Damaging enemies Dazes them."
+                }
+            ]
+        },
+        {
+            "id": 24,
+            "name": "Footmen",
+            "description": "An Armored phalanx Squad of steel, a great Tank for fragile allies, and can be split to defend two lanes at once!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Fortification",
+                    "description": "Gain 30% extra empty Health."
+                },
+                {
+                    "id": 2,
+                    "name": "Shield Bash",
+                    "description": "Periodically Stun the target for 1 second."
+                },
+                {
+                    "id": 3,
+                    "name": "Last Stand",
+                    "description": "Armor increases to 75% damage reduction when no other Footmen are nearby."
+                }
+            ]
+        },
+        {
+            "id": 25,
+            "name": "Frostwolf Shaman",
+            "description": "Why choose between Ranged damage and Healing when you can have both? Elemental mastery to heal and harm!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Earth Shield",
+                    "description": "Grant Armored to a nearby ally. Ability has 1 charge."
+                },
+                {
+                    "id": 2,
+                    "name": "Lightning Mastery",
+                    "description": "Ranged attack chains to 3 nearby targets."
+                },
+                {
+                    "id": 3,
+                    "name": "Earthwall Totem",
+                    "description": "Once per deploy, place a totem that partially heals a nearby tower or base."
+                }
+            ]
+        },
+        {
+            "id": 26,
+            "name": "Gargoyle",
+            "description": "A Flying fortress of Armor. This single-minded Tank attacks buildings and bosses, ignoring all other distractions.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Wing Buffet",
+                    "description": "ncreases move speed by 33%."
+                },
+                {
+                    "id": 2,
+                    "name": "Aerial Superiority",
+                    "description": "Incoming damage from Flying minis is reduced by 50%."
+                },
+                {
+                    "id": 3,
+                    "name": "Obsidian Statue",
+                    "description": "On death, summon a statue with Taunt. Lasts until destroyed."
+                }
+            ]
+        },
+        {
+            "id": 27,
+            "name": "General Drakkisath",
+            "description": "A cunning and ruthless strategist.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Chromatic Scales",
+                    "description": "Grants nearby allies the Resistant trait."
+                },
+                {
+                    "id": 2,
+                    "name": "Piercing Blows",
+                    "description": "Attacks pierce through enemies in a line."
+                },
+                {
+                    "id": 3,
+                    "name": "Lasting Legacy",
+                    "description": "On death, drop a banner. Nearby enemies take 50% additional Elemental damage. Lasts 10 seconds."
+                }
+            ]
+        },
+        {
+            "id": 28,
+            "name": "Ghoul",
+            "description": "A cheap but ravenous Tank, ready to feast on fallen enemies to replenish its Health.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Bone Shield",
+                    "description": "Cannibalizing grants Armored for 10 seconds."
+                },
+                {
+                    "id": 2,
+                    "name": "Taste for Blood",
+                    "description": "Deal 50% additional damage to enemies who are below 50% health."
+                },
+                {
+                    "id": 3,
+                    "name": "Ravenous",
+                    "description": "Cannibalizing grants Bloodlust for 10 seconds."
+                }
+            ]
+        },
+        {
+            "id": 29,
+            "name": "Gnoll Brute",
+            "description": "A tough Tank with a menacing mace. Cleaves through Squads of enemies, or clobbers with collateral damage.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Rabid",
+                    "description": "Reduce deploy cost by 1 and gain the Cycle trait."
+                },
+                {
+                    "id": 2,
+                    "name": "Pillage",
+                    "description": "Deal Siege damage."
+                },
+                {
+                    "id": 3,
+                    "name": "Thick Hide",
+                    "description": "Gain Armor."
+                }
+            ]
+        },
+        {
+            "id": 30,
+            "name": "Goblin Sapper",
+            "description": "Sappers sacrifice themselves to deliver superior Siege damage in seconds. Topple Towers with this tag team!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Rocket Powered Turbo Boots",
+                    "description": "Move twice as fast and gain the Fast trait."
+                },
+                {
+                    "id": 2,
+                    "name": "Extra BOOM",
+                    "description": "Deploy an additional +1 Goblin Sapper."
+                },
+                {
+                    "id": 3,
+                    "name": "Crude Gunpowder",
+                    "description": "On death, Burn nearby enemies."
+                }
+            ]
+        },
+        {
+            "id": 31,
+            "name": "Grommash Hellscream",
+            "description": "Don't call me Grom!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Bladestorm",
+                    "description": "Gain an AOE bladespin ability that damages all nearby enemies."
+                },
+                {
+                    "id": 2,
+                    "name": "Savage Strikes",
+                    "description": "Deal double damage to enemies who are below 50% health."
+                },
+                {
+                    "id": 3,
+                    "name": "Mirror Image",
+                    "description": "Summon two fragile mirror images when entering combat."
+                }
+            ]
+        },
+        {
+            "id": 32,
+            "name": "Gryphon Rider",
+            "description": "A sky-riding Flier that throws mighty dwarven hammers at aerial and ground troops alike.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Mighty Throw",
+                    "description": "Gain +3 Range."
+                },
+                {
+                    "id": 2,
+                    "name": "Odyn's Fury",
+                    "description": "Gain Fury."
+                },
+                {
+                    "id": 3,
+                    "name": "Air Drop",
+                    "description": "Periodically drop a potion, leveling up the first ally to touch it."
+                }
+            ]
+        },
+        {
+            "id": 33,
+            "name": "Harpies",
+            "description": "A trio of fragile Fliers, but if they can reach their target, they will shred it in seconds.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Infectious Swipes",
+                    "description": "Gain Poison."
+                },
+                {
+                    "id": 2,
+                    "name": "Trinket Collectors",
+                    "description": "Gain the Miner trait. Cost increased by 1."
+                },
+                {
+                    "id": 3,
+                    "name": "Talon Dive",
+                    "description": "Deal double damage on the 1st attack."
+                }
+            ]
+        },
+        {
+            "id": 34,
+            "name": "Harvest Golem",
+            "description": "A hearty Melee automaton with a trick up its sleeve - After its first death it will shock itself back to life!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Trojan Chickens",
+                    "description": "On death, spawn 4 Angry Chickens."
+                },
+                {
+                    "id": 2,
+                    "name": "Unstable Core",
+                    "description": "On death, Stun nearby enemies for 3 seconds."
+                },
+                {
+                    "id": 3,
+                    "name": "Bountiful Harvest",
+                    "description": "On death, apply a Heal over time effect to nearby allies."
+                }
+            ]
+        },
+        {
+            "id": 35,
+            "name": "Hogger",
+            "description": "The legendary terror of Elwynn Forest. Mercilessly CLEAVES aspiring adventurers and rallies Gnoll Brutes to his cause.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Ham Hock",
+                    "description": "Hogger also gains +10% max health each time he is played."
+                },
+                {
+                    "id": 2,
+                    "name": "Spoiled Meat",
+                    "description": "Gain Poison."
+                },
+                {
+                    "id": 3,
+                    "name": "Fatal Frenzy",
+                    "description": "On death, Bloodlust nearby Beasts."
+                }
+            ]
+        },
+        {
+            "id": 36,
+            "name": "Holy Nova",
+            "description": "Bathe friend and foe in holy light, Healing allies and damaging enemies to turn the tide of battle!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Inner Fire",
+                    "description": "Affected allies gain Armored and Resist for 5 seconds."
+                },
+                {
+                    "id": 2,
+                    "name": "Amplify Magic",
+                    "description": "Effects are doubled on all Elemental minis."
+                },
+                {
+                    "id": 3,
+                    "name": "Renew",
+                    "description": "Also adds a heal over time to allies."
+                }
+            ]
+        },
+        {
+            "id": 37,
+            "name": "Huntress",
+            "description": "A Fast and lethal Ranged rider. Her glaives slice through Squads, bouncing from foe to foe.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Elven Might",
+                    "description": "Deal 50% additional damage to the initial target."
+                },
+                {
+                    "id": 2,
+                    "name": "Shadowmeld",
+                    "description": "Gain Stealth and Ambush."
+                },
+                {
+                    "id": 3,
+                    "name": "Darnassian Steel",
+                    "description": "Glaive bounces an additional 3 times."
+                }
+            ]
+        },
+        {
+            "id": 38,
+            "name": "Jaina Proudmoore",
+            "description": "Jaina makes her own bling.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Clearcasting",
+                    "description": "Spells cost 1 less (but no less than 1) if played immediately after Jaina."
+                },
+                {
+                    "id": 2,
+                    "name": "Flurry",
+                    "description": "Frostbolts burst on impact, Frosting enemies near the target."
+                },
+                {
+                    "id": 3,
+                    "name": "Blink",
+                    "description": "Periodically teleport away from attackers."
+                }
+            ]
+        },
+        {
+            "id": 39,
+            "name": "Living Bomb",
+            "description": "Plant a bomb on a group of enemies that all blow up for excessive collateral damage. The more the flamier!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Chain Reaction",
+                    "description": "Splash damage inflicts Living Bomb."
+                },
+                {
+                    "id": 2,
+                    "name": "Blast Radius",
+                    "description": "Also burn enemies within 10 units."
+                },
+                {
+                    "id": 3,
+                    "name": "Burden Of Fate",
+                    "description": "Affected enemies are Dazed."
+                }
+            ]
+        },
+        {
+            "id": 40,
+            "name": "Maiev Shadowsong",
+            "description": "Wield the shadows and strike like the wind.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Remorseless",
+                    "description": "Deal double damage for 2 seconds after killing an enemy."
+                },
+                {
+                    "id": 2,
+                    "name": "Enveloping Shadows",
+                    "description": "Cast Smoke Bomb on deploy, Stealthing nearby allies."
+                },
+                {
+                    "id": 3,
+                    "name": "Shadowstep",
+                    "description": "eriodically teleport to a ranged attacker when hit."
+                }
+            ]
+        },
+        {
+            "id": 41,
+            "name": "Meat Wagon",
+            "description": "Sieges enemies with slabs of meat. Bombards from so far away that it outranges Towers!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Filet Trebuchet",
+                    "description": "Increase Bombard range by +2."
+                },
+                {
+                    "id": 2,
+                    "name": "Meat And Bones",
+                    "description": "Every other attack summons a Skeleton instead of dealing damage."
+                },
+                {
+                    "id": 3,
+                    "name": "Greased Gears",
+                    "description": "Gain Fury."
+                }
+            ]
+        },
+        {
+            "id": 42,
+            "name": "Molten Giant",
+            "description": "A wall of Armored obsidian. Slow and lumbering but devastating to Towers. The ultimate Melee Tank.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Bolster",
+                    "description": "Heal when destroying a tower."
+                },
+                {
+                    "id": 2,
+                    "name": "Threatening Presence",
+                    "description": "Gain Taunt."
+                },
+                {
+                    "id": 3,
+                    "name": "Blood Of The Mountain",
+                    "description": "On death, explode, damaging nearby enemies."
+                }
+            ]
+        },
+        {
+            "id": 43,
+            "name": "Mountaineer",
+            "description": "This inseparable Tank and Ranged pair cover each other for an instantly effective offensive!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Mend Pets",
+                    "description": "Heal up to 3 additional nearby Beasts when healing the Bear."
+                },
+                {
+                    "id": 2,
+                    "name": "Intimidation",
+                    "description": "Bear gains Taunt."
+                },
+                {
+                    "id": 3,
+                    "name": "Frenzied Spirit",
+                    "description": "When the Bear or Mountaineer die, the other gains Bloodlust."
+                }
+            ]
+        },
+        {
+            "id": 44,
+            "name": "Murloc Tidehunters",
+            "description": "Fast and cheap, great for supporting Tanks and taking Treasure Chests, but weak on their own.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Safety Bubble",
+                    "description": "Deploy with a bubble that blocks the first attack."
+                },
+                {
+                    "id": 2,
+                    "name": "Morelocs",
+                    "description": "Deploy with +1 additional Murloc."
+                },
+                {
+                    "id": 3,
+                    "name": "Careful Aim",
+                    "description": "Gain +2 range."
+                }
+            ]
+        },
+        {
+            "id": 45,
+            "name": "Necromancer",
+            "description": "Endlessly summons Skeletons for protection while piercing through Armor with Elemental shadow bolts.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Jeweled Skulls",
+                    "description": "Summon Skeletal Mages instead of Skeletons."
+                },
+                {
+                    "id": 2,
+                    "name": "Cult of the Damned",
+                    "description": "On kill, summon a Skeleton."
+                },
+                {
+                    "id": 3,
+                    "name": "Breath of the Dying",
+                    "description": "On death, summon 5 Skeletons."
+                }
+            ]
+        },
+        {
+            "id": 46,
+            "name": "Ogre Mage",
+            "description": "Hurling fireballs is always brutal, but this Magi also buffs nearby allies with Bloodlust. More bang for your buck!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Avarice",
+                    "description": "Gain Bloodlust when Bloodlusting an ally."
+                },
+                {
+                    "id": 2,
+                    "name": "Frostfire Bolt",
+                    "description": "Gain Frost."
+                },
+                {
+                    "id": 3,
+                    "name": "Ignite",
+                    "description": "Burn enemy targets."
+                }
+            ]
+        },
+        {
+            "id": 47,
+            "name": "Old Murk-Eye",
+            "description": "This seasoned Murloc has (and hasn't) seen plenty of battles. If you can shell out the Gold, his entourage of Tidehunters is shore to make waves on the battlefield.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Marathon Of The Murlocs",
+                    "description": "March of the Murlocs lasts an additional 5 seconds longer after deploying."
+                },
+                {
+                    "id": 2,
+                    "name": "Electric Eels",
+                    "description": "Attacks briefly Stun enemies."
+                },
+                {
+                    "id": 3,
+                    "name": "Tip of the Spear",
+                    "description": "Tidehunters spawn at Old Murk Eye's location instead."
+                }
+            ]
+        },
+        {
+            "id": 48,
+            "name": "Plague Farmer",
+            "description": "Bombards enemy ground troops with Poisonous pumpkins. Keep him alive and watch enemies rot!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Splashing Pumpkins",
+                    "description": "Increase Range by +1 and double the Splash area."
+                },
+                {
+                    "id": 2,
+                    "name": "Parting Gift",
+                    "description": "On death, summon a pumpkin. When touched, it Poisons nearby enemies."
+                },
+                {
+                    "id": 3,
+                    "name": "Virulence",
+                    "description": "On kill, Poison enemies near the target."
+                }
+            ]
+        },
+        {
+            "id": 49,
+            "name": "Polymorph",
+            "description": "Morphs your foes into fluffy yet feeble sheep, stripping them of their defenses and making them Vulnerable for a precious few seconds!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Golden Fleece",
+                    "description": "One sheep becomes golden. Killing it grants +1 gold."
+                },
+                {
+                    "id": 2,
+                    "name": "Exploding Sheep",
+                    "description": "Killing a sheep damages nearby enemies."
+                },
+                {
+                    "id": 3,
+                    "name": "Stable Transfiguration",
+                    "description": "Lasts twice as long, but sheep regenerate health very quickly."
+                }
+            ]
+        },
+        {
+            "id": 50,
+            "name": "Prowler",
+            "description": "A Fast and ferocious Melee Tank. Sprints ahead to protect slower troops, or defend a far away fight.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "On The Prowl",
+                    "description": "Gain Stealth, and stun the target when attacking from Stealth."
+                },
+                {
+                    "id": 2,
+                    "name": "Pack Leader",
+                    "description": "Grants nearby Beast allies 30% additional damage."
+                },
+                {
+                    "id": 3,
+                    "name": "Predatory Instincts",
+                    "description": "Deal double damage to enemies who are at more than 75% health."
+                }
+            ]
+        },
+        {
+            "id": 51,
+            "name": "Pyromancer",
+            "description": "Sometimes you need to light an enemy on fire. She prefers to light them all on fire.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Conflagrate",
+                    "description": "Splash area is doubled."
+                },
+                {
+                    "id": 2,
+                    "name": "Pyroblast",
+                    "description": "Deal triple damage on the first attack."
+                },
+                {
+                    "id": 3,
+                    "name": "Blaze of Glory",
+                    "description": "Damage and Burn nearby enemies on death."
+                }
+            ]
+        },
+        {
+            "id": 52,
+            "name": "Quilboar",
+            "description": "Surprise your enemies with this Unbound Melee burrower! Slow to emerge but bristling for a fight.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Tunnel Vision",
+                    "description": "Deploy much more quickly."
+                },
+                {
+                    "id": 2,
+                    "name": "Bristleback",
+                    "description": "Deal a small amount of damage to Melee attackers."
+                },
+                {
+                    "id": 3,
+                    "name": "Bramble Burst",
+                    "description": "Inflict Poison on nearby enemies when emerging."
+                }
+            ]
+        },
+        {
+            "id": 53,
+            "name": "Raptors",
+            "description": "Fast savage slashers! Each extra tap increases Gold cost by 1 and deploys an additional Raptor.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Strength In Numbers",
+                    "description": "Deal 10% more damage for each other Raptor nearby."
+                },
+                {
+                    "id": 2,
+                    "name": "Fast Food",
+                    "description": "On kill, heal a small amount of damage."
+                },
+                {
+                    "id": 3,
+                    "name": "Motivation",
+                    "description": "Gain Bloodlust while a chest or gold vein is nearby."
+                }
+            ]
+        },
+        {
+            "id": 54,
+            "name": "Rend Blackhand",
+            "description": "Riding dragons before it was coool.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Scale and Steel",
+                    "description": "Gain Resistant while flying and Armored while dismounted."
+                },
+                {
+                    "id": 2,
+                    "name": "Flaming Soul",
+                    "description": "Cast Living Bomb upon dismounting, damaging nearby enemies."
+                },
+                {
+                    "id": 3,
+                    "name": "Legionnaire",
+                    "description": "Dismount when first taking damage. The Drake continues fighting."
+                }
+            ]
+        },
+        {
+            "id": 55,
+            "name": "S.A.F.E. Pilot",
+            "description": "A flexible Ranged unit. Crash her into enemies or land her behind your Tanks for Area Damage support.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Gnomish Cloaking Device",
+                    "description": "Deploy from the explosion with Stealth and Ambush."
+                },
+                {
+                    "id": 2,
+                    "name": "Comin' In Hot!",
+                    "description": "Deploy twice as fast and Burn nearby enemies."
+                },
+                {
+                    "id": 3,
+                    "name": "Gnomish Muttonizer",
+                    "description": "Polymorph the first blaster target."
+                }
+            ]
+        },
+        {
+            "id": 56,
+            "name": "Skeleton Party",
+            "description": "A Frosty surprise for any location! Raise a Squad of Ranged and Melee Skeletons to assist with any skirmish.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "5-Man",
+                    "description": "Summons a Skeleton Tank, Rogue, Priest, and 2 Mages."
+                },
+                {
+                    "id": 2,
+                    "name": "Corpse Run",
+                    "description": "Gain +1 level for each deploy after the first. (Maximum +3 levels)"
+                },
+                {
+                    "id": 3,
+                    "name": "Ritual of Rime",
+                    "description": "Summon 5 Skeleton Mages who guard the deploy location."
+                }
+            ]
+        },
+        {
+            "id": 57,
+            "name": "Skeletons",
+            "description": "These Skeletons can arise anywhere on the map to distract enemies or claim a remote resource.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Questing Buddies",
+                    "description": "One Skeleton gains Armor, one gains Resist, and one gains Stealth."
+                },
+                {
+                    "id": 2,
+                    "name": "Exhume",
+                    "description": "If deployed near a Tower or Meeting Stone, deploy +2 additional Skeletons."
+                },
+                {
+                    "id": 3,
+                    "name": "Cackle",
+                    "description": "Gain Taunt."
+                }
+            ]
+        },
+        {
+            "id": 58,
+            "name": "Smoke Bomb",
+            "description": "Get the drop on your enemies by granting Stealth to nearby allies. Use in a skirmish to confuse the enemy!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Through The Shadows",
+                    "description": "Affected minis move 50% faster until unstealthed."
+                },
+                {
+                    "id": 2,
+                    "name": "Band Of Thieves",
+                    "description": "Grant +2 levels to Cycle minis within."
+                },
+                {
+                    "id": 3,
+                    "name": "Strangers in the Night",
+                    "description": "Effects apply to enemies as well."
+                }
+            ]
+        },
+        {
+            "id": 59,
+            "name": "Sneed",
+            "description": "When you are a buzzsaw, all your problems look like trees.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Lead With Greed",
+                    "description": "Gain an additional +2 Gold when Sneed triggers Sneed Before Greed."
+                },
+                {
+                    "id": 2,
+                    "name": "Mine Is Money, Friend!",
+                    "description": "Gain the Miner trait."
+                },
+                {
+                    "id": 3,
+                    "name": "Land Grab",
+                    "description": "Gain a level whenever Sneed Before Greed."
+                }
+            ]
+        },
+        {
+            "id": 60,
+            "name": "Spiderlings",
+            "description": "A Squad of Poisonous predators. Their venom will pierce Armor and down even the mightiest of Tanks.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Frostbite",
+                    "description": "Gain Frost."
+                },
+                {
+                    "id": 2,
+                    "name": "Bloated Carapace",
+                    "description": "Explode on death, Poisoning nearby enemies."
+                },
+                {
+                    "id": 3,
+                    "name": "Envenom",
+                    "description": "Deal twice as much Poison damage."
+                }
+            ]
+        },
+        {
+            "id": 61,
+            "name": "Stonehoof Tauren",
+            "description": "An exceptionally beefy bruiser that will Charge into battle, and even Charge while she's in battle!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Momentum",
+                    "description": "After connecting a charge, immediately charge a second time if possible."
+                },
+                {
+                    "id": 2,
+                    "name": "Pummel",
+                    "description": "After connecting a charge, Stun the target for 3 seconds."
+                },
+                {
+                    "id": 3,
+                    "name": "Provoke",
+                    "description": "After connecting a charge, Taunt nearby enemies."
+                }
+            ]
+        },
+        {
+            "id": 62,
+            "name": "Sylvannas Windrunner",
+            "description": "Sylvanas attacks with unrelenting arrow shots, and releases a Banshee when she dies.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Black Arrow",
+                    "description": "Pierce through enemies in a line, dealing Elemental damage."
+                },
+                {
+                    "id": 2,
+                    "name": "Banshee's Wail",
+                    "description": "Scream on Death, Stunning nearby enemies for 3 seconds."
+                },
+                {
+                    "id": 3,
+                    "name": "Forsaken Fury",
+                    "description": "Nearby Horde and Undead Minis gain Fury."
+                }
+            ]
+        },
+        {
+            "id": 63,
+            "name": "Tirion Fordring",
+            "description": "A hammer of CLEAVING , a hand of HEALING , and ARMOR of believing. What more do you need?",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Divine Shield",
+                    "description": "Gain a magical shield at 30% health, absorbing all damage for 5 seconds."
+                },
+                {
+                    "id": 2,
+                    "name": "By The Light",
+                    "description": "Heal the primary target for twice as much."
+                },
+                {
+                    "id": 3,
+                    "name": "Consecrate",
+                    "description": "Regularly consecrate the ground, damaging enemies within."
+                }
+            ]
+        },
+        {
+            "id": 64,
+            "name": "Vultures",
+            "description": "A cheap pair of Flying scavengers. Two vultures are a nuisance, but each vulture victim adds to the flock!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Feeding Frenzy",
+                    "description": "The flock gains Bloodlust for 5 seconds when spawning a new Vulture."
+                },
+                {
+                    "id": 2,
+                    "name": "Migration",
+                    "description": "All additional Vultures spawn at your base."
+                },
+                {
+                    "id": 3,
+                    "name": "Tendon Rip",
+                    "description": "Attacks Daze enemies for 3 seconds."
+                }
+            ]
+        },
+        {
+            "id": 65,
+            "name": "Warsong Grunts",
+            "description": "While slow and steady at the start, this Squad of fighters will speed up, Furiously slashing at frightened foes.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Command",
+                    "description": "Nearby Beast allies deal 30% additional damage."
+                },
+                {
+                    "id": 2,
+                    "name": "Blood Pact",
+                    "description": "When a Grunt dies, the other gain Bloodlust."
+                },
+                {
+                    "id": 3,
+                    "name": "Guard Duty",
+                    "description": "Remain at deploy location until entering combat."
+                }
+            ]
+        },
+        {
+            "id": 66,
+            "name": "Warsong Raider",
+            "description": "This Fast rider smashes Towers with savage sustained Siege damage. Clear a path and she'll clear the rest.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Razing Focus",
+                    "description": "Become a Siege unit, ignoring enemy Minis."
+                },
+                {
+                    "id": 2,
+                    "name": "Sunder Armor",
+                    "description": "Damaging an Armored enemy removes their Armor."
+                },
+                {
+                    "id": 3,
+                    "name": "Saboteur",
+                    "description": "Damaging a tower reduces its damage dealt by 50% for 3 seconds."
+                }
+            ]
+        },
+        {
+            "id": 67,
+            "name": "Whelp Eggs",
+            "description": "Drop these eggs anywhere on the battlefield to surprise Melee enemies with many fiery Flying whelps!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Flame Burst",
+                    "description": "Damage nearby enemies when hatching."
+                },
+                {
+                    "id": 2,
+                    "name": "Rookery",
+                    "description": "When one egg hatches, the others hatch immediately."
+                },
+                {
+                    "id": 3,
+                    "name": "Chromatic Plating",
+                    "description": "Eggs gain Taunt."
+                }
+            ]
+        },
+        {
+            "id": 68,
+            "name": "Worgen",
+            "description": "This Stealthy predator assassinates annoying Ranged units. Play him anywhere and tear their support apart!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Premeditation",
+                    "description": "Increase Ambush damage by 50%."
+                },
+                {
+                    "id": 2,
+                    "name": "Lone Wolf",
+                    "description": "On deploy, grant +1 gold if no allies are nearby."
+                },
+                {
+                    "id": 3,
+                    "name": "Frenzy",
+                    "description": "On kill, gain Bloodlust for 10 seconds."
+                }
+            ]
+        },
+        {
+            "id": 69,
+            "name": "Chimaera",
+            "description": "A Flying malefic monstrosity that rains down Poison and Lightning on multiple miniscule minions.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Leviathan",
+                    "description": "Gain 10% additional Health per deploy."
+                },
+                {
+                    "id": 2,
+                    "name": "Frost Shock",
+                    "description": "Lightning Ball applies Frost on hit."
+                },
+                {
+                    "id": 3,
+                    "name": "Fiery Rebirth",
+                    "description": "Poison Spit inflicts twice as much Poison."
+                }
+            ]
+        },
+        {
+            "id": 70,
+            "name": "Emperor Thaurissan",
+            "description": "If Ragnaros was your boss, you'd be cranky too.",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Moira's Wit",
+                    "description": "Nearby Burning enemies Heal Thaurissan."
+                },
+                {
+                    "id": 2,
+                    "name": "Hubris",
+                    "description": "After playing Thaurissan, your next non-Elemental Mini deploys with +2 levels."
+                },
+                {
+                    "id": 3,
+                    "name": "Incinerate",
+                    "description": "Lava Spike's Burn is permanent."
+                }
+            ]
+        },
+        {
+            "id": 71,
+            "name": "Witch Doctor",
+            "description": "A Cycle support caster. Channels an explosive Curse on an enemy, helping allies take out multiple foes!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Alchemist",
+                    "description": "Periodically drop a potion, granting Bloodlust to the first ally who touches it."
+                },
+                {
+                    "id": 2,
+                    "name": "Amplify Curse",
+                    "description": "Enemies killed by the Curse explosion also explode."
+                },
+                {
+                    "id": 3,
+                    "name": "Spirit Ward",
+                    "description": "On kill, grant a shield to nearby allies, absorbing the next hit against them."
+                }
+            ]
+        },
+        {
+            "id": 72,
+            "name": "Faerie Dragon",
+            "description": "This flying trickster can see through Stealth, and shakes off Poison, Burn, Stuns, and Slows!",
+            "talents": [
+                {
+                    "id": 1,
+                    "name": "Phase Shift",
+                    "description": "Teleport backwards when attacked."
+                },
+                {
+                    "id": 2,
+                    "name": "Invisibility",
+                    "description": "Gain Stealth."
+                },
+                {
+                    "id": 3,
+                    "name": "Fae Blessing",
+                    "description": "Once per deploy, grant Resist to a nearby Ally."
+                }
+            ]
+        }
+    ],
+    "categories": {
+        "factions": [
+            {
+                "id": 1,
+                "name": "Undead"
+            },
+            {
+                "id": 2,
+                "name": "Beast"
+            },
+            {
+                "id": 3,
+                "name": "Alliance"
+            },
+            {
+                "id": 4,
+                "name": "Horde"
+            },
+            {
+                "id": 5,
+                "name": "Blackrock"
+            },
+            {
+                "id": 6,
+                "name": "Cenarion"
+            }
+        ],
+        "types": [
+            {
+                "id": 1,
+                "name": "Troop"
+            },
+            {
+                "id": 2,
+                "name": "Spell"
+            },
+            {
+                "id": 3,
+                "name": "Leader"
+            }
+        ],
+        "traits": [
+            {
+                "id": 1,
+                "name": "Tank"
+            },
+            {
+                "id": 2,
+                "name": "Hook"
+            },
+            {
+                "id": 3,
+                "name": "Melee"
+            },
+            {
+                "id": 4,
+                "name": "AoE"
+            },
+            {
+                "id": 5,
+                "name": "Cycle"
+            },
+            {
+                "id": 6,
+                "name": "Fast"
+            },
+            {
+                "id": 7,
+                "name": "Squad"
+            },
+            {
+                "id": 8,
+                "name": "Elemental"
+            },
+            {
+                "id": 9,
+                "name": "Spell"
+            },
+            {
+                "id": 10,
+                "name": "Possesion"
+            },
+            {
+                "id": 11,
+                "name": "Ranged"
+            },
+            {
+                "id": 12,
+                "name": "One-Target"
+            },
+            {
+                "id": 13,
+                "name": "Armored"
+            },
+            {
+                "id": 14,
+                "name": "Bombard"
+            },
+            {
+                "id": 15,
+                "name": "Flying"
+            },
+            {
+                "id": 16,
+                "name": "Frost"
+            },
+            {
+                "id": 17,
+                "name": "Attack Stun"
+            },
+            {
+                "id": 18,
+                "name": "Percent Damage"
+            },
+            {
+                "id": 19,
+                "name": "Attack Root"
+            },
+            {
+                "id": 20,
+                "name": "Resistant"
+            },
+            {
+                "id": 21,
+                "name": "Revive"
+            },
+            {
+                "id": 22,
+                "name": "Unbound"
+            },
+            {
+                "id": 23,
+                "name": "Miner"
+            },
+            {
+                "id": 24,
+                "name": "Stealth"
+            },
+            {
+                "id": 25,
+                "name": "Cheap Shot"
+            },
+            {
+                "id": 26,
+                "name": "Siege Damage"
+            },
+            {
+                "id": 27,
+                "name": "Siege Specialist"
+            },
+            {
+                "id": 28,
+                "name": "Fury"
+            },
+            {
+                "id": 29,
+                "name": "Bomabrd"
+            },
+            {
+                "id": 30,
+                "name": "Healer"
+            },
+            {
+                "id": 31,
+                "name": "Cannibalize"
+            },
+            {
+                "id": 32,
+                "name": "tank"
+            },
+            {
+                "id": 33,
+                "name": "Bloodlist"
+            },
+            {
+                "id": 34,
+                "name": "Rebirth"
+            },
+            {
+                "id": 35,
+                "name": "Longshot"
+            },
+            {
+                "id": 36,
+                "name": "Heal Squadmate"
+            },
+            {
+                "id": 37,
+                "name": "Summoner"
+            },
+            {
+                "id": 38,
+                "name": "Bloodlust"
+            },
+            {
+                "id": 39,
+                "name": "Poisonous"
+            },
+            {
+                "id": 40,
+                "name": "Dismount"
+            },
+            {
+                "id": 41,
+                "name": "Vulnerable"
+            },
+            {
+                "id": 42,
+                "name": "Charge"
+            },
+            {
+                "id": 43,
+                "name": "Haunt"
+            },
+            {
+                "id": 44,
+                "name": "Carrion"
+            },
+            {
+                "id": 45,
+                "name": "Hatching"
+            },
+            {
+                "id": 46,
+                "name": "Ambush"
+            },
+            {
+                "id": 47,
+                "name": "Fiery Weapon Enchant"
+            },
+            {
+                "id": 48,
+                "name": "Detect"
+            },
+            {
+                "id": 49,
+                "name": "Nullify"
+            }
+        ],
+        "speeds": [
+            {
+                "id": 1,
+                "name": "Slow"
+            },
+            {
+                "id": 2,
+                "name": "Med-Fast"
+            },
+            {
+                "id": 3,
+                "name": "Medium"
+            },
+            {
+                "id": 4,
+                "name": "Fast"
+            }
+        ]
     }
-  },
-  "factions": {
-    "1": "Undead",
-    "2": "Beast",
-    "3": "Alliance",
-    "4": "Horde",
-    "5": "Blackrock",
-    "6": "Cenarion"
-  },
-  "types": {
-    "1": "Troop",
-    "2": "Spell",
-    "3": "Leader"
-  },
-  "traits": {
-    "1": "Tank",
-    "2": "Hook",
-    "3": "Melee",
-    "4": "AoE",
-    "5": "Cycle",
-    "6": "Fast",
-    "7": "Squad",
-    "8": "Elemental",
-    "9": "Spell",
-    "10": "Possesion",
-    "11": "Ranged",
-    "12": "One-Target",
-    "13": "Armored",
-    "14": "Bombard",
-    "15": "Flying",
-    "16": "Frost",
-    "17": "Attack Stun",
-    "18": "Percent Damage",
-    "19": "Attack Root",
-    "20": "Resistant",
-    "21": "Revive",
-    "22": "Unbound",
-    "23": "Miner",
-    "24": "Stealth",
-    "25": "Cheap Shot",
-    "26": "Siege Damage",
-    "27": "Siege Specialist",
-    "28": "Fury",
-    "29": "Bomabrd",
-    "30": "Healer",
-    "31": "Cannibalize",
-    "32": "tank",
-    "33": "Bloodlist",
-    "34": "Rebirth",
-    "35": "Longshot",
-    "36": "Heal Squadmate",
-    "37": "Summoner",
-    "38": "Bloodlust",
-    "39": "Poisonous",
-    "40": "Dismount",
-    "41": "Vulnerable",
-    "42": "Charge",
-    "43": "Haunt",
-    "44": "Carrion",
-    "45": "Hatching",
-    "46": "Ambush",
-    "47": "Fiery Weapon Enchant",
-    "48": "Detect",
-    "49": "Nullify"
-  },
-  "speeds": {
-    "1": "Slow",
-    "2": "Med-Fast",
-    "3": "Medium",
-    "4": "Fast"
-  }
 }
