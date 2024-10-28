@@ -56,7 +56,7 @@ class WCRCog(commands.Cog):
         # Bestimmen Sie den Pfad zu 'emojis.json'
         current_dir = os.path.dirname(os.path.abspath(__file__))
         emojis_path = os.path.join(
-            current_dir, '..', 'data', 'emojis.json')
+            current_dir, '..', 'data', 'emojis.json')  # Pfad angepasst
         emojis_path = os.path.normpath(emojis_path)
 
         with open(emojis_path, 'r', encoding='utf-8') as f:
@@ -143,7 +143,7 @@ class WCRCog(commands.Cog):
                 urllib.request.urlretrieve(talent_image_url, filename)
                 files.append(discord.File(filename, filename=filename))
                 inline_fields.append(
-                    (f"{talent_name}", f"{talent_description}\n[Bild]({filename})"))
+                    (f"{talent_name}", f"{talent_description}\n[Bild]({talent_image_url})"))
             else:
                 inline_fields.append((talent_name, talent_description))
 
@@ -158,8 +158,14 @@ class WCRCog(commands.Cog):
         if pose_url:
             embed.set_thumbnail(url=pose_url)
 
+        # Füge die normalen Felder hinzu
         for name, value in fields:
             embed.add_field(name=name, value=value, inline=False)
+
+        # Füge einen leeren Platzhalter ein, um Abstand zu schaffen
+        embed.add_field(name="\u200b", value="\u200b", inline=False)
+
+        # Füge die Inline-Felder (Talente) hinzu
         for name, value in inline_fields:
             embed.add_field(name=name, value=value, inline=True)
 
