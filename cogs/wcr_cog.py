@@ -2,8 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import json
-import requests
 import os
+import urllib.request  # Verwenden Sie urllib.request statt requests
 
 
 class WCRCog(commands.Cog):
@@ -14,87 +14,133 @@ class WCRCog(commands.Cog):
         self.pictures = self.load_pictures()
         self.emojis = self.load_emojis()
 
-    # (Hier bleiben die load_* Methoden unverändert)
+    def load_units(self):
+        # Bestimmen Sie den Pfad zu 'units.json'
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        units_path = os.path.join(
+            current_dir, '..', 'data', 'wcr', 'units.json')
+        units_path = os.path.normpath(units_path)
+
+        with open(units_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        # Die Einheitenliste unter dem Schlüssel 'units' zurückgeben
+        return data['units']
+
+    def load_languages(self):
+        languages = {}
+        # Bestimmen Sie den Pfad zum 'locals'-Verzeichnis
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        locals_dir = os.path.join(current_dir, '..', 'data', 'wcr', 'locals')
+        locals_dir = os.path.normpath(locals_dir)
+
+        for lang_file in os.listdir(locals_dir):
+            if lang_file.endswith('.json'):
+                lang_code = lang_file.split('.')[0]
+                with open(os.path.join(locals_dir, lang_file), 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                languages[lang_code] = data
+        return languages
+
+    def load_pictures(self):
+        # Bestimmen Sie den Pfad zu 'pictures.json'
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        pictures_path = os.path.join(
+            current_dir, '..', 'data', 'wcr', 'pictures.json')
+        pictures_path = os.path.normpath(pictures_path)
+
+        with open(pictures_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data
+
+    def load_emojis(self):
+        # Bestimmen Sie den Pfad zu 'emojis.json'
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        emojis_path = os.path.join(
+            current_dir, '..', 'data', 'wcr', 'emojis.json')
+        emojis_path = os.path.normpath(emojis_path)
+
+        with open(emojis_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data
 
     def get_text_data(self, unit_id, lang):
         texts = self.languages.get(lang, self.languages["de"])
-        unit_text = texts["units"].get(str(unit_id), {})
-        return unit_text.get("name", "Unbekannt"), unit_text.get("description", "Beschreibung fehlt"), unit_text.get("talents", {})
+        # Suche die Einheit in der Sprachdatei anhand der ID
+        unit_text = next(
+            (unit for unit in texts["units"] if unit["id"] == unit_id), {})
+        return unit_text.get("name", "Unbekannt"), unit_text.get("description", "Beschreibung fehlt"), unit_text.get("talents", [])
 
     def get_pose_url(self, unit_id):
         """Gibt die pose-URL des Minis zurück, falls vorhanden."""
-        return self.pictures["units"].get(str(unit_id), {}).get("pose", "")
+        unit_pictures = self.pictures.get("units", [])
+        unit_picture = next(
+            (pic for pic in unit_pictures if pic["id"] == unit_id), {})
+        return unit_picture.get("pose", "")
 
     @app_commands.command(name="name", description="Zeigt Details zu einem Mini basierend auf dem Namen an.")
     async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
         print(f"Befehl /name ausgeführt mit Name: {name} und Sprache: {lang}")
 
         if lang not in self.languages:
-            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: de, en.")
+            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: " + ", ".join(self.languages.keys()))
             return
 
         # Suche nach dem Namen in der Sprachdatei
-        matching_unit = None
-        for unit_id, unit_data in self.languages[lang]["units"].items():
-            if unit_data["name"].lower() == name.lower():
-                matching_unit = next(
-                    (u for u in self.units if str(u["id"]) == unit_id), None)
-                break
+        texts = self.languages[lang]
+        matching_unit_text = next(
+            (unit for unit in texts["units"] if unit["name"].lower() == name.lower()), None)
 
-        if not matching_unit:
+        if not matching_unit_text:
             await interaction.response.send_message(f"Mini mit Namen '{name}' nicht gefunden.")
             return
 
+        # Finde die Einheit in der units-Liste anhand der ID
+        unit_id = matching_unit_text["id"]
+        matching_unit = next(
+            (unit for unit in self.units if unit["id"] == unit_id), None)
+
+        if not matching_unit:
+            await interaction.response.send_message(f"Details für Mini mit ID '{unit_id}' nicht gefunden.")
+            return
+
         unit_name, unit_description, talents = self.get_text_data(
-            matching_unit["id"], lang)
-        stats = matching_unit["stats"]
+            unit_id, lang)
+        stats = matching_unit.get("stats", {})
 
         # Erstelle dynamisch die Felder für vorhandene Statistiken
         fields = [
-            (f"{self.emojis.get('wcr_cost', {}).get('syntax', '')
-                } Kosten", str(matching_unit.get("cost", "N/A"))),
-            (f"{self.emojis.get('wcr_speed', {}).get('syntax', '')
-                } Geschwindigkeit", str(matching_unit.get("speed_id", "N/A"))),
+            (f"{self.emojis.get('wcr_cost', {}).get('syntax', '')} Kosten",
+             str(matching_unit.get("cost", "N/A"))),
+            (f"{self.emojis.get('wcr_speed', {}).get('syntax', '')} Geschwindigkeit",
+             str(matching_unit.get("speed_id", "N/A"))),
         ]
 
         # Füge nur Statistiken hinzu, die tatsächlich einen Wert haben
-        if stats.get("health"):
-            fields.append((f"{self.emojis.get('wcr_health', {}).get(
-                'syntax', '')} Gesundheit", str(stats["health"])))
-        if stats.get("damage"):
-            fields.append((f"{self.emojis.get('wcr_damage', {}).get(
-                'syntax', '')} Schaden", str(stats["damage"])))
-        if stats.get("dps"):
-            fields.append(
-                (f"{self.emojis.get('wcr_dps', {}).get('syntax', '')} DPS", str(stats["dps"])))
-        if stats.get("attack_speed"):
-            fields.append((f"{self.emojis.get('wcr_attack_speed', {}).get(
-                'syntax', '')} Angriffsgeschwindigkeit", str(stats["attack_speed"])))
-        if stats.get("range"):
-            fields.append((f"{self.emojis.get('wcr_range', {}).get(
-                'syntax', '')} Reichweite", str(stats["range"])))
-        if stats.get("duration"):
-            fields.append((f"{self.emojis.get('wcr_duration', {}).get(
-                'syntax', '')} Dauer", str(stats["duration"])))
+        for stat_key, emoji_name in [("health", "wcr_health"), ("damage", "wcr_damage"), ("dps", "wcr_dps"),
+                                     ("attack_speed", "wcr_attack_speed"), ("range", "wcr_range"), ("duration", "wcr_duration")]:
+            if stats.get(stat_key):
+                fields.append(
+                    (f"{self.emojis.get(emoji_name, {}).get('syntax', '')} {stat_key.capitalize()}", str(stats[stat_key])))
 
         # Inline-Felder für Talente vorbereiten und Bilder als Anhang hinzufügen
         files = []
         inline_fields = []
-        for i, (talent_id, talent_data) in enumerate(talents.items()):
+        for i, talent in enumerate(talents):
             if i >= 3:
                 break  # Begrenzt auf maximal 3 Talente
-            talent_name = talent_data.get("name", "Unbekanntes Talent")
-            talent_description = talent_data.get(
+            talent_name = talent.get("name", "Unbekanntes Talent")
+            talent_description = talent.get(
                 "description", "Beschreibung fehlt")
-            talent_image_url = self.pictures["units"].get(
-                str(matching_unit["id"]), {}).get(f"talent_{talent_id}", "")
+            # Suche nach dem Talentbild
+            unit_pictures = self.pictures.get("units", [])
+            unit_picture = next(
+                (pic for pic in unit_pictures if pic["id"] == unit_id), {})
+            talent_image_url = unit_picture.get(f"talent_{i+1}", "")
 
             if talent_image_url:
                 # Lade das Bild herunter und speichere es temporär
-                image_data = requests.get(talent_image_url).content
                 filename = f"temp_talent_image_{i}.png"
-                with open(filename, "wb") as f:
-                    f.write(image_data)
+                urllib.request.urlretrieve(talent_image_url, filename)
                 files.append(discord.File(filename, filename=filename))
                 inline_fields.append(
                     (f"{talent_name}", f"{talent_description}\n[Bild]({filename})"))
@@ -108,8 +154,9 @@ class WCRCog(commands.Cog):
             color=0x3498db
         )
 
-        if self.get_pose_url(matching_unit["id"]):
-            embed.set_thumbnail(url=self.get_pose_url(matching_unit["id"]))
+        pose_url = self.get_pose_url(unit_id)
+        if pose_url:
+            embed.set_thumbnail(url=pose_url)
 
         for name, value in fields:
             embed.add_field(name=name, value=value, inline=False)
