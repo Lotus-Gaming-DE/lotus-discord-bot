@@ -56,7 +56,7 @@ class WCRCog(commands.Cog):
         # Bestimmen Sie den Pfad zu 'emojis.json'
         current_dir = os.path.dirname(os.path.abspath(__file__))
         emojis_path = os.path.join(
-            current_dir, '..', 'data', 'wcr', 'emojis.json')
+            current_dir, '..', 'data', 'emojis.json')
         emojis_path = os.path.normpath(emojis_path)
 
         with open(emojis_path, 'r', encoding='utf-8') as f:
