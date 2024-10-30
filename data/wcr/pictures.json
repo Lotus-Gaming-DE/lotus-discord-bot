@@ -291,5 +291,39 @@
       "id": 72,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/FaerieDragon_Statue.webp"
     }
-  ]
+  ],
+  "categories": {
+        "factions": [
+            {
+                "id": 1,
+                "icon": "wcr_undead",
+				        "color": "#6D4DBB"
+            },
+            {
+                "id": 2,
+                "name": "wcr_beast",
+				        "color": "#B08F58"
+            },
+            {
+                "id": 3,
+                "name": "wcr_alliance",
+				        "color": "#3A5FD0"
+            },
+            {
+                "id": 4,
+                "name": "wcr_horde",
+				        "color": "#BE4532"
+            },
+            {
+                "id": 5,
+                "name": "wcr_blackrock",
+				        "color": "#486166"
+            },
+            {
+                "id": 6,
+                "name": "wcr_cenarion",
+				        "color": "#359078"
+            }
+        ]
+  }  
 }

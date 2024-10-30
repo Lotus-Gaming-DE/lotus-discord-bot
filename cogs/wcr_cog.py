@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 import json
 import os
-import urllib.request  # Verwenden Sie urllib.request statt requests
+import urllib.request
 
 
 class WCRCog(commands.Cog):
@@ -15,7 +15,7 @@ class WCRCog(commands.Cog):
         self.emojis = self.load_emojis()
 
     def load_units(self):
-        # Bestimmen Sie den Pfad zu 'units.json'
+        # Pfad zu 'units.json' bestimmen
         current_dir = os.path.dirname(os.path.abspath(__file__))
         units_path = os.path.join(
             current_dir, '..', 'data', 'wcr', 'units.json')
@@ -23,12 +23,12 @@ class WCRCog(commands.Cog):
 
         with open(units_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-        # Die Einheitenliste unter dem Schlüssel 'units' zurückgeben
+        # Rückgabe der Einheitenliste
         return data['units']
 
     def load_languages(self):
         languages = {}
-        # Bestimmen Sie den Pfad zum 'locals'-Verzeichnis
+        # Pfad zum 'locals'-Verzeichnis bestimmen
         current_dir = os.path.dirname(os.path.abspath(__file__))
         locals_dir = os.path.join(current_dir, '..', 'data', 'wcr', 'locals')
         locals_dir = os.path.normpath(locals_dir)
@@ -42,7 +42,7 @@ class WCRCog(commands.Cog):
         return languages
 
     def load_pictures(self):
-        # Bestimmen Sie den Pfad zu 'pictures.json'
+        # Pfad zu 'pictures.json' bestimmen
         current_dir = os.path.dirname(os.path.abspath(__file__))
         pictures_path = os.path.join(
             current_dir, '..', 'data', 'wcr', 'pictures.json')
@@ -53,10 +53,10 @@ class WCRCog(commands.Cog):
         return data
 
     def load_emojis(self):
-        # Bestimmen Sie den Pfad zu 'emojis.json'
+        # Pfad zu 'emojis.json' bestimmen
         current_dir = os.path.dirname(os.path.abspath(__file__))
         emojis_path = os.path.join(
-            current_dir, '..', 'data', 'emojis.json')  # Pfad angepasst
+            current_dir, '..', 'data', 'emojis.json')
         emojis_path = os.path.normpath(emojis_path)
 
         with open(emojis_path, 'r', encoding='utf-8') as f:
@@ -65,17 +65,30 @@ class WCRCog(commands.Cog):
 
     def get_text_data(self, unit_id, lang):
         texts = self.languages.get(lang, self.languages["de"])
-        # Suche die Einheit in der Sprachdatei anhand der ID
+        # Einheit in der Sprachdatei anhand der ID suchen
         unit_text = next(
             (unit for unit in texts["units"] if unit["id"] == unit_id), {})
         return unit_text.get("name", "Unbekannt"), unit_text.get("description", "Beschreibung fehlt"), unit_text.get("talents", [])
 
     def get_pose_url(self, unit_id):
-        """Gibt die pose-URL des Minis zurück, falls vorhanden."""
+        """Gibt die Pose-URL des Minis zurück, falls vorhanden."""
         unit_pictures = self.pictures.get("units", [])
         unit_picture = next(
             (pic for pic in unit_pictures if pic["id"] == unit_id), {})
         return unit_picture.get("pose", "")
+
+    def get_faction_data(self, faction_id):
+        """Gibt die Fraktionsdaten basierend auf der faction_id zurück."""
+        factions = self.pictures.get("categories", {}).get("factions", [])
+        return next((faction for faction in factions if faction["id"] == faction_id), {})
+
+    def get_category_name(self, category, category_id, lang):
+        """Gibt den Namen eines Kategorie-Elements basierend auf seiner ID zurück."""
+        categories = self.languages.get(lang, {}).get(
+            "categories", {}).get(category, [])
+        category_item = next(
+            (item for item in categories if item["id"] == category_id), {})
+        return category_item.get("name", "Unbekannt")
 
     @app_commands.command(name="name", description="Zeigt Details zu einem Mini basierend auf dem Namen an.")
     async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
@@ -107,22 +120,132 @@ class WCRCog(commands.Cog):
             unit_id, lang)
         stats = matching_unit.get("stats", {})
 
-        # Erstelle dynamisch die Felder für vorhandene Statistiken
-        fields = [
-            (f"{self.emojis.get('wcr_cost', {}).get('syntax', '')} Kosten",
-             str(matching_unit.get("cost", "N/A"))),
-            (f"{self.emojis.get('wcr_speed', {}).get('syntax', '')} Geschwindigkeit",
-             str(matching_unit.get("speed_id", "N/A"))),
-        ]
+        # Fraktionsdaten ermitteln
+        faction_id = matching_unit.get("faction_id")
+        faction_data = self.get_faction_data(faction_id)
+        embed_color_hex = faction_data.get("color", "#3498db")
+        embed_color = int(embed_color_hex.strip("#"), 16)
+        faction_emoji_name = faction_data.get("icon", "")
+        faction_emoji = self.emojis.get(
+            faction_emoji_name, {}).get("syntax", "")
 
-        # Füge nur Statistiken hinzu, die tatsächlich einen Wert haben
-        for stat_key, emoji_name in [("health", "wcr_health"), ("damage", "wcr_damage"), ("dps", "wcr_dps"),
-                                     ("attack_speed", "wcr_attack_speed"), ("range", "wcr_range"), ("duration", "wcr_duration")]:
-            if stats.get(stat_key):
-                fields.append(
-                    (f"{self.emojis.get(emoji_name, {}).get('syntax', '')} {stat_key.capitalize()}", str(stats[stat_key])))
+        # Typ-Namen erhalten
+        type_id = matching_unit.get("type_id")
+        type_name = self.get_category_name("types", type_id, lang)
 
-        # Inline-Felder für Talente vorbereiten und Bilder als Anhang hinzufügen
+        # Geschwindigkeit ermitteln
+        speed_id = matching_unit.get("speed_id")
+        speed_name = self.get_category_name("speeds", speed_id, lang)
+
+        # Stats vorbereiten
+        stats_ordered = []
+
+        # Erste Reihe: Kosten und Typ
+        cost = matching_unit.get("cost", "N/A")
+        stats_ordered.append({
+            "name": f"{self.emojis.get('wcr_cost', {}).get('syntax', '')} Kosten",
+            "value": str(cost),
+            "inline": True
+        })
+
+        stats_ordered.append({
+            "name": f"{self.emojis.get('wcr_type', {}).get('syntax', '')} Typ",
+            "value": type_name,
+            "inline": True
+        })
+
+        # Zweite Reihe: Gesundheit und Geschwindigkeit
+        health = stats.get("health")
+        if health:
+            stats_ordered.append({
+                "name": f"{self.emojis.get('wcr_health', {}).get('syntax', '')} Gesundheit",
+                "value": str(health),
+                "inline": True
+            })
+
+        if speed_name:
+            stats_ordered.append({
+                "name": f"{self.emojis.get('wcr_speed', {}).get('syntax', '')} Geschwindigkeit",
+                "value": speed_name,
+                "inline": True
+            })
+
+        # Dritte Reihe: Schaden, Angriffsgeschwindigkeit, DPS
+        damage_label = None
+        damage_value = None
+        damage_emoji = None
+
+        if "damage" in stats or "area_damage" in stats:
+            is_elemental = 8 in matching_unit.get("traits_ids", [])
+            if "damage" in stats:
+                damage_value = stats["damage"]
+                if is_elemental:
+                    damage_label = "Elementarschaden"
+                    damage_emoji = self.emojis.get(
+                        'wcr_damage_ele', {}).get('syntax', '')
+                else:
+                    damage_label = "Schaden"
+                    damage_emoji = self.emojis.get(
+                        'wcr_damage', {}).get('syntax', '')
+            elif "area_damage" in stats:
+                damage_value = stats["area_damage"]
+                if is_elemental:
+                    damage_label = "Elementarflächenschaden"
+                    damage_emoji = self.emojis.get(
+                        'wcr_damage_ele', {}).get('syntax', '')
+                else:
+                    damage_label = "Flächenschaden"
+                    damage_emoji = self.emojis.get(
+                        'wcr_damage', {}).get('syntax', '')
+            stats_ordered.append({
+                "name": f"{damage_emoji} {damage_label}",
+                "value": str(damage_value),
+                "inline": True
+            })
+
+        attack_speed = stats.get("attack_speed")
+        if attack_speed:
+            stats_ordered.append({
+                "name": f"{self.emojis.get('wcr_attack_speed', {}).get('syntax', '')} Angriffsgeschwindigkeit",
+                "value": str(attack_speed),
+                "inline": True
+            })
+
+        dps = stats.get("dps")
+        if dps:
+            stats_ordered.append({
+                "name": f"{self.emojis.get('wcr_dps', {}).get('syntax', '')} DPS",
+                "value": str(dps),
+                "inline": True
+            })
+
+        # Übrige Stats sammeln
+        used_stats_keys = {'damage', 'area_damage',
+                           'attack_speed', 'dps', 'health'}
+
+        for stat_key, emoji_name in [("range", "wcr_range"), ("duration", "wcr_duration"), ("healing", "wcr_healing"), ("radius", "wcr_radius"), ("lvl_advantage", "wcr_lvl_advantage"), ("percent_dmg", "wcr_percent_dmg"), ("percent_dps", "wcr_percent_dps"), ("fan_damage", "wcr_fan_damage"), ("crash_damage", "wcr_crash_damage"), ("healing", "wcr_healing"), ("area_healing", "wcr_area_healing")]:
+            if stat_key in stats and stat_key not in used_stats_keys:
+                stats_ordered.append({
+                    "name": f"{self.emojis.get(emoji_name, {}).get('syntax', '')} {stat_key.capitalize()}",
+                    "value": str(stats[stat_key]),
+                    "inline": True
+                })
+                used_stats_keys.add(stat_key)
+
+        # Embed erstellen
+        embed = discord.Embed(
+            title=f"{faction_emoji} {unit_name}",
+            description=unit_description,
+            color=embed_color
+        )
+
+        # Stats hinzufügen (jeweils bis zu 3 pro Reihe)
+        for i in range(0, len(stats_ordered), 3):
+            for stat in stats_ordered[i:i+3]:
+                embed.add_field(
+                    name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
+
+        # Talente vorbereiten und Bilder als Anhang hinzufügen
         files = []
         inline_fields = []
         for i, talent in enumerate(talents):
@@ -147,33 +270,34 @@ class WCRCog(commands.Cog):
             else:
                 inline_fields.append((talent_name, talent_description))
 
-        # Erstelle das Embed und sende es
-        embed = discord.Embed(
-            title=unit_name,
-            description=unit_description,
-            color=0x3498db
-        )
+        # Leeren Platzhalter für Abstand hinzufügen
+        if inline_fields:
+            embed.add_field(name="\u200b", value="\u200b", inline=False)
+            # Inline-Felder für Talente hinzufügen
+            for name, value in inline_fields:
+                embed.add_field(name=name, value=value, inline=True)
 
+        # Setze das Hauptbild (Pose)
         pose_url = self.get_pose_url(unit_id)
         if pose_url:
-            embed.set_thumbnail(url=pose_url)
+            embed.set_image(url=pose_url)
 
-        # Füge die normalen Felder hinzu
-        for name, value in fields:
-            embed.add_field(name=name, value=value, inline=False)
-
-        # Füge einen leeren Platzhalter ein, um Abstand zu schaffen
-        embed.add_field(name="\u200b", value="\u200b", inline=False)
-
-        # Füge die Inline-Felder (Talente) hinzu
-        for name, value in inline_fields:
-            embed.add_field(name=name, value=value, inline=True)
+        # Logo hinzufügen
+        logo_filename = 'LotusGaming.png'
+        logo_path = os.path.join('data', 'media', logo_filename)
+        if os.path.exists(logo_path):
+            files.append(discord.File(logo_path, filename=logo_filename))
+            embed.set_footer(text='a service brought to you by Lotus Gaming',
+                             icon_url=f'attachment://{logo_filename}')
+        else:
+            embed.set_footer(text='a service brought to you by Lotus Gaming')
 
         await interaction.response.send_message(embed=embed, files=files)
 
-        # Entferne die temporären Dateien nach dem Senden
+        # Temporäre Dateien entfernen
         for file in files:
-            os.remove(file.filename)
+            if file.filename.startswith('temp_talent_image_'):
+                os.remove(file.filename)
 
 
 async def setup(bot):
