@@ -80,12 +80,14 @@ class WCRCog(commands.Cog):
     def get_faction_data(self, faction_id):
         """Gibt die Fraktionsdaten basierend auf der faction_id zurück."""
         factions = self.pictures.get("categories", {}).get("factions", [])
-        return next((faction for faction in factions if faction["id"] == faction_id), {})
+        faction_data = next(
+            (faction for faction in factions if faction["id"] == faction_id), {})
+        return faction_data
 
     def get_category_name(self, category, category_id, lang):
         """Gibt den Namen eines Kategorie-Elements basierend auf seiner ID zurück."""
-        categories = self.languages.get(lang, {}).get(
-            "categories", {}).get(category, [])
+        categories = self.languages.get(
+            lang, {}).get("categories", {}).get(category, [])
         category_item = next(
             (item for item in categories if item["id"] == category_id), {})
         return category_item.get("name", "Unbekannt")
@@ -120,6 +122,9 @@ class WCRCog(commands.Cog):
             unit_id, lang)
         stats = matching_unit.get("stats", {})
 
+        # Stat Labels laden
+        stat_labels = texts.get('stat_labels', {})
+
         # Fraktionsdaten ermitteln
         faction_id = matching_unit.get("faction_id")
         faction_data = self.get_faction_data(faction_id)
@@ -138,97 +143,99 @@ class WCRCog(commands.Cog):
         speed_name = self.get_category_name("speeds", speed_id, lang)
 
         # Stats vorbereiten
-        stats_ordered = []
+        row1_stats = []
+        row2_stats = []
+        row3_stats = []
+        extra_stats = []
 
         # Erste Reihe: Kosten und Typ
         cost = matching_unit.get("cost", "N/A")
-        stats_ordered.append({
-            "name": f"{self.emojis.get('wcr_cost', {}).get('syntax', '')} Kosten",
+        row1_stats.append({
+            "name": f"{self.emojis.get('wcr_cost', {}).get('syntax', '')} {stat_labels.get('cost', 'Kosten')}",
             "value": str(cost),
             "inline": True
         })
 
-        stats_ordered.append({
-            "name": f"{self.emojis.get('wcr_type', {}).get('syntax', '')} Typ",
+        row1_stats.append({
+            "name": f"{self.emojis.get('wcr_type', {}).get('syntax', '')} {stat_labels.get('type_id', 'Typ')}",
             "value": type_name,
             "inline": True
         })
 
         # Zweite Reihe: Gesundheit und Geschwindigkeit
         health = stats.get("health")
-        if health:
-            stats_ordered.append({
-                "name": f"{self.emojis.get('wcr_health', {}).get('syntax', '')} Gesundheit",
+        if health is not None:
+            row2_stats.append({
+                "name": f"{self.emojis.get('wcr_health', {}).get('syntax', '')} {stat_labels.get('health', 'Gesundheit')}",
                 "value": str(health),
                 "inline": True
             })
 
         if speed_name:
-            stats_ordered.append({
-                "name": f"{self.emojis.get('wcr_speed', {}).get('syntax', '')} Geschwindigkeit",
+            row2_stats.append({
+                "name": f"{self.emojis.get('wcr_speed', {}).get('syntax', '')} {stat_labels.get('speed_id', 'Geschwindigkeit')}",
                 "value": speed_name,
                 "inline": True
             })
 
         # Dritte Reihe: Schaden, Angriffsgeschwindigkeit, DPS
-        damage_label = None
-        damage_value = None
-        damage_emoji = None
-
         is_elemental = 8 in matching_unit.get("traits_ids", [])
 
         if "damage" in stats or "area_damage" in stats:
             if "damage" in stats:
                 damage_value = stats["damage"]
                 if is_elemental:
-                    damage_label = "Elementarschaden"
+                    damage_label = stat_labels.get(
+                        'damage', 'Elementarschaden')
                     damage_emoji = self.emojis.get(
                         'wcr_damage_ele', {}).get('syntax', '')
                 else:
-                    damage_label = "Schaden"
+                    damage_label = stat_labels.get('damage', 'Schaden')
                     damage_emoji = self.emojis.get(
                         'wcr_damage', {}).get('syntax', '')
             elif "area_damage" in stats:
                 damage_value = stats["area_damage"]
                 if is_elemental:
-                    damage_label = "Elementarflächenschaden"
+                    damage_label = stat_labels.get(
+                        'area_damage', 'Elementarflächenschaden')
                     damage_emoji = self.emojis.get(
                         'wcr_damage_ele', {}).get('syntax', '')
                 else:
-                    damage_label = "Flächenschaden"
+                    damage_label = stat_labels.get(
+                        'area_damage', 'Flächenschaden')
                     damage_emoji = self.emojis.get(
                         'wcr_damage', {}).get('syntax', '')
-            stats_ordered.append({
+            row3_stats.append({
                 "name": f"{damage_emoji} {damage_label}",
                 "value": str(damage_value),
                 "inline": True
             })
 
         attack_speed = stats.get("attack_speed")
-        if attack_speed:
-            stats_ordered.append({
-                "name": f"{self.emojis.get('wcr_attack_speed', {}).get('syntax', '')} Angriffsgeschwindigkeit",
+        if attack_speed is not None:
+            row3_stats.append({
+                "name": f"{self.emojis.get('wcr_attack_speed', {}).get('syntax', '')} {stat_labels.get('attack_speed', 'Angriffsgeschwindigkeit')}",
                 "value": str(attack_speed),
                 "inline": True
             })
 
         dps = stats.get("dps")
-        if dps:
-            stats_ordered.append({
-                "name": f"{self.emojis.get('wcr_dps', {}).get('syntax', '')} DPS",
+        if dps is not None:
+            row3_stats.append({
+                "name": f"{self.emojis.get('wcr_dps', {}).get('syntax', '')} {stat_labels.get('dps', 'DPS')}",
                 "value": str(dps),
                 "inline": True
             })
 
-        # Übrige Stats sammeln, ab der vierten Reihe
-        extra_stats = []
+        # Übrige Stats sammeln
         used_stats_keys = {'damage', 'area_damage',
                            'attack_speed', 'dps', 'health'}
 
-        for stat_key, emoji_name in [("range", "wcr_range"), ("duration", "wcr_duration"), ("healing", "wcr_healing"), ("radius", "wcr_radius"), ("lvl_advantage", "wcr_lvl_advantage"), ("percent_dmg", "wcr_percent_dmg"), ("percent_dps", "wcr_percent_dps"), ("fan_damage", "wcr_fan_damage"), ("crash_damage", "wcr_crash_damage"), ("area_healing", "wcr_area_healing")]:
+        for stat_key, emoji_name in [("range", "wcr_range"), ("duration", "wcr_duration"), ("healing", "wcr_healing"), ("radius", "wcr_radius"), ("lvl_advantage", "wcr_advantage"), ("percent_dmg", "wcr_percent_dmg"), ("percent_dps", "wcr_percent_dps"), ("fan_damage", "wcr_fan_damage"), ("crash_damage", "wcr_crash_damage"), ("area_healing", "wcr_area_healing"), ("dwarf_dmg", "wcr_damage"), ("bear_dmg", "wcr_damage"), ("dwarf_dps", "wcr_dps"), ("bear_dps", "wcr_dps"), ("dwarf_health", "wcr_health"), ("bear_health", "wcr_health"), ("dwarf_range", "wcr_range")]:
             if stat_key in stats and stat_key not in used_stats_keys:
+                label = stat_labels.get(stat_key, stat_key.capitalize())
                 extra_stats.append({
-                    "name": f"{self.emojis.get(emoji_name, {}).get('syntax', '')} {stat_key.capitalize()}",
+                    "name": f"{self.emojis.get(emoji_name, {}).get('syntax', '')} {label}",
                     "value": str(stats[stat_key]),
                     "inline": True
                 })
@@ -244,30 +251,28 @@ class WCRCog(commands.Cog):
         # Kleiner Abstand zwischen Beschreibung und Stats
         embed.add_field(name="\u200b", value="\u200b", inline=False)
 
-        # Stats hinzufügen, jeweils genau die definierten Felder pro Reihe
-        field_groups = []
-        # Erste Reihe (Kosten und Typ)
-        field_groups.append(stats_ordered[0:2])
-        # Zweite Reihe (Gesundheit und Geschwindigkeit)
-        field_groups.append(stats_ordered[2:4])
-        # Dritte Reihe (Schaden, Angriffsgeschwindigkeit, DPS)
-        field_groups.append(stats_ordered[4:7])
+        # Stats hinzufügen
+        for stat in row1_stats:
+            embed.add_field(
+                name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
 
-        # Jetzt die restlichen Stats hinzufügen
-        index = 0
-        while index < len(extra_stats):
-            group = extra_stats[index:index+3]
-            field_groups.append(group)
-            index += 3
+        for stat in row2_stats:
+            embed.add_field(
+                name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
 
-        # Felder zum Embed hinzufügen
-        for group in field_groups:
-            for field in group:
+        for stat in row3_stats:
+            embed.add_field(
+                name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
+
+        # Kleiner Abstand nach den ersten drei Reihen
+        embed.add_field(name="\u200b", value="\u200b", inline=False)
+
+        # Übrige Stats hinzufügen, jeweils bis zu drei pro Reihe
+        for i in range(0, len(extra_stats), 3):
+            group = extra_stats[i:i+3]
+            for stat in group:
                 embed.add_field(
-                    name=field["name"], value=field["value"], inline=field.get("inline", True))
-            # Nach den ersten drei Reihen einen kleinen Abstand einfügen
-            if group == field_groups[2]:
-                embed.add_field(name="\u200b", value="\u200b", inline=False)
+                    name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
 
         # Talente vorbereiten und Bilder als Anhang hinzufügen
         files = []
@@ -311,8 +316,8 @@ class WCRCog(commands.Cog):
         logo_path = os.path.join('data', 'media', logo_filename)
         if os.path.exists(logo_path):
             files.append(discord.File(logo_path, filename=logo_filename))
-            embed.set_footer(text='a service brought to you by Lotus Gaming',
-                             icon_url=f'attachment://{logo_filename}')
+            embed.set_footer(
+                text='a service brought to you by Lotus Gaming', icon_url=f'attachment://{logo_filename}')
         else:
             embed.set_footer(text='a service brought to you by Lotus Gaming')
 
