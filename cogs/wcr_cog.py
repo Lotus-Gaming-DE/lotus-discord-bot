@@ -175,8 +175,9 @@ class WCRCog(commands.Cog):
         damage_value = None
         damage_emoji = None
 
+        is_elemental = 8 in matching_unit.get("traits_ids", [])
+
         if "damage" in stats or "area_damage" in stats:
-            is_elemental = 8 in matching_unit.get("traits_ids", [])
             if "damage" in stats:
                 damage_value = stats["damage"]
                 if is_elemental:
@@ -219,13 +220,14 @@ class WCRCog(commands.Cog):
                 "inline": True
             })
 
-        # Übrige Stats sammeln
+        # Übrige Stats sammeln, ab der vierten Reihe
+        extra_stats = []
         used_stats_keys = {'damage', 'area_damage',
                            'attack_speed', 'dps', 'health'}
 
-        for stat_key, emoji_name in [("range", "wcr_range"), ("duration", "wcr_duration"), ("healing", "wcr_healing"), ("radius", "wcr_radius"), ("lvl_advantage", "wcr_lvl_advantage"), ("percent_dmg", "wcr_percent_dmg"), ("percent_dps", "wcr_percent_dps"), ("fan_damage", "wcr_fan_damage"), ("crash_damage", "wcr_crash_damage"), ("healing", "wcr_healing"), ("area_healing", "wcr_area_healing")]:
+        for stat_key, emoji_name in [("range", "wcr_range"), ("duration", "wcr_duration"), ("healing", "wcr_healing"), ("radius", "wcr_radius"), ("lvl_advantage", "wcr_lvl_advantage"), ("percent_dmg", "wcr_percent_dmg"), ("percent_dps", "wcr_percent_dps"), ("fan_damage", "wcr_fan_damage"), ("crash_damage", "wcr_crash_damage"), ("area_healing", "wcr_area_healing")]:
             if stat_key in stats and stat_key not in used_stats_keys:
-                stats_ordered.append({
+                extra_stats.append({
                     "name": f"{self.emojis.get(emoji_name, {}).get('syntax', '')} {stat_key.capitalize()}",
                     "value": str(stats[stat_key]),
                     "inline": True
@@ -239,11 +241,33 @@ class WCRCog(commands.Cog):
             color=embed_color
         )
 
-        # Stats hinzufügen (jeweils bis zu 3 pro Reihe)
-        for i in range(0, len(stats_ordered), 3):
-            for stat in stats_ordered[i:i+3]:
+        # Kleiner Abstand zwischen Beschreibung und Stats
+        embed.add_field(name="\u200b", value="\u200b", inline=False)
+
+        # Stats hinzufügen, jeweils genau die definierten Felder pro Reihe
+        field_groups = []
+        # Erste Reihe (Kosten und Typ)
+        field_groups.append(stats_ordered[0:2])
+        # Zweite Reihe (Gesundheit und Geschwindigkeit)
+        field_groups.append(stats_ordered[2:4])
+        # Dritte Reihe (Schaden, Angriffsgeschwindigkeit, DPS)
+        field_groups.append(stats_ordered[4:7])
+
+        # Jetzt die restlichen Stats hinzufügen
+        index = 0
+        while index < len(extra_stats):
+            group = extra_stats[index:index+3]
+            field_groups.append(group)
+            index += 3
+
+        # Felder zum Embed hinzufügen
+        for group in field_groups:
+            for field in group:
                 embed.add_field(
-                    name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
+                    name=field["name"], value=field["value"], inline=field.get("inline", True))
+            # Nach den ersten drei Reihen einen kleinen Abstand einfügen
+            if group == field_groups[2]:
+                embed.add_field(name="\u200b", value="\u200b", inline=False)
 
         # Talente vorbereiten und Bilder als Anhang hinzufügen
         files = []
@@ -270,7 +294,7 @@ class WCRCog(commands.Cog):
             else:
                 inline_fields.append((talent_name, talent_description))
 
-        # Leeren Platzhalter für Abstand hinzufügen
+        # Kleiner Abstand zwischen Stats und Talenten
         if inline_fields:
             embed.add_field(name="\u200b", value="\u200b", inline=False)
             # Inline-Felder für Talente hinzufügen
