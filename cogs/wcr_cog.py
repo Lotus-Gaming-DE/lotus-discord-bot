@@ -113,67 +113,83 @@ class WCRCog(commands.Cog):
         print(f"Befehl /name ausgeführt mit Name: {name} und Sprache: {lang}")
         # Defer the response if processing might take time
         await interaction.response.defer()
-        embed = self.create_mini_embed(name, lang)
+        embed, logo_file = self.create_mini_embed(name, lang)
         if embed is None:
             await interaction.followup.send(f"Mini mit Namen '{name}' nicht gefunden.")
         else:
-            await interaction.followup.send(embed=embed)
+            if logo_file:
+                await interaction.followup.send(embed=embed, file=logo_file)
+            else:
+                await interaction.followup.send(embed=embed)
 
     def create_mini_embed(self, name_or_id, lang):
         if lang not in self.languages:
-            return None
+            return None, None
 
-        # Normalisiere den eingegebenen Namen oder verwende die ID
-        input_words = self.normalize_name(str(name_or_id))
-        permutations = [' '.join(p) for i in range(1, len(input_words) + 1)
-                        for p in itertools.permutations(input_words, i)]
-
-        unit_found = False
-        matching_unit_text = None
-
-        # Suche in der gewählten Sprache
         texts = self.languages[lang]
-        for permuted_name in permutations:
-            for unit in texts["units"]:
-                unit_name_normalized = ' '.join(
-                    self.normalize_name(unit["name"]))
-                if permuted_name in unit_name_normalized:
-                    matching_unit_text = unit
-                    unit_found = True
-                    break
-            if unit_found:
-                break
 
-        # Wenn nicht gefunden, suche in anderen Sprachen
-        if not unit_found:
-            for other_lang, other_texts in self.languages.items():
-                if other_lang == lang:
-                    continue
-                for permuted_name in permutations:
-                    for unit in other_texts["units"]:
-                        unit_name_normalized = ' '.join(
-                            self.normalize_name(unit["name"]))
-                        if permuted_name in unit_name_normalized:
-                            matching_unit_text = unit
-                            lang = other_lang  # Sprache wechseln
-                            texts = other_texts
-                            unit_found = True
-                            break
-                    if unit_found:
+        # Versuche, name_or_id als ID zu behandeln
+        try:
+            unit_id = int(name_or_id)
+            # Finde die Einheit in der units-Liste anhand der ID
+            matching_unit = next(
+                (unit for unit in self.units if unit["id"] == unit_id), None)
+            if not matching_unit:
+                return None, None
+            # Hole den Einheitentext
+            matching_unit_text = next(
+                (unit for unit in texts["units"] if unit["id"] == unit_id), None)
+            if not matching_unit_text:
+                return None, None
+        except ValueError:
+            # Ist keine ID, behandle es als Namen
+            input_words = self.normalize_name(name_or_id)
+            permutations = [' '.join(p) for i in range(1, len(input_words) + 1)
+                            for p in itertools.permutations(input_words, i)]
+
+            unit_found = False
+            matching_unit_text = None
+
+            # Suche in der gewählten Sprache
+            for permuted_name in permutations:
+                for unit in texts["units"]:
+                    unit_name_normalized = ' '.join(
+                        self.normalize_name(unit["name"]))
+                    if permuted_name in unit_name_normalized:
+                        matching_unit_text = unit
+                        unit_found = True
                         break
                 if unit_found:
                     break
 
-        if not unit_found:
-            return None
+            # Wenn nicht gefunden, suche in anderen Sprachen
+            if not unit_found:
+                for other_lang, other_texts in self.languages.items():
+                    if other_lang == lang:
+                        continue
+                    for permuted_name in permutations:
+                        for unit in other_texts["units"]:
+                            unit_name_normalized = ' '.join(
+                                self.normalize_name(unit["name"]))
+                            if permuted_name in unit_name_normalized:
+                                matching_unit_text = unit
+                                lang = other_lang  # Sprache wechseln
+                                texts = other_texts
+                                unit_found = True
+                                break
+                        if unit_found:
+                            break
+                    if unit_found:
+                        break
 
-        # Finde die Einheit in der units-Liste anhand der ID
-        unit_id = matching_unit_text["id"]
-        matching_unit = next(
-            (unit for unit in self.units if unit["id"] == unit_id), None)
+            if not unit_found:
+                return None, None
 
-        if not matching_unit:
-            return None
+            unit_id = matching_unit_text["id"]
+            matching_unit = next(
+                (unit for unit in self.units if unit["id"] == unit_id), None)
+            if not matching_unit:
+                return None, None
 
         unit_name, unit_description, talents = self.get_text_data(
             unit_id, lang)
@@ -387,10 +403,12 @@ class WCRCog(commands.Cog):
         if os.path.exists(logo_path):
             embed.set_footer(
                 text='a service brought to you by Lotus Gaming', icon_url=f'attachment://{logo_filename}')
+            logo_file = discord.File(logo_path, filename=logo_filename)
         else:
             embed.set_footer(text='a service brought to you by Lotus Gaming')
+            logo_file = None
 
-        return embed
+        return embed, logo_file
 
     # Autocomplete-Funktionen
     async def cost_autocomplete(self, interaction: discord.Interaction, current: str):
@@ -510,29 +528,32 @@ class WCRCog(commands.Cog):
         await interaction.response.send_message("Gefundene Minis:", view=view)
 
     async def send_mini_embed(self, interaction, unit_id, lang):
-        embed = self.create_mini_embed(unit_id, lang)
+        embed, logo_file = self.create_mini_embed(unit_id, lang)
         if embed is None:
             await interaction.followup.send(f"Details für Mini mit ID '{unit_id}' nicht gefunden.")
         else:
-            await interaction.followup.send(embed=embed)
+            if logo_file:
+                await interaction.followup.send(embed=embed, file=logo_file)
+            else:
+                await interaction.followup.send(embed=embed)
 
 
 class MiniSelectView(discord.ui.View):
     def __init__(self, options, cog, lang):
         super().__init__(timeout=60)
-        self.add_item(MiniSelect(options))
-        self.cog = cog
-        self.lang = lang
+        self.add_item(MiniSelect(options, cog, lang))
 
 
 class MiniSelect(discord.ui.Select):
-    def __init__(self, options):
+    def __init__(self, options, cog, lang):
         super().__init__(placeholder="Wähle ein Mini aus", options=options, max_values=1)
+        self.cog = cog
+        self.lang = lang
 
     async def callback(self, interaction: discord.Interaction):
         unit_id = int(self.values[0])
         await interaction.response.defer()
-        await self.view.cog.send_mini_embed(interaction, unit_id, self.view.lang)
+        await self.cog.send_mini_embed(interaction, unit_id, self.lang)
 
 
 async def setup(bot):
