@@ -111,13 +111,20 @@ class WCRCog(commands.Cog):
     @app_commands.describe(name="Name des Minis", lang="Sprache")
     async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
         print(f"Befehl /name ausgeführt mit Name: {name} und Sprache: {lang}")
+        # Defer the response if processing might take time
+        await interaction.response.defer()
+        embed = self.create_mini_embed(name, lang)
+        if embed is None:
+            await interaction.followup.send(f"Mini mit Namen '{name}' nicht gefunden.")
+        else:
+            await interaction.followup.send(embed=embed)
 
+    def create_mini_embed(self, name_or_id, lang):
         if lang not in self.languages:
-            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: " + ", ".join(self.languages.keys()))
-            return
+            return None
 
-        # Normalisiere den eingegebenen Namen
-        input_words = self.normalize_name(name)
+        # Normalisiere den eingegebenen Namen oder verwende die ID
+        input_words = self.normalize_name(str(name_or_id))
         permutations = [' '.join(p) for i in range(1, len(input_words) + 1)
                         for p in itertools.permutations(input_words, i)]
 
@@ -158,8 +165,7 @@ class WCRCog(commands.Cog):
                     break
 
         if not unit_found:
-            await interaction.response.send_message(f"Mini mit Namen '{name}' nicht gefunden.")
-            return
+            return None
 
         # Finde die Einheit in der units-Liste anhand der ID
         unit_id = matching_unit_text["id"]
@@ -167,8 +173,7 @@ class WCRCog(commands.Cog):
             (unit for unit in self.units if unit["id"] == unit_id), None)
 
         if not matching_unit:
-            await interaction.response.send_message(f"Details für Mini mit ID '{unit_id}' nicht gefunden.")
-            return
+            return None
 
         unit_name, unit_description, talents = self.get_text_data(
             unit_id, lang)
@@ -382,11 +387,10 @@ class WCRCog(commands.Cog):
         if os.path.exists(logo_path):
             embed.set_footer(
                 text='a service brought to you by Lotus Gaming', icon_url=f'attachment://{logo_filename}')
-            logo_file = discord.File(logo_path, filename=logo_filename)
-            await interaction.response.send_message(embed=embed, file=logo_file)
         else:
             embed.set_footer(text='a service brought to you by Lotus Gaming')
-            await interaction.response.send_message(embed=embed)
+
+        return embed
 
     # Autocomplete-Funktionen
     async def cost_autocomplete(self, interaction: discord.Interaction, current: str):
@@ -501,36 +505,34 @@ class WCRCog(commands.Cog):
                            value=str(unit_id), emoji=faction_emoji))
 
         # Erstelle das Dropdown-Menü
-        select = discord.ui.Select(
-            placeholder="Wähle ein Mini aus", options=options, max_values=1)
-
-        async def select_callback(interaction_select: discord.Interaction):
-            unit_id = int(select.values[0])
-            await self.send_mini_embed(interaction_select, unit_id, lang)
-
-        select.callback = select_callback
-
-        view = discord.ui.View()
-        view.add_item(select)
+        view = MiniSelectView(options, self, lang)
 
         await interaction.response.send_message("Gefundene Minis:", view=view)
 
     async def send_mini_embed(self, interaction, unit_id, lang):
-        # Finde die Einheit in der units-Liste anhand der ID
-        matching_unit = next(
-            (unit for unit in self.units if unit["id"] == unit_id), None)
+        embed = self.create_mini_embed(unit_id, lang)
+        if embed is None:
+            await interaction.followup.send(f"Details für Mini mit ID '{unit_id}' nicht gefunden.")
+        else:
+            await interaction.followup.send(embed=embed)
 
-        if not matching_unit:
-            await interaction.response.send_message(f"Details für Mini mit ID '{unit_id}' nicht gefunden.")
-            return
 
-        texts = self.languages[lang]
-        unit_name, unit_description, talents = self.get_text_data(
-            unit_id, lang)
-        stats = matching_unit.get("stats", {})
+class MiniSelectView(discord.ui.View):
+    def __init__(self, options, cog, lang):
+        super().__init__(timeout=60)
+        self.add_item(MiniSelect(options))
+        self.cog = cog
+        self.lang = lang
 
-        # Hier verwenden wir den gleichen Code wie in der /name-Methode, um das Embed zu erstellen
-        await self.name(interaction, name=unit_name, lang=lang)
+
+class MiniSelect(discord.ui.Select):
+    def __init__(self, options):
+        super().__init__(placeholder="Wähle ein Mini aus", options=options, max_values=1)
+
+    async def callback(self, interaction: discord.Interaction):
+        unit_id = int(self.values[0])
+        await interaction.response.defer()
+        await self.view.cog.send_mini_embed(interaction, unit_id, self.view.lang)
 
 
 async def setup(bot):
