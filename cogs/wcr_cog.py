@@ -251,7 +251,7 @@ class WCRCog(commands.Cog):
 
         # Kleiner Absatz nach der Beschreibung
         embed.description += "\n"
-        embed.description += "\n **Stats:**"
+        embed.description += "\n **Stats**"
 
         # Stats hinzufügen
         if row1_stats:
@@ -294,7 +294,7 @@ class WCRCog(commands.Cog):
         # Talente hinzufügen
         if talents:
             # Kleiner Abstand vor den Talenten
-            embed.add_field(name="\u200b", value="\u200b", inline=False)
+            embed.add_field(name="\u200b", value="**Talents**", inline=False)
             for talent in talents[:3]:
                 talent_name = talent.get("name", "Unbekanntes Talent")
                 talent_description = talent.get(
