@@ -44,7 +44,7 @@ async def on_ready():
 
         print("Emoji-Liste vom Hauptserver wurde erfolgreich in 'data/emojis.json' gespeichert.")
 
-    # Emoji-Laden für den neuen Server
+    # Emoji-Laden für den Emoji-Server
     emoji_guild = bot.get_guild(int(emoji_server_id))
     if emoji_guild:
         emojis_extension_data = {}
@@ -61,8 +61,18 @@ async def on_ready():
 
         print("Emoji-Liste vom Emoji-Server wurde erfolgreich in 'data/emojis_extension_01.json' gespeichert.")
 
-    # Synchronisiere Slash-Commands nur für den Hauptserver
-    await bot.tree.sync(guild=discord.Object(id=int(main_server_id)))
+    # Synchronisiere die Befehle
+    guild = discord.Object(id=int(main_server_id))
+
+    # **Globale Befehle löschen**
+    await bot.tree.clear_commands(guild=None)
+    await bot.tree.sync(guild=None)
+    print('Globale Befehle wurden gelöscht.')
+
+    # **Guild-spezifische Befehle synchronisieren**
+    await bot.tree.sync(guild=guild)
+    print(f'Befehle wurden für den Server {main_server_id} synchronisiert.')
+
     print(f'Bot ist online als {bot.user} und mit dem Server synchronisiert.')
 
 
