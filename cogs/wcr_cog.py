@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 import json
 import os
+import itertools
 
 
 class WCRCog(commands.Cog):
@@ -92,7 +93,15 @@ class WCRCog(commands.Cog):
             (item for item in categories if item["id"] == category_id), {})
         return category_item.get("name", "Unbekannt")
 
+    def get_faction_icon(self, faction_id):
+        faction_data = self.get_faction_data(faction_id)
+        return faction_data.get("icon", "")
+
+    def normalize_name(self, name):
+        return ''.join(c for c in name if c.isalnum() or c.isspace()).lower().split()
+
     @app_commands.command(name="name", description="Zeigt Details zu einem Mini basierend auf dem Namen an.")
+    @app_commands.describe(name="Name des Minis", lang="Sprache")
     async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
         print(f"Befehl /name ausgeführt mit Name: {name} und Sprache: {lang}")
 
@@ -100,12 +109,46 @@ class WCRCog(commands.Cog):
             await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: " + ", ".join(self.languages.keys()))
             return
 
-        # Suche nach dem Namen in der Sprachdatei
-        texts = self.languages[lang]
-        matching_unit_text = next(
-            (unit for unit in texts["units"] if unit["name"].lower() == name.lower()), None)
+        # Normalisiere den eingegebenen Namen
+        input_words = self.normalize_name(name)
+        permutations = [' '.join(p) for i in range(1, len(input_words) + 1)
+                        for p in itertools.permutations(input_words, i)]
 
-        if not matching_unit_text:
+        unit_found = False
+        matching_unit_text = None
+
+        # Suche in der gewählten Sprache
+        texts = self.languages[lang]
+        for permuted_name in permutations:
+            matching_unit_text = next(
+                (unit for unit in texts["units"] if permuted_name in self.normalize_name(
+                    unit["name"])),
+                None
+            )
+            if matching_unit_text:
+                unit_found = True
+                break
+
+        # Wenn nicht gefunden, suche in anderen Sprachen
+        if not unit_found:
+            for other_lang, other_texts in self.languages.items():
+                if other_lang == lang:
+                    continue
+                for permuted_name in permutations:
+                    matching_unit_text = next(
+                        (unit for unit in other_texts["units"] if permuted_name in self.normalize_name(
+                            unit["name"])),
+                        None
+                    )
+                    if matching_unit_text:
+                        lang = other_lang  # Sprache wechseln
+                        texts = other_texts
+                        unit_found = True
+                        break
+                if unit_found:
+                    break
+
+        if not unit_found:
             await interaction.response.send_message(f"Mini mit Namen '{name}' nicht gefunden.")
             return
 
@@ -335,6 +378,156 @@ class WCRCog(commands.Cog):
         else:
             embed.set_footer(text='a service brought to you by Lotus Gaming')
             await interaction.response.send_message(embed=embed)
+
+    # Autocomplete-Funktionen für die Filterparameter
+    async def cost_autocomplete(self, interaction: discord.Interaction, current: str):
+        costs = sorted(set(unit["cost"] for unit in self.units))
+        return [
+            app_commands.Choice(name=str(c), value=str(c))
+            for c in costs if current.lower() in str(c).lower()
+        ]
+
+    async def speed_autocomplete(self, interaction: discord.Interaction, current: str):
+        speeds = self.languages['en']['categories']['speeds']
+        return [
+            app_commands.Choice(name=s['name'], value=str(s['id']))
+            for s in speeds if current.lower() in s['name'].lower()
+        ]
+
+    async def faction_autocomplete(self, interaction: discord.Interaction, current: str):
+        factions = self.languages['en']['categories']['factions']
+        return [
+            app_commands.Choice(name=f['name'], value=str(f['id']))
+            for f in factions if current.lower() in f['name'].lower()
+        ]
+
+    async def type_autocomplete(self, interaction: discord.Interaction, current: str):
+        types = self.languages['en']['categories']['types']
+        return [
+            app_commands.Choice(name=t['name'], value=str(t['id']))
+            for t in types if current.lower() in t['name'].lower()
+        ]
+
+    async def trait_autocomplete(self, interaction: discord.Interaction, current: str):
+        traits = self.languages['en']['categories']['traits']
+        return [
+            app_commands.Choice(name=t['name'], value=str(t['id']))
+            for t in traits if current.lower() in t['name'].lower()
+        ]
+
+    @app_commands.command(name="filter", description="Filtert Minis basierend auf verschiedenen Kriterien.")
+    @app_commands.describe(
+        cost="Kosten des Minis",
+        speed="Geschwindigkeit des Minis",
+        faction="Fraktion des Minis",
+        type="Typ des Minis",
+        trait="Merkmal des Minis",
+        lang="Sprache"
+    )
+    @app_commands.autocomplete(
+        cost=cost_autocomplete,
+        speed=speed_autocomplete,
+        faction=faction_autocomplete,
+        type=type_autocomplete,
+        trait=trait_autocomplete
+    )
+    async def filter(self, interaction: discord.Interaction, cost: str = None, speed: str = None,
+                     faction: str = None, type: str = None, trait: str = None, lang: str = "de"):
+        print(f"Befehl /filter ausgeführt mit Parametern: cost={cost}, speed={
+              speed}, faction={faction}, type={type}, trait={trait}, lang={lang}")
+
+        if lang not in self.languages:
+            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: " + ", ".join(self.languages.keys()))
+            return
+
+        texts = self.languages[lang]
+
+        # Starte mit allen Einheiten
+        filtered_units = self.units
+
+        # Wende Filter an, wenn Parameter angegeben sind
+        if cost is not None:
+            filtered_units = [
+                u for u in filtered_units if str(u.get("cost")) == cost]
+
+        if speed is not None:
+            filtered_units = [u for u in filtered_units if str(
+                u.get("speed_id")) == speed]
+
+        if faction is not None:
+            filtered_units = [u for u in filtered_units if str(
+                u.get("faction_id")) == faction]
+
+        if type is not None:
+            filtered_units = [u for u in filtered_units if str(
+                u.get("type_id")) == type]
+
+        if trait is not None:
+            filtered_units = [u for u in filtered_units if int(
+                trait) in u.get("traits_ids", [])]
+
+        if not filtered_units:
+            await interaction.response.send_message("Keine Minis gefunden, die den angegebenen Kriterien entsprechen.")
+            return
+
+        # Begrenze die Anzahl der Ergebnisse
+        if len(filtered_units) > 25:
+            await interaction.response.send_message("Zu viele Ergebnisse. Bitte verfeinere deine Filter.")
+            return
+
+        # Erstelle die Optionen für das Dropdown-Menü
+        options = []
+        for unit in filtered_units:
+            unit_id = unit["id"]
+            unit_text = next(
+                (u for u in texts["units"] if u["id"] == unit_id), {})
+            unit_name = unit_text.get("name", "Unbekannt")
+
+            # Fraktions-Emoji abrufen
+            faction_emoji = self.emojis.get(
+                self.get_faction_icon(unit["faction_id"]), {}).get("syntax", "")
+
+            options.append(discord.SelectOption(label=unit_name,
+                           value=str(unit_id), emoji=faction_emoji))
+
+        # Erstelle das Dropdown-Menü
+        select = discord.ui.Select(
+            placeholder="Wähle ein Mini aus", options=options, max_values=1)
+
+        async def select_callback(interaction_select: discord.Interaction):
+            unit_id = int(select.values[0])
+            await self.send_mini_embed(interaction_select, unit_id, lang)
+
+        select.callback = select_callback
+
+        view = discord.ui.View()
+        view.add_item(select)
+
+        await interaction.response.send_message("Gefundene Minis:", view=view)
+
+    async def send_mini_embed(self, interaction, unit_id, lang):
+        # Implementiere hier die Logik, um das Embed für das ausgewählte Mini zu senden
+        # Du kannst den Code aus deinem `/name`-Befehl wiederverwenden
+        # Finde die Einheit in der units-Liste anhand der ID
+        matching_unit = next(
+            (unit for unit in self.units if unit["id"] == unit_id), None)
+
+        if not matching_unit:
+            await interaction.response.send_message(f"Details für Mini mit ID '{unit_id}' nicht gefunden.")
+            return
+
+        texts = self.languages[lang]
+        unit_name, unit_description, talents = self.get_text_data(
+            unit_id, lang)
+        stats = matching_unit.get("stats", {})
+
+        # Rest des Codes ist identisch mit dem in der `/name`-Funktion
+        # ...
+
+        # (Hier kannst du den gleichen Code wie in der `/name`-Methode verwenden, um das Embed zu erstellen und zu senden.)
+
+        # Für Einfachheit rufen wir die `name`-Methode auf
+        await self.name(interaction, name=unit_name, lang=lang)
 
 
 async def setup(bot):
