@@ -11,12 +11,11 @@ intents.guilds = True  # Stelle sicher, dass die Guilds-Intents aktiviert sind
 class MyBot(commands.Bot):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Server-IDs aus den Umgebungsvariablen lesen
+        # Server-ID aus der Umgebungsvariablen lesen
         self.main_server_id = os.getenv('server_id')
-        self.emoji_server_id = os.getenv('emoji_server_id')
 
-        if self.main_server_id is None or self.emoji_server_id is None:
-            print("Eine oder beide Server-IDs wurden nicht gefunden. Bitte stelle sicher, dass die Environment-Variablen 'server_id' und 'emoji_server_id' gesetzt sind.")
+        if self.main_server_id is None:
+            print("Die Environment-Variable 'server_id' wurde nicht gefunden. Bitte stelle sicher, dass sie gesetzt ist.")
             exit(1)
 
     async def setup_hook(self):
@@ -25,12 +24,12 @@ class MyBot(commands.Bot):
             if filename.endswith('.py'):
                 await self.load_extension(f'cogs.{filename[:-3]}')
 
-        # Emoji-Laden und Befehle synchronisieren
+        # Emojis laden und Befehle synchronisieren
         await self.load_emojis_and_sync_commands()
 
     async def load_emojis_and_sync_commands(self):
         try:
-            # Emoji-Laden für den Hauptserver
+            # Emojis vom Hauptserver laden
             main_guild = self.get_guild(int(self.main_server_id))
             if main_guild is None:
                 main_guild = await self.fetch_guild(int(self.main_server_id))
@@ -50,27 +49,9 @@ class MyBot(commands.Bot):
 
                 print(
                     "Emoji-Liste vom Hauptserver wurde erfolgreich in 'data/emojis.json' gespeichert.")
-
-            # Emoji-Laden für den Emoji-Server
-            emoji_guild = self.get_guild(int(self.emoji_server_id))
-            if emoji_guild is None:
-                emoji_guild = await self.fetch_guild(int(self.emoji_server_id))
-            if emoji_guild:
-                emojis_extension_data = {}
-                for emoji in emoji_guild.emojis:
-                    emojis_extension_data[emoji.name] = {
-                        "id": emoji.id,
-                        "animated": emoji.animated,
-                        "syntax": f"{'<a:' if emoji.animated else '<:'}{emoji.name}:{emoji.id}>"
-                    }
-
-                # Speichern in separater JSON-Datei
-                with open("data/emojis_extension_01.json", "w", encoding="utf-8") as f:
-                    json.dump(emojis_extension_data, f,
-                              indent=4, ensure_ascii=False)
-
-                print(
-                    "Emoji-Liste vom Emoji-Server wurde erfolgreich in 'data/emojis_extension_01.json' gespeichert.")
+            else:
+                print(f"Hauptserver mit ID {
+                      self.main_server_id} nicht gefunden.")
 
             # Synchronisiere die Befehle
             guild = discord.Object(id=int(self.main_server_id))
