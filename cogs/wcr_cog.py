@@ -130,7 +130,9 @@ class WCRCog(commands.Cog):
         faction_data = self.get_faction_data(faction_id)
         embed_color_hex = faction_data.get("color", "#3498db")
         embed_color = int(embed_color_hex.strip("#"), 16)
-        faction_emoji_name = faction_data.get("icon", "")
+        # Suchen nach 'icon' oder 'name' für das Emoji
+        faction_emoji_name = faction_data.get(
+            "icon", faction_data.get("name", ""))
         faction_emoji = self.emojis.get(
             faction_emoji_name, {}).get("syntax", "")
 
@@ -256,13 +258,26 @@ class WCRCog(commands.Cog):
             embed.add_field(
                 name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
 
+        # Falls weniger als 3 Felder in der Reihe, leere Felder hinzufügen
+        while len(row1_stats) < 3:
+            embed.add_field(name="\u200b", value="\u200b", inline=True)
+            row1_stats.append(None)
+
         for stat in row2_stats:
             embed.add_field(
                 name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
 
+        while len(row2_stats) < 3:
+            embed.add_field(name="\u200b", value="\u200b", inline=True)
+            row2_stats.append(None)
+
         for stat in row3_stats:
             embed.add_field(
                 name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
+
+        while len(row3_stats) < 3:
+            embed.add_field(name="\u200b", value="\u200b", inline=True)
+            row3_stats.append(None)
 
         # Kleiner Abstand nach den ersten drei Reihen
         embed.add_field(name="\u200b", value="\u200b", inline=False)
@@ -273,6 +288,10 @@ class WCRCog(commands.Cog):
             for stat in group:
                 embed.add_field(
                     name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
+            # Falls weniger als 3 Felder in der Reihe, leere Felder hinzufügen
+            while len(group) < 3:
+                embed.add_field(name="\u200b", value="\u200b", inline=True)
+                group.append(None)
 
         # Talente vorbereiten und Bilder als Anhang hinzufügen
         files = []
@@ -306,10 +325,10 @@ class WCRCog(commands.Cog):
             for name, value in inline_fields:
                 embed.add_field(name=name, value=value, inline=True)
 
-        # Setze das Hauptbild (Pose)
+        # Setze das Thumbnail (Pose)
         pose_url = self.get_pose_url(unit_id)
         if pose_url:
-            embed.set_image(url=pose_url)
+            embed.set_thumbnail(url=pose_url)
 
         # Logo hinzufügen
         logo_filename = 'LotusGaming.png'
