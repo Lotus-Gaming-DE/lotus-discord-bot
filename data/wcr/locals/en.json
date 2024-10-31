@@ -1842,5 +1842,32 @@
                 "name": "Fast"
             }
         ]
+    },
+    "stat_labels": {
+        "cost": "Cost",
+        "type_id": "Type",
+        "health": "Health",
+        "speed_id": "Speed",
+        "damage": "Damage",
+        "area_damage": "AOE Damange",
+        "attack_speed": "ATK Speed",
+        "dps": "DPS",
+        "range": "Range",
+        "duration": "Duration",
+        "healing": "Healing",
+        "radius": "Radius",
+        "lvl_advantage": "Lv. Advantage",
+        "percent_dmg": "% Damage",
+        "percent_dps": "% DPS",
+        "fan_damage": "Fan Damage",
+        "crash_damage": "Crash Damage",
+        "area_healing": "AOE Healing",
+        "dwarf_dmg": "Dwarf Damage",
+        "bear_dmg": "Bear Damage",
+        "dwarf_dps": "Dwarf DPS",
+        "bear_dps": "Bear DPS",
+        "dwarf_health": "Dwarf Health",
+        "bear_health": "Bear Health",
+        "dwarf_range": "Dwarf Range"
     }
 }
