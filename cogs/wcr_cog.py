@@ -379,10 +379,6 @@ class WCRCog(commands.Cog):
                 for _ in range(3 - (len(talents[:3]) % 3)):
                     embed.add_field(name="\u200b", value="\u200b", inline=True)
 
-        # Füge ein Feld mit einem Zero-Width Space hinzu, um einen minimalen Abstand zu erzeugen
-        # Verwende U+200C (Zero Width Non-Joiner)
-        embed.add_field(name="‎", value="‎", inline=False)
-
         # Traits hinzufügen
         traits_ids = matching_unit.get("traits_ids", [])
         traits = []
