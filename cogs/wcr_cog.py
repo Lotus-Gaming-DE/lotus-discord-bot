@@ -249,6 +249,9 @@ class WCRCog(commands.Cog):
             color=embed_color
         )
 
+        # Kleiner Absatz nach der Beschreibung
+        embed.description += "\n"
+
         # Stats hinzufügen
         if row1_stats:
             for stat in row1_stats:
@@ -289,12 +292,18 @@ class WCRCog(commands.Cog):
 
         # Talente hinzufügen
         if talents:
+            # Kleiner Abstand vor den Talenten
+            embed.add_field(name="\u200b", value="\u200b", inline=False)
             for talent in talents[:3]:
                 talent_name = talent.get("name", "Unbekanntes Talent")
                 talent_description = talent.get(
                     "description", "Beschreibung fehlt")
                 embed.add_field(name=talent_name,
-                                value=talent_description, inline=False)
+                                value=talent_description, inline=True)
+            # Falls weniger als 3 Talente, Reihe auffüllen
+            if len(talents[:3]) % 3 != 0:
+                for _ in range(3 - (len(talents[:3]) % 3)):
+                    embed.add_field(name="\u200b", value="\u200b", inline=True)
 
         # Traits hinzufügen
         traits_ids = matching_unit.get("traits_ids", [])
