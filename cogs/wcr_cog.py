@@ -29,7 +29,8 @@ class WCRCog(commands.Cog):
         languages = {}
         # Pfad zum 'locals'-Verzeichnis bestimmen
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        locals_dir = os.path.join(current_dir, '..', 'data', 'wcr', 'locals')
+        locals_dir = os.path.join(
+            current_dir, '..', 'data', 'wcr', 'locals')
         locals_dir = os.path.normpath(locals_dir)
 
         for lang_file in os.listdir(locals_dir):
@@ -286,13 +287,14 @@ class WCRCog(commands.Cog):
                     embed.add_field(name="\u200b", value="\u200b", inline=True)
                     group.append(None)
 
-        # Talente vorbereiten
+        # Talente hinzufügen
         if talents:
-            # Kleiner Abstand zwischen Stats und Talenten
-            # embed.add_field(name="\u200b", value="\u200b", inline=False)
-            # Inline-Felder für Talente hinzufügen
-            for name, value in [(t.get("name", "Unbekanntes Talent"), t.get("description", "Beschreibung fehlt")) for t in talents[:3]]:
-                embed.add_field(name=name, value=value, inline=False)
+            for talent in talents[:3]:
+                talent_name = talent.get("name", "Unbekanntes Talent")
+                talent_description = talent.get(
+                    "description", "Beschreibung fehlt")
+                embed.add_field(name=talent_name,
+                                value=talent_description, inline=False)
 
         # Traits hinzufügen
         traits_ids = matching_unit.get("traits_ids", [])
@@ -324,5 +326,6 @@ class WCRCog(commands.Cog):
             embed.set_footer(text='a service brought to you by Lotus Gaming')
             await interaction.response.send_message(embed=embed)
 
-    async def setup(bot):
-        await bot.add_cog(WCRCog(bot))
+
+async def setup(bot):
+    await bot.add_cog(WCRCog(bot))
