@@ -3,7 +3,6 @@ from discord import app_commands
 from discord.ext import commands
 import json
 import os
-import urllib.request
 
 
 class WCRCog(commands.Cog):
@@ -130,9 +129,8 @@ class WCRCog(commands.Cog):
         faction_data = self.get_faction_data(faction_id)
         embed_color_hex = faction_data.get("color", "#3498db")
         embed_color = int(embed_color_hex.strip("#"), 16)
-        # Suchen nach 'icon' oder 'name' für das Emoji
-        faction_emoji_name = faction_data.get(
-            "icon", faction_data.get("name", ""))
+        # Suchen nach 'icon' für das Emoji
+        faction_emoji_name = faction_data.get("icon", "")
         faction_emoji = self.emojis.get(
             faction_emoji_name, {}).get("syntax", "")
 
@@ -250,80 +248,64 @@ class WCRCog(commands.Cog):
             color=embed_color
         )
 
-        # Kleiner Abstand zwischen Beschreibung und Stats
-        embed.add_field(name="\u200b", value="\u200b", inline=False)
-
         # Stats hinzufügen
-        for stat in row1_stats:
-            embed.add_field(
-                name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
-
-        # Falls weniger als 3 Felder in der Reihe, leere Felder hinzufügen
-        while len(row1_stats) < 3:
-            embed.add_field(name="\u200b", value="\u200b", inline=True)
-            row1_stats.append(None)
-
-        for stat in row2_stats:
-            embed.add_field(
-                name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
-
-        while len(row2_stats) < 3:
-            embed.add_field(name="\u200b", value="\u200b", inline=True)
-            row2_stats.append(None)
-
-        for stat in row3_stats:
-            embed.add_field(
-                name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
-
-        while len(row3_stats) < 3:
-            embed.add_field(name="\u200b", value="\u200b", inline=True)
-            row3_stats.append(None)
-
-        # Kleiner Abstand nach den ersten drei Reihen
-        embed.add_field(name="\u200b", value="\u200b", inline=False)
-
-        # Übrige Stats hinzufügen, jeweils bis zu drei pro Reihe
-        for i in range(0, len(extra_stats), 3):
-            group = extra_stats[i:i+3]
-            for stat in group:
+        if row1_stats:
+            for stat in row1_stats:
                 embed.add_field(
                     name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
-            # Falls weniger als 3 Felder in der Reihe, leere Felder hinzufügen
-            while len(group) < 3:
+            # Fülle die Reihe auf, wenn weniger als 3 Felder
+            while len(row1_stats) < 3:
                 embed.add_field(name="\u200b", value="\u200b", inline=True)
-                group.append(None)
+                row1_stats.append(None)
 
-        # Talente vorbereiten und Bilder als Anhang hinzufügen
-        files = []
-        inline_fields = []
-        for i, talent in enumerate(talents):
-            if i >= 3:
-                break  # Begrenzt auf maximal 3 Talente
-            talent_name = talent.get("name", "Unbekanntes Talent")
-            talent_description = talent.get(
-                "description", "Beschreibung fehlt")
-            # Suche nach dem Talentbild
-            unit_pictures = self.pictures.get("units", [])
-            unit_picture = next(
-                (pic for pic in unit_pictures if pic["id"] == unit_id), {})
-            talent_image_url = unit_picture.get(f"talent_{i+1}", "")
+        if row2_stats:
+            for stat in row2_stats:
+                embed.add_field(
+                    name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
+            while len(row2_stats) < 3:
+                embed.add_field(name="\u200b", value="\u200b", inline=True)
+                row2_stats.append(None)
 
-            if talent_image_url:
-                # Lade das Bild herunter und speichere es temporär
-                filename = f"temp_talent_image_{i}.png"
-                urllib.request.urlretrieve(talent_image_url, filename)
-                files.append(discord.File(filename, filename=filename))
-                inline_fields.append(
-                    (f"{talent_name}", f"{talent_description}\n[Bild]({talent_image_url})"))
-            else:
-                inline_fields.append((talent_name, talent_description))
+        if row3_stats:
+            for stat in row3_stats:
+                embed.add_field(
+                    name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
+            while len(row3_stats) < 3:
+                embed.add_field(name="\u200b", value="\u200b", inline=True)
+                row3_stats.append(None)
 
-        # Kleiner Abstand zwischen Stats und Talenten
-        if inline_fields:
-            embed.add_field(name="\u200b", value="\u200b", inline=False)
+        # Übrige Stats hinzufügen, jeweils bis zu drei pro Reihe
+        if extra_stats:
+            for i in range(0, len(extra_stats), 3):
+                group = extra_stats[i:i+3]
+                for stat in group:
+                    embed.add_field(
+                        name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
+                # Fülle die Reihe auf, wenn weniger als 3 Felder
+                while len(group) < 3:
+                    embed.add_field(name="\u200b", value="\u200b", inline=True)
+                    group.append(None)
+
+        # Talente vorbereiten
+        if talents:
+            # Kleiner Abstand zwischen Stats und Talenten
+            # embed.add_field(name="\u200b", value="\u200b", inline=False)
             # Inline-Felder für Talente hinzufügen
-            for name, value in inline_fields:
-                embed.add_field(name=name, value=value, inline=True)
+            for name, value in [(t.get("name", "Unbekanntes Talent"), t.get("description", "Beschreibung fehlt")) for t in talents[:3]]:
+                embed.add_field(name=name, value=value, inline=False)
+
+        # Traits hinzufügen
+        traits_ids = matching_unit.get("traits_ids", [])
+        traits = []
+        all_traits = texts.get("categories", {}).get("traits", [])
+        for trait_id in traits_ids:
+            trait = next((t for t in all_traits if t["id"] == trait_id), None)
+            if trait:
+                traits.append(trait["name"])
+
+        if traits:
+            embed.add_field(name=stat_labels.get('traits', 'Traits'),
+                            value=', '.join(traits), inline=False)
 
         # Setze das Thumbnail (Pose)
         pose_url = self.get_pose_url(unit_id)
@@ -334,19 +316,13 @@ class WCRCog(commands.Cog):
         logo_filename = 'LotusGaming.png'
         logo_path = os.path.join('data', 'media', logo_filename)
         if os.path.exists(logo_path):
-            files.append(discord.File(logo_path, filename=logo_filename))
             embed.set_footer(
                 text='a service brought to you by Lotus Gaming', icon_url=f'attachment://{logo_filename}')
+            logo_file = discord.File(logo_path, filename=logo_filename)
+            await interaction.response.send_message(embed=embed, file=logo_file)
         else:
             embed.set_footer(text='a service brought to you by Lotus Gaming')
+            await interaction.response.send_message(embed=embed)
 
-        await interaction.response.send_message(embed=embed, files=files)
-
-        # Temporäre Dateien entfernen
-        for file in files:
-            if file.filename.startswith('temp_talent_image_'):
-                os.remove(file.filename)
-
-
-async def setup(bot):
-    await bot.add_cog(WCRCog(bot))
+    async def setup(bot):
+        await bot.add_cog(WCRCog(bot))
