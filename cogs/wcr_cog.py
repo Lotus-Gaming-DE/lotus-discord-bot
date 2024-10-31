@@ -1,9 +1,15 @@
 import discord
-from discord import app_commands
 from discord.ext import commands
+from discord import app_commands
 import json
 import os
 import itertools
+
+# Hauptserver-ID aus der Umgebungsvariablen lesen
+SERVER_ID = os.getenv('server_id')
+if SERVER_ID is None:
+    raise ValueError("Environment variable 'server_id' is not set.")
+MAIN_SERVER_ID = int(SERVER_ID)
 
 
 class WCRCog(commands.Cog):
@@ -101,6 +107,7 @@ class WCRCog(commands.Cog):
         return ''.join(c for c in name if c.isalnum() or c.isspace()).lower().split()
 
     @app_commands.command(name="name", description="Zeigt Details zu einem Mini basierend auf dem Namen an.")
+    @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
     @app_commands.describe(name="Name des Minis", lang="Sprache")
     async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
         print(f"Befehl /name ausgeführt mit Name: {name} und Sprache: {lang}")
@@ -120,13 +127,14 @@ class WCRCog(commands.Cog):
         # Suche in der gewählten Sprache
         texts = self.languages[lang]
         for permuted_name in permutations:
-            matching_unit_text = next(
-                (unit for unit in texts["units"] if permuted_name in self.normalize_name(
-                    unit["name"])),
-                None
-            )
-            if matching_unit_text:
-                unit_found = True
+            for unit in texts["units"]:
+                unit_name_normalized = ' '.join(
+                    self.normalize_name(unit["name"]))
+                if permuted_name in unit_name_normalized:
+                    matching_unit_text = unit
+                    unit_found = True
+                    break
+            if unit_found:
                 break
 
         # Wenn nicht gefunden, suche in anderen Sprachen
@@ -135,15 +143,16 @@ class WCRCog(commands.Cog):
                 if other_lang == lang:
                     continue
                 for permuted_name in permutations:
-                    matching_unit_text = next(
-                        (unit for unit in other_texts["units"] if permuted_name in self.normalize_name(
-                            unit["name"])),
-                        None
-                    )
-                    if matching_unit_text:
-                        lang = other_lang  # Sprache wechseln
-                        texts = other_texts
-                        unit_found = True
+                    for unit in other_texts["units"]:
+                        unit_name_normalized = ' '.join(
+                            self.normalize_name(unit["name"]))
+                        if permuted_name in unit_name_normalized:
+                            matching_unit_text = unit
+                            lang = other_lang  # Sprache wechseln
+                            texts = other_texts
+                            unit_found = True
+                            break
+                    if unit_found:
                         break
                 if unit_found:
                     break
@@ -379,7 +388,7 @@ class WCRCog(commands.Cog):
             embed.set_footer(text='a service brought to you by Lotus Gaming')
             await interaction.response.send_message(embed=embed)
 
-    # Autocomplete-Funktionen für die Filterparameter
+    # Autocomplete-Funktionen
     async def cost_autocomplete(self, interaction: discord.Interaction, current: str):
         costs = sorted(set(unit["cost"] for unit in self.units))
         return [
@@ -416,6 +425,7 @@ class WCRCog(commands.Cog):
         ]
 
     @app_commands.command(name="filter", description="Filtert Minis basierend auf verschiedenen Kriterien.")
+    @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
     @app_commands.describe(
         cost="Kosten des Minis",
         speed="Geschwindigkeit des Minis",
@@ -506,8 +516,6 @@ class WCRCog(commands.Cog):
         await interaction.response.send_message("Gefundene Minis:", view=view)
 
     async def send_mini_embed(self, interaction, unit_id, lang):
-        # Implementiere hier die Logik, um das Embed für das ausgewählte Mini zu senden
-        # Du kannst den Code aus deinem `/name`-Befehl wiederverwenden
         # Finde die Einheit in der units-Liste anhand der ID
         matching_unit = next(
             (unit for unit in self.units if unit["id"] == unit_id), None)
@@ -521,12 +529,7 @@ class WCRCog(commands.Cog):
             unit_id, lang)
         stats = matching_unit.get("stats", {})
 
-        # Rest des Codes ist identisch mit dem in der `/name`-Funktion
-        # ...
-
-        # (Hier kannst du den gleichen Code wie in der `/name`-Methode verwenden, um das Embed zu erstellen und zu senden.)
-
-        # Für Einfachheit rufen wir die `name`-Methode auf
+        # Hier verwenden wir den gleichen Code wie in der /name-Methode, um das Embed zu erstellen
         await self.name(interaction, name=unit_name, lang=lang)
 
 
