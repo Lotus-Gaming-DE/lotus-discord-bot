@@ -251,6 +251,7 @@ class WCRCog(commands.Cog):
 
         # Kleiner Absatz nach der Beschreibung
         embed.description += "\n"
+        embed.description += "\n Stats:"
 
         # Stats hinzufügen
         if row1_stats:
