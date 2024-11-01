@@ -1,10 +1,16 @@
+# cogs/wcr/cog.py
 import discord
 from discord.ext import commands
 from discord import app_commands
-import json
 import os
-import itertools
+import logging
+from . import data_loader
+from . import helpers
+from .views import MiniSelectView
 import traceback
+import itertools
+
+logger = logging.getLogger(__name__)
 
 # Hauptserver-ID aus der Umgebungsvariablen lesen
 SERVER_ID = os.getenv('server_id')
@@ -16,118 +22,10 @@ MAIN_SERVER_ID = int(SERVER_ID)
 class WCRCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.units = self.load_units()
-        self.languages = self.load_languages()
-        self.pictures = self.load_pictures()
-        self.emojis = self.load_emojis()
-
-    def load_units(self):
-        # Pfad zu 'units.json' bestimmen
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        units_path = os.path.join(
-            current_dir, '..', 'data', 'wcr', 'units.json')
-        units_path = os.path.normpath(units_path)
-
-        with open(units_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        # Rückgabe der Einheitenliste
-        return data['units']
-
-    def load_languages(self):
-        languages = {}
-        # Pfad zum 'locals'-Verzeichnis bestimmen
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        locals_dir = os.path.join(
-            current_dir, '..', 'data', 'wcr', 'locals')
-        locals_dir = os.path.normpath(locals_dir)
-
-        for lang_file in os.listdir(locals_dir):
-            if lang_file.endswith('.json'):
-                lang_code = lang_file.split('.')[0]
-                with open(os.path.join(locals_dir, lang_file), 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                languages[lang_code] = data
-        return languages
-
-    def load_pictures(self):
-        # Pfad zu 'pictures.json' bestimmen
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        pictures_path = os.path.join(
-            current_dir, '..', 'data', 'wcr', 'pictures.json')
-        pictures_path = os.path.normpath(pictures_path)
-
-        with open(pictures_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        return data
-
-    def load_emojis(self):
-        # Pfad zu 'emojis.json' bestimmen
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        emojis_path = os.path.join(
-            current_dir, '..', 'data', 'emojis.json')
-        emojis_path = os.path.normpath(emojis_path)
-
-        with open(emojis_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        return data
-
-    def get_text_data(self, unit_id, lang):
-        texts = self.languages.get(lang, self.languages["de"])
-        # Einheit in der Sprachdatei anhand der ID suchen
-        unit_text = next(
-            (unit for unit in texts["units"] if unit["id"] == unit_id), {})
-        return unit_text.get("name", "Unbekannt"), unit_text.get("description", "Beschreibung fehlt"), unit_text.get("talents", [])
-
-    def get_pose_url(self, unit_id):
-        """Gibt die Pose-URL des Minis zurück, falls vorhanden."""
-        unit_pictures = self.pictures.get("units", [])
-        unit_picture = next(
-            (pic for pic in unit_pictures if pic["id"] == unit_id), {})
-        return unit_picture.get("pose", "")
-
-    def get_faction_data(self, faction_id):
-        """Gibt die Fraktionsdaten basierend auf der faction_id zurück."""
-        factions = self.pictures.get("categories", {}).get("factions", [])
-        faction_data = next(
-            (faction for faction in factions if faction["id"] == faction_id), {})
-        return faction_data
-
-    def get_category_name(self, category, category_id, lang):
-        """Gibt den Namen eines Kategorie-Elements basierend auf seiner ID zurück."""
-        categories = self.languages.get(
-            lang, {}).get("categories", {}).get(category, [])
-        category_item = next(
-            (item for item in categories if item["id"] == category_id), {})
-        return category_item.get("name", "Unbekannt")
-
-    def get_faction_icon(self, faction_id):
-        faction_data = self.get_faction_data(faction_id)
-        return faction_data.get("icon", "")
-
-    def normalize_name(self, name):
-        return ''.join(c for c in name if c.isalnum() or c.isspace()).lower().split()
-
-    def find_category_id(self, category_name, category, lang):
-        """Findet die ID einer Kategorie basierend auf dem Namen, sucht in allen Sprachen."""
-        # Zuerst in der aktuellen Sprache suchen
-        category_list = self.languages[lang]['categories'][category]
-        matching_item = next(
-            (item for item in category_list if item['name'].lower() == category_name.lower()), None)
-        if matching_item:
-            return matching_item['id']
-
-        # In anderen Sprachen suchen
-        for other_lang, other_texts in self.languages.items():
-            if other_lang == lang:
-                continue
-            category_list = other_texts['categories'][category]
-            matching_item = next(
-                (item for item in category_list if item['name'].lower() == category_name.lower()), None)
-            if matching_item:
-                return matching_item['id']
-
-        # Wenn nicht gefunden, None zurückgeben
-        return None
+        self.units = data_loader.load_units()
+        self.languages = data_loader.load_languages()
+        self.pictures = data_loader.load_pictures()
+        self.emojis = data_loader.load_emojis()
 
     # Autocomplete-Funktionen
     async def cost_autocomplete(self, interaction: discord.Interaction, current: str):
@@ -188,8 +86,8 @@ class WCRCog(commands.Cog):
     )
     async def filter(self, interaction: discord.Interaction, cost: str = None, speed: str = None,
                      faction: str = None, type: str = None, trait: str = None, lang: str = "de"):
-        print(f"Befehl /filter ausgeführt von {interaction.user} mit Parametern: cost={
-              cost}, speed={speed}, faction={faction}, type={type}, trait={trait}, lang={lang}")
+        logger.info(f"Befehl /filter ausgeführt von {interaction.user} mit Parametern: cost={
+                    cost}, speed={speed}, faction={faction}, type={type}, trait={trait}, lang={lang}")
 
         if lang not in self.languages:
             await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: " + ", ".join(self.languages.keys()), ephemeral=True)
@@ -215,7 +113,8 @@ class WCRCog(commands.Cog):
             if speed.isdigit():
                 speed_id = int(speed)
             else:
-                speed_id = self.find_category_id(speed, 'speeds', lang)
+                speed_id = helpers.find_category_id(
+                    speed, 'speeds', lang, self.languages)
                 if speed_id is None:
                     await interaction.response.send_message(f"Geschwindigkeit '{speed}' nicht gefunden.", ephemeral=True)
                     return
@@ -227,7 +126,8 @@ class WCRCog(commands.Cog):
             if faction.isdigit():
                 faction_id = int(faction)
             else:
-                faction_id = self.find_category_id(faction, 'factions', lang)
+                faction_id = helpers.find_category_id(
+                    faction, 'factions', lang, self.languages)
                 if faction_id is None:
                     await interaction.response.send_message(f"Fraktion '{faction}' nicht gefunden.", ephemeral=True)
                     return
@@ -239,7 +139,8 @@ class WCRCog(commands.Cog):
             if type.isdigit():
                 type_id = int(type)
             else:
-                type_id = self.find_category_id(type, 'types', lang)
+                type_id = helpers.find_category_id(
+                    type, 'types', lang, self.languages)
                 if type_id is None:
                     await interaction.response.send_message(f"Typ '{type}' nicht gefunden.", ephemeral=True)
                     return
@@ -251,7 +152,8 @@ class WCRCog(commands.Cog):
             if trait.isdigit():
                 trait_id = int(trait)
             else:
-                trait_id = self.find_category_id(trait, 'traits', lang)
+                trait_id = helpers.find_category_id(
+                    trait, 'traits', lang, self.languages)
                 if trait_id is None:
                     await interaction.response.send_message(f"Merkmal '{trait}' nicht gefunden.", ephemeral=True)
                     return
@@ -277,7 +179,7 @@ class WCRCog(commands.Cog):
 
             # Fraktions-Emoji abrufen
             faction_emoji = self.emojis.get(
-                self.get_faction_icon(unit["faction_id"]), {}).get("syntax", "")
+                helpers.get_faction_icon(unit["faction_id"], self.pictures), {}).get("syntax", "")
 
             options.append(discord.SelectOption(label=unit_name,
                                                 value=str(unit_id), emoji=faction_emoji))
@@ -291,7 +193,7 @@ class WCRCog(commands.Cog):
     @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
     @app_commands.describe(name="Name des Minis", lang="Sprache")
     async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
-        print(
+        logger.info(
             f"Befehl /name ausgeführt von {interaction.user} mit Name: {name} und Sprache: {lang}")
         await interaction.response.defer(ephemeral=True)  # Ephemere Antwort
         embed, logo_file = self.create_mini_embed(name, lang)
@@ -324,7 +226,7 @@ class WCRCog(commands.Cog):
                 return None, None
         except ValueError:
             # Ist keine ID, behandle es als Namen
-            input_words = self.normalize_name(name_or_id)
+            input_words = helpers.normalize_name(name_or_id)
             permutations = [' '.join(p) for i in range(1, len(input_words) + 1)
                             for p in itertools.permutations(input_words, i)]
 
@@ -335,7 +237,7 @@ class WCRCog(commands.Cog):
             for permuted_name in permutations:
                 for unit in texts["units"]:
                     unit_name_normalized = ' '.join(
-                        self.normalize_name(unit["name"]))
+                        helpers.normalize_name(unit["name"]))
                     if permuted_name in unit_name_normalized:
                         matching_unit_text = unit
                         unit_found = True
@@ -351,7 +253,7 @@ class WCRCog(commands.Cog):
                     for permuted_name in permutations:
                         for unit in other_texts["units"]:
                             unit_name_normalized = ' '.join(
-                                self.normalize_name(unit["name"]))
+                                helpers.normalize_name(unit["name"]))
                             if permuted_name in unit_name_normalized:
                                 matching_unit_text = unit
                                 lang = other_lang  # Sprache wechseln
@@ -372,8 +274,8 @@ class WCRCog(commands.Cog):
             if not matching_unit:
                 return None, None
 
-        unit_name, unit_description, talents = self.get_text_data(
-            unit_id, lang)
+        unit_name, unit_description, talents = helpers.get_text_data(
+            unit_id, lang, self.languages)
         stats = matching_unit.get("stats", {})
 
         # Stat Labels laden
@@ -381,7 +283,7 @@ class WCRCog(commands.Cog):
 
         # Fraktionsdaten ermitteln
         faction_id = matching_unit.get("faction_id")
-        faction_data = self.get_faction_data(faction_id)
+        faction_data = helpers.get_faction_data(faction_id, self.pictures)
         embed_color_hex = faction_data.get("color", "#3498db")
         embed_color = int(embed_color_hex.strip("#"), 16)
         # Suchen nach 'icon' für das Emoji
@@ -391,11 +293,13 @@ class WCRCog(commands.Cog):
 
         # Typ-Namen erhalten
         type_id = matching_unit.get("type_id")
-        type_name = self.get_category_name("types", type_id, lang)
+        type_name = helpers.get_category_name(
+            "types", type_id, lang, self.languages)
 
         # Geschwindigkeit ermitteln
         speed_id = matching_unit.get("speed_id")
-        speed_name = self.get_category_name("speeds", speed_id, lang)
+        speed_name = helpers.get_category_name(
+            "speeds", speed_id, lang, self.languages)
 
         # Stats vorbereiten
         row1_stats = []
@@ -574,7 +478,7 @@ class WCRCog(commands.Cog):
                             value=', '.join(traits), inline=False)
 
         # Setze das Thumbnail (Pose)
-        pose_url = self.get_pose_url(unit_id)
+        pose_url = helpers.get_pose_url(unit_id, self.pictures)
         if pose_url:
             embed.set_thumbnail(url=pose_url)
 
@@ -604,29 +508,5 @@ class WCRCog(commands.Cog):
         except Exception as e:
             error_message = f"Fehler beim Senden des Embeds für unit_id {
                 unit_id}: {e}"
-            print(error_message)
-            traceback.print_exc()
+            logger.error(error_message, exc_info=True)
             await interaction.followup.send("Es ist ein Fehler aufgetreten. Bitte versuche es erneut.", ephemeral=True)
-
-
-class MiniSelectView(discord.ui.View):
-    def __init__(self, options, cog, lang):
-        super().__init__(timeout=60)
-        self.add_item(MiniSelect(options, cog, lang))
-
-
-class MiniSelect(discord.ui.Select):
-    def __init__(self, options, cog, lang):
-        super().__init__(placeholder="Wähle ein Mini aus", options=options, max_values=1)
-        self.cog = cog
-        self.lang = lang
-
-    async def callback(self, interaction: discord.Interaction):
-        unit_id = int(self.values[0])
-        await interaction.response.defer(ephemeral=True)
-        await self.cog.send_mini_embed(interaction, unit_id, self.lang)
-
-
-# Setup-Funktion auf Modulebene
-async def setup(bot):
-    await bot.add_cog(WCRCog(bot))

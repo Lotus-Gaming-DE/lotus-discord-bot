@@ -1,11 +1,20 @@
+# bot.py
 import discord
 from discord.ext import commands
 import os
 import json
+import logging
+
+# Setze das Logging-Level und das Format
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(levelname)s:%(name)s: %(message)s')
+
+# Logger für dein Bot-Modul
+logger = logging.getLogger('bot')
 
 intents = discord.Intents.default()
-intents.message_content = True
-intents.guilds = True  # Stelle sicher, dass die Guilds-Intents aktiviert sind
+intents.message_content = True  # Notwendig für den quiz_cog
+intents.guilds = True  # Notwendig für Guild-Events und Befehle
 
 
 class MyBot(commands.Bot):
@@ -15,7 +24,8 @@ class MyBot(commands.Bot):
         self.main_server_id = os.getenv('server_id')
 
         if self.main_server_id is None:
-            print("Die Environment-Variable 'server_id' wurde nicht gefunden. Bitte stelle sicher, dass sie gesetzt ist.")
+            logger.error(
+                "Die Environment-Variable 'server_id' wurde nicht gefunden. Bitte stelle sicher, dass sie gesetzt ist.")
             exit(1)
 
     async def setup_hook(self):
@@ -23,6 +33,9 @@ class MyBot(commands.Bot):
         for filename in os.listdir('./cogs'):
             if filename.endswith('.py'):
                 await self.load_extension(f'cogs.{filename[:-3]}')
+            elif os.path.isdir(os.path.join('./cogs', filename)):
+                # Falls der Cog in einem Unterverzeichnis ist
+                await self.load_extension(f'cogs.{filename}')
 
         # Emojis laden und Befehle synchronisieren
         await self.load_emojis_and_sync_commands()
@@ -47,11 +60,11 @@ class MyBot(commands.Bot):
                 with open("data/emojis.json", "w", encoding="utf-8") as f:
                     json.dump(emojis_data, f, indent=4, ensure_ascii=False)
 
-                print(
+                logger.info(
                     "Emoji-Liste vom Hauptserver wurde erfolgreich in 'data/emojis.json' gespeichert.")
             else:
-                print(f"Hauptserver mit ID {
-                      self.main_server_id} nicht gefunden.")
+                logger.warning(f"Hauptserver mit ID {
+                               self.main_server_id} nicht gefunden.")
 
             # Synchronisiere die Befehle
             guild = discord.Object(id=int(self.main_server_id))
@@ -59,28 +72,27 @@ class MyBot(commands.Bot):
             # **Globale Befehle löschen**
             self.tree.clear_commands(guild=None)
             await self.tree.sync(guild=None)
-            print('Globale Befehle wurden gelöscht.')
+            logger.info('Globale Befehle wurden gelöscht.')
 
             # **Guild-spezifische Befehle synchronisieren**
             await self.tree.sync(guild=guild)
-            print(f'Befehle wurden für den Server {
-                  self.main_server_id} synchronisiert.')
+            logger.info(f'Befehle wurden für den Server {
+                        self.main_server_id} synchronisiert.')
 
         except Exception as e:
-            print(
-                f"Ein Fehler ist beim Laden der Emojis und Synchronisieren der Befehle aufgetreten: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Ein Fehler ist beim Laden der Emojis und Synchronisieren der Befehle aufgetreten: {
+                         e}", exc_info=True)
 
     async def on_ready(self):
-        print(f'Bot ist online als {self.user}.')
+        logger.info(f'Bot ist online als {self.user}.')
 
 
 if __name__ == '__main__':
     # Lies den Token aus der Environment-Variable
     bot_token = os.getenv('bot_key')
     if bot_token is None:
-        print("Bot Token nicht gefunden. Stelle sicher, dass die Environment-Variable 'bot_key' gesetzt ist.")
+        logger.error(
+            "Bot Token nicht gefunden. Stelle sicher, dass die Environment-Variable 'bot_key' gesetzt ist.")
     else:
-        bot = MyBot(command_prefix="", intents=intents)
+        bot = MyBot(command_prefix=None, intents=intents)
         bot.run(bot_token)
