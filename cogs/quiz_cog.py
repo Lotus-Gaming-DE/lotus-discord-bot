@@ -20,12 +20,12 @@ class QuizCog(commands.Cog):
         self.current_questions = {}  # Speichert die aktuellen Fragen pro Bereich
         self.areas_config = {
             'wcr': {
-                'channel_id': 123456789012345678,  # Ersetze mit deiner Kanal-ID
-                'interval_hours': 0.1,
+                'channel_id': 1301858256255455243,  # Ersetze mit deiner Kanal-ID
+                'interval_hours': 0.5,
             },
             'd4': {
-                'channel_id': 123456789012345678,  # Ersetze mit deiner Kanal-ID
-                'interval_hours': 0.1,
+                'channel_id': 1301858256255455243,  # Ersetze mit deiner Kanal-ID
+                'interval_hours': 0.5,
             },
             # Weitere Bereiche hinzufügen
         }
