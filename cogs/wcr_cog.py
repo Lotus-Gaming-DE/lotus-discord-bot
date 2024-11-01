@@ -493,4 +493,121 @@ class WCRCog(commands.Cog):
 
         # Kleiner Absatz nach der Beschreibung
         embed.description += "\n"
-        embed
+        embed.description += "\n **Stats**"
+
+        # Stats hinzufügen
+        if row1_stats:
+            for stat in row1_stats:
+                embed.add_field(
+                    name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
+            # Fülle die Reihe auf, wenn weniger als 3 Felder
+            while len(row1_stats) < 3:
+                embed.add_field(name="\u200b", value="\u200b", inline=True)
+                row1_stats.append(None)
+
+        if row2_stats:
+            for stat in row2_stats:
+                embed.add_field(
+                    name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
+            while len(row2_stats) < 3:
+                embed.add_field(name="\u200b", value="\u200b", inline=True)
+                row2_stats.append(None)
+
+        if row3_stats:
+            for stat in row3_stats:
+                embed.add_field(
+                    name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
+            while len(row3_stats) < 3:
+                embed.add_field(name="\u200b", value="\u200b", inline=True)
+                row3_stats.append(None)
+
+        # Übrige Stats hinzufügen, jeweils bis zu drei pro Reihe
+        if extra_stats:
+            for i in range(0, len(extra_stats), 3):
+                group = extra_stats[i:i+3]
+                for stat in group:
+                    embed.add_field(
+                        name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
+                # Fülle die Reihe auf, wenn weniger als 3 Felder
+                while len(group) < 3:
+                    embed.add_field(name="\u200b", value="\u200b", inline=True)
+                    group.append(None)
+
+        # Talente hinzufügen
+        if talents:
+            # Kleiner Abstand vor den Talenten
+            embed.add_field(name="\u200b", value="**Talents**", inline=False)
+            for talent in talents[:3]:
+                talent_name = talent.get("name", "Unbekanntes Talent")
+                talent_description = talent.get(
+                    "description", "Beschreibung fehlt")
+                embed.add_field(name=talent_name,
+                                value=talent_description, inline=True)
+            # Falls weniger als 3 Talente, Reihe auffüllen
+            if len(talents[:3]) % 3 != 0:
+                for _ in range(3 - (len(talents[:3]) % 3)):
+                    embed.add_field(name="\u200b", value="\u200b", inline=True)
+
+        # Traits hinzufügen
+        traits_ids = matching_unit.get("traits_ids", [])
+        traits = []
+        all_traits = texts.get("categories", {}).get("traits", [])
+        for trait_id in traits_ids:
+            trait = next((t for t in all_traits if t["id"] == trait_id), None)
+            if trait:
+                traits.append(trait["name"])
+
+        if traits:
+            embed.add_field(name=stat_labels.get('traits', 'Traits'),
+                            value=', '.join(traits), inline=False)
+
+        # Setze das Thumbnail (Pose)
+        pose_url = self.get_pose_url(unit_id)
+        if pose_url:
+            embed.set_thumbnail(url=pose_url)
+
+        # Logo hinzufügen
+        logo_filename = 'LotusGaming.png'
+        logo_path = os.path.join('data', 'media', logo_filename)
+        if os.path.exists(logo_path):
+            embed.set_footer(
+                text='a service brought to you by Lotus Gaming', icon_url=f'attachment://{logo_filename}')
+            logo_file = discord.File(logo_path, filename=logo_filename)
+        else:
+            embed.set_footer(text='a service brought to you by Lotus Gaming')
+            logo_file = None
+
+        return embed, logo_file
+
+    async def send_mini_embed(self, interaction, unit_id, lang):
+        embed, logo_file = self.create_mini_embed(unit_id, lang)
+        if embed is None:
+            await interaction.followup.send(f"Details für Mini mit ID '{unit_id}' nicht gefunden.", ephemeral=True)
+        else:
+            if logo_file:
+                await interaction.followup.send(embed=embed, file=logo_file, ephemeral=True)
+            else:
+                await interaction.followup.send(embed=embed, ephemeral=True)
+
+
+class MiniSelectView(discord.ui.View):
+    def __init__(self, options, cog, lang):
+        super().__init__(timeout=60)
+        self.add_item(MiniSelect(options, cog, lang))
+
+
+class MiniSelect(discord.ui.Select):
+    def __init__(self, options, cog, lang):
+        super().__init__(placeholder="Wähle ein Mini aus", options=options, max_values=1)
+        self.cog = cog
+        self.lang = lang
+
+    async def callback(self, interaction: discord.Interaction):
+        unit_id = int(self.values[0])
+        await interaction.response.defer(ephemeral=True)
+        await self.cog.send_mini_embed(interaction, unit_id, self.lang)
+
+
+# Setup-Funktion auf Modulebene
+async def setup(bot):
+    await bot.add_cog(WCRCog(bot))
