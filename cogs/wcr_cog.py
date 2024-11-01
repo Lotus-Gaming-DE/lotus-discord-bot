@@ -111,16 +111,15 @@ class WCRCog(commands.Cog):
     @app_commands.describe(name="Name des Minis", lang="Sprache")
     async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
         print(f"Befehl /name ausgeführt mit Name: {name} und Sprache: {lang}")
-        # Defer the response if processing might take time
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)  # Ephemere Antwort
         embed, logo_file = self.create_mini_embed(name, lang)
         if embed is None:
-            await interaction.followup.send(f"Mini mit Namen '{name}' nicht gefunden.")
+            await interaction.followup.send(f"Mini mit Namen '{name}' nicht gefunden.", ephemeral=True)
         else:
             if logo_file:
-                await interaction.followup.send(embed=embed, file=logo_file)
+                await interaction.followup.send(embed=embed, file=logo_file, ephemeral=True)
             else:
-                await interaction.followup.send(embed=embed)
+                await interaction.followup.send(embed=embed, ephemeral=True)
 
     def create_mini_embed(self, name_or_id, lang):
         if lang not in self.languages:
@@ -469,7 +468,7 @@ class WCRCog(commands.Cog):
               speed}, faction={faction}, type={type}, trait={trait}, lang={lang}")
 
         if lang not in self.languages:
-            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: " + ", ".join(self.languages.keys()))
+            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: " + ", ".join(self.languages.keys()), ephemeral=True)
             return
 
         texts = self.languages[lang]
@@ -499,7 +498,7 @@ class WCRCog(commands.Cog):
                 trait) in u.get("traits_ids", [])]
 
         if not filtered_units:
-            await interaction.response.send_message("Keine Minis gefunden, die den angegebenen Kriterien entsprechen.")
+            await interaction.response.send_message("Keine Minis gefunden, die den angegebenen Kriterien entsprechen.", ephemeral=True)
             return
 
         # Begrenze die Anzahl der Ergebnisse
@@ -525,17 +524,17 @@ class WCRCog(commands.Cog):
         # Erstelle das Dropdown-Menü
         view = MiniSelectView(options, self, lang)
 
-        await interaction.response.send_message("Gefundene Minis:", view=view)
+        await interaction.response.send_message("Gefundene Minis:", view=view, ephemeral=True)
 
     async def send_mini_embed(self, interaction, unit_id, lang):
         embed, logo_file = self.create_mini_embed(unit_id, lang)
         if embed is None:
-            await interaction.followup.send(f"Details für Mini mit ID '{unit_id}' nicht gefunden.")
+            await interaction.followup.send(f"Details für Mini mit ID '{unit_id}' nicht gefunden.", ephemeral=True)
         else:
             if logo_file:
-                await interaction.followup.send(embed=embed, file=logo_file)
+                await interaction.followup.send(embed=embed, file=logo_file, ephemeral=True)
             else:
-                await interaction.followup.send(embed=embed)
+                await interaction.followup.send(embed=embed, ephemeral=True)
 
 
 class MiniSelectView(discord.ui.View):
@@ -552,7 +551,7 @@ class MiniSelect(discord.ui.Select):
 
     async def callback(self, interaction: discord.Interaction):
         unit_id = int(self.values[0])
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         await self.cog.send_mini_embed(interaction, unit_id, self.lang)
 
 
