@@ -503,7 +503,7 @@ class WCRCog(commands.Cog):
 
         # Begrenze die Anzahl der Ergebnisse
         if len(filtered_units) > 25:
-            await interaction.response.send_message("Zu viele Ergebnisse. Bitte verfeinere deine Filter.")
+            await interaction.response.send_message("Zu viele Ergebnisse. Bitte verfeinere deine Filter.", ephemeral=True)
             return
 
         # Erstelle die Optionen für das Dropdown-Menü
