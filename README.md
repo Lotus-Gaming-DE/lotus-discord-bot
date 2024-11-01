@@ -1,4 +1,4 @@
-![Logo von Lotus Gaming](/data/LotusGamingColorless.png)
+![Logo von Lotus Gaming](./data/LotusGamingColorless.png)
 # Lotus Gaming Discord Bot!
 
 
