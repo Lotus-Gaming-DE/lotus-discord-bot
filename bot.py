@@ -31,11 +31,31 @@ class MyBot(commands.Bot):
     async def setup_hook(self):
         # Lade deine Cogs hier
         for filename in os.listdir('./cogs'):
+            filepath = os.path.join('./cogs', filename)
             if filename.endswith('.py'):
-                await self.load_extension(f'cogs.{filename[:-3]}')
-            elif os.path.isdir(os.path.join('./cogs', filename)):
-                # Falls der Cog in einem Unterverzeichnis ist
-                await self.load_extension(f'cogs.{filename}')
+                # Lade einzelne .py Dateien als Cogs
+                extension = f'cogs.{filename[:-3]}'
+                try:
+                    await self.load_extension(extension)
+                    logger.info(f'Extension {extension} geladen.')
+                except Exception as e:
+                    logger.error(f'Fehler beim Laden der Extension {
+                        extension}: {e}', exc_info=True)
+            elif os.path.isdir(filepath) and not filename.startswith('__'):
+                # Lade Unterverzeichnisse als Cogs, ignoriere Verzeichnisse, die mit '__' beginnen
+                if '__init__.py' in os.listdir(filepath):
+                    extension = f'cogs.{filename}'
+                    try:
+                        await self.load_extension(extension)
+                        logger.info(f'Extension {extension} geladen.')
+                    except Exception as e:
+                        logger.error(f'Fehler beim Laden der Extension {
+                            extension}: {e}', exc_info=True)
+                else:
+                    logger.warning(
+                        f'Verzeichnis {filepath} enthält keine __init__.py und wird ignoriert.')
+            else:
+                logger.warning(f'Ignoriere {filepath}')
 
         # Emojis laden und Befehle synchronisieren
         await self.load_emojis_and_sync_commands()
