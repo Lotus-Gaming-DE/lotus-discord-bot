@@ -1,4 +1,6 @@
-# Lotus Gaming Discord Bot
+![Logo von Lotus Gaming](./data/LotusGamingColorless.png)
+# Lotus Gaming Discord Bot!
+
 
 Willkommen zum **Lotus Gaming Discord Bot** Projekt! Dieser Bot wurde entwickelt, um das Spielerlebnis innerhalb unserer Community zu verbessern, indem er nützliche Funktionen und Interaktionen rund um unsere Lieblingsspiele bereitstellt. Der Bot ist modular aufgebaut, was eine einfache Erweiterung und Wartung verschiedener Funktionen ermöglicht.
 
