@@ -57,7 +57,7 @@ class MyBot(commands.Bot):
             guild = discord.Object(id=int(self.main_server_id))
 
             # **Globale Befehle löschen**
-            await self.tree.clear_commands(guild=None)
+            self.tree.clear_commands(guild=None)
             await self.tree.sync(guild=None)
             print('Globale Befehle wurden gelöscht.')
 
