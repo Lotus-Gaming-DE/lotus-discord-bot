@@ -106,6 +106,28 @@ class WCRCog(commands.Cog):
     def normalize_name(self, name):
         return ''.join(c for c in name if c.isalnum() or c.isspace()).lower().split()
 
+    def find_category_id(self, category_name, category, lang):
+        """Findet die ID einer Kategorie basierend auf dem Namen, sucht in allen Sprachen."""
+        # Zuerst in der aktuellen Sprache suchen
+        category_list = self.languages[lang]['categories'][category]
+        matching_item = next(
+            (item for item in category_list if item['name'].lower() == category_name.lower()), None)
+        if matching_item:
+            return matching_item['id']
+
+        # In anderen Sprachen suchen
+        for other_lang, other_texts in self.languages.items():
+            if other_lang == lang:
+                continue
+            category_list = other_texts['categories'][category]
+            matching_item = next(
+                (item for item in category_list if item['name'].lower() == category_name.lower()), None)
+            if matching_item:
+                return matching_item['id']
+
+        # Wenn nicht gefunden, None zurückgeben
+        return None
+
     # Autocomplete-Funktionen
     async def cost_autocomplete(self, interaction: discord.Interaction, current: str):
         costs = sorted(set(unit["cost"] for unit in self.units))
@@ -188,12 +210,8 @@ class WCRCog(commands.Cog):
             if speed.isdigit():
                 speed_id = int(speed)
             else:
-                speed_list = texts['categories']['speeds']
-                matching_speed = next(
-                    (s for s in speed_list if s['name'].lower() == speed.lower()), None)
-                if matching_speed:
-                    speed_id = matching_speed['id']
-                else:
+                speed_id = self.find_category_id(speed, 'speeds', lang)
+                if speed_id is None:
                     await interaction.response.send_message(f"Geschwindigkeit '{speed}' nicht gefunden.", ephemeral=True)
                     return
             filtered_units = [
@@ -204,12 +222,8 @@ class WCRCog(commands.Cog):
             if faction.isdigit():
                 faction_id = int(faction)
             else:
-                faction_list = texts['categories']['factions']
-                matching_faction = next(
-                    (f for f in faction_list if f['name'].lower() == faction.lower()), None)
-                if matching_faction:
-                    faction_id = matching_faction['id']
-                else:
+                faction_id = self.find_category_id(faction, 'factions', lang)
+                if faction_id is None:
                     await interaction.response.send_message(f"Fraktion '{faction}' nicht gefunden.", ephemeral=True)
                     return
             filtered_units = [u for u in filtered_units if u.get(
@@ -220,12 +234,8 @@ class WCRCog(commands.Cog):
             if type.isdigit():
                 type_id = int(type)
             else:
-                type_list = texts['categories']['types']
-                matching_type = next(
-                    (t for t in type_list if t['name'].lower() == type.lower()), None)
-                if matching_type:
-                    type_id = matching_type['id']
-                else:
+                type_id = self.find_category_id(type, 'types', lang)
+                if type_id is None:
                     await interaction.response.send_message(f"Typ '{type}' nicht gefunden.", ephemeral=True)
                     return
             filtered_units = [
@@ -236,12 +246,8 @@ class WCRCog(commands.Cog):
             if trait.isdigit():
                 trait_id = int(trait)
             else:
-                trait_list = texts['categories']['traits']
-                matching_trait = next(
-                    (t for t in trait_list if t['name'].lower() == trait.lower()), None)
-                if matching_trait:
-                    trait_id = matching_trait['id']
-                else:
+                trait_id = self.find_category_id(trait, 'traits', lang)
+                if trait_id is None:
                     await interaction.response.send_message(f"Merkmal '{trait}' nicht gefunden.", ephemeral=True)
                     return
             filtered_units = [
