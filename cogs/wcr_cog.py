@@ -445,86 +445,140 @@ class WCRCog(commands.Cog):
             for t in traits if current.lower() in t['name'].lower()
         ]
 
-    @app_commands.command(name="filter", description="Filtert Minis basierend auf verschiedenen Kriterien.")
-    @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
-    @app_commands.describe(
-        cost="Kosten des Minis",
-        speed="Geschwindigkeit des Minis",
-        faction="Fraktion des Minis",
-        type="Typ des Minis",
-        trait="Merkmal des Minis",
-        lang="Sprache"
-    )
-    @app_commands.autocomplete(
-        cost=cost_autocomplete,
-        speed=speed_autocomplete,
-        faction=faction_autocomplete,
-        type=type_autocomplete,
-        trait=trait_autocomplete
-    )
-    async def filter(self, interaction: discord.Interaction, cost: str = None, speed: str = None,
-                     faction: str = None, type: str = None, trait: str = None, lang: str = "de"):
-        print(f"Befehl /filter ausgeführt mit Parametern: cost={cost}, speed={
-              speed}, faction={faction}, type={type}, trait={trait}, lang={lang}")
 
-        if lang not in self.languages:
-            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: " + ", ".join(self.languages.keys()), ephemeral=True)
+@app_commands.command(name="filter", description="Filtert Minis basierend auf verschiedenen Kriterien.")
+@app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
+@app_commands.describe(
+    cost="Kosten des Minis",
+    speed="Geschwindigkeit des Minis",
+    faction="Fraktion des Minis",
+    type="Typ des Minis",
+    trait="Merkmal des Minis",
+    lang="Sprache"
+)
+@app_commands.autocomplete(
+    cost=cost_autocomplete,
+    speed=speed_autocomplete,
+    faction=faction_autocomplete,
+    type=type_autocomplete,
+    trait=trait_autocomplete
+)
+async def filter(self, interaction: discord.Interaction, cost: str = None, speed: str = None,
+                 faction: str = None, type: str = None, trait: str = None, lang: str = "de"):
+    print(f"Befehl /filter ausgeführt mit Parametern: cost={cost}, speed={
+          speed}, faction={faction}, type={type}, trait={trait}, lang={lang}")
+
+    if lang not in self.languages:
+        await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: " + ", ".join(self.languages.keys()), ephemeral=True)
+        return
+
+    texts = self.languages[lang]
+
+    # Starte mit allen Einheiten
+    filtered_units = self.units
+
+    # Wende Filter an, wenn Parameter angegeben sind
+    if cost is not None:
+        try:
+            cost_value = int(cost)
+        except ValueError:
+            await interaction.response.send_message(f"Kosten '{cost}' ist keine gültige Zahl.", ephemeral=True)
             return
+        filtered_units = [
+            u for u in filtered_units if u.get("cost") == cost_value]
 
-        texts = self.languages[lang]
+    if speed is not None:
+        speed_id = None
+        if speed.isdigit():
+            speed_id = int(speed)
+        else:
+            speed_list = texts['categories']['speeds']
+            matching_speed = next(
+                (s for s in speed_list if s['name'].lower() == speed.lower()), None)
+            if matching_speed:
+                speed_id = matching_speed['id']
+            else:
+                await interaction.response.send_message(f"Geschwindigkeit '{speed}' nicht gefunden.", ephemeral=True)
+                return
+        filtered_units = [
+            u for u in filtered_units if u.get("speed_id") == speed_id]
 
-        # Starte mit allen Einheiten
-        filtered_units = self.units
+    if faction is not None:
+        faction_id = None
+        if faction.isdigit():
+            faction_id = int(faction)
+        else:
+            faction_list = texts['categories']['factions']
+            matching_faction = next(
+                (f for f in faction_list if f['name'].lower() == faction.lower()), None)
+            if matching_faction:
+                faction_id = matching_faction['id']
+            else:
+                await interaction.response.send_message(f"Fraktion '{faction}' nicht gefunden.", ephemeral=True)
+                return
+        filtered_units = [u for u in filtered_units if u.get(
+            "faction_id") == faction_id]
 
-        # Wende Filter an, wenn Parameter angegeben sind
-        if cost is not None:
-            filtered_units = [
-                u for u in filtered_units if str(u.get("cost")) == cost]
+    if type is not None:
+        type_id = None
+        if type.isdigit():
+            type_id = int(type)
+        else:
+            type_list = texts['categories']['types']
+            matching_type = next(
+                (t for t in type_list if t['name'].lower() == type.lower()), None)
+            if matching_type:
+                type_id = matching_type['id']
+            else:
+                await interaction.response.send_message(f"Typ '{type}' nicht gefunden.", ephemeral=True)
+                return
+        filtered_units = [
+            u for u in filtered_units if u.get("type_id") == type_id]
 
-        if speed is not None:
-            filtered_units = [u for u in filtered_units if str(
-                u.get("speed_id")) == speed]
+    if trait is not None:
+        trait_id = None
+        if trait.isdigit():
+            trait_id = int(trait)
+        else:
+            trait_list = texts['categories']['traits']
+            matching_trait = next(
+                (t for t in trait_list if t['name'].lower() == trait.lower()), None)
+            if matching_trait:
+                trait_id = matching_trait['id']
+            else:
+                await interaction.response.send_message(f"Merkmal '{trait}' nicht gefunden.", ephemeral=True)
+                return
+        filtered_units = [
+            u for u in filtered_units if trait_id in u.get("traits_ids", [])]
 
-        if faction is not None:
-            filtered_units = [u for u in filtered_units if str(
-                u.get("faction_id")) == faction]
+    if not filtered_units:
+        await interaction.response.send_message("Keine Minis gefunden, die den angegebenen Kriterien entsprechen.", ephemeral=True)
+        return
 
-        if type is not None:
-            filtered_units = [u for u in filtered_units if str(
-                u.get("type_id")) == type]
+    # Begrenze die Anzahl der Ergebnisse
+    if len(filtered_units) > 25:
+        await interaction.response.send_message("Zu viele Ergebnisse. Bitte verfeinere deine Filter.", ephemeral=True)
+        return
 
-        if trait is not None:
-            filtered_units = [u for u in filtered_units if int(
-                trait) in u.get("traits_ids", [])]
+    # Erstelle die Optionen für das Dropdown-Menü
+    options = []
+    for unit in filtered_units:
+        unit_id = unit["id"]
+        unit_text = next(
+            (u for u in texts["units"] if u["id"] == unit_id), {})
+        unit_name = unit_text.get("name", "Unbekannt")
 
-        if not filtered_units:
-            await interaction.response.send_message("Keine Minis gefunden, die den angegebenen Kriterien entsprechen.", ephemeral=True)
-            return
+        # Fraktions-Emoji abrufen
+        faction_emoji = self.emojis.get(
+            self.get_faction_icon(unit["faction_id"]), {}).get("syntax", "")
 
-        # Begrenze die Anzahl der Ergebnisse
-        if len(filtered_units) > 25:
-            await interaction.response.send_message("Zu viele Ergebnisse. Bitte verfeinere deine Filter.", ephemeral=True)
-            return
+        options.append(discord.SelectOption(label=unit_name,
+                                            value=str(unit_id), emoji=faction_emoji))
 
-        # Erstelle die Optionen für das Dropdown-Menü
-        options = []
-        for unit in filtered_units:
-            unit_id = unit["id"]
-            unit_text = next(
-                (u for u in texts["units"] if u["id"] == unit_id), {})
-            unit_name = unit_text.get("name", "Unbekannt")
+    # Erstelle das Dropdown-Menü
+    view = MiniSelectView(options, self, lang)
 
-            # Fraktions-Emoji abrufen
-            faction_emoji = self.emojis.get(
-                self.get_faction_icon(unit["faction_id"]), {}).get("syntax", "")
-
-            options.append(discord.SelectOption(label=unit_name,
-                           value=str(unit_id), emoji=faction_emoji))
-
-        # Erstelle das Dropdown-Menü
-        view = MiniSelectView(options, self, lang)
-
-        await interaction.response.send_message("Gefundene Minis:", view=view, ephemeral=True)
+    await interaction.response.send_message("Gefundene Minis:", view=view, ephemeral=True)
 
     async def send_mini_embed(self, interaction, unit_id, lang):
         embed, logo_file = self.create_mini_embed(unit_id, lang)
