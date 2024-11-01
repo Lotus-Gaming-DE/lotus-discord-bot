@@ -4,6 +4,7 @@ from discord import app_commands
 import json
 import os
 import itertools
+import traceback
 
 # Hauptserver-ID aus der Umgebungsvariablen lesen
 SERVER_ID = os.getenv('server_id')
@@ -134,35 +135,39 @@ class WCRCog(commands.Cog):
         return [
             app_commands.Choice(name=str(c), value=str(c))
             for c in costs if current.lower() in str(c).lower()
-        ]
+        ][:25]  # Maximal 25 Einträge zurückgeben
 
     async def speed_autocomplete(self, interaction: discord.Interaction, current: str):
         speeds = self.languages['en']['categories']['speeds']
-        return [
+        choices = [
             app_commands.Choice(name=s['name'], value=str(s['id']))
             for s in speeds if current.lower() in s['name'].lower()
         ]
+        return choices[:25]
 
     async def faction_autocomplete(self, interaction: discord.Interaction, current: str):
         factions = self.languages['en']['categories']['factions']
-        return [
+        choices = [
             app_commands.Choice(name=f['name'], value=str(f['id']))
             for f in factions if current.lower() in f['name'].lower()
         ]
+        return choices[:25]
 
     async def type_autocomplete(self, interaction: discord.Interaction, current: str):
         types = self.languages['en']['categories']['types']
-        return [
+        choices = [
             app_commands.Choice(name=t['name'], value=str(t['id']))
             for t in types if current.lower() in t['name'].lower()
         ]
+        return choices[:25]
 
     async def trait_autocomplete(self, interaction: discord.Interaction, current: str):
         traits = self.languages['en']['categories']['traits']
-        return [
+        choices = [
             app_commands.Choice(name=t['name'], value=str(t['id']))
             for t in traits if current.lower() in t['name'].lower()
         ]
+        return choices[:25]
 
     @app_commands.command(name="filter", description="Filtert Minis basierend auf verschiedenen Kriterien.")
     @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
@@ -183,8 +188,8 @@ class WCRCog(commands.Cog):
     )
     async def filter(self, interaction: discord.Interaction, cost: str = None, speed: str = None,
                      faction: str = None, type: str = None, trait: str = None, lang: str = "de"):
-        print(f"Befehl /filter ausgeführt mit Parametern: cost={cost}, speed={
-              speed}, faction={faction}, type={type}, trait={trait}, lang={lang}")
+        print(f"Befehl /filter ausgeführt von {interaction.user} mit Parametern: cost={
+              cost}, speed={speed}, faction={faction}, type={type}, trait={trait}, lang={lang}")
 
         if lang not in self.languages:
             await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: " + ", ".join(self.languages.keys()), ephemeral=True)
@@ -286,7 +291,8 @@ class WCRCog(commands.Cog):
     @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
     @app_commands.describe(name="Name des Minis", lang="Sprache")
     async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
-        print(f"Befehl /name ausgeführt mit Name: {name} und Sprache: {lang}")
+        print(
+            f"Befehl /name ausgeführt von {interaction.user} mit Name: {name} und Sprache: {lang}")
         await interaction.response.defer(ephemeral=True)  # Ephemere Antwort
         embed, logo_file = self.create_mini_embed(name, lang)
         if embed is None:
@@ -586,14 +592,21 @@ class WCRCog(commands.Cog):
         return embed, logo_file
 
     async def send_mini_embed(self, interaction, unit_id, lang):
-        embed, logo_file = self.create_mini_embed(unit_id, lang)
-        if embed is None:
-            await interaction.followup.send(f"Details für Mini mit ID '{unit_id}' nicht gefunden.", ephemeral=True)
-        else:
-            if logo_file:
-                await interaction.followup.send(embed=embed, file=logo_file, ephemeral=True)
+        try:
+            embed, logo_file = self.create_mini_embed(unit_id, lang)
+            if embed is None:
+                await interaction.followup.send(f"Details für Mini mit ID '{unit_id}' nicht gefunden.", ephemeral=True)
             else:
-                await interaction.followup.send(embed=embed, ephemeral=True)
+                if logo_file:
+                    await interaction.followup.send(embed=embed, file=logo_file, ephemeral=True)
+                else:
+                    await interaction.followup.send(embed=embed, ephemeral=True)
+        except Exception as e:
+            error_message = f"Fehler beim Senden des Embeds für unit_id {
+                unit_id}: {e}"
+            print(error_message)
+            traceback.print_exc()
+            await interaction.followup.send("Es ist ein Fehler aufgetreten. Bitte versuche es erneut.", ephemeral=True)
 
 
 class MiniSelectView(discord.ui.View):
