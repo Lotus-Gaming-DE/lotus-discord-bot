@@ -19,7 +19,7 @@ intents.guilds = True  # Notwendig für Guild-Events und Befehle
 
 class MyBot(commands.Bot):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(command_prefix='§', intents=intents, **kwargs)
         # Server-ID aus der Umgebungsvariablen lesen
         self.main_server_id = os.getenv('server_id')
 
@@ -39,6 +39,16 @@ class MyBot(commands.Bot):
 
         # Emojis laden und Befehle synchronisieren
         await self.load_emojis_and_sync_commands()
+
+        # Synchronisiere die Befehle für den Hauptserver
+        try:
+            guild = discord.Object(id=int(self.main_server_id))
+            await self.tree.sync(guild=guild)
+            logger.info(
+                f'Slash-Befehle wurden für den Server {self.main_server_id} synchronisiert.')
+        except Exception as e:
+            logger.error(
+                f"Fehler beim Synchronisieren der Slash-Befehle: {e}", exc_info=True)
 
     async def load_emojis_and_sync_commands(self):
         try:
@@ -86,6 +96,20 @@ class MyBot(commands.Bot):
     async def on_ready(self):
         logger.info(f'Bot ist online als {self.user}.')
 
+    async def on_message(self, message):
+        # Verhindere, dass der Bot versucht, Präfixbefehle zu verarbeiten
+        if message.author.bot:
+            return  # Ignoriere Nachrichten von Bots
+
+        # Lasse andere Cogs (wie quiz_cog) das on_message-Event verarbeiten
+        await self.invoke_cog_message_listeners(message)
+
+    async def invoke_cog_message_listeners(self, message):
+        """Hilfsfunktion, um on_message-Events an Cogs weiterzugeben."""
+        for cog in self.cogs.values():
+            if hasattr(cog, 'on_message'):
+                await cog.on_message(message)
+
 
 if __name__ == '__main__':
     # Lies den Token aus der Environment-Variable
@@ -94,5 +118,5 @@ if __name__ == '__main__':
         logger.error(
             "Bot Token nicht gefunden. Stelle sicher, dass die Environment-Variable 'bot_key' gesetzt ist.")
     else:
-        bot = MyBot(command_prefix=None, intents=intents)
+        bot = MyBot()
         bot.run(bot_token)
