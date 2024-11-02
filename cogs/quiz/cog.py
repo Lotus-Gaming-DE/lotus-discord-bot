@@ -16,7 +16,7 @@ class QuizCog(commands.Cog):
         self.question_generator = QuestionGenerator(self.data_loader)
         self.current_questions = {}
 
-        # WCR-Spezifische Logik für dynamisch generierte Fragen
+        # WCR-spezifische Logik für dynamisch generierte Fragen
         self.recent_wcr_questions = []
 
         # Konfiguration der Areas mit Channel-ID und Intervall in Stunden
@@ -49,14 +49,19 @@ class QuizCog(commands.Cog):
             await self.bot.wait_until_ready()
 
         quiz_loop.start()
+        logger.info(f"Quiz task for area '{
+                    area}' started with interval {interval} hours.")
 
     async def run_quiz(self, area):
         config = self.areas_config[area]
         channel = self.bot.get_channel(config['channel_id'])
         if channel is None:
-            logger.error(f"Konnte Kanal mit ID {
-                         config['channel_id']} nicht finden.")
+            logger.error(f"Channel with ID {
+                         config['channel_id']} for area '{area}' not found.")
             return
+
+        logger.info(f"Running quiz for area '{
+                    area}' in channel {channel.name}.")
 
         if area == 'wcr':
             question_data = self.generate_unique_wcr_question()
@@ -67,15 +72,19 @@ class QuizCog(commands.Cog):
             question_text, correct_answers = question_data['frage'], question_data['antwort']
             self.current_questions[area] = correct_answers
             await channel.send(f"**Quizfrage für {area}:** {question_text}")
+            logger.info(f"Question for area '{area}' sent: {question_text}")
+        else:
+            logger.warning(
+                f"No question could be generated for area '{area}'.")
 
     def generate_unique_question(self, area):
-        area_questions = self.data_loader.load_questions().get(area, {})
+        logger.info(f"Generating unique question for area '{area}'.")
 
+        area_questions = self.data_loader.load_questions().get(area, {})
         if not area_questions:
-            logger.error(f"Keine Fragen für den Bereich '{area}' gefunden.")
+            logger.error(f"No questions found for area '{area}'.")
             return None
 
-        # Auswahl einer Kategorie
         category = random.choice(list(area_questions.keys()))
         category_questions = area_questions[category]
         asked_questions = self.data_loader.load_asked_questions().get(area, [])
@@ -83,31 +92,43 @@ class QuizCog(commands.Cog):
         remaining_questions = [
             q for q in category_questions if q['frage'] not in asked_questions
         ]
+        logger.debug(f"Remaining questions for area '{area}': {
+                     [q['frage'] for q in remaining_questions]}")
 
         if not remaining_questions:
-            # Alle Fragen wurden einmal gestellt, zurücksetzen
             self.data_loader.reset_asked_questions(area)
             remaining_questions = category_questions.copy()
+            logger.info(f"All questions have been asked for area '{
+                        area}'. Resetting asked questions.")
 
         question = random.choice(remaining_questions)
         self.data_loader.mark_question_as_asked(area, question['frage'])
+        logger.info(f"Selected question for area '{
+                    area}': {question['frage']}")
         return question
 
     def generate_unique_wcr_question(self):
-        while True:
+        max_attempts = 20
+        logger.info("Generating unique WCR question.")
+
+        for attempt in range(max_attempts):
             question_data = self.question_generator.generate_question()
             question_text = question_data['frage']
+            logger.debug(f"Attempt {
+                         attempt + 1}/{max_attempts}: Generated WCR question - {question_text}")
 
-            if question_text in self.recent_wcr_questions:
-                # Erneut generieren, um Dopplung zu vermeiden
-                return self.generate_unique_wcr_question()
+            if question_text not in self.recent_wcr_questions:
+                self.recent_wcr_questions.append(question_text)
+                if len(self.recent_wcr_questions) > 10:
+                    removed_question = self.recent_wcr_questions.pop(0)
+                    logger.debug(f"Removed oldest question from recent WCR questions: {
+                                 removed_question}")
+                logger.info(f"Unique WCR question selected: {question_text}")
+                return question_data
 
-        # Speichert die Frage und entfernt die älteste, wenn mehr als 10 Fragen gespeichert sind
-        self.recent_wcr_questions.append(question_text)
-        if len(self.recent_wcr_questions) > 10:
-            self.recent_wcr_questions.pop(0)
-
-        return question_data
+        logger.warning(
+            "Could not generate a unique WCR question after maximum attempts.")
+        return None
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -121,7 +142,6 @@ class QuizCog(commands.Cog):
                 if correct_answers and check_answer(message.content, correct_answers):
                     await message.channel.send(f"Richtig, {message.author.mention}!")
                     logger.info(
-                        f"{message.author} hat die richtige Antwort gegeben.")
-                    # Entferne die aktuelle Frage, nachdem sie beantwortet wurde
+                        f"{message.author} answered correctly for area '{area}'.")
                     del self.current_questions[area]
-                break  # Bereich gefunden, weitere Iteration nicht nötig
+                break
