@@ -94,12 +94,13 @@ class QuizCog(commands.Cog):
         return question
 
     def generate_unique_wcr_question(self):
-        question_data = self.question_generator.generate_question()
-        question_text = question_data['frage']
+        while True:
+            question_data = self.question_generator.generate_question()
+            question_text = question_data['frage']
 
-        if question_text in self.recent_wcr_questions:
-            # Erneut generieren, um Dopplung zu vermeiden
-            return self.generate_unique_wcr_question()
+            if question_text in self.recent_wcr_questions:
+                # Erneut generieren, um Dopplung zu vermeiden
+                return self.generate_unique_wcr_question()
 
         # Speichert die Frage und entfernt die älteste, wenn mehr als 10 Fragen gespeichert sind
         self.recent_wcr_questions.append(question_text)
