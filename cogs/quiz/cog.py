@@ -1,10 +1,13 @@
+# cogs/quiz/cog.py
 import discord
 from discord.ext import commands, tasks
 import logging
 import random
+import asyncio
+import datetime
 from .data_loader import DataLoader
 from .question_generator import QuestionGenerator
-from .utils import check_answer
+from .utils import check_answer, create_permutations
 
 logger = logging.getLogger(__name__)
 
@@ -14,43 +17,61 @@ class QuizCog(commands.Cog):
         self.bot = bot
         self.data_loader = DataLoader()
         self.question_generator = QuestionGenerator(self.data_loader)
+        # {area: {'message': message, 'correct_answers': [...], 'end_time': datetime}}
         self.current_questions = {}
+        self.wcr_question_count = 0  # Zählt die Anzahl der gestellten WCR-Fragen
+        # Anzahl der dynamischen Fragen, bevor eine Frage aus JSON gestellt wird
+        self.max_wcr_dynamic_questions = 10
+        self.time_window = datetime.timedelta(
+            minutes=30)  # Zeitfenster von 30 Minuten
 
-        # WCR-spezifische Logik für dynamisch generierte Fragen
-        self.recent_wcr_questions = []
+        self.language = 'en'  # Standardmäßig 'en'
 
-        # Konfiguration der Areas mit Channel-ID und Intervall in Stunden
+        # Konfiguration der Areas mit Channel-ID
         self.areas_config = {
             'wcr': {
-                'channel_id': 1290804058281607189,  # Beispiel ID ersetzen
-                'interval_hours': 0.1,
+                'channel_id': 123456789012345678,  # Ersetze mit deiner WCR-Kanal-ID
             },
             'd4': {
-                'channel_id': 1290804058281607189,  # Beispiel ID ersetzen
-                'interval_hours': 0.1,
+                'channel_id': 234567890123456789,  # Ersetze mit deiner D4-Kanal-ID
             },
             # Weitere Areas können hier hinzugefügt werden
         }
 
         # Start der Quiz-Timer für alle konfigurierten Areas
         for area in self.areas_config:
-            self.start_quiz_task(area)
+            self.bot.loop.create_task(self.quiz_scheduler(area))
 
-    def start_quiz_task(self, area):
-        config = self.areas_config[area]
-        interval = config['interval_hours']
+    async def quiz_scheduler(self, area):
+        """Scheduler, der das Zeitfenster verwaltet und die Fragen zu zufälligen Zeiten stellt."""
+        await self.bot.wait_until_ready()
+        while True:
+            # Berechne den Start und das Ende des aktuellen Zeitfensters
+            now = datetime.datetime.utcnow()
+            next_window_start = now.replace(second=0, microsecond=0)
+            next_window_end = next_window_start + self.time_window
 
-        @tasks.loop(hours=interval)
-        async def quiz_loop():
+            # Berechne die späteste Zeit für die Fragenstellung (Hälfte des Zeitfensters)
+            latest_question_time = next_window_start + (self.time_window / 2)
+
+            # Wähle eine zufällige Zeit zwischen jetzt und der Hälfte des Zeitfensters
+            question_time = now + \
+                random.uniform(
+                    0, (latest_question_time - now).total_seconds()) * datetime.timedelta(seconds=1)
+
+            # Warte bis zur Frage
+            await asyncio.sleep((question_time - now).total_seconds())
+
+            # Stelle die Frage
             await self.run_quiz(area)
 
-        @quiz_loop.before_loop
-        async def before_quiz():
-            await self.bot.wait_until_ready()
+            # Warte bis zum Ende des Zeitfensters
+            now = datetime.datetime.utcnow()
+            await asyncio.sleep((next_window_end - now).total_seconds())
 
-        quiz_loop.start()
-        logger.info(f"Quiz task for area '{
-                    area}' started with interval {interval} hours.")
+            # Schließe die Frage, falls sie noch offen ist
+            if area in self.current_questions:
+                await self.close_question(area, timed_out=True)
 
     async def run_quiz(self, area):
         config = self.areas_config[area]
@@ -63,85 +84,85 @@ class QuizCog(commands.Cog):
         logger.info(f"Running quiz for area '{
                     area}' in channel {channel.name}.")
 
+        # Prüfen, ob bereits eine Frage offen ist
+        if area in self.current_questions:
+            logger.warning(f"A question is already active in area '{area}'.")
+            return
+
+        # Frage generieren
         if area == 'wcr':
-            question_data = self.generate_unique_wcr_question()
+            if self.wcr_question_count < self.max_wcr_dynamic_questions:
+                question_data = self.question_generator.generate_dynamic_wcr_question()
+                self.wcr_question_count += 1
+            else:
+                question_data = self.question_generator.generate_question_from_json(
+                    area)
+                self.wcr_question_count = 0  # Zurücksetzen des Zählers
         else:
-            question_data = self.generate_unique_question(area)
+            question_data = self.question_generator.generate_question_from_json(
+                area)
 
         if question_data:
             question_text, correct_answers = question_data['frage'], question_data['antwort']
-            self.current_questions[area] = correct_answers
-            await channel.send(f"**Quizfrage für {area}:** {question_text}")
+            message = await channel.send(f"**Quizfrage für {area}:** {question_text}")
+            self.current_questions[area] = {
+                'message': message,
+                'correct_answers': correct_answers,
+                'end_time': datetime.datetime.utcnow() + self.time_window
+            }
             logger.info(f"Question for area '{area}' sent: {question_text}")
         else:
             logger.warning(
                 f"No question could be generated for area '{area}'.")
 
-    def generate_unique_question(self, area):
-        logger.info(f"Generating unique question for area '{area}'.")
-
-        area_questions = self.data_loader.load_questions().get(area, {})
-        if not area_questions:
-            logger.error(f"No questions found for area '{area}'.")
-            return None
-
-        category = random.choice(list(area_questions.keys()))
-        category_questions = area_questions[category]
-        asked_questions = self.data_loader.load_asked_questions().get(area, [])
-
-        remaining_questions = [
-            q for q in category_questions if q['frage'] not in asked_questions
-        ]
-        logger.debug(f"Remaining questions for area '{area}': {
-                     [q['frage'] for q in remaining_questions]}")
-
-        if not remaining_questions:
-            self.data_loader.reset_asked_questions(area)
-            remaining_questions = category_questions.copy()
-            logger.info(f"All questions have been asked for area '{
-                        area}'. Resetting asked questions.")
-
-        question = random.choice(remaining_questions)
-        self.data_loader.mark_question_as_asked(area, question['frage'])
-        logger.info(f"Selected question for area '{
-                    area}': {question['frage']}")
-        return question
-
-    def generate_unique_wcr_question(self):
-        max_attempts = 20
-        logger.info("Generating unique WCR question.")
-
-        for attempt in range(max_attempts):
-            question_data = self.question_generator.generate_question()
-            question_text = question_data['frage']
-            logger.debug(f"Attempt {
-                         attempt + 1}/{max_attempts}: Generated WCR question - {question_text}")
-
-            if question_text not in self.recent_wcr_questions:
-                self.recent_wcr_questions.append(question_text)
-                if len(self.recent_wcr_questions) > 10:
-                    removed_question = self.recent_wcr_questions.pop(0)
-                    logger.debug(f"Removed oldest question from recent WCR questions: {
-                                 removed_question}")
-                logger.info(f"Unique WCR question selected: {question_text}")
-                return question_data
-
-        logger.warning(
-            "Could not generate a unique WCR question after maximum attempts.")
-        return None
+    async def close_question(self, area, timed_out=False):
+        """Schließt die aktuelle Frage für den angegebenen Bereich."""
+        question_info = self.current_questions.pop(area, None)
+        if question_info:
+            channel = question_info['message'].channel
+            if timed_out:
+                await channel.send("Zeit abgelaufen! Leider wurde die Frage nicht rechtzeitig beantwortet.")
+            else:
+                await channel.send("Die Frage wurde erfolgreich beantwortet!")
+            logger.info(f"Question in area '{area}' closed.")
 
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
             return  # Ignoriere Nachrichten von Bots
 
-        # Prüfen, ob die Nachricht in einem Quiz-Channel gesendet wurde
-        for area, config in self.areas_config.items():
-            if message.channel.id == config['channel_id']:
-                correct_answers = self.current_questions.get(area)
-                if correct_answers and check_answer(message.content, correct_answers):
-                    await message.channel.send(f"Richtig, {message.author.mention}!")
-                    logger.info(
-                        f"{message.author} answered correctly for area '{area}'.")
-                    del self.current_questions[area]
-                break
+        # Prüfen, ob die Nachricht eine Antwort auf eine aktive Frage ist
+        for area, question_info in self.current_questions.items():
+            if message.channel.id == question_info['message'].channel.id:
+                if message.reference and message.reference.message_id == question_info['message'].id:
+                    # Antwort prüfen
+                    correct_answers = question_info['correct_answers']
+                    if check_answer(message.content, correct_answers):
+                        # Punkte hinzufügen
+                        user_id = str(message.author.id)
+                        scores = self.data_loader.load_scores()
+                        scores[user_id] = scores.get(user_id, 0) + 1
+                        self.data_loader.save_scores(scores)
+
+                        # Benutzer benachrichtigen
+                        await message.channel.send(f"Richtig, {message.author.mention}! Du hast einen Punkt erhalten. 🏆")
+
+                        # Frage schließen
+                        await self.close_question(area)
+                        break
+                    else:
+                        await message.channel.send(f"Das ist leider nicht korrekt, {message.author.mention}. Versuche es erneut!")
+                        break
+
+                # Überprüfe, ob das Zeitfenster abgelaufen ist
+                if datetime.datetime.utcnow() >= question_info['end_time']:
+                    await self.close_question(area, timed_out=True)
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def set_language(self, ctx, language_code):
+        """Setzt die Sprache für die Quizfragen."""
+        self.language = language_code
+        self.data_loader.set_language(language_code)
+        self.question_generator = QuestionGenerator(self.data_loader)
+        await ctx.send(f"Sprache wurde auf '{language_code}' gesetzt.")
