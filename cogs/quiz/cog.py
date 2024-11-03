@@ -83,7 +83,7 @@ class QuizCog(commands.Cog):
         channel = self.bot.get_channel(config['channel_id'])
         if channel is None:
             logger.error(f"Channel with ID {
-                         config['channel_id']} for area '{area}' not found.")
+                config['channel_id']} for area '{area}' not found.")
             return
 
         logger.info(f"Running quiz for area '{
@@ -110,8 +110,14 @@ class QuizCog(commands.Cog):
         if question_data:
             question_text, correct_answers = question_data['frage'], question_data['antwort']
             category = question_data.get('category', 'Mechanik')
-            end_time = datetime.datetime.utcnow() + self.time_window
+
+            # Berechne die Endzeit der Frage basierend auf dem aktuellen Zeitfenster
+            now = datetime.datetime.utcnow()
+            current_window_end = now.replace(
+                minute=(now.minute // 5 + 1) * 5, second=0, microsecond=0)
+            end_time = min(now + self.time_window, current_window_end)
             end_time_str = end_time.strftime('%H:%M:%S')
+
             message = await channel.send(f"**Quizfrage ({category}):** {question_text}")
             self.current_questions[area] = {
                 'message': message,
@@ -135,49 +141,54 @@ class QuizCog(commands.Cog):
                 await channel.send("Die Frage wurde erfolgreich beantwortet!")
             logger.info(f"Question in area '{area}' closed.")
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        if message.author.bot:
-            return  # Ignoriere Nachrichten von Bots
 
-        # Prüfen, ob die Nachricht eine Antwort auf eine aktive Frage ist
-        for area, question_info in self.current_questions.items():
-            if message.channel.id == question_info['message'].channel.id:
-                # Überprüfe, ob das Zeitfenster abgelaufen ist
-                if datetime.datetime.utcnow() >= question_info['end_time']:
-                    await self.close_question(area, timed_out=True)
-                    continue  # Zum nächsten Bereich gehen
+@commands.Cog.listener()
+async def on_message(self, message):
+    if message.author.bot:
+        return  # Ignoriere Nachrichten von Bots
 
-                if message.reference and message.reference.message_id == question_info['message'].id:
-                    # Antwort prüfen
-                    correct_answers = question_info['correct_answers']
-                    if check_answer(message.content, correct_answers):
-                        # Punkte hinzufügen
-                        user_id = str(message.author.id)
-                        scores = self.data_loader.load_scores()
-                        scores[user_id] = scores.get(user_id, 0) + 1
-                        self.data_loader.save_scores(scores)
+    # Prüfen, ob die Nachricht eine Antwort auf eine aktive Frage ist
+    for area, question_info in self.current_questions.items():
+        if message.channel.id == question_info['message'].channel.id:
+            # Überprüfe, ob das Zeitfenster abgelaufen ist
+            if datetime.datetime.utcnow() >= question_info['end_time']:
+                await self.close_question(area, timed_out=True)
+                continue  # Zum nächsten Bereich gehen
 
-                        # Benutzer benachrichtigen
-                        await message.channel.send(f"Richtig, {message.author.mention}! Du hast einen Punkt erhalten. 🏆")
+            if message.reference and message.reference.message_id == question_info['message'].id:
+                # Antwort prüfen
+                correct_answers = question_info['correct_answers']
+                if check_answer(message.content, correct_answers):
+                    # Punkte hinzufügen
+                    user_id = str(message.author.id)
+                    scores = self.data_loader.load_scores()
+                    scores[user_id] = scores.get(user_id, 0) + 1
+                    self.data_loader.save_scores(scores)
 
-                        # Frage schließen
-                        await self.close_question(area)
+                    # Benutzer benachrichtigen
+                    await message.channel.send(f"Richtig, {message.author.mention}! Du hast einen Punkt erhalten. 🏆")
 
-                        # Logge die richtige Antwort des Benutzers
-                        logger.info(f"User '{message.author}' answered correctly in area '{
-                                    area}' with '{message.content}'.")
+                    # Frage schließen
+                    await self.close_question(area)
 
-                        return  # Verarbeitung beenden
-                    else:
-                        await message.channel.send(f"Das ist leider nicht korrekt, {message.author.mention}. Versuche es erneut!")
+                    # Logge die richtige Antwort des Benutzers
+                    logger.info(f"User '{message.author}' answered correctly in area '{
+                                area}' with '{message.content}'.")
 
-                        # Logge die falsche Antwort des Benutzers
-                        logger.info(f"User '{message.author}' answered incorrectly in area '{
-                                    area}' with '{message.content}'.")
+                    return  # Verarbeitung beenden
+                else:
+                    await message.channel.send(f"Das ist leider nicht korrekt, {message.author.mention}. Versuche es erneut!")
 
-                        return  # Verarbeitung beenden
-        # Wenn die Nachricht nicht relevant war, nichts tun
+                    # Logge die falsche Antwort des Benutzers
+                    logger.info(f"User '{message.author}' answered incorrectly in area '{
+                                area}' with '{message.content}'.")
+
+                    return  # Verarbeitung beenden
+            else:
+                # Die Nachricht bezieht sich nicht auf die Frage
+                continue  # Zum nächsten Bereich gehen
+
+    # Wenn die Nachricht nicht relevant war, nichts tun
 
     @commands.command()
     @commands.has_permissions(administrator=True)

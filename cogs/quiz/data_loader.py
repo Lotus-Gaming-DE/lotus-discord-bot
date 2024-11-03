@@ -68,46 +68,34 @@ class DataLoader:
             logger.error(f"Error saving scores: {e}")
 
     def load_asked_questions(self):
-        try:
-            if os.path.exists(self.ASKED_QUESTIONS_FILE):
-                with open(self.ASKED_QUESTIONS_FILE, 'r', encoding='utf-8') as f:
-                    asked_questions = json.load(f)
-                    logger.info("Asked questions loaded successfully.")
-                    return asked_questions
-            else:
-                logger.info(
-                    f"{self.ASKED_QUESTIONS_FILE} not found, starting fresh.")
-                return {}
-        except Exception as e:
-            logger.error(f"Error loading asked questions: {e}")
-            return {}
+        if os.path.exists(self.ASKED_QUESTIONS_FILE):
+            with open(self.ASKED_QUESTIONS_FILE, 'r', encoding='utf-8') as f:
+                asked_questions = json.load(f)
+                logger.info("Asked questions loaded successfully.")
+                return asked_questions
+        else:
+            return {}  # Initialisiere mit leerem Dict
 
-    def mark_question_as_asked(self, area, question_text):
-        try:
-            asked_questions = self.load_asked_questions()
-            if area not in asked_questions:
-                asked_questions[area] = []
-            asked_questions[area].append(question_text)
-
+    def mark_question_as_asked(self, area, question_id):
+        asked_questions = self.load_asked_questions()
+        if area not in asked_questions:
+            asked_questions[area] = []
+        if question_id not in asked_questions[area]:
+            asked_questions[area].append(question_id)
             with open(self.ASKED_QUESTIONS_FILE, 'w', encoding='utf-8') as f:
-                json.dump(asked_questions, f, ensure_ascii=False, indent=4)
-                logger.info(
-                    f"Question '{question_text}' marked as asked in area '{area}'.")
-        except Exception as e:
-            logger.error(f"Error marking question as asked: {e}")
+                json.dump(asked_questions, f)
+            logger.info(f"Question with ID {
+                        question_id} marked as asked for area '{area}'.")
+        else:
+            logger.warning(f"Question with ID {
+                question_id} was already marked as asked for area '{area}'.")
 
     def reset_asked_questions(self, area):
-        try:
-            asked_questions = self.load_asked_questions()
-            if area in asked_questions:
-                asked_questions[area] = []
-
-            with open(self.ASKED_QUESTIONS_FILE, 'w', encoding='utf-8') as f:
-                json.dump(asked_questions, f, ensure_ascii=False, indent=4)
-                logger.info(f"Asked questions for area '{
-                            area}' have been reset.")
-        except Exception as e:
-            logger.error(f"Error resetting asked questions: {e}")
+        asked_questions = self.load_asked_questions()
+        asked_questions[area] = []
+        with open(self.ASKED_QUESTIONS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(asked_questions, f)
+        logger.info(f"Asked questions reset for area '{area}'.")
 
     def load_wcr_units(self):
         try:

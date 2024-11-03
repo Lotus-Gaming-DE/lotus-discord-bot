@@ -31,7 +31,7 @@ class QuestionGenerator:
 
         # Filtere bereits gestellte Fragen
         remaining_questions = [
-            q for q in category_questions if q['frage'] not in asked_questions]
+            q for q in category_questions if q['id'] not in asked_questions]
 
         if not remaining_questions:
             # Alle Fragen wurden gestellt, zurücksetzen
@@ -41,13 +41,14 @@ class QuestionGenerator:
                         area}'. Resetting asked questions.")
 
         question_data = random.choice(remaining_questions)
-        self.data_loader.mark_question_as_asked(area, question_data['frage'])
+        self.data_loader.mark_question_as_asked(area, question_data['id'])
         logger.info(f"Generated question for area '{area}', category '{
                     category}': {question_data['frage']}")
         return {
             "frage": question_data['frage'],
             "antwort": create_permutations_list([question_data['antwort']]),
-            "category": category
+            "category": category,
+            "id": question_data['id']
         }
 
     def generate_dynamic_wcr_question(self):
