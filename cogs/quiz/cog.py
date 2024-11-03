@@ -23,7 +23,7 @@ class QuizCog(commands.Cog):
         # Anzahl der dynamischen Fragen, bevor eine Frage aus JSON gestellt wird
         self.max_wcr_dynamic_questions = 10
         self.time_window = datetime.timedelta(
-            minutes=30)  # Zeitfenster von 30 Minuten
+            minutes=5)  # Zeitfenster von 5 Minuten
 
         self.language = 'en'  # Standardmäßig 'en'
 
