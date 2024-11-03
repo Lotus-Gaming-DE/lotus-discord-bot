@@ -7,7 +7,7 @@ import asyncio
 import datetime
 from .data_loader import DataLoader
 from .question_generator import QuestionGenerator
-from .utils import check_answer, create_permutations
+from .utils import check_answer, create_permutations_list
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +30,10 @@ class QuizCog(commands.Cog):
         # Konfiguration der Areas mit Channel-ID
         self.areas_config = {
             'wcr': {
-                'channel_id': 1290804058281607189,  # Ersetze mit deiner WCR-Kanal-ID
+                'channel_id': 123456789012345678,  # Ersetze mit deiner WCR-Kanal-ID
             },
             'd4': {
-                'channel_id': 1290804058281607189,  # Ersetze mit deiner D4-Kanal-ID
+                'channel_id': 234567890123456789,  # Ersetze mit deiner D4-Kanal-ID
             },
             # Weitere Areas können hier hinzugefügt werden
         }
@@ -50,6 +50,11 @@ class QuizCog(commands.Cog):
             now = datetime.datetime.utcnow()
             next_window_start = now.replace(second=0, microsecond=0)
             next_window_end = next_window_start + self.time_window
+
+            # Logge die Dauer des Zeitfensters
+            window_end_str = next_window_end.strftime('%H:%M:%S')
+            logger.info(f"Time window for area '{
+                        area}' until {window_end_str}.")
 
             # Berechne die späteste Zeit für die Fragenstellung (Hälfte des Zeitfensters)
             latest_question_time = next_window_start + (self.time_window / 2)
@@ -104,13 +109,17 @@ class QuizCog(commands.Cog):
 
         if question_data:
             question_text, correct_answers = question_data['frage'], question_data['antwort']
-            message = await channel.send(f"**Quizfrage für {area}:** {question_text}")
+            category = question_data.get('category', 'Mechanik')
+            end_time = datetime.datetime.utcnow() + self.time_window
+            end_time_str = end_time.strftime('%H:%M:%S')
+            message = await channel.send(f"**Quizfrage ({category}):** {question_text}")
             self.current_questions[area] = {
                 'message': message,
                 'correct_answers': correct_answers,
-                'end_time': datetime.datetime.utcnow() + self.time_window
+                'end_time': end_time
             }
-            logger.info(f"Question for area '{area}' sent: {question_text}")
+            logger.info(f"Question for area '{area}' sent: {
+                        question_text} (will end at {end_time_str})")
         else:
             logger.warning(
                 f"No question could be generated for area '{area}'.")
@@ -134,6 +143,11 @@ class QuizCog(commands.Cog):
         # Prüfen, ob die Nachricht eine Antwort auf eine aktive Frage ist
         for area, question_info in self.current_questions.items():
             if message.channel.id == question_info['message'].channel.id:
+                # Überprüfe, ob das Zeitfenster abgelaufen ist
+                if datetime.datetime.utcnow() >= question_info['end_time']:
+                    await self.close_question(area, timed_out=True)
+                    continue  # Zum nächsten Bereich gehen
+
                 if message.reference and message.reference.message_id == question_info['message'].id:
                     # Antwort prüfen
                     correct_answers = question_info['correct_answers']
@@ -149,14 +163,21 @@ class QuizCog(commands.Cog):
 
                         # Frage schließen
                         await self.close_question(area)
-                        break
+
+                        # Logge die richtige Antwort des Benutzers
+                        logger.info(f"User '{message.author}' answered correctly in area '{
+                                    area}' with '{message.content}'.")
+
+                        return  # Verarbeitung beenden
                     else:
                         await message.channel.send(f"Das ist leider nicht korrekt, {message.author.mention}. Versuche es erneut!")
-                        break
 
-                # Überprüfe, ob das Zeitfenster abgelaufen ist
-                if datetime.datetime.utcnow() >= question_info['end_time']:
-                    await self.close_question(area, timed_out=True)
+                        # Logge die falsche Antwort des Benutzers
+                        logger.info(f"User '{message.author}' answered incorrectly in area '{
+                                    area}' with '{message.content}'.")
+
+                        return  # Verarbeitung beenden
+        # Wenn die Nachricht nicht relevant war, nichts tun
 
     @commands.command()
     @commands.has_permissions(administrator=True)

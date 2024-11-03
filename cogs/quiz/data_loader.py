@@ -115,26 +115,26 @@ class DataLoader:
                 with open(self.WCR_UNITS_FILE, 'r', encoding='utf-8') as f:
                     units = json.load(f)
                     logger.info("WCR units loaded successfully.")
-                    return units
+                    return units.get('units', [])
             else:
                 logger.warning(f"{self.WCR_UNITS_FILE} not found.")
-                return {}
+                return []
         except Exception as e:
             logger.error(f"Error loading WCR units: {e}")
-            return {}
+            return []
 
     def load_wcr_locals(self):
-        local_file = os.path.join(self.WCR_LOCALS_DIR, f"{self.language}.json")
-        try:
-            if os.path.exists(local_file):
-                with open(local_file, 'r', encoding='utf-8') as f:
-                    locals_data = json.load(f)
-                    logger.info(f"WCR locals for language '{
-                                self.language}' loaded successfully.")
-                    return locals_data
-            else:
-                logger.warning(f"{local_file} not found.")
-                return {}
-        except Exception as e:
-            logger.error(f"Error loading WCR locals: {e}")
-            return {}
+        locals_data = {}
+        for filename in os.listdir(self.WCR_LOCALS_DIR):
+            if filename.endswith('.json'):
+                language_code = filename[:-5]  # Entferne '.json'
+                local_file = os.path.join(self.WCR_LOCALS_DIR, filename)
+                try:
+                    with open(local_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        locals_data[language_code] = data
+                        logger.info(f"WCR locals for language '{
+                                    language_code}' loaded successfully.")
+                except Exception as e:
+                    logger.error(f"Error loading WCR locals '{filename}': {e}")
+        return locals_data

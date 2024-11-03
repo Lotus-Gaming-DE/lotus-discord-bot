@@ -2,7 +2,7 @@
 import random
 import logging
 from .data_loader import DataLoader
-from .utils import create_permutations
+from .utils import create_permutations_list
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ class QuestionGenerator:
     def __init__(self, data_loader):
         self.data_loader = data_loader
         self.questions_by_area = self.data_loader.questions_by_area
-        self.wcr_units = self.data_loader.wcr_units.get('units', [])
+        self.wcr_units = self.data_loader.wcr_units
         self.wcr_locals = self.data_loader.wcr_locals
         logger.info("QuestionGenerator initialized.")
 
@@ -42,12 +42,12 @@ class QuestionGenerator:
 
         question_data = random.choice(remaining_questions)
         self.data_loader.mark_question_as_asked(area, question_data['frage'])
-
         logger.info(f"Generated question for area '{area}', category '{
                     category}': {question_data['frage']}")
         return {
             "frage": question_data['frage'],
-            "antwort": create_permutations(question_data['antwort'])
+            "antwort": create_permutations_list([question_data['antwort']]),
+            "category": category
         }
 
     def generate_dynamic_wcr_question(self):
@@ -77,117 +77,148 @@ class QuestionGenerator:
         locals_data = self.wcr_locals
         talents = []
         for unit in units:
-            unit_locals = next(
-                (u for u in locals_data['units'] if u['id'] == unit['id']), None)
-            if unit_locals:
-                for talent in unit_locals.get('talents', []):
-                    talents.append({
-                        'talent_name': talent['name'],
-                        'unit_name': unit_locals['name']
-                    })
+            for lang_code, lang_data in locals_data.items():
+                unit_locals = next(
+                    (u for u in lang_data['units'] if u['id'] == unit['id']), None)
+                if unit_locals:
+                    for talent in unit_locals.get('talents', []):
+                        talents.append({
+                            'talent_name': talent['name'],
+                            'unit_name': unit_locals['name']
+                        })
         if not talents:
             return None
         talent_info = random.choice(talents)
         question_text = f"Welches Mini kann das Talent '{
             talent_info['talent_name']}' erlernen?"
-        correct_answer = talent_info['unit_name']
+        # Korrekte Antworten aus allen Sprachen sammeln
+        correct_answers = []
+        for lang_data in locals_data.values():
+            for unit in lang_data['units']:
+                if any(talent['name'] == talent_info['talent_name'] for talent in unit.get('talents', [])):
+                    correct_answers.append(unit['name'])
+        correct_answers = create_permutations_list(correct_answers)
         return {
             'frage': question_text,
-            'antwort': create_permutations(correct_answer)
+            'antwort': correct_answers,
+            'category': 'Mechanik'
         }
+
+    # Die anderen Fragegeneratoren werden ähnlich angepasst, um Antworten aus allen Sprachen zu berücksichtigen
 
     def generate_question_type_2(self):
         """Fragetyp 2: [Talentbeschreibung] - Welches Talent ist gesucht?"""
         locals_data = self.wcr_locals
         talents = []
-        for unit in locals_data.get('units', []):
-            for talent in unit.get('talents', []):
-                talents.append({
-                    'talent_name': talent['name'],
-                    'talent_description': talent['description']
-                })
+        for lang_data in locals_data.values():
+            for unit in lang_data.get('units', []):
+                for talent in unit.get('talents', []):
+                    talents.append({
+                        'talent_name': talent['name'],
+                        'talent_description': talent['description']
+                    })
         if not talents:
             return None
         talent_info = random.choice(talents)
         question_text = f"\"{
             talent_info['talent_description']}\" - Welches Talent ist gesucht?"
-        correct_answer = talent_info['talent_name']
+        # Korrekte Antworten aus allen Sprachen sammeln
+        correct_answers = [t['talent_name']
+                           for t in talents if t['talent_description'] == talent_info['talent_description']]
+        correct_answers = create_permutations_list(correct_answers)
         return {
             'frage': question_text,
-            'antwort': create_permutations(correct_answer)
+            'antwort': correct_answers,
+            'category': 'Mechanik'
         }
 
     def generate_question_type_3(self):
         """Fragetyp 3: Zu welcher Fraktion gehört der Mini [Mininame]?"""
         units = self.wcr_units
         locals_data = self.wcr_locals
-        factions = {f['id']: f['name']
-                    for f in locals_data['categories']['factions']}
-        unit = random.choice(units['units'])
-        unit_locals = next(
-            (u for u in locals_data['units'] if u['id'] == unit['id']), None)
-        if not unit_locals:
-            return None
-        faction_name = factions.get(unit['faction_id'], 'Unknown')
+        factions = {}
+        for lang_data in locals_data.values():
+            for faction in lang_data['categories']['factions']:
+                factions.setdefault(faction['id'], []).append(faction['name'])
+        unit = random.choice(units)
+        unit_names = []
+        for lang_data in locals_data.values():
+            unit_locals = next(
+                (u for u in lang_data['units'] if u['id'] == unit['id']), None)
+            if unit_locals:
+                unit_names.append(unit_locals['name'])
+        faction_names = factions.get(unit['faction_id'], [])
         question_text = f"Zu welcher Fraktion gehört der Mini '{
-            unit_locals['name']}'?"
-        correct_answer = faction_name
+            unit_names[0]}'?"
+        correct_answers = create_permutations_list(faction_names)
         return {
             'frage': question_text,
-            'antwort': create_permutations(correct_answer)
+            'antwort': correct_answers,
+            'category': 'Mechanik'
         }
 
     def generate_question_type_4(self):
         """Fragetyp 4: Wie viel Gold kostet es den Mini [Mininame] zu spielen?"""
         units = self.wcr_units
         locals_data = self.wcr_locals
-        unit = random.choice(units['units'])
-        unit_locals = next(
-            (u for u in locals_data['units'] if u['id'] == unit['id']), None)
-        if not unit_locals:
-            return None
+        unit = random.choice(units)
+        unit_names = []
+        for lang_data in locals_data.values():
+            unit_locals = next(
+                (u for u in lang_data['units'] if u['id'] == unit['id']), None)
+            if unit_locals:
+                unit_names.append(unit_locals['name'])
         cost = unit.get('cost')
         question_text = f"Wie viel Gold kostet es, den Mini '{
-            unit_locals['name']}' zu spielen?"
+            unit_names[0]}' zu spielen?"
         correct_answer = str(cost)
         return {
             'frage': question_text,
-            'antwort': [correct_answer]
+            'antwort': [correct_answer],
+            'category': 'Mechanik'
         }
 
     def generate_question_type_5(self):
         """Fragetyp 5: Welches Mini hat mehr [Stat/Statlabel], [Mininame1] oder [Mininame2]?"""
         units = self.wcr_units
         locals_data = self.wcr_locals
-        stat_labels = locals_data.get('stat_labels', {})
+        stat_labels = {}
+        for lang_data in locals_data.values():
+            stat_labels.update(lang_data.get('stat_labels', {}))
         stats_list = ['damage', 'health',
                       'attack_speed', 'range']  # Verfügbare Stats
         stat = random.choice(stats_list)
         stat_label = stat_labels.get(stat, stat.capitalize())
         # Wähle zwei Einheiten, die den gewählten Stat haben
-        valid_units = [unit for unit in units['units']
-                       if stat in unit.get('stats', {})]
+        valid_units = [unit for unit in units if stat in unit.get('stats', {})]
         if len(valid_units) < 2:
             return None
         unit1, unit2 = random.sample(valid_units, 2)
-        unit1_locals = next(
-            (u for u in locals_data['units'] if u['id'] == unit1['id']), None)
-        unit2_locals = next(
-            (u for u in locals_data['units'] if u['id'] == unit2['id']), None)
-        if not unit1_locals or not unit2_locals:
-            return None
+        unit1_names = []
+        unit2_names = []
+        for lang_data in locals_data.values():
+            unit1_locals = next(
+                (u for u in lang_data['units'] if u['id'] == unit1['id']), None)
+            unit2_locals = next(
+                (u for u in lang_data['units'] if u['id'] == unit2['id']), None)
+            if unit1_locals:
+                unit1_names.append(unit1_locals['name'])
+            if unit2_locals:
+                unit2_names.append(unit2_locals['name'])
         value1 = unit1['stats'][stat]
         value2 = unit2['stats'][stat]
         if value1 == value2:
             # Bei Gleichstand erneut versuchen
             return None
         if value1 > value2:
-            correct_answer = unit1_locals['name']
+            correct_answers = unit1_names
         else:
-            correct_answer = unit2_locals['name']
+            correct_answers = unit2_names
         question_text = f"Welches Mini hat mehr {stat_label}, '{
-            unit1_locals['name']}' oder '{unit2_locals['name']}'?"
+            unit1_names[0]}' oder '{unit2_names[0]}'?"
+        correct_answers = create_permutations_list(correct_answers)
         return {
             'frage': question_text,
-            'antwort': create_permutations(correct_answer)
+            'antwort': correct_answers,
+            'category': 'Mechanik'
         }
