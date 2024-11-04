@@ -152,9 +152,12 @@ class QuizCog(commands.Cog):
         if message.author.bot:
             return  # Ignoriere Nachrichten von Bots
 
-        # Prüfen, ob die Nachricht eine Antwort auf eine aktive Frage ist
-        for area, question_info in self.current_questions.items():
-            # Überprüfe, ob die Nachricht im selben Kanal wie die Quizfrage gesendet wurde
+        # Füge ein Debug-Log hinzu, um zu sehen, wann die Methode aufgerufen wird
+        logger.debug(f"on_message triggered by {message.author} in {
+            message.channel} with message ID {message.id}")
+
+        # Verwende eine Kopie von current_questions.items() für die Iteration
+        for area, question_info in list(self.current_questions.items()):
             if message.channel.id == question_info['message'].channel.id:
                 # Überprüfe, ob das Zeitfenster abgelaufen ist
                 if datetime.datetime.utcnow() >= question_info['end_time']:
