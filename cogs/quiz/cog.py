@@ -30,7 +30,7 @@ class QuizCog(commands.Cog):
         # Konfiguration der Areas mit Channel-ID
         self.areas_config = {
             'wcr': {
-                'channel_id': 1290804058281607189,  # Ersetze mit deiner WCR-Kanal-ID
+                'channel_id': 1301858256255455243,  # Ersetze mit deiner WCR-Kanal-ID
             },
             'd4': {
                 'channel_id': 1290804058281607189,  # Ersetze mit deiner D4-Kanal-ID
