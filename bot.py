@@ -40,7 +40,7 @@ class MyBot(commands.Bot):
                     logger.info(f'Extension {extension} geladen.')
                 except Exception as e:
                     logger.error(f'Fehler beim Laden der Extension {
-                        extension}: {e}', exc_info=True)
+                                 extension}: {e}', exc_info=True)
             elif os.path.isdir(filepath) and not filename.startswith('__'):
                 # Lade Unterverzeichnisse als Cogs, ignoriere Verzeichnisse, die mit '__' beginnen
                 if '__init__.py' in os.listdir(filepath):
@@ -50,7 +50,7 @@ class MyBot(commands.Bot):
                         logger.info(f'Extension {extension} geladen.')
                     except Exception as e:
                         logger.error(f'Fehler beim Laden der Extension {
-                            extension}: {e}', exc_info=True)
+                                     extension}: {e}', exc_info=True)
                 else:
                     logger.warning(
                         f'Verzeichnis {filepath} enthält keine __init__.py und wird ignoriert.')
@@ -117,18 +117,11 @@ class MyBot(commands.Bot):
         logger.info(f'Bot ist online als {self.user}.')
 
     async def on_message(self, message):
-        # Verhindere, dass der Bot versucht, Präfixbefehle zu verarbeiten
         if message.author.bot:
             return  # Ignoriere Nachrichten von Bots
 
-        # Lasse andere Cogs (wie quiz_cog) das on_message-Event verarbeiten
-        await self.invoke_cog_message_listeners(message)
-
-    async def invoke_cog_message_listeners(self, message):
-        """Hilfsfunktion, um on_message-Events an Cogs weiterzugeben."""
-        for cog in self.cogs.values():
-            if hasattr(cog, 'on_message'):
-                await cog.on_message(message)
+        # Verarbeite Befehle, falls du welche verwendest
+        await self.process_commands(message)
 
 
 if __name__ == '__main__':
