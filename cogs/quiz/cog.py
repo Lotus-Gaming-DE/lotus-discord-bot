@@ -113,8 +113,14 @@ class QuizCog(commands.Cog):
 
             # Berechne die Endzeit der Frage basierend auf dem aktuellen Zeitfenster
             now = datetime.datetime.utcnow()
+            minutes = (now.minute // 5 + 1) * 5
+            extra_hours, minutes = divmod(minutes, 60)
             current_window_end = now.replace(
-                minute=(now.minute // 5 + 1) * 5, second=0, microsecond=0)
+                hour=(now.hour + extra_hours) % 24,
+                minute=minutes,
+                second=0,
+                microsecond=0
+            )
             end_time = min(now + self.time_window, current_window_end)
             end_time_str = end_time.strftime('%H:%M:%S')
 
@@ -141,54 +147,53 @@ class QuizCog(commands.Cog):
                 await channel.send("Die Frage wurde erfolgreich beantwortet!")
             logger.info(f"Question in area '{area}' closed.")
 
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.bot:
+            return  # Ignoriere Nachrichten von Bots
 
-@commands.Cog.listener()
-async def on_message(self, message):
-    if message.author.bot:
-        return  # Ignoriere Nachrichten von Bots
+        # Prüfen, ob die Nachricht eine Antwort auf eine aktive Frage ist
+        for area, question_info in self.current_questions.items():
+            # Überprüfe, ob die Nachricht im selben Kanal wie die Quizfrage gesendet wurde
+            if message.channel.id == question_info['message'].channel.id:
+                # Überprüfe, ob das Zeitfenster abgelaufen ist
+                if datetime.datetime.utcnow() >= question_info['end_time']:
+                    await self.close_question(area, timed_out=True)
+                    continue  # Zum nächsten Bereich gehen
 
-    # Prüfen, ob die Nachricht eine Antwort auf eine aktive Frage ist
-    for area, question_info in self.current_questions.items():
-        if message.channel.id == question_info['message'].channel.id:
-            # Überprüfe, ob das Zeitfenster abgelaufen ist
-            if datetime.datetime.utcnow() >= question_info['end_time']:
-                await self.close_question(area, timed_out=True)
-                continue  # Zum nächsten Bereich gehen
+                # Überprüfe, ob die Nachricht eine Antwort auf die Quizfrage ist
+                if message.reference and message.reference.message_id == question_info['message'].id:
+                    # Antwort prüfen
+                    correct_answers = question_info['correct_answers']
+                    if check_answer(message.content, correct_answers):
+                        # Punkte hinzufügen
+                        user_id = str(message.author.id)
+                        scores = self.data_loader.load_scores()
+                        scores[user_id] = scores.get(user_id, 0) + 1
+                        self.data_loader.save_scores(scores)
 
-            if message.reference and message.reference.message_id == question_info['message'].id:
-                # Antwort prüfen
-                correct_answers = question_info['correct_answers']
-                if check_answer(message.content, correct_answers):
-                    # Punkte hinzufügen
-                    user_id = str(message.author.id)
-                    scores = self.data_loader.load_scores()
-                    scores[user_id] = scores.get(user_id, 0) + 1
-                    self.data_loader.save_scores(scores)
+                        # Benutzer benachrichtigen
+                        await message.channel.send(f"Richtig, {message.author.mention}! Du hast einen Punkt erhalten. 🏆")
 
-                    # Benutzer benachrichtigen
-                    await message.channel.send(f"Richtig, {message.author.mention}! Du hast einen Punkt erhalten. 🏆")
+                        # Frage schließen
+                        await self.close_question(area)
 
-                    # Frage schließen
-                    await self.close_question(area)
+                        # Logge die richtige Antwort des Benutzers
+                        logger.info(f"User '{message.author}' answered correctly in area '{
+                                    area}' with '{message.content}'.")
 
-                    # Logge die richtige Antwort des Benutzers
-                    logger.info(f"User '{message.author}' answered correctly in area '{
-                                area}' with '{message.content}'.")
+                        return  # Verarbeitung beenden
+                    else:
+                        await message.channel.send(f"Das ist leider nicht korrekt, {message.author.mention}. Versuche es erneut!")
 
-                    return  # Verarbeitung beenden
+                        # Logge die falsche Antwort des Benutzers
+                        logger.info(f"User '{message.author}' answered incorrectly in area '{
+                                    area}' with '{message.content}'.")
+
+                        return  # Verarbeitung beenden
                 else:
-                    await message.channel.send(f"Das ist leider nicht korrekt, {message.author.mention}. Versuche es erneut!")
-
-                    # Logge die falsche Antwort des Benutzers
-                    logger.info(f"User '{message.author}' answered incorrectly in area '{
-                                area}' with '{message.content}'.")
-
-                    return  # Verarbeitung beenden
-            else:
-                # Die Nachricht bezieht sich nicht auf die Frage
-                continue  # Zum nächsten Bereich gehen
-
-    # Wenn die Nachricht nicht relevant war, nichts tun
+                    continue  # Nachricht ist keine Antwort auf die Quizfrage
+        # Wenn die Nachricht nicht relevant war, nichts tun
 
     @commands.command()
     @commands.has_permissions(administrator=True)
