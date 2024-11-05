@@ -23,17 +23,17 @@ class QuizCog(commands.Cog):
         # Anzahl der dynamischen Fragen, bevor eine Frage aus JSON gestellt wird
         self.max_wcr_dynamic_questions = 200
         self.time_window = datetime.timedelta(
-            hours=1)  # Zeitfenster von 1 Stunde
+            hours=0.25)  # Zeitfenster von 1 Stunde
 
         # Konfiguration der Areas mit Channel-ID und Sprache
         self.areas_config = {
             'wcr': {
-                'channel_id': 1170101064427647016,  # Ersetze mit deiner WCR-Kanal-ID
-                'language': 'en'
+                'channel_id': 1303261310103851008,  # Ersetze mit deiner WCR-Kanal-ID
+                'language': 'de'
             },
             'd4': {
                 'channel_id': 1290804058281607189,  # Ersetze mit deiner D4-Kanal-ID
-                'language': 'en'
+                'language': 'de'
             },
             # Weitere Areas können hier hinzugefügt werden
         }
