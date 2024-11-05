@@ -1,3 +1,5 @@
+# cogs/quiz/data_loader.py
+
 import json
 import os
 import logging
@@ -10,8 +12,11 @@ class DataLoader:
     QUESTIONS_FILE_TEMPLATE = 'questions_{}.json'  # Platzhalter für die Sprache
     SCORES_FILE = os.path.join(QUIZ_DIR, 'scores.json')
     ASKED_QUESTIONS_FILE = os.path.join(QUIZ_DIR, 'asked_questions.json')
-    WCR_UNITS_FILE = os.path.join(QUIZ_DIR, 'wcr', 'units.json')
-    WCR_LOCALS_DIR = os.path.join(QUIZ_DIR, 'wcr', 'locals/')
+
+    # **Angepasste Pfade für WCR-Daten**
+    WCR_UNITS_FILE = './data/wcr/units.json'  # Korrigiert
+    WCR_LOCALS_DIR = './data/wcr/locals/'    # Korrigiert
+
     DEFAULT_LANGUAGE = 'en'  # Standardmäßig 'en', kann geändert werden
 
     def __init__(self):
@@ -28,6 +33,8 @@ class DataLoader:
 
     def set_language(self, language_code):
         self.language = language_code
+        # Fragen neu laden in der neuen Sprache
+        self.questions_by_area = self.load_questions()
         self.wcr_locals = self.load_wcr_locals()
         logger.info(f"Language set to '{self.language}'.")
 
