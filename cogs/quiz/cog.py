@@ -21,15 +21,15 @@ class QuizCog(commands.Cog):
         self.current_questions = {}
         self.wcr_question_count = 0  # Zählt die Anzahl der gestellten WCR-Fragen
         # Anzahl der dynamischen Fragen, bevor eine Frage aus JSON gestellt wird
-        self.max_wcr_dynamic_questions = 10
+        self.max_wcr_dynamic_questions = 100
         self.time_window = datetime.timedelta(
-            minutes=5)  # Zeitfenster von 5 Minuten
+            minutes=60)  # Zeitfenster von 60 Minuten
 
         # Konfiguration der Areas mit Channel-ID und Sprache
         self.areas_config = {
             'wcr': {
-                'channel_id': 1301858256255455243,  # Ersetze mit deiner WCR-Kanal-ID
-                'language': 'de'
+                'channel_id': 1170101064427647016,  # Ersetze mit deiner WCR-Kanal-ID
+                'language': 'en'
             },
             'd4': {
                 'channel_id': 1290804058281607189,  # Ersetze mit deiner D4-Kanal-ID
