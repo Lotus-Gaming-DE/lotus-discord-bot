@@ -1,7 +1,7 @@
 # cogs/quiz/question_generator.py
+
 import random
 import logging
-from .data_loader import DataLoader
 from .utils import create_permutations_list
 
 logger = logging.getLogger(__name__)
@@ -13,10 +13,11 @@ class QuestionGenerator:
         self.questions_by_area = self.data_loader.questions_by_area
         self.wcr_units = self.data_loader.wcr_units
         self.wcr_locals = self.data_loader.wcr_locals
+        self.language = self.data_loader.language  # Aktuelle Sprache
         logger.info("QuestionGenerator initialized.")
 
     def generate_question_from_json(self, area):
-        """Generiert eine Frage aus questions.json für den angegebenen Bereich."""
+        """Generiert eine Frage aus der entsprechenden questions-Datei für den angegebenen Bereich."""
         area_questions = self.questions_by_area.get(area)
         if not area_questions:
             logger.error(f"Area '{area}' not found in loaded questions.")
@@ -31,7 +32,8 @@ class QuestionGenerator:
 
         # Filtere bereits gestellte Fragen
         remaining_questions = [
-            q for q in category_questions if q['id'] not in asked_questions]
+            q for q in category_questions if q['id'] not in asked_questions
+        ]
 
         if not remaining_questions:
             # Alle Fragen wurden gestellt, zurücksetzen
@@ -80,7 +82,9 @@ class QuestionGenerator:
         for unit in units:
             for lang_code, lang_data in locals_data.items():
                 unit_locals = next(
-                    (u for u in lang_data['units'] if u['id'] == unit['id']), None)
+                    (u for u in lang_data['units']
+                     if u['id'] == unit['id']), None
+                )
                 if unit_locals:
                     for talent in unit_locals.get('talents', []):
                         talents.append({
@@ -88,16 +92,31 @@ class QuestionGenerator:
                             'unit_name': unit_locals['name']
                         })
         if not talents:
+            logger.warning("No talents found to generate type_1 question.")
             return None
         talent_info = random.choice(talents)
-        question_text = f"Welches Mini kann das Talent '{
-            talent_info['talent_name']}' erlernen?"
-        # Korrekte Antworten aus allen Sprachen sammeln
+
+        # Sprache berücksichtigen
+        language = self.data_loader.language
+        try:
+            template = self.wcr_locals[language]['question_templates']['type_1']
+            question_text = template.format(
+                talent_name=talent_info['talent_name'])
+        except KeyError as e:
+            logger.error(f"Missing template for type_1 in language '{
+                         language}': {e}")
+            return None
+
+        # Korrekte Antworten aus der aktuellen Sprache sammeln
         correct_answers = []
-        for lang_data in locals_data.values():
-            for unit in lang_data['units']:
-                if any(talent['name'] == talent_info['talent_name'] for talent in unit.get('talents', [])):
-                    correct_answers.append(unit['name'])
+        for unit in units:
+            for lang_code, lang_data in locals_data.items():
+                unit_locals = next(
+                    (u for u in lang_data['units']
+                     if u['id'] == unit['id']), None
+                )
+                if unit_locals and any(talent['name'] == talent_info['talent_name'] for talent in unit_locals.get('talents', [])):
+                    correct_answers.append(unit_locals['name'])
         correct_answers = create_permutations_list(correct_answers)
         return {
             'frage': question_text,
@@ -105,13 +124,11 @@ class QuestionGenerator:
             'category': 'Mechanik'
         }
 
-    # Die anderen Fragegeneratoren werden ähnlich angepasst, um Antworten aus allen Sprachen zu berücksichtigen
-
     def generate_question_type_2(self):
         """Fragetyp 2: [Talentbeschreibung] - Welches Talent ist gesucht?"""
         locals_data = self.wcr_locals
         talents = []
-        for lang_data in locals_data.values():
+        for lang_code, lang_data in locals_data.items():
             for unit in lang_data.get('units', []):
                 for talent in unit.get('talents', []):
                     talents.append({
@@ -119,13 +136,25 @@ class QuestionGenerator:
                         'talent_description': talent['description']
                     })
         if not talents:
+            logger.warning("No talents found to generate type_2 question.")
             return None
         talent_info = random.choice(talents)
-        question_text = f"\"{
-            talent_info['talent_description']}\" - Welches Talent ist gesucht?"
-        # Korrekte Antworten aus allen Sprachen sammeln
-        correct_answers = [t['talent_name']
-                           for t in talents if t['talent_description'] == talent_info['talent_description']]
+
+        # Sprache berücksichtigen
+        language = self.data_loader.language
+        try:
+            template = self.wcr_locals[language]['question_templates']['type_2']
+            question_text = template.format(
+                talent_description=talent_info['talent_description'])
+        except KeyError as e:
+            logger.error(f"Missing template for type_2 in language '{
+                         language}': {e}")
+            return None
+
+        # Korrekte Antworten sammeln
+        correct_answers = [
+            t['talent_name'] for t in talents if t['talent_description'] == talent_info['talent_description']
+        ]
         correct_answers = create_permutations_list(correct_answers)
         return {
             'frage': question_text,
@@ -137,89 +166,115 @@ class QuestionGenerator:
         """Fragetyp 3: Zu welcher Fraktion gehört der Mini [Mininame]?"""
         units = self.wcr_units
         locals_data = self.wcr_locals
-        factions = {}
-        for lang_data in locals_data.values():
-            for faction in lang_data['categories']['factions']:
-                factions.setdefault(faction['id'], []).append(faction['name'])
+        if not units:
+            logger.warning("No units found to generate type_3 question.")
+            return None
         unit = random.choice(units)
-        unit_names = []
-        for lang_data in locals_data.values():
-            unit_locals = next(
-                (u for u in lang_data['units'] if u['id'] == unit['id']), None)
-            if unit_locals:
-                unit_names.append(unit_locals['name'])
-        faction_names = factions.get(unit['faction_id'], [])
-        question_text = f"Zu welcher Fraktion gehört der Mini '{
-            unit_names[0]}'?"
-        correct_answers = create_permutations_list(faction_names)
+
+        # Sprache berücksichtigen
+        language = self.data_loader.language
+        try:
+            template = self.wcr_locals[language]['question_templates']['type_3']
+            question_text = template.format(unit_name=unit['name'])
+        except KeyError as e:
+            logger.error(f"Missing template for type_3 in language '{
+                         language}': {e}")
+            return None
+
+        # Korrekte Antwort sammeln
+        faction = unit.get('faction')
+        if not faction:
+            logger.warning(
+                f"Unit '{unit['name']}' has no faction information.")
+            return None
+        correct_answers = [faction]
+        correct_answers = create_permutations_list(correct_answers)
         return {
             'frage': question_text,
             'antwort': correct_answers,
-            'category': 'Mechanik'
+            'category': 'Franchise'
         }
 
     def generate_question_type_4(self):
-        """Fragetyp 4: Wie viel Gold kostet es den Mini [Mininame] zu spielen?"""
+        """Fragetyp 4: Wie viel Gold kostet es, den Mini [Mininame] zu spielen?"""
         units = self.wcr_units
         locals_data = self.wcr_locals
+        if not units:
+            logger.warning("No units found to generate type_4 question.")
+            return None
         unit = random.choice(units)
-        unit_names = []
-        for lang_data in locals_data.values():
-            unit_locals = next(
-                (u for u in lang_data['units'] if u['id'] == unit['id']), None)
-            if unit_locals:
-                unit_names.append(unit_locals['name'])
-        cost = unit.get('cost')
-        question_text = f"Wie viel Gold kostet es, den Mini '{
-            unit_names[0]}' zu spielen?"
-        correct_answer = str(cost)
-        return {
-            'frage': question_text,
-            'antwort': [correct_answer],
-            'category': 'Mechanik'
-        }
 
-    def generate_question_type_5(self):
-        """Fragetyp 5: Welches Mini hat mehr [Stat/Statlabel], [Mininame1] oder [Mininame2]?"""
-        units = self.wcr_units
-        locals_data = self.wcr_locals
-        stat_labels = {}
-        for lang_data in locals_data.values():
-            stat_labels.update(lang_data.get('stat_labels', {}))
-        stats_list = ['damage', 'health',
-                      'attack_speed', 'range']  # Verfügbare Stats
-        stat = random.choice(stats_list)
-        stat_label = stat_labels.get(stat, stat.capitalize())
-        # Wähle zwei Einheiten, die den gewählten Stat haben
-        valid_units = [unit for unit in units if stat in unit.get('stats', {})]
-        if len(valid_units) < 2:
+        # Sprache berücksichtigen
+        language = self.data_loader.language
+        try:
+            template = self.wcr_locals[language]['question_templates']['type_4']
+            question_text = template.format(unit_name=unit['name'])
+        except KeyError as e:
+            logger.error(f"Missing template for type_4 in language '{
+                         language}': {e}")
             return None
-        unit1, unit2 = random.sample(valid_units, 2)
-        unit1_names = []
-        unit2_names = []
-        for lang_data in locals_data.values():
-            unit1_locals = next(
-                (u for u in lang_data['units'] if u['id'] == unit1['id']), None)
-            unit2_locals = next(
-                (u for u in lang_data['units'] if u['id'] == unit2['id']), None)
-            if unit1_locals:
-                unit1_names.append(unit1_locals['name'])
-            if unit2_locals:
-                unit2_names.append(unit2_locals['name'])
-        value1 = unit1['stats'][stat]
-        value2 = unit2['stats'][stat]
-        if value1 == value2:
-            # Bei Gleichstand erneut versuchen
+
+        # Korrekte Antwort sammeln
+        cost = unit.get('cost')
+        if cost is None:
+            logger.warning(f"Unit '{unit['name']}' has no cost information.")
             return None
-        if value1 > value2:
-            correct_answers = unit1_names
-        else:
-            correct_answers = unit2_names
-        question_text = f"Welches Mini hat mehr {stat_label}, '{
-            unit1_names[0]}' oder '{unit2_names[0]}'?"
+        correct_answers = [str(cost)]
         correct_answers = create_permutations_list(correct_answers)
         return {
             'frage': question_text,
             'antwort': correct_answers,
             'category': 'Mechanik'
         }
+
+    def generate_question_type_5(self):
+        """Fragetyp 5: Welches Mini hat mehr [Statlabel], [Mininame1] oder [Mininame2]?"""
+        units = self.wcr_units
+        locals_data = self.wcr_locals
+        if len(units) < 2:
+            logger.warning("Not enough units to generate type_5 question.")
+            return None
+        unit1, unit2 = random.sample(units, 2)
+
+        # Auswahl eines zufälligen Statlabels
+        stat_labels = ['health', 'damage',
+                       'attack_speed', 'dps']  # Beispielstatistiken
+        stat_label = random.choice(stat_labels)
+
+        # Sprache berücksichtigen
+        language = self.data_loader.language
+        try:
+            template = self.wcr_locals[language]['question_templates']['type_5']
+            question_text = template.format(
+                stat_label=stat_label,
+                unit1=unit1['name'],
+                unit2=unit2['name']
+            )
+        except KeyError as e:
+            logger.error(f"Missing template for type_5 in language '{
+                         language}': {e}")
+            return None
+
+        # Korrekte Antwort bestimmen
+        stat1 = unit1.get(stat_label)
+        stat2 = unit2.get(stat_label)
+        if stat1 is None or stat2 is None:
+            logger.warning(f"One of the units '{unit1['name']}' or '{
+                           unit2['name']}' lacks '{stat_label}' information.")
+            return None
+
+        if stat1 > stat2:
+            correct_answers = [unit1['name']]
+        elif stat2 > stat1:
+            correct_answers = [unit2['name']]
+        else:
+            correct_answers = [unit1['name'], unit2['name']]  # Beide gleich
+
+        correct_answers = create_permutations_list(correct_answers)
+        return {
+            'frage': question_text,
+            'antwort': correct_answers,
+            'category': 'Mechanik'
+        }
+
+    # Weitere Fragetypen können hier hinzugefügt werden

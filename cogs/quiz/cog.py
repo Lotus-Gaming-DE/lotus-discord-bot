@@ -40,7 +40,7 @@ class QuizCog(commands.Cog):
         # Initialisiere DataLoader und QuestionGenerator pro Area
         for area, config in self.areas_config.items():
             data_loader = DataLoader()
-            data_loader.set_language(config['language'])
+            data_loader.set_language(config['language'])  # Sprache setzen
             question_generator = QuestionGenerator(data_loader)
             self.area_data[area] = {
                 'data_loader': data_loader,
