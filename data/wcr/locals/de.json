@@ -1869,5 +1869,13 @@
         "dwarf_health": "Dwarf Health",
         "bear_health": "Bear Health",
         "dwarf_range": "Dwarf Range"
+    },
+
+    "question_templates": {
+        "type_1": "Welches Mini kann das Talent '{talent_name}' erlernen?",
+        "type_2": "\"{talent_description}\" - Welches Talent ist gesucht?",
+        "type_3": "Zu welcher Fraktion gehört der Mini '{unit_name}'?",
+        "type_4": "Wie viel Gold kostet es, den Mini '{unit_name}' zu spielen?",
+        "type_5": "Welches Mini hat mehr {stat_label}, '{unit1}' oder '{unit2}'?"
     }
 }

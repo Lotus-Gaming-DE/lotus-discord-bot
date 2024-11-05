@@ -15,9 +15,8 @@ logger = logging.getLogger(__name__)
 class QuizCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.data_loader = DataLoader()
-        self.question_generator = QuestionGenerator(self.data_loader)
-        # {area: {'message': message, 'correct_answers': [...], 'end_time': datetime}}
+        # {area: {'data_loader': DataLoader, 'question_generator': QuestionGenerator}}
+        self.area_data = {}
         self.current_questions = {}
         self.wcr_question_count = 0  # Zählt die Anzahl der gestellten WCR-Fragen
         # Anzahl der dynamischen Fragen, bevor eine Frage aus JSON gestellt wird
@@ -25,21 +24,29 @@ class QuizCog(commands.Cog):
         self.time_window = datetime.timedelta(
             minutes=5)  # Zeitfenster von 5 Minuten
 
-        self.language = 'en'  # Standardmäßig 'en'
-
-        # Konfiguration der Areas mit Channel-ID
+        # Konfiguration der Areas mit Channel-ID und Sprache
         self.areas_config = {
             'wcr': {
                 'channel_id': 1301858256255455243,  # Ersetze mit deiner WCR-Kanal-ID
+                'language': 'de'
             },
             'd4': {
                 'channel_id': 1290804058281607189,  # Ersetze mit deiner D4-Kanal-ID
+                'language': 'en'
             },
             # Weitere Areas können hier hinzugefügt werden
         }
 
-        # Start der Quiz-Timer für alle konfigurierten Areas
-        for area in self.areas_config:
+        # Initialisiere DataLoader und QuestionGenerator pro Area
+        for area, config in self.areas_config.items():
+            data_loader = DataLoader()
+            data_loader.set_language(config['language'])
+            question_generator = QuestionGenerator(data_loader)
+            self.area_data[area] = {
+                'data_loader': data_loader,
+                'question_generator': question_generator
+            }
+            # Starte den Quiz-Scheduler für jede Area
             self.bot.loop.create_task(self.quiz_scheduler(area))
 
     async def quiz_scheduler(self, area):
@@ -60,19 +67,23 @@ class QuizCog(commands.Cog):
             latest_question_time = next_window_start + (self.time_window / 2)
 
             # Wähle eine zufällige Zeit zwischen jetzt und der Hälfte des Zeitfensters
+            delta_seconds = (latest_question_time - now).total_seconds()
             question_time = now + \
-                random.uniform(
-                    0, (latest_question_time - now).total_seconds()) * datetime.timedelta(seconds=1)
+                datetime.timedelta(seconds=random.uniform(0, delta_seconds))
 
             # Warte bis zur Frage
-            await asyncio.sleep((question_time - now).total_seconds())
+            sleep_time = (question_time - now).total_seconds()
+            if sleep_time > 0:
+                await asyncio.sleep(sleep_time)
 
             # Stelle die Frage
             await self.run_quiz(area)
 
             # Warte bis zum Ende des Zeitfensters
             now = datetime.datetime.utcnow()
-            await asyncio.sleep((next_window_end - now).total_seconds())
+            sleep_until_end = (next_window_end - now).total_seconds()
+            if sleep_until_end > 0:
+                await asyncio.sleep(sleep_until_end)
 
             # Schließe die Frage, falls sie noch offen ist
             if area in self.current_questions:
@@ -80,10 +91,12 @@ class QuizCog(commands.Cog):
 
     async def run_quiz(self, area):
         config = self.areas_config[area]
+        data_loader = self.area_data[area]['data_loader']
+        question_generator = self.area_data[area]['question_generator']
         channel = self.bot.get_channel(config['channel_id'])
         if channel is None:
             logger.error(f"Channel with ID {
-                config['channel_id']} for area '{area}' not found.")
+                         config['channel_id']} for area '{area}' not found.")
             return
 
         logger.info(f"Running quiz for area '{
@@ -97,14 +110,14 @@ class QuizCog(commands.Cog):
         # Frage generieren
         if area == 'wcr':
             if self.wcr_question_count < self.max_wcr_dynamic_questions:
-                question_data = self.question_generator.generate_dynamic_wcr_question()
+                question_data = question_generator.generate_dynamic_wcr_question()
                 self.wcr_question_count += 1
             else:
-                question_data = self.question_generator.generate_question_from_json(
+                question_data = question_generator.generate_question_from_json(
                     area)
                 self.wcr_question_count = 0  # Zurücksetzen des Zählers
         else:
-            question_data = self.question_generator.generate_question_from_json(
+            question_data = question_generator.generate_question_from_json(
                 area)
 
         if question_data:
@@ -154,7 +167,7 @@ class QuizCog(commands.Cog):
 
         # Füge ein Debug-Log hinzu, um zu sehen, wann die Methode aufgerufen wird
         logger.debug(f"on_message triggered by {message.author} in {
-            message.channel} with message ID {message.id}")
+                     message.channel} with message ID {message.id}")
 
         # Verwende eine Kopie von current_questions.items() für die Iteration
         for area, question_info in list(self.current_questions.items()):
@@ -171,9 +184,10 @@ class QuizCog(commands.Cog):
                     if check_answer(message.content, correct_answers):
                         # Punkte hinzufügen
                         user_id = str(message.author.id)
-                        scores = self.data_loader.load_scores()
+                        scores = self.area_data[area]['data_loader'].load_scores(
+                        )
                         scores[user_id] = scores.get(user_id, 0) + 1
-                        self.data_loader.save_scores(scores)
+                        self.area_data[area]['data_loader'].save_scores(scores)
 
                         # Benutzer benachrichtigen
                         await message.channel.send(f"Richtig, {message.author.mention}! Du hast einen Punkt erhalten. 🏆")
@@ -200,9 +214,15 @@ class QuizCog(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def set_language(self, ctx, language_code):
-        """Setzt die Sprache für die Quizfragen."""
-        self.language = language_code
-        self.data_loader.set_language(language_code)
-        self.question_generator = QuestionGenerator(self.data_loader)
-        await ctx.send(f"Sprache wurde auf '{language_code}' gesetzt.")
+    async def set_language(self, ctx, area: str, language_code: str):
+        """Setzt die Sprache für die Quizfragen in einer bestimmten Area."""
+        if area not in self.areas_config:
+            await ctx.send(f"Area '{area}' existiert nicht.")
+            return
+
+        if language_code not in self.area_data[area]['data_loader'].wcr_locals:
+            await ctx.send(f"Sprache '{language_code}' ist für Area '{area}' nicht verfügbar.")
+            return
+
+        self.area_data[area]['data_loader'].set_language(language_code)
+        await ctx.send(f"Sprache für Area '{area}' wurde auf '{language_code}' gesetzt.")

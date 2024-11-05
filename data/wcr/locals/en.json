@@ -1869,5 +1869,12 @@
         "dwarf_health": "Dwarf Health",
         "bear_health": "Bear Health",
         "dwarf_range": "Dwarf Range"
-    }
+    },
+    "question_templates": {
+        "type_1": "Which mini can learn the talent '{talent_name}'?",
+        "type_2": "\"{talent_description}\" - Which talent is being sought?",
+        "type_3": "Which faction does the mini '{unit_name}' belong to?",
+        "type_4": "How much gold does it cost to play the mini '{unit_name}'?",
+        "type_5": "Which mini has more {stat_label}, '{unit1}' or '{unit2}'?"
+    } 
 }
