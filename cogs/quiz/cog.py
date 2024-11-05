@@ -21,9 +21,9 @@ class QuizCog(commands.Cog):
         self.current_questions = {}
         self.wcr_question_count = 0  # Zählt die Anzahl der gestellten WCR-Fragen
         # Anzahl der dynamischen Fragen, bevor eine Frage aus JSON gestellt wird
-        self.max_wcr_dynamic_questions = 100
+        self.max_wcr_dynamic_questions = 200
         self.time_window = datetime.timedelta(
-            minutes=60)  # Zeitfenster von 60 Minuten
+            hours=1)  # Zeitfenster von 1 Stunde
 
         # Konfiguration der Areas mit Channel-ID und Sprache
         self.areas_config = {
@@ -77,8 +77,8 @@ class QuizCog(commands.Cog):
             if sleep_time > 0:
                 await asyncio.sleep(sleep_time)
 
-            # Stelle die Frage
-            await self.run_quiz(area)
+            # Stelle die Frage mit dem Ende des Zeitfensters als Parameter
+            await self.run_quiz(area, next_window_end)
 
             # Warte bis zum Ende des Zeitfensters
             now = datetime.datetime.utcnow()
@@ -90,7 +90,7 @@ class QuizCog(commands.Cog):
             if area in self.current_questions:
                 await self.close_question(area, timed_out=True)
 
-    async def run_quiz(self, area):
+    async def run_quiz(self, area, end_time):
         config = self.areas_config[area]
         data_loader = self.area_data[area]['data_loader']
         question_generator = self.area_data[area]['question_generator']
@@ -125,17 +125,7 @@ class QuizCog(commands.Cog):
             question_text, correct_answers = question_data['frage'], question_data['antwort']
             category = question_data.get('category', 'Mechanik')
 
-            # Berechne die Endzeit der Frage basierend auf dem aktuellen Zeitfenster
-            now = datetime.datetime.utcnow()
-            minutes = (now.minute // 5 + 1) * 5
-            extra_hours, minutes = divmod(minutes, 60)
-            current_window_end = now.replace(
-                hour=(now.hour + extra_hours) % 24,
-                minute=minutes,
-                second=0,
-                microsecond=0
-            )
-            end_time = min(now + self.time_window, current_window_end)
+            # Setze die Endzeit direkt auf das Ende des Zeitfensters
             end_time_str = end_time.strftime('%H:%M:%S')
 
             message = await channel.send(f"**Quizfrage ({category}):** {question_text}")
