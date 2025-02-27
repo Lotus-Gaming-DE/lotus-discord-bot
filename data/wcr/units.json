@@ -1,1402 +1,1034 @@
-[
-  {
-    "id": 1,
-    "cost": 6,
-    "faction_id": 1,
-    "type_id": 1,
-    "traits_ids": [
-      1,
-      2,
-      3,
-      4
-    ],
-    "speed_id": 1,
-    "stats": {
-      "area_damage": 170,
-      "health": 3400,
-      "dps": 68,
-      "attack_speed": 2.5
-    }
-  },
-  {
-    "id": 2,
-    "cost": 2,
-    "faction_id": 2,
-    "type_id": 1,
-    "traits_ids": [
-      5,
-      6,
-      3,
-      7
-    ],
-    "speed_id": 2,
-    "stats": {
-      "damage": 40,
-      "health": 25,
-      "dps": 40,
-      "attack_speed": 1
-    }
-  },
-  {
-    "id": 3,
-    "cost": 1,
-    "faction_id": 3,
-    "type_id": 2,
-    "traits_ids": [
-      8,
-      5,
-      9,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 75,
-      "radius": 5
-    }
-  },
-  {
-    "id": 4,
-    "cost": 4,
-    "faction_id": 1,
-    "type_id": 1,
-    "traits_ids": [
-      10,
-      11,
-      12
-    ],
-    "speed_id": 2,
-    "stats": {
-      "health": 230
-    }
-  },
-  {
-    "id": 5,
-    "cost": 4,
-    "faction_id": 1,
-    "type_id": 3,
-    "traits_ids": [
-      1,
-      13,
-      8,
-      6,
-      3,
-      12
-    ],
-    "speed_id": 4,
-    "stats": {
-      "damage": 190,
-      "health": 1040,
-      "dps": 112,
-      "attack_speed": 1.7
-    }
-  },
-  {
-    "id": 6,
-    "cost": 2,
-    "faction_id": 4,
-    "type_id": 1,
-    "traits_ids": [
-      8,
-      14,
-      5,
-      15,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 250,
-      "health": 170,
-      "dps": 100,
-      "attack_speed": 2.5,
-      "duration": 2.5,
-      "range": 6.5
-    }
-  },
-  {
-    "id": 7,
-    "cost": 4,
-    "faction_id": 3,
-    "type_id": 2,
-    "traits_ids": [
-      16,
-      8,
-      9,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 500,
-      "dps": 100,
-      "radius": 6,
-      "duration": 5
-    }
-  },
-  {
-    "id": 8,
-    "cost": 4,
-    "faction_id": 1,
-    "type_id": 3,
-    "traits_ids": [
-      8,
-      11,
-      4
-    ],
-    "speed_id": 1,
-    "stats": {
-      "area_damage": 150,
-      "health": 460,
-      "dps": 107,
-      "attack_speed": 1.4,
-      "range": 8.5
-    }
-  },
-  {
-    "id": 9,
-    "cost": 5,
-    "faction_id": 4,
-    "type_id": 3,
-    "traits_ids": [
-      1,
-      17,
-      3,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 160,
-      "health": 1700,
-      "dps": 64,
-      "attack_speed": 2.5
-    }
-  },
-  {
-    "id": 10,
-    "cost": 2,
-    "faction_id": 4,
-    "type_id": 2,
-    "traits_ids": [
-      5,
-      8,
-      9,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 150,
-      "radius": 5
-    }
-  },
-  {
-    "id": 11,
-    "cost": 2,
-    "faction_id": 2,
-    "type_id": 3,
-    "traits_ids": [
-      18,
-      14,
-      19,
-      5,
-      11,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 6,
-      "health": 320,
-      "dps": 24,
-      "range": 8.5,
-      "percent_dps": 8
-    }
-  },
-  {
-    "id": 12,
-    "cost": 3,
-    "faction_id": 1,
-    "type_id": 2,
-    "traits_ids": [
-      9,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "radius": 5,
-      "duration": 5,
-      "lvl_advantage": "0.5 Sec"
-    }
-  },
-  {
-    "id": 13,
-    "cost": 6,
-    "faction_id": 5,
-    "type_id": 1,
-    "traits_ids": [
-      20,
-      21,
-      1,
-      3,
-      7
-    ],
-    "speed_id": 1,
-    "stats": {
-      "damage": 170,
-      "health": 1420,
-      "dps": 77,
-      "attack_speed": 2.2
-    }
-  },
-  {
-    "id": 14,
-    "cost": 2,
-    "faction_id": 5,
-    "type_id": 1,
-    "traits_ids": [
-      22,
-      23,
-      5,
-      3,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 60,
-      "health": 540,
-      "dps": 43,
-      "attack_speed": 1.4
-    }
-  },
-  {
-    "id": 15,
-    "cost": 3,
-    "faction_id": 4,
-    "type_id": 1,
-    "traits_ids": [
-      11,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 190,
-      "health": 220,
-      "dps": 158,
-      "attack_speed": 1.2,
-      "range": 9
-    }
-  },
-  {
-    "id": 16,
-    "cost": 4,
-    "faction_id": 5,
-    "type_id": 2,
-    "traits_ids": [
-      8,
-      9,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 400,
-      "range": 25
-    }
-  },
-  {
-    "id": 17,
-    "cost": 1,
-    "faction_id": 3,
-    "type_id": 1,
-    "traits_ids": [
-      24,
-      25,
-      5,
-      3,
-      7
-    ],
-    "speed_id": 2,
-    "stats": {
-      "damage": 30,
-      "health": 120,
-      "dps": 17,
-      "attack_speed": 1.8
-    }
-  },
-  {
-    "id": 18,
-    "cost": 4,
-    "faction_id": 5,
-    "type_id": 1,
-    "traits_ids": [
-      8,
-      15,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 320,
-      "health": 340,
-      "dps": 133,
-      "attack_speed": 2.4
-    }
-  },
-  {
-    "id": 19,
-    "cost": 3,
-    "faction_id": 5,
-    "type_id": 1,
-    "traits_ids": [
-      1,
-      13,
-      22,
-      26,
-      27,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 70,
-      "health": 940,
-      "dps": 35,
-      "attack_speed": 2
-    }
-  },
-  {
-    "id": 20,
-    "cost": 3,
-    "faction_id": 4,
-    "type_id": 2,
-    "traits_ids": [
-      9,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "radius": 5,
-      "lvl_advantage": "5%",
-      "percent_dmg": 50
-    }
-  },
-  {
-    "id": 21,
-    "cost": 4,
-    "faction_id": 5,
-    "type_id": 1,
-    "traits_ids": [
-      1,
-      8,
-      20,
-      3,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 120,
-      "health": 1640,
-      "dps": 67,
-      "attack_speed": 1.8
-    }
-  },
-  {
-    "id": 22,
-    "cost": 4,
-    "faction_id": 5,
-    "type_id": 1,
-    "traits_ids": [
-      8,
-      28,
-      11,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 140,
-      "health": 350,
-      "dps": 100,
-      "attack_speed": 1.4,
-      "range": 9
-    }
-  },
-  {
-    "id": 23,
-    "cost": 4,
-    "faction_id": 5,
-    "type_id": 1,
-    "traits_ids": [
-      8,
-      29,
-      11,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 220,
-      "health": 460,
-      "dps": 122,
-      "attack_speed": 1.8,
-      "range": 7.5
-    }
-  },
-  {
-    "id": 24,
-    "cost": 5,
-    "faction_id": 3,
-    "type_id": 1,
-    "traits_ids": [
-      13,
-      1,
-      3,
-      7
-    ],
-    "speed_id": 1,
-    "stats": {
-      "damage": 70,
-      "health": 800,
-      "dps": 44,
-      "attack_speed": 1.6
-    }
-  },
-  {
-    "id": 25,
-    "cost": 4,
-    "faction_id": 4,
-    "type_id": 1,
-    "traits_ids": [
-      8,
-      30,
-      11,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 60,
-      "health": 480,
-      "dps": 22,
-      "attack_speed": 1.5,
-      "range": 8,
-      "healing": 80
-    }
-  },
-  {
-    "id": 26,
-    "cost": 4,
-    "faction_id": 1,
-    "type_id": 1,
-    "traits_ids": [
-      1,
-      26,
-      13,
-      15,
-      27,
-      12
-    ],
-    "speed_id": 1,
-    "stats": {
-      "damage": 250,
-      "health": 1300,
-      "dps": 147,
-      "attack_speed": 1.7
-    }
-  },
-  {
-    "id": 27,
-    "cost": 5,
-    "faction_id": 5,
-    "type_id": 3,
-    "traits_ids": [
-      1,
-      8,
-      20,
-      3,
-      12
-    ],
-    "speed_id": 1,
-    "stats": {
-      "damage": 300,
-      "health": 1600,
-      "dps": 167,
-      "attack_speed": 1.8
-    }
-  },
-  {
-    "id": 28,
-    "cost": 2,
-    "faction_id": 1,
-    "type_id": 1,
-    "traits_ids": [
-      1,
-      31,
-      5,
-      3,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 110,
-      "health": 1040,
-      "dps": 65,
-      "attack_speed": 1.7
-    }
-  },
-  {
-    "id": 29,
-    "cost": 3,
-    "faction_id": 2,
-    "type_id": 1,
-    "traits_ids": [
-      1,
-      3,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 130,
-      "health": 1240,
-      "dps": 65,
-      "attack_speed": 2
-    }
-  },
-  {
-    "id": 30,
-    "cost": 2,
-    "faction_id": 4,
-    "type_id": 1,
-    "traits_ids": [
-      26,
-      5,
-      27,
-      7
-    ],
-    "speed_id": 2,
-    "stats": {
-      "damage": 450,
-      "health": 120
-    }
-  },
-  {
-    "id": 31,
-    "cost": 4,
-    "faction_id": 4,
-    "type_id": 3,
-    "traits_ids": [
-      32,
-      33,
-      3,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 220,
-      "health": 1360,
-      "dps": 169,
-      "attack_speed": 1.3
-    }
-  },
-  {
-    "id": 32,
-    "cost": 2,
-    "faction_id": 3,
-    "type_id": 1,
-    "traits_ids": [
-      5,
-      15,
-      12
-    ],
-    "speed_id": 2,
-    "stats": {
-      "damage": 160,
-      "health": 170,
-      "dps": 145,
-      "attack_speed": 1.1,
-      "range": 5
-    }
-  },
-  {
-    "id": 33,
-    "cost": 3,
-    "faction_id": 2,
-    "type_id": 1,
-    "traits_ids": [
-      6,
-      15,
-      7
-    ],
-    "speed_id": 4,
-    "stats": {
-      "damage": 140,
-      "health": 150,
-      "dps": 117,
-      "attack_speed": 1.2
-    }
-  },
-  {
-    "id": 34,
-    "cost": 3,
-    "faction_id": 3,
-    "type_id": 1,
-    "traits_ids": [
-      1,
-      34,
-      3,
-      12
-    ],
-    "speed_id": 1,
-    "stats": {
-      "damage": 140,
-      "health": 1480,
-      "dps": 70,
-      "attack_speed": 2
-    }
-  },
-  {
-    "id": 35,
-    "cost": 4,
-    "faction_id": 2,
-    "type_id": 3,
-    "traits_ids": [
-      1,
-      3,
-      4
-    ],
-    "speed_id": 2,
-    "stats": {
-      "area_damage": 190,
-      "health": 1120,
-      "dps": 79,
-      "attack_speed": 2.4
-    }
-  },
-  {
-    "id": 36,
-    "cost": 3,
-    "faction_id": 3,
-    "type_id": 2,
-    "traits_ids": [
-      8,
-      9,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 150,
-      "radius": 5,
-      "healing": 280
-    }
-  },
-  {
-    "id": 37,
-    "cost": 5,
-    "faction_id": 3,
-    "type_id": 1,
-    "traits_ids": [
-      6,
-      20,
-      11,
-      4
-    ],
-    "speed_id": 4,
-    "stats": {
-      "area_damage": 150,
-      "health": 400,
-      "dps": 107,
-      "attack_speed": 1.4,
-      "range": 7.5
-    }
-  },
-  {
-    "id": 38,
-    "cost": 3,
-    "faction_id": 3,
-    "type_id": 3,
-    "traits_ids": [
-      8,
-      16,
-      11,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 190,
-      "health": 250,
-      "dps": 119,
-      "attack_speed": 1.6,
-      "range": 7
-    }
-  },
-  {
-    "id": 39,
-    "cost": 6,
-    "faction_id": 5,
-    "type_id": 2,
-    "traits_ids": [
-      8,
-      9,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 200,
-      "radius": 6
-    }
-  },
-  {
-    "id": 40,
-    "cost": 6,
-    "faction_id": 3,
-    "type_id": 3,
-    "traits_ids": [
-      24,
-      22,
-      3,
-      4
-    ],
-    "speed_id": 2,
-    "stats": {
-      "damage": 160,
-      "health": 620,
-      "dps": 100,
-      "attack_speed": 1.6,
-      "fan_damage": 300
-    }
-  },
-  {
-    "id": 41,
-    "cost": 3,
-    "faction_id": 1,
-    "type_id": 1,
-    "traits_ids": [
-      26,
-      35,
-      14,
-      11,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 210,
-      "health": 320,
-      "dps": 70,
-      "attack_speed": 3,
-      "range": 11
-    }
-  },
-  {
-    "id": 42,
-    "cost": 6,
-    "faction_id": 5,
-    "type_id": 1,
-    "traits_ids": [
-      1,
-      13,
-      26,
-      3,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 180,
-      "health": 2900,
-      "dps": 67,
-      "attack_speed": 2.7
-    }
-  },
-  {
-    "id": 43,
-    "cost": 6,
-    "faction_id": 3,
-    "type_id": 1,
-    "traits_ids": [
-      36,
-      1,
-      3,
-      11,
-      7
-    ],
-    "speed_id": 3,
-    "stats": {
-      "dwarf_dmg": 170,
-      "bear_dmg": 110,
-      "dwarf_dps": 121,
-      "bear_dps": 61,
-      "dwarf_health": 280,
-      "bear_health": 1400,
-      "dwarf_range": 8.5
-    }
-  },
-  {
-    "id": 44,
-    "cost": 2,
-    "faction_id": 2,
-    "type_id": 1,
-    "traits_ids": [
-      6,
-      5,
-      11,
-      7
-    ],
-    "speed_id": 4,
-    "stats": {
-      "damage": 90,
-      "health": 80,
-      "dps": 56,
-      "attack_speed": 1.6,
-      "range": 6.5
-    }
-  },
-  {
-    "id": 45,
-    "cost": 4,
-    "faction_id": 1,
-    "type_id": 1,
-    "traits_ids": [
-      8,
-      37,
-      11,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 190,
-      "health": 400,
-      "dps": 146,
-      "attack_speed": 1.3,
-      "range": 7.5
-    }
-  },
-  {
-    "id": 46,
-    "cost": 5,
-    "faction_id": 4,
-    "type_id": 1,
-    "traits_ids": [
-      8,
-      38,
-      11,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 160,
-      "health": 650,
-      "dps": 114,
-      "attack_speed": 1.4,
-      "range": 8
-    }
-  },
-  {
-    "id": 47,
-    "cost": 4,
-    "faction_id": 2,
-    "type_id": 3,
-    "traits_ids": [
-      6,
-      8,
-      11,
-      4
-    ],
-    "speed_id": 4,
-    "stats": {
-      "damage": 150,
-      "health": 160,
-      "dps": 94,
-      "attack_speed": 1.6,
-      "range": 6.5
-    }
-  },
-  {
-    "id": 48,
-    "cost": 2,
-    "faction_id": 1,
-    "type_id": 1,
-    "traits_ids": [
-      39,
-      14,
-      5,
-      11,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 260,
-      "health": 200,
-      "dps": 113,
-      "attack_speed": 2.3,
-      "duration": 5,
-      "range": 9
-    }
-  },
-  {
-    "id": 49,
-    "cost": 3,
-    "faction_id": 2,
-    "type_id": 2,
-    "traits_ids": [
-      9,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "radius": 5,
-      "duration": 6,
-      "lvl_advantage": "0.5 Sec"
-    }
-  },
-  {
-    "id": 50,
-    "cost": 3,
-    "faction_id": 2,
-    "type_id": 1,
-    "traits_ids": [
-      6,
-      1,
-      3,
-      12
-    ],
-    "speed_id": 4,
-    "stats": {
-      "damage": 130,
-      "health": 840,
-      "dps": 144,
-      "attack_speed": 0.9
-    }
-  },
-  {
-    "id": 51,
-    "cost": 3,
-    "faction_id": 5,
-    "type_id": 1,
-    "traits_ids": [
-      8,
-      11,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 170,
-      "health": 220,
-      "dps": 113,
-      "attack_speed": 1.5,
-      "range": 8
-    }
-  },
-  {
-    "id": 52,
-    "cost": 2,
-    "faction_id": 2,
-    "type_id": 1,
-    "traits_ids": [
-      22,
-      20,
-      5,
-      1,
-      3,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 70,
-      "health": 780,
-      "dps": 39,
-      "attack_speed": 1.8
-    }
-  },
-  {
-    "id": 53,
-    "cost": 1,
-    "faction_id": 2,
-    "type_id": 1,
-    "traits_ids": [
-      6,
-      5,
-      3,
-      7
-    ],
-    "speed_id": 4,
-    "stats": {
-      "damage": 90,
-      "health": 350,
-      "dps": 69,
-      "attack_speed": 1.3
-    }
-  },
-  {
-    "id": 54,
-    "cost": 6,
-    "faction_id": 5,
-    "type_id": 3,
-    "traits_ids": [
-      40,
-      8,
-      15,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "rend_dmg": 140,
-      "gyth_dmg": 320,
-      "rend_dps": 82,
-      "gyth_dps": 133,
-      "rend_health": 1200,
-      "gyth_health": 340,
-      "rend_range": 4,
-      "gyth_range": 4
-    }
-  },
-  {
-    "id": 55,
-    "cost": 3,
-    "faction_id": 3,
-    "type_id": 1,
-    "traits_ids": [
-      8,
-      22,
-      11,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 170,
-      "health": 210,
-      "dps": 71,
-      "attack_speed": 2.4,
-      "range": 8.5,
-      "crash_damage": 250
-    }
-  },
-  {
-    "id": 56,
-    "cost": 4,
-    "faction_id": 1,
-    "type_id": 1,
-    "traits_ids": [
-      22,
-      8,
-      16,
-      3,
-      11,
-      7
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 46,
-      "health": 200,
-      "dps": 33,
-      "attack_speed": 1.4,
-      "range": 7
-    }
-  },
-  {
-    "id": 57,
-    "cost": 2,
-    "faction_id": 1,
-    "type_id": 1,
-    "traits_ids": [
-      22,
-      5,
-      3,
-      7
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 46,
-      "health": 200,
-      "dps": 33,
-      "attack_speed": 1.4
-    }
-  },
-  {
-    "id": 58,
-    "cost": 1,
-    "faction_id": 5,
-    "type_id": 2,
-    "traits_ids": [
-      5,
-      9,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "radius": 5,
-      "duration": 5,
-      "lvl_advantage": "0.5 Sec"
-    }
-  },
-  {
-    "id": 59,
-    "cost": 5,
-    "faction_id": 5,
-    "type_id": 3,
-    "traits_ids": [
-      1,
-      13,
-      26,
-      3,
-      4
-    ],
-    "speed_id": 3,
-    "stats": {
-      "area_damage": 360,
-      "health": 1040,
-      "dps": 120,
-      "attack_speed": 3
-    }
-  },
-  {
-    "id": 60,
-    "cost": 2,
-    "faction_id": 2,
-    "type_id": 1,
-    "traits_ids": [
-      39,
-      5,
-      41,
-      3,
-      4
-    ],
-    "speed_id": 2,
-    "stats": {
-      "damage": 40,
-      "health": 380,
-      "dps": 50,
-      "attack_speed": 0.8,
-      "duration": 5
-    }
-  },
-  {
-    "id": 61,
-    "cost": 4,
-    "faction_id": 4,
-    "type_id": 1,
-    "traits_ids": [
-      1,
-      42,
-      3,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 150,
-      "health": 1720,
-      "dps": 83,
-      "attack_speed": 1.8
-    }
-  },
-  {
-    "id": 62,
-    "cost": 6,
-    "faction_id": 1,
-    "type_id": 3,
-    "traits_ids": [
-      43,
-      11,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 190,
-      "health": 430,
-      "dps": 146,
-      "attack_speed": 1.3,
-      "range": 8.5
-    }
-  },
-  {
-    "id": 63,
-    "cost": 4,
-    "faction_id": 3,
-    "type_id": 3,
-    "traits_ids": [
-      1,
-      13,
-      30,
-      3,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 120,
-      "health": 700,
-      "dps": 67,
-      "attack_speed": 1.8,
-      "healing": 160
-    }
-  },
-  {
-    "id": 64,
-    "cost": 1,
-    "faction_id": 2,
-    "type_id": 1,
-    "traits_ids": [
-      5,
-      44,
-      15,
-      7
-    ],
-    "speed_id": 2,
-    "stats": {
-      "damage": 70,
-      "health": 25,
-      "dps": 44,
-      "attack_speed": 1.6
-    }
-  },
-  {
-    "id": 65,
-    "cost": 5,
-    "faction_id": 4,
-    "type_id": 1,
-    "traits_ids": [
-      28,
-      1,
-      3,
-      7
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 80,
-      "health": 1720,
-      "dps": 50,
-      "attack_speed": 1.6
-    }
-  },
-  {
-    "id": 66,
-    "cost": 4,
-    "faction_id": 4,
-    "type_id": 1,
-    "traits_ids": [
-      26,
-      6,
-      1,
-      3,
-      12
-    ],
-    "speed_id": 4,
-    "stats": {
-      "damage": 180,
-      "health": 1340,
-      "dps": 106,
-      "attack_speed": 1.7
-    }
-  },
-  {
-    "id": 67,
-    "cost": 3,
-    "faction_id": 5,
-    "type_id": 1,
-    "traits_ids": [
-      8,
-      22,
-      45,
-      15,
-      7
-    ],
-    "speed_id": 2,
-    "stats": {
-      "area_damage": 110,
-      "health": 130,
-      "dps": 61,
-      "attack_speed": 1.8,
-      "range": 3.5
-    }
-  },
-  {
-    "id": 68,
-    "cost": 3,
-    "faction_id": 3,
-    "type_id": 1,
-    "traits_ids": [
-      24,
-      46,
-      22,
-      3,
-      12
-    ],
-    "speed_id": 2,
-    "stats": {
-      "damage": 130,
-      "health": 340,
-      "dps": 163,
-      "attack_speed": 0.8
-    }
-  },
-  {
-    "id": 69,
-    "cost": 5,
-    "faction_id": 2,
-    "type_id": 1,
-    "traits_ids": [
-      15,
-      4,
-      39,
-      8
-    ],
-    "speed_id": 2,
-    "stats": {
-      "health": 450,
-      "range": 7,
-      "right_damage": 50,
-      "left_damage": 150,
-      "right_dps": 33,
-      "left_dps": 50
-    }
-  },
-  {
-    "id": 70,
-    "cost": 4,
-    "faction_id": 5,
-    "type_id": 3,
-    "traits_ids": [
-      11,
-      4,
-      8,
-      47
-    ],
-    "speed_id": 3,
-    "stats": {
-      "health": 1330,
-      "range": 7,
-      "damage": 85,
-      "dps": 33,
-      "attack_speed": 2.6
-    }
-  },
-  {
-    "id": 71,
-    "cost": 2,
-    "faction_id": 4,
-    "type_id": 1,
-    "traits_ids": [
-      11,
-      4,
-      8,
-      5
-    ],
-    "speed_id": 3,
-    "stats": {
-      "health": 300,
-      "range": 8,
-      "damage": 18,
-      "dps": 90,
-      "area_damage": 100
-    }
-  },
-  {
-    "id": 72,
-    "cost": 3,
-    "faction_id": 6,
-    "type_id": 1,
-    "traits_ids": [
-      8,
-      20,
-      48,
-      49,
-      15,
-      12
-    ],
-    "speed_id": 3,
-    "stats": {
-      "damage": 170,
-      "health": 180,
-      "dps": 113,
-      "attack_speed": 1.5,
-      "range": 5
-    }
-  }
-]
+{
+  "units": [
+    {
+      "id": 1,
+      "cost": 6,
+      "faction_id": 1,
+      "type_id": 1,
+      "traits_ids": [1, 2, 3, 4],
+      "speed_id": 1,
+      "stats": {
+        "area_damage": 170,
+        "health": 3400,
+        "dps": 68,
+        "attack_speed": 2.5
+      }
+    },
+    {
+      "id": 2,
+      "cost": 2,
+      "faction_id": 2,
+      "type_id": 1,
+      "traits_ids": [5, 6, 3, 7],
+      "speed_id": 2,
+      "stats": {
+        "damage": 40,
+        "health": 25,
+        "dps": 40,
+        "attack_speed": 1
+      }
+    },
+    {
+      "id": 3,
+      "cost": 1,
+      "faction_id": 3,
+      "type_id": 2,
+      "traits_ids": [8, 5, 9, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 75,
+        "radius": 5
+      }
+    },
+    {
+      "id": 4,
+      "cost": 4,
+      "faction_id": 1,
+      "type_id": 1,
+      "traits_ids": [10, 11, 12],
+      "speed_id": 2,
+      "stats": {
+        "health": 230
+      }
+    },
+    {
+      "id": 5,
+      "cost": 4,
+      "faction_id": 1,
+      "type_id": 3,
+      "traits_ids": [1, 13, 8, 6, 3, 12],
+      "speed_id": 4,
+      "stats": {
+        "damage": 190,
+        "health": 1040,
+        "dps": 112,
+        "attack_speed": 1.7
+      }
+    },
+    {
+      "id": 6,
+      "cost": 2,
+      "faction_id": 4,
+      "type_id": 1,
+      "traits_ids": [8, 14, 5, 15, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 250,
+        "health": 170,
+        "dps": 100,
+        "attack_speed": 2.5,
+        "duration": 2.5,
+        "range": 6.5
+      }
+    },
+    {
+      "id": 7,
+      "cost": 4,
+      "faction_id": 3,
+      "type_id": 2,
+      "traits_ids": [16, 8, 9, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 500,
+        "dps": 100,
+        "radius": 6,
+        "duration": 5
+      }
+    },
+    {
+      "id": 8,
+      "cost": 4,
+      "faction_id": 1,
+      "type_id": 3,
+      "traits_ids": [8, 11, 4],
+      "speed_id": 1,
+      "stats": {
+        "area_damage": 150,
+        "health": 460,
+        "dps": 107,
+        "attack_speed": 1.4,
+        "range": 8.5
+      }
+    },
+    {
+      "id": 9,
+      "cost": 5,
+      "faction_id": 4,
+      "type_id": 3,
+      "traits_ids": [1, 17, 3, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 160,
+        "health": 1700,
+        "dps": 64,
+        "attack_speed": 2.5
+      }
+    },
+    {
+      "id": 10,
+      "cost": 2,
+      "faction_id": 4,
+      "type_id": 2,
+      "traits_ids": [5, 8, 9, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 150,
+        "radius": 5
+      }
+    },
+    {
+      "id": 11,
+      "cost": 2,
+      "faction_id": 2,
+      "type_id": 3,
+      "traits_ids": [18, 14, 19, 5, 11, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 6,
+        "health": 320,
+        "dps": 24,
+        "range": 8.5,
+        "percent_dps": 8
+      }
+    },
+    {
+      "id": 12,
+      "cost": 3,
+      "faction_id": 1,
+      "type_id": 2,
+      "traits_ids": [9, 4],
+      "speed_id": 3,
+      "stats": {
+        "radius": 5,
+        "duration": 5,
+        "lvl_advantage": "0.5 Sec"
+      }
+    },
+    {
+      "id": 13,
+      "cost": 6,
+      "faction_id": 5,
+      "type_id": 1,
+      "traits_ids": [20, 21, 1, 3, 7],
+      "speed_id": 1,
+      "stats": {
+        "damage": 170,
+        "health": 1420,
+        "dps": 77,
+        "attack_speed": 2.2
+      }
+    },
+    {
+      "id": 14,
+      "cost": 2,
+      "faction_id": 5,
+      "type_id": 1,
+      "traits_ids": [22, 23, 5, 3, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 60,
+        "health": 540,
+        "dps": 43,
+        "attack_speed": 1.4
+      }
+    },
+    {
+      "id": 15,
+      "cost": 3,
+      "faction_id": 4,
+      "type_id": 1,
+      "traits_ids": [11, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 190,
+        "health": 220,
+        "dps": 158,
+        "attack_speed": 1.2,
+        "range": 9
+      }
+    },
+    {
+      "id": 16,
+      "cost": 4,
+      "faction_id": 5,
+      "type_id": 2,
+      "traits_ids": [8, 9, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 400,
+        "range": 25
+      }
+    },
+    {
+      "id": 17,
+      "cost": 1,
+      "faction_id": 3,
+      "type_id": 1,
+      "traits_ids": [24, 25, 5, 3, 7],
+      "speed_id": 2,
+      "stats": {
+        "damage": 30,
+        "health": 120,
+        "dps": 17,
+        "attack_speed": 1.8
+      }
+    },
+    {
+      "id": 18,
+      "cost": 4,
+      "faction_id": 5,
+      "type_id": 1,
+      "traits_ids": [8, 15, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 320,
+        "health": 340,
+        "dps": 133,
+        "attack_speed": 2.4
+      }
+    },
+    {
+      "id": 19,
+      "cost": 3,
+      "faction_id": 5,
+      "type_id": 1,
+      "traits_ids": [1, 13, 22, 26, 27, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 70,
+        "health": 940,
+        "dps": 35,
+        "attack_speed": 2
+      }
+    },
+    {
+      "id": 20,
+      "cost": 3,
+      "faction_id": 4,
+      "type_id": 2,
+      "traits_ids": [9, 4],
+      "speed_id": 3,
+      "stats": {
+        "radius": 5,
+        "lvl_advantage": "5%",
+        "percent_dmg": 50
+      }
+    },
+    {
+      "id": 21,
+      "cost": 4,
+      "faction_id": 5,
+      "type_id": 1,
+      "traits_ids": [1, 8, 20, 3, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 120,
+        "health": 1640,
+        "dps": 67,
+        "attack_speed": 1.8
+      }
+    },
+    {
+      "id": 22,
+      "cost": 4,
+      "faction_id": 5,
+      "type_id": 1,
+      "traits_ids": [8, 28, 11, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 140,
+        "health": 350,
+        "dps": 100,
+        "attack_speed": 1.4,
+        "range": 9
+      }
+    },
+    {
+      "id": 23,
+      "cost": 4,
+      "faction_id": 5,
+      "type_id": 1,
+      "traits_ids": [8, 29, 11, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 220,
+        "health": 460,
+        "dps": 122,
+        "attack_speed": 1.8,
+        "range": 7.5
+      }
+    },
+    {
+      "id": 24,
+      "cost": 5,
+      "faction_id": 3,
+      "type_id": 1,
+      "traits_ids": [13, 1, 3, 7],
+      "speed_id": 1,
+      "stats": {
+        "damage": 70,
+        "health": 800,
+        "dps": 44,
+        "attack_speed": 1.6
+      }
+    },
+    {
+      "id": 25,
+      "cost": 4,
+      "faction_id": 4,
+      "type_id": 1,
+      "traits_ids": [8, 30, 11, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 60,
+        "health": 480,
+        "dps": 22,
+        "attack_speed": 1.5,
+        "range": 8,
+        "healing": 80
+      }
+    },
+    {
+      "id": 26,
+      "cost": 4,
+      "faction_id": 1,
+      "type_id": 1,
+      "traits_ids": [1, 26, 13, 15, 27, 12],
+      "speed_id": 1,
+      "stats": {
+        "damage": 250,
+        "health": 1300,
+        "dps": 147,
+        "attack_speed": 1.7
+      }
+    },
+    {
+      "id": 27,
+      "cost": 5,
+      "faction_id": 5,
+      "type_id": 3,
+      "traits_ids": [1, 8, 20, 3, 12],
+      "speed_id": 1,
+      "stats": {
+        "damage": 300,
+        "health": 1600,
+        "dps": 167,
+        "attack_speed": 1.8
+      }
+    },
+    {
+      "id": 28,
+      "cost": 2,
+      "faction_id": 1,
+      "type_id": 1,
+      "traits_ids": [1, 31, 5, 3, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 110,
+        "health": 1040,
+        "dps": 65,
+        "attack_speed": 1.7
+      }
+    },
+    {
+      "id": 29,
+      "cost": 3,
+      "faction_id": 2,
+      "type_id": 1,
+      "traits_ids": [1, 3, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 130,
+        "health": 1240,
+        "dps": 65,
+        "attack_speed": 2
+      }
+    },
+    {
+      "id": 30,
+      "cost": 2,
+      "faction_id": 4,
+      "type_id": 1,
+      "traits_ids": [26, 5, 27, 7],
+      "speed_id": 2,
+      "stats": {
+        "damage": 450,
+        "health": 120
+      }
+    },
+    {
+      "id": 31,
+      "cost": 4,
+      "faction_id": 4,
+      "type_id": 3,
+      "traits_ids": [32, 33, 3, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 220,
+        "health": 1360,
+        "dps": 169,
+        "attack_speed": 1.3
+      }
+    },
+    {
+      "id": 32,
+      "cost": 2,
+      "faction_id": 3,
+      "type_id": 1,
+      "traits_ids": [5, 15, 12],
+      "speed_id": 2,
+      "stats": {
+        "damage": 160,
+        "health": 170,
+        "dps": 145,
+        "attack_speed": 1.1,
+        "range": 5
+      }
+    },
+    {
+      "id": 33,
+      "cost": 3,
+      "faction_id": 2,
+      "type_id": 1,
+      "traits_ids": [6, 15, 7],
+      "speed_id": 4,
+      "stats": {
+        "damage": 140,
+        "health": 150,
+        "dps": 117,
+        "attack_speed": 1.2
+      }
+    },
+    {
+      "id": 34,
+      "cost": 3,
+      "faction_id": 3,
+      "type_id": 1,
+      "traits_ids": [1, 34, 3, 12],
+      "speed_id": 1,
+      "stats": {
+        "damage": 140,
+        "health": 1480,
+        "dps": 70,
+        "attack_speed": 2
+      }
+    },
+    {
+      "id": 35,
+      "cost": 4,
+      "faction_id": 2,
+      "type_id": 3,
+      "traits_ids": [1, 3, 4],
+      "speed_id": 2,
+      "stats": {
+        "area_damage": 190,
+        "health": 1120,
+        "dps": 79,
+        "attack_speed": 2.4
+      }
+    },
+    {
+      "id": 36,
+      "cost": 3,
+      "faction_id": 3,
+      "type_id": 2,
+      "traits_ids": [8, 9, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 150,
+        "radius": 5,
+        "healing": 280
+      }
+    },
+    {
+      "id": 37,
+      "cost": 5,
+      "faction_id": 3,
+      "type_id": 1,
+      "traits_ids": [6, 20, 11, 4],
+      "speed_id": 4,
+      "stats": {
+        "area_damage": 150,
+        "health": 400,
+        "dps": 107,
+        "attack_speed": 1.4,
+        "range": 7.5
+      }
+    },
+    {
+      "id": 38,
+      "cost": 3,
+      "faction_id": 3,
+      "type_id": 3,
+      "traits_ids": [8, 16, 11, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 190,
+        "health": 250,
+        "dps": 119,
+        "attack_speed": 1.6,
+        "range": 7
+      }
+    },
+    {
+      "id": 39,
+      "cost": 6,
+      "faction_id": 5,
+      "type_id": 2,
+      "traits_ids": [8, 9, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 200,
+        "radius": 6
+      }
+    },
+    {
+      "id": 40,
+      "cost": 6,
+      "faction_id": 3,
+      "type_id": 3,
+      "traits_ids": [24, 22, 3, 4],
+      "speed_id": 2,
+      "stats": {
+        "damage": 160,
+        "health": 620,
+        "dps": 100,
+        "attack_speed": 1.6,
+        "fan_damage": 300
+      }
+    },
+    {
+      "id": 41,
+      "cost": 3,
+      "faction_id": 1,
+      "type_id": 1,
+      "traits_ids": [26, 35, 14, 11, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 210,
+        "health": 320,
+        "dps": 70,
+        "attack_speed": 3,
+        "range": 11
+      }
+    },
+    {
+      "id": 42,
+      "cost": 6,
+      "faction_id": 5,
+      "type_id": 1,
+      "traits_ids": [1, 13, 26, 3, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 180,
+        "health": 2900,
+        "dps": 67,
+        "attack_speed": 2.7
+      }
+    },
+    {
+      "id": 43,
+      "cost": 6,
+      "faction_id": 3,
+      "type_id": 1,
+      "traits_ids": [36, 1, 3, 11, 7],
+      "speed_id": 3,
+      "stats": {
+        "dwarf_dmg": 170,
+        "bear_dmg": 110,
+        "dwarf_dps": 121,
+        "bear_dps": 61,
+        "dwarf_health": 280,
+        "bear_health": 1400,
+        "dwarf_range": 8.5
+      }
+    },
+    {
+      "id": 44,
+      "cost": 2,
+      "faction_id": 2,
+      "type_id": 1,
+      "traits_ids": [6, 5, 11, 7],
+      "speed_id": 4,
+      "stats": {
+        "damage": 90,
+        "health": 80,
+        "dps": 56,
+        "attack_speed": 1.6,
+        "range": 6.5
+      }
+    },
+    {
+      "id": 45,
+      "cost": 4,
+      "faction_id": 1,
+      "type_id": 1,
+      "traits_ids": [8, 37, 11, 4],
+      "speed_id": 3,
+      "stats": {
+        "damage": 190,
+        "health": 400,
+        "dps": 146,
+        "attack_speed": 1.3,
+        "range": 7.5
+      }
+    },
+    {
+      "id": 46,
+      "cost": 5,
+      "faction_id": 4,
+      "type_id": 1,
+      "traits_ids": [8, 38, 11, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 160,
+        "health": 650,
+        "dps": 114,
+        "attack_speed": 1.4,
+        "range": 8
+      }
+    },
+    {
+      "id": 47,
+      "cost": 4,
+      "faction_id": 2,
+      "type_id": 3,
+      "traits_ids": [6, 8, 11, 4],
+      "speed_id": 4,
+      "stats": {
+        "damage": 150,
+        "health": 160,
+        "dps": 94,
+        "attack_speed": 1.6,
+        "range": 6.5
+      }
+    },
+    {
+      "id": 48,
+      "cost": 2,
+      "faction_id": 1,
+      "type_id": 1,
+      "traits_ids": [39, 14, 5, 11, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 260,
+        "health": 200,
+        "dps": 113,
+        "attack_speed": 2.3,
+        "duration": 5,
+        "range": 9
+      }
+    },
+    {
+      "id": 49,
+      "cost": 3,
+      "faction_id": 2,
+      "type_id": 2,
+      "traits_ids": [9, 4],
+      "speed_id": 3,
+      "stats": {
+        "radius": 5,
+        "duration": 6,
+        "lvl_advantage": "0.5 Sec"
+      }
+    },
+    {
+      "id": 50,
+      "cost": 3,
+      "faction_id": 2,
+      "type_id": 1,
+      "traits_ids": [6, 1, 3, 12],
+      "speed_id": 4,
+      "stats": {
+        "damage": 130,
+        "health": 840,
+        "dps": 144,
+        "attack_speed": 0.9
+      }
+    },
+    {
+      "id": 51,
+      "cost": 3,
+      "faction_id": 5,
+      "type_id": 1,
+      "traits_ids": [8, 11, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 170,
+        "health": 220,
+        "dps": 113,
+        "attack_speed": 1.5,
+        "range": 8
+      }
+    },
+    {
+      "id": 52,
+      "cost": 2,
+      "faction_id": 2,
+      "type_id": 1,
+      "traits_ids": [22, 20, 5, 1, 3, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 70,
+        "health": 780,
+        "dps": 39,
+        "attack_speed": 1.8
+      }
+    },
+    {
+      "id": 53,
+      "cost": 1,
+      "faction_id": 2,
+      "type_id": 1,
+      "traits_ids": [6, 5, 3, 7],
+      "speed_id": 4,
+      "stats": {
+        "damage": 90,
+        "health": 350,
+        "dps": 69,
+        "attack_speed": 1.3
+      }
+    },
+    {
+      "id": 54,
+      "cost": 6,
+      "faction_id": 5,
+      "type_id": 3,
+      "traits_ids": [40, 8, 15, 4],
+      "speed_id": 3,
+      "stats": {
+        "rend_dmg": 140,
+        "gyth_dmg": 320,
+        "rend_dps": 82,
+        "gyth_dps": 133,
+        "rend_health": 1200,
+        "gyth_health": 340,
+        "rend_range": 4,
+        "gyth_range": 4
+      }
+    },
+    {
+      "id": 55,
+      "cost": 3,
+      "faction_id": 3,
+      "type_id": 1,
+      "traits_ids": [8, 22, 11, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 170,
+        "health": 210,
+        "dps": 71,
+        "attack_speed": 2.4,
+        "range": 8.5,
+        "crash_damage": 250
+      }
+    },
+    {
+      "id": 56,
+      "cost": 4,
+      "faction_id": 1,
+      "type_id": 1,
+      "traits_ids": [22, 8, 16, 3, 11, 7],
+      "speed_id": 3,
+      "stats": {
+        "damage": 46,
+        "health": 200,
+        "dps": 33,
+        "attack_speed": 1.4,
+        "range": 7
+      }
+    },
+    {
+      "id": 57,
+      "cost": 2,
+      "faction_id": 1,
+      "type_id": 1,
+      "traits_ids": [22, 5, 3, 7],
+      "speed_id": 3,
+      "stats": {
+        "damage": 46,
+        "health": 200,
+        "dps": 33,
+        "attack_speed": 1.4
+      }
+    },
+    {
+      "id": 58,
+      "cost": 1,
+      "faction_id": 5,
+      "type_id": 2,
+      "traits_ids": [5, 9, 4],
+      "speed_id": 3,
+      "stats": {
+        "radius": 5,
+        "duration": 5,
+        "lvl_advantage": "0.5 Sec"
+      }
+    },
+    {
+      "id": 59,
+      "cost": 5,
+      "faction_id": 5,
+      "type_id": 3,
+      "traits_ids": [1, 13, 26, 3, 4],
+      "speed_id": 3,
+      "stats": {
+        "area_damage": 360,
+        "health": 1040,
+        "dps": 120,
+        "attack_speed": 3
+      }
+    },
+    {
+      "id": 60,
+      "cost": 2,
+      "faction_id": 2,
+      "type_id": 1,
+      "traits_ids": [39, 5, 41, 3, 4],
+      "speed_id": 2,
+      "stats": {
+        "damage": 40,
+        "health": 380,
+        "dps": 50,
+        "attack_speed": 0.8,
+        "duration": 5
+      }
+    },
+    {
+      "id": 61,
+      "cost": 4,
+      "faction_id": 4,
+      "type_id": 1,
+      "traits_ids": [1, 42, 3, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 150,
+        "health": 1720,
+        "dps": 83,
+        "attack_speed": 1.8
+      }
+    },
+    {
+      "id": 62,
+      "cost": 6,
+      "faction_id": 1,
+      "type_id": 3,
+      "traits_ids": [43, 11, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 190,
+        "health": 430,
+        "dps": 146,
+        "attack_speed": 1.3,
+        "range": 8.5
+      }
+    },
+    {
+      "id": 63,
+      "cost": 4,
+      "faction_id": 3,
+      "type_id": 3,
+      "traits_ids": [1, 13, 30, 3, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 120,
+        "health": 700,
+        "dps": 67,
+        "attack_speed": 1.8,
+        "healing": 160
+      }
+    },
+    {
+      "id": 64,
+      "cost": 1,
+      "faction_id": 2,
+      "type_id": 1,
+      "traits_ids": [5, 44, 15, 7],
+      "speed_id": 2,
+      "stats": {
+        "damage": 70,
+        "health": 25,
+        "dps": 44,
+        "attack_speed": 1.6
+      }
+    },
+    {
+      "id": 65,
+      "cost": 5,
+      "faction_id": 4,
+      "type_id": 1,
+      "traits_ids": [28, 1, 3, 7],
+      "speed_id": 3,
+      "stats": {
+        "damage": 80,
+        "health": 1720,
+        "dps": 50,
+        "attack_speed": 1.6
+      }
+    },
+    {
+      "id": 66,
+      "cost": 4,
+      "faction_id": 4,
+      "type_id": 1,
+      "traits_ids": [26, 6, 1, 3, 12],
+      "speed_id": 4,
+      "stats": {
+        "damage": 180,
+        "health": 1340,
+        "dps": 106,
+        "attack_speed": 1.7
+      }
+    },
+    {
+      "id": 67,
+      "cost": 3,
+      "faction_id": 5,
+      "type_id": 1,
+      "traits_ids": [8, 22, 45, 15, 7],
+      "speed_id": 2,
+      "stats": {
+        "area_damage": 110,
+        "health": 130,
+        "dps": 61,
+        "attack_speed": 1.8,
+        "range": 3.5
+      }
+    },
+    {
+      "id": 68,
+      "cost": 3,
+      "faction_id": 3,
+      "type_id": 1,
+      "traits_ids": [24, 46, 22, 3, 12],
+      "speed_id": 2,
+      "stats": {
+        "damage": 130,
+        "health": 340,
+        "dps": 163,
+        "attack_speed": 0.8
+      }
+    },
+    {
+      "id": 69,
+      "cost": 5,
+      "faction_id": 2,
+      "type_id": 1,
+      "traits_ids": [15, 4, 39, 8],
+      "speed_id": 2,
+      "stats": {
+        "health": 450,
+        "range": 7,
+        "right_damage": 50,
+        "left_damage": 150,
+        "right_dps": 33,
+        "left_dps": 50
+      }
+    },
+    {
+      "id": 70,
+      "cost": 4,
+      "faction_id": 5,
+      "type_id": 3,
+      "traits_ids": [11, 4, 8, 47],
+      "speed_id": 3,
+      "stats": {
+        "health": 1330,
+        "range": 7,
+        "damage": 85,
+        "dps": 33,
+        "attack_speed": 2.6
+      }
+    },
+    {
+      "id": 71,
+      "cost": 2,
+      "faction_id": 4,
+      "type_id": 1,
+      "traits_ids": [11, 4, 8, 5],
+      "speed_id": 3,
+      "stats": {
+        "health": 300,
+        "range": 8,
+        "damage": 18,
+        "dps": 90,
+        "area_damage": 100
+      }
+    },
+    {
+      "id": 72,
+      "cost": 3,
+      "faction_id": 6,
+      "type_id": 1,
+      "traits_ids": [8, 20, 48, 49, 15, 12],
+      "speed_id": 3,
+      "stats": {
+        "damage": 170,
+        "health": 180,
+        "dps": 113,
+        "attack_speed": 1.5,
+        "range": 5
+      }
+    }
+  ]
+}

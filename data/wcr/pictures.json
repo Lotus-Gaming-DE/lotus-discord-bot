@@ -1,220 +1,329 @@
 {
-  "units": {
-    "1": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Abomination_Pose.webp"
+  "units": [
+    {
+      "id": 1,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Abomination_Pose.webp",
+      "talent_1": "https://warcraftrumble.gg/_ipx/s_36x36/rawimages/talent_noxiouspresence.webp",
+      "talent_2": "https://warcraftrumble.gg/_ipx/s_36x36/rawimages/talent_cannonball.webp",
+      "talent_3": "https://warcraftrumble.gg/_ipx/s_36x36/rawimages/talent_freshmeat.webp"
     },
-    "2": {
+    {
+      "id": 2,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_AngryChickens_Pose.webp"
     },
-    "3": {
+    {
+      "id": 3,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_ArcaneBlast_Pose.webp"
     },
-    "4": {
+    {
+      "id": 4,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Banshee_Pose.webp"
     },
-    "5": {
+    {
+      "id": 5,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_BaronRivendare_Pose.webp"
     },
-    "6": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Bat_rider_Pose.webp"
+    {
+      "id": 6,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_BatRider_Pose.webp"
     },
-    "7": {
+    {
+      "id": 7,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Blizzard_Pose.webp"
     },
-    "8": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Bloodmage_thalnos_Pose.webp"
+    {
+      "id": 8,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Bloodmages_Pose.webp"
     },
-    "9": {
+    {
+      "id": 9,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Cairne_Pose.webp"
     },
-    "10": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_ChainLightning_Pose.webp" 
+    {
+      "id": 10,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_ChainLightning_Pose.webp"
     },
-    "11": {
+    {
+      "id": 11,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Charlga_Pose.webp"
     },
-    "12": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Cheat_death_Pose.webp"
+    {
+      "id": 12,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_CheatDeath_Pose.webp"
     },
-    "13": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Core_hounds_Pose.webp"
+    {
+      "id": 13,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Corehounds_Pose.webp"
     },
-    "14": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Dark_iron_miner_Pose.webp"
+    {
+      "id": 14,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_DarkIronDwarf_Pose.webp"
     },
-    "15": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Darkspear_troll_Pose.webp"
+    {
+      "id": 15,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_DarkspearTroll_Pose.webp"
     },
-    "16": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Deep_breath_Pose.webp"
+    {
+      "id": 16,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_DeepBreath_Pose.webp"
     },
-    "17": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Defias_bandits_Pose.webp"
+    {
+      "id": 17,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_DefiasBandits_Pose.webp"
     },
-    "18": {
+    {
+      "id": 18,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Drake_Pose.webp"
     },
-    "19": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Earth_elemental_Pose.webp"
+    {
+      "id": 19,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_EarthElemental_Pose.webp"
     },
-    "20": {
+    {
+      "id": 20,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Execute_Pose.webp"
     },
-    "21": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Fire_elemental_Pose.webp"
+    {
+      "id": 21,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_FireElemental_Pose.webp"
     },
-    "22": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Firehammer_Pose.webp"
+    {
+      "id": 22,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_FireHammer_Pose.webp"
     },
-    "23": {
+    {
+      "id": 23,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Flamewaker_Pose.webp"
     },
-    "24": {
+    {
+      "id": 24,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Footmen_Pose.webp"
     },
-    "25": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Frostwolf_shaman_Pose.webp"
+    {
+      "id": 25,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Shaman_Pose.webp"
     },
-    "26": {
+    {
+      "id": 26,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Gargoyle_Pose.webp"
     },
-    "27": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_General_drakkisath_Pose.webp"
+    {
+      "id": 27,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Drakkisath_Pose.webp"
     },
-    "28": {
+    {
+      "id": 28,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Ghoul_Pose.webp"
     },
-    "29": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Gnoll_brute_Pose.webp"
+    {
+      "id": 29,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_GnollBrute_Pose.webp"
     },
-    "30": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Goblin_sapper_Pose.webp"
+    {
+      "id": 30,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_GoblinSapper_Pose.webp"
     },
-    "31": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Grommash_hellscream_Pose.webp"
+    {
+      "id": 31,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Grommash_Pose.webp"
     },
-    "32": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Gryphon_rider_Pose.webp"
+    {
+      "id": 32,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_GryphonRider_Pose.webp"
     },
-    "33": {
+    {
+      "id": 33,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Harpies_Pose.webp"
     },
-    "34": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Harvest_golem_Pose.webp"
+    {
+      "id": 34,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_HarvestGolem_Pose.webp"
     },
-    "35": {
+    {
+      "id": 35,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Hogger_Pose.webp"
     },
-    "36": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Holy_nova_Pose.webp"
+    {
+      "id": 36,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_HolyNova_Pose.webp"
     },
-    "37": {
+    {
+      "id": 37,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Huntress_Pose.webp"
     },
-    "38": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Jaina_proudmoore_Pose.webp"
+    {
+      "id": 38,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Jaina_Pose.webp"
     },
-    "39": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Living_bomb_Pose.webp"
+    {
+      "id": 39,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_LivingBomb_Pose.webp"
     },
-    "40": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Maiev_shadowsong_Pose.webp"
+    {
+      "id": 40,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Maiev_Pose.webp"
     },
-    "41": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Meat_wagon_Pose.webp"
+    {
+      "id": 41,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_MeatWagon_Pose.webp"
     },
-    "42": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Molten_giant_Pose.webp"
+    {
+      "id": 42,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_MoltenGiant_Pose.webp"
     },
-    "43": {
+    {
+      "id": 43,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Mountaineer_Pose.webp"
     },
-    "44": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Murloc_tidehunters_Pose.webp"
+    {
+      "id": 44,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_MurlocTidehunters_Pose.webp"
     },
-    "45": {
+    {
+      "id": 45,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Necromancer_Pose.webp"
     },
-    "46": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Ogre_mage_Pose.webp"
+    {
+      "id": 46,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_OgreMage_Pose.webp"
     },
-    "47": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Old_murk-eye_Pose.webp"
+    {
+      "id": 47,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_OldMurkEye_Pose.webp"
     },
-    "48": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Plague_farmer_Pose.webp"
+    {
+      "id": 48,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_PlagueFarmer_Pose.webp"
     },
-    "49": {
+    {
+      "id": 49,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Polymorph_Pose.webp"
     },
-    "50": {
+    {
+      "id": 50,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Prowler_Pose.webp"
     },
-    "51": {
+    {
+      "id": 51,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Pyromancer_Pose.webp"
     },
-    "52": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Quilboar_Pose.webp"
+    {
+      "id": 52,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Quillboar_Pose.webp"
     },
-    "53": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Raptors_Pose.webp"
+    {
+      "id": 53,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Raptors_StatuePoseC.webp"
     },
-    "54": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Rend_blackhand_Pose.webp"
+    {
+      "id": 54,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Rend_Pose.webp"
     },
-    "55": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_S.a.f.e._pilot_Pose.webp"
+    {
+      "id": 55,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_GnomishFlyingMachine_Pose.webp"
     },
-    "56": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Skeleton_party_Pose.webp"
+    {
+      "id": 56,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_SkeletonParty_Pose.webp"
     },
-    "57": {
+    {
+      "id": 57,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Skeletons_Pose.webp"
     },
-    "58": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Smoke_bomb_Pose.webp"
+    {
+      "id": 58,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_SmokeBomb_Pose.webp"
     },
-    "59": {
+    {
+      "id": 59,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Sneed_Pose.webp"
     },
-    "60": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Spiderlings_Pose.webp"
+    {
+      "id": 60,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Spiderling_Pose.webp"
     },
-    "61": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Stonehoof_tauren_Pose.webp"
+    {
+      "id": 61,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_StonehoofTauren_Pose.webp"
     },
-    "62": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Sylvannas_windrunner_Pose.webp"
+    {
+      "id": 62,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Sylvanas_Pose.webp"
     },
-    "63": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Tirion_fordring_Pose.webp"
+    {
+      "id": 63,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Tirion_Pose.webp"
     },
-    "64": {
+    {
+      "id": 64,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Vultures_Pose.webp"
     },
-    "65": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Warsong_grunts_Pose.webp"
+    {
+      "id": 65,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_WarsongGrunts_Pose.webp"
     },
-    "66": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Warsong_raider_Pose.webp"
+    {
+      "id": 66,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_WarsongRaider_Pose.webp"
     },
-    "67": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Whelp_eggs_Pose.webp"
+    {
+      "id": 67,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_WhelpEggs_Pose.webp"
     },
-    "68": {
+    {
+      "id": 68,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Worgen_Pose.webp"
     },
-    "69": {
+    {
+      "id": 69,
       "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Chimaera_Pose.webp"
     },
-    "70": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Emperor_thaurissan_Pose.webp"
+    {
+      "id": 70,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Thaurissan_Pose.webp"
     },
-    "71": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Witch_doctor_Pose.webp"
+    {
+      "id": 71,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_WitchDoctor_Pose.webp"
     },
-    "72": {
-      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/Statue_Faerie_dragon_Pose.webp"
+    {
+      "id": 72,
+      "pose": "https://warcraftrumble.gg/_ipx/_/rawimages/FaerieDragon_Statue.webp"
     }
-  }
+  ],
+  "categories": {
+        "factions": [
+            {
+                "id": 1,
+                "icon": "wcr_undead",
+				        "color": "#6D4DBB"
+            },
+            {
+                "id": 2,
+                "icon": "wcr_beast",
+				        "color": "#B08F58"
+            },
+            {
+                "id": 3,
+                "icon": "wcr_alliance",
+				        "color": "#3A5FD0"
+            },
+            {
+                "id": 4,
+                "icon": "wcr_horde",
+				        "color": "#BE4532"
+            },
+            {
+                "id": 5,
+                "icon": "wcr_blackrock",
+				        "color": "#486166"
+            },
+            {
+                "id": 6,
+                "icon": "wcr_cenarion",
+				        "color": "#359078"
+            }
+        ]
+  }  
 }

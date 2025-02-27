@@ -2,24 +2,28 @@
   "wcr": {
     "Lore": [
       {
+        "id": 1,
         "frage": "Wer ist der Hauptantagonist in Warcraft Rumble?",
         "antwort": "Morton der Unbezwingbare"
       }
     ],
     "Mechanik": [
       {
+        "id": 2,
         "frage": "Welche Einheit wird oft als „Tank“ bezeichnet?",
         "antwort": "Golem"
       }
     ],
     "Franchise": [
       {
+        "id": 3,
         "frage": "In welchem Jahr wurde Warcraft Rumble veröffentlicht?",
         "antwort": "2023"
       }
     ],
     "Welt": [
       {
+        "id": 4,
         "frage": "In welchem Gebiet kämpft man gegen Hogger?",
         "antwort": "Elwynn Forest"
       }
@@ -28,24 +32,28 @@
   "d4": {
     "Lore": [
       {
+        "id": 1,
         "frage": "Wer ist der Hauptantagonist in Diablo IV?",
         "antwort": "Lilith"
       }
     ],
     "Mechanik": [
       {
+        "id": 2,
         "frage": "Welche Klasse kann als Werwolf kämpfen?",
         "antwort": "Druide"
       }
     ],
     "Franchise": [
       {
+        "id": 3,
         "frage": "In welchem Jahr erschien Diablo IV?",
         "antwort": "2023"
       }
     ],
     "Welt": [
       {
+        "id": 4,
         "frage": "Wie heißt die Stadt, die als Hauptquartier dient?",
         "antwort": "Kyovashad"
       }
