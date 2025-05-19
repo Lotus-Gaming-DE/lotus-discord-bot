@@ -91,22 +91,24 @@
         {
             "id": 5,
             "name": "Baron Totenschwur",
-            "description": "Der Schrecken des Scharlachroten Kreuzzugs.",
+            "description": "Schrecken des Scharlachroten Kreuzzugs",
+            "leader_ability": "Armee der Toten",
+            "leader_description": "Totenschwur ruft regelmäßig Skelette an Gebäuden herbei, die Ihr kontrolliert.",
             "talents": [
                 {
                     "id": 1,
                     "name": "Todespakt",
-                    "description": "Opfert periodisch ein nahes Skelett, um geheilt zu werden."
+                    "description": "Opfert regelmäßig ein Skelett in der Nähe, um sich zu heilen."
                 },
                 {
                     "id": 2,
-                    "name": "Skelettwut",
-                    "description": "Nahe verbündete Skelette erhalten Blutrausch."
+                    "name": "Skelettraserei",
+                    "description": "Verleiht verbündeten Skeletten in der Nähe Kampfrausch."
                 },
                 {
                     "id": 3,
-                    "name": "Kälte des Grabes",
-                    "description": "Beschwört Skelettmagier anstelle von Kriegern."
+                    "name": "Grabeskälte",
+                    "description": "Ruft Skelettmagier statt Krieger herbei."
                 }
             ]
         },
@@ -158,43 +160,47 @@
             "id": 8,
             "name": "Blutmagier Thalnos",
             "description": "Blutmagie ist dicker als Wassermagie.",
+            "leader_ability": "Dunkles Ritual",
+            "leader_description": "Thalnos erhält bis er stirbt für jeden gewirkten Zauber eine Stufe.",
             "talents": [
                 {
                     "id": 1,
-                    "name": "Lebensentzug",
+                    "name": "Blutsauger",
                     "description": "Erhält Lebensraub."
                 },
                 {
                     "id": 2,
-                    "name": "Fluch",
-                    "description": "Das Spielen eines Zaubers erhöht die Angriffsgeschwindigkeit 5 Sekunden lang um 30%."
+                    "name": "Dunkle Macht",
+                    "description": "Das Wirken eines Zaubers erhöht das Angriffstempo 5 Sek. lang um 30%."
                 },
                 {
                     "id": 3,
-                    "name": "Dominanz",
-                    "description": "Zauber mit Kosten von 4 oder mehr gewähren eine zusätzliche Stufe."
+                    "name": "Vorherrschaft",
+                    "description": "Zauber, die 4 Gold oder mehr kosten, gewähren eine zusätzliche Stufe."
                 }
             ]
         },
         {
             "id": 9,
             "name": "Cairne Bluthuf",
-            "description": "Der ursprüngliche Elite Tauren Chieftain.",
+            "description": "Der einzig wahre 'Elite Tauren Chieftain'.",
+            "leader_ability": "Irdene Macht",
+            "leader_description": "Eure Hordetruppen haben 20% mehr Leben.",
             "talents": [
                 {
                     "id": 1,
                     "name": "Reinkarnation",
-                    "description": "Belebt sich nach dem Tod einmal mit 50% Gesundheit wieder."
+                    "description": "Wird nach dem Tod einmal mit 50% Leben wiederbelebt."
                 },
                 {
                     "id": 2,
-                    "name": "Ebenenlauf",
-                    "description": "Bewegt sich 50% schneller und erhält das Merkmal Schnell."
+                    "name": "Ebenenläufer",
+                    "description": "Erhöht das Bewegungstempo um 50% und verleiht die Eigenschaft Schnell."
                 },
                 {
                     "id": 3,
                     "name": "Nachbeben",
-                    "description": "Wenn die Betäubung endet, werden betroffene Feinde 5 Sekunden lang benommen."
+                    "description": "Nach Ablauf des Betäubungseffekts sind betroffene Gegner 5 Sek. lang benommen."
                 }
             ]
         },
@@ -575,22 +581,24 @@
         {
             "id": 27,
             "name": "General Drakkisath",
-            "description": "Ein gerissener und rücksichtsloser Stratege.",
+            "description": "Ein gerissener, skrupelloser Stratege.",
+            "leader_ability": "Flammenbanner",
+            "leader_description": "Gegner in der Nähe erleiden 50% mehr Elementarschaden Zum Frühstück frisst er Ragnar-Os.",
             "talents": [
                 {
                     "id": 1,
                     "name": "Chromatische Schuppen",
-                    "description": "Verleiht nahen Verbündeten das Merkmal Resistent."
+                    "description": "Verleiht allen Verbündeten in der Nähe die Eigenschaft Widerstand."
                 },
                 {
                     "id": 2,
-                    "name": "Durchdringende Schläge",
-                    "description": "Angriffe durchdringen Feinde in einer Linie."
+                    "name": "Durchbohrende Stöße",
+                    "description": "Angriffe durchbohren Gegner in einer Linie."
                 },
                 {
                     "id": 3,
                     "name": "Bleibendes Vermächtnis",
-                    "description": "Lässt beim Tod eine Fahne fallen. Nahe Feinde erleiden 50% zusätzlichen Elementarschaden. Hält 10 Sekunden an."
+                    "description": "Lässt beim Tod ein Banner fallen, das 10 Sek. lang anhält. Gegner in der Nähe erleiden 50% mehr Elementarschaden."
                 }
             ]
         },
@@ -663,22 +671,24 @@
         {
             "id": 31,
             "name": "Grommash Höllschrei",
-            "description": "Nenn mich nicht Grom!",
+            "description": "Nennt mich nicht Grom!",
+            "leader_ability": "Für die Horde!",
+            "leader_description": "Verbündete Einheiten in der Nähe erhalten Kampfrausch.",
             "talents": [
                 {
                     "id": 1,
                     "name": "Klingensturm",
-                    "description": "Erhält eine AoE-Klingenwirbel-Fähigkeit, die allen nahen Feinden Schaden zufügt."
+                    "description": "Erhält eine Klingenwirbelfähigkeit, die allen Gegnern in der Nähe Schaden zufügt."
                 },
                 {
                     "id": 2,
-                    "name": "Wilde Schläge",
-                    "description": "Verursacht doppelten Schaden an Feinden, die unter 50% Gesundheit sind."
+                    "name": "Wilde Stöße",
+                    "description": "Fügt Gegnern unter 50% Leben doppelten Schaden zu."
                 },
                 {
                     "id": 3,
                     "name": "Spiegelbild",
-                    "description": "Beschwört zwei fragile Spiegelbilder beim Betreten des Kampfes."
+                    "description": "Ruft bei Kampfbeginn zwei zerbrechliche Spiegelbilder herbei."
                 }
             ]
         },
@@ -817,22 +827,24 @@
         {
             "id": 38,
             "name": "Jaina Prachtmeer",
-            "description": "Jaina macht ihren eigenen Glanz.",
+            "description": "Die Kälte ist ein Teil von ihr.",
+            "leader_ability": "Arkane Brillanz",
+            "leader_description": "Erhöht die Stufe Eurer Zauber um 3, während Jaina aktiv ist.",
             "talents": [
                 {
                     "id": 1,
                     "name": "Freizaubern",
-                    "description": "Zauber kosten 1 weniger (aber nicht weniger als 1), wenn sie sofort nach Jaina gespielt werden."
+                    "description": "Zauber kosten 1 Gold weniger (aber nicht unter 1), wenn sie unmittelbar nach Jaina ausgespielt werden."
                 },
                 {
                     "id": 2,
-                    "name": "Flut",
-                    "description": "Frostblitze explodieren beim Aufprall und vereisen Feinde in der Nähe des Ziels."
+                    "name": "Hagel",
+                    "description": "Frostblitze explodieren beim Einschlag und frieren Gegner in der Nähe des Ziels ein."
                 },
                 {
                     "id": 3,
                     "name": "Blinzeln",
-                    "description": "Teleportiert sich periodisch von Angreifern weg."
+                    "description": "Teleportiert sich regelmäßig von Angreifern weg."
                 }
             ]
         },
@@ -861,22 +873,24 @@
         {
             "id": 40,
             "name": "Maiev Schattensang",
-            "description": "Nutze die Schatten und schlage wie der Wind zu.",
+            "description": "Eins mit den Schatten, schnell wie der Wind.",
+            "leader_ability": "Meisterassassine",
+            "leader_description": "Verringert Maievs Einsatzkosten pro ausgespielte ungebundene Truppe um 1 Gold.",
             "talents": [
                 {
                     "id": 1,
-                    "name": "Gnadenlos",
-                    "description": "Verursacht 2 Sekunden lang doppelten Schaden nach dem Töten eines Feindes."
+                    "name": "Unerbittlich",
+                    "description": "Verursacht nach dem Töten eines Gegners 2 Sek. lang doppelten Schaden."
                 },
                 {
                     "id": 2,
-                    "name": "Umhüllende Schatten",
-                    "description": "Wirkt Rauchbombe bei Einsatz und verstohlt nahe Verbündete."
+                    "name": "Schattenschritt",
+                    "description": "Teleportiert sich regelmäßig zu einem Fernkampfangreifer, wenn sie getroffen wird."
                 },
                 {
                     "id": 3,
-                    "name": "Schattenschritt",
-                    "description": "Teleportiert sich periodisch zu einem Fernkampfangreifer, wenn sie getroffen wird."
+                    "name": "Einhüllende Schatten",
+                    "description": "Wirkt beim Einsatz Rauchbombe, die Verbündeten in der Nähe Verstohlenheit verleiht."
                 }
             ]
         },
@@ -1014,23 +1028,25 @@
         },
         {
             "id": 47,
-            "name": "Alt-Augenflosse",
-            "description": "Dieser erfahrene Murloc hat (und hat nicht) viele Schlachten gesehen. Wenn du das Gold ausgeben kannst, wird seine Entourage von Gezeitenjägern sicher Wellen auf dem Schlachtfeld machen.",
+            "name": "Trübauge der Alte",
+            "description": "Dieser Murlocveteran hat viele Schlachten gesehen (oder auch nicht). Wenn Ihr das Schlachtfeld mit Gold fluten könnt, wird sein Gefolge aus Gezeitenjägern hohe Wellen schlagen.",
+            "leader_ability": "Marsch der Murlocs",
+            "leader_description": "Ruft nach dem Einsatz 5 Sek. lang für jedes Gold, das für andere Minis ausgegeben wird, einen Murlocgezeitenjäger herbei.",
             "talents": [
                 {
                     "id": 1,
-                    "name": "Murloc-Marathon",
-                    "description": "Marsch der Murlocs dauert nach dem Einsatz zusätzliche 5 Sekunden an."
+                    "name": "Marathon der Murlocs",
+                    "description": "Marsch der Murlocs hält nach dem Einsatz 5 Sek. länger an."
                 },
                 {
                     "id": 2,
-                    "name": "Elektrische Aale",
-                    "description": "Angriffe betäuben Feinde kurzzeitig."
+                    "name": "Zitteraale",
+                    "description": "Angriffe betäuben Gegner kurzzeitig."
                 },
                 {
                     "id": 3,
-                    "name": "Spitze des Speers",
-                    "description": "Gezeitenjäger spawnen stattdessen an Alt-Augenflosses Position."
+                    "name": "Speerspitze",
+                    "description": "Gezeitenjäger erscheinen stattdessen an der Position von Trübauge dem Alten."
                 }
             ]
         },
@@ -1169,22 +1185,24 @@
         {
             "id": 54,
             "name": "Rend Schwarzfaust",
-            "description": "Reitet Drachen, bevor es cool war.",
+            "description": "Ein Trendsetter in Sachen Drachenreiten.",
+            "leader_ability": "Verdunkelter Himmel",
+            "leader_description": "Eure anderen Flugtruppen kosten 1 Gold weniger, während Rend aktiv ist (aber nicht unter 2).",
             "talents": [
                 {
                     "id": 1,
-                    "name": "Schuppen und Stahl",
-                    "description": "Erhält Resistent beim Fliegen und Gepanzert beim Absteigen."
+                    "name": "Schuppe und Stahl",
+                    "description": "Erhält Widerstand beim Fliegen und Gepanzert nach dem Absitzen."
                 },
                 {
                     "id": 2,
-                    "name": "Flammende Seele",
-                    "description": "Wirkt Lebende Bombe beim Absteigen und fügt nahen Feinden Schaden zu."
+                    "name": "Zornbringer",
+                    "description": "Steigt beim ersten erlittenen Schaden ab. Der Drache kämpft weiter."
                 },
                 {
                     "id": 3,
-                    "name": "Legionär",
-                    "description": "Steigt ab, wenn er zum ersten Mal Schaden erleidet. Der Drache kämpft weiter."
+                    "name": "Flammende Seele",
+                    "description": "Wirkt beim Absitzen Lebende Bombe, die Gegnern in der Nähe Schaden zufügt."
                 }
             ]
         },
@@ -1279,22 +1297,24 @@
         {
             "id": 59,
             "name": "Sneed",
-            "description": "Wenn du eine Kreissäge bist, sehen all deine Probleme wie Bäume aus.",
+            "description": "Ist man eine Motorsäge, sehen alle Probleme aus wie Bäume.",
+            "leader_ability": "Seines Glückes Sneed",
+            "leader_description": "Ihr erhaltet 2 Gold, wenn eine Belagerungseinheit einen Turm zerstört, einen Versammlungsstein erobert oder eine Truhe öffnet.",
             "talents": [
                 {
                     "id": 1,
-                    "name": "Anführen mit Gier",
-                    "description": "Erhält zusätzlich +2 Gold, wenn Sneed 'Sneed vor Gier' auslöst."
+                    "name": "Extraglück",
+                    "description": "Ihr erhaltet 2 Gold mehr, wenn Seines Glückes Sneed ausgelöst wird."
                 },
                 {
                     "id": 2,
-                    "name": "Bergbau ist Geld, Freund!",
-                    "description": "Erhält das Merkmal Minenarbeiter."
+                    "name": "Zeit ist Geld!",
+                    "description": "Erhält die Eigenschaft Bergbau."
                 },
                 {
                     "id": 3,
-                    "name": "Landnahme",
-                    "description": "Erhält eine Stufe, wann immer 'Sneed vor Gier' ausgelöst wird."
+                    "name": "Aneignung",
+                    "description": "Steigt jedes Mal eine Stufe auf, wenn 'Seines Glückes Sneed' ausgelöst wird."
                 }
             ]
         },
@@ -1345,44 +1365,48 @@
         {
             "id": 62,
             "name": "Sylvanas Windläufer",
-            "description": "Sylvanas attackiert mit unnachgiebigen Pfeilschüssen und lässt eine Banshee frei, wenn sie stirbt.",
+            "description": "Sylvanas greift mit einem stetigen Pfeilhagel an und wird zur Banshee, wenn sie stirbt.",
+            "leader_ability": "Kriegshäuptling Windläufer",
+            "leader_description": "Alle Minis der Untoten und Horde erhalten in Sylvanas Nähe +30 % Bewegungstempo.",
             "talents": [
                 {
                     "id": 1,
                     "name": "Schwarzer Pfeil",
-                    "description": "Durchdringt Feinde in einer Linie und verursacht Elementarschaden."
+                    "description": "Durchbohrt die Gegner in einer Linie und verursacht Elementarschaden."
                 },
                 {
                     "id": 2,
-                    "name": "Klage der Banshee",
-                    "description": "Schreit beim Tod und betäubt nahe Feinde für 3 Sekunden."
+                    "name": "Bansheeheulen",
+                    "description": "Schrei bei Tod, Gegner in der Nähe werden für 3 Sekunden betäubt."
                 },
                 {
                     "id": 3,
-                    "name": "Verlassene Wut",
-                    "description": "Nahe Horde- und Untote-Minis erhalten Wut."
+                    "name": "Furor der Verlassenen",
+                    "description": "Horde- und Untoten-Minis in der Nähe erhalten Furor."
                 }
             ]
         },
         {
             "id": 63,
             "name": "Tirion Fordring",
-            "description": "Ein Hammer zum SPALTEN, eine Hand zum HEILEN und RÜSTUNG des Glaubens. Was brauchst du mehr?",
+            "description": "Ein Hammer des SPALTENS, eine Hand des HEILENS und PANZERUNG des Glaubens. Was will man mehr?",
+            "leader_ability": "Heiliges Licht",
+            "leader_description": "Heilt alle verbündeten Einheiten in der Nähe.",
             "talents": [
                 {
                     "id": 1,
-                    "name": "Göttlicher Schild",
-                    "description": "Erhält bei 30% Gesundheit einen magischen Schild, der 5 Sekunden lang allen Schaden absorbiert."
+                    "name": "Gottesschild",
+                    "description": "Erhält bei 30% Leben einen magischen Schild, der 5 Sek. lang jeglichen Schaden absorbiert."
                 },
                 {
                     "id": 2,
-                    "name": "Durch das Licht",
-                    "description": "Heilt das Hauptziel doppelt so viel."
+                    "name": "Beim Licht",
+                    "description": "Heilt das Primärziel um die doppelte Menge."
                 },
                 {
                     "id": 3,
                     "name": "Weihe",
-                    "description": "Weihe regelmäßig den Boden und fügt Feinden darin Schaden zu."
+                    "description": "Weiht regelmäßig den Boden und fügt Gegnern im Bereich Schaden zu."
                 }
             ]
         },
@@ -1521,22 +1545,24 @@
         {
             "id": 70,
             "name": "Imperator Thaurissan",
-            "description": "Wenn Ragnaros dein Chef wäre, wärst du auch griesgrämig.",
+            "description": "Wenn Ragnaros dein Chef wäre, hättest du auch miese Laune.",
+            "leader_ability": "Verzauberung: Feurige Waffe",
+            "leader_description": "Wenn aktiv verursachen Verbündete Nichtelementarschaden, falls sie physischen Schaden verursachen. Der Typ ist böse, Moira, Mädchen.",
             "talents": [
                 {
                     "id": 1,
-                    "name": "Moiras Witz",
-                    "description": "Nahe brennende Feinde heilen Thaurissan."
+                    "name": "Moiras Scharfsinn",
+                    "description": "Brennende Gegner in der Nähe heilen Thaurissan."
                 },
                 {
                     "id": 2,
                     "name": "Hybris",
-                    "description": "Nach dem Spielen von Thaurissan setzt dein nächstes nicht-elementares Mini mit +2 Stufen ein."
+                    "description": "Nach dem Ausspielen von Thaurissan wird Eure nächste Nicht-Elementarmini mit +2 Stufen eingesetzt."
                 },
                 {
                     "id": 3,
-                    "name": "Einäschern",
-                    "description": "Der Brand von Lava-Spike ist permanent."
+                    "name": "Flammentod",
+                    "description": "Lavaausbruch verbrennt dauerhaft."
                 }
             ]
         },
