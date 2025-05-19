@@ -1,3 +1,5 @@
+# cogs/tourney/cog.py
+
 import os
 import logging
 from datetime import datetime
@@ -23,7 +25,7 @@ mod_or_admin = commands.check_any(
 
 
 class TourneyCog(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         logger.info("TourneyCog initialisiert")
 
@@ -31,6 +33,9 @@ class TourneyCog(commands.Cog):
     @commands.hybrid_group(name="tourney", description="Turnier-Verwaltung")
     @mod_or_admin
     async def tourney(self, ctx: commands.Context):
+        """
+        Basiskommando /tourney. Zeigt Hilfe, wenn keine Subcommand angegeben wurde.
+        """
         if ctx.invoked_subcommand is None:
             await ctx.send_help(ctx.command)
 
@@ -50,34 +55,37 @@ class TourneyCog(commands.Cog):
         registration_closes: Option(str, "Anmeldeschluss (YYYY-MM-DD HH:MM)"),
         start_time: Option(str, "Startzeit (YYYY-MM-DD HH:MM)")
     ):
+        """
+        Legt ein neues Turnier an und speichert es in tournaments.json.
+        """
         logger.info(
-            f"{ctx.author} startet /tourney erstellen: name={name}, game={game}, mode={mode}")
+            f"{ctx.author} nutzt /tourney erstellen: name={name!r}, game={game!r}, mode={mode!r}")
 
         # Datum/Uhrzeit validieren
         try:
             reg_dt = datetime.strptime(registration_closes, "%Y-%m-%d %H:%M")
         except ValueError:
-            logger.warning(f"Ungültiges registration_closes: {
-                           registration_closes!r}")
+            logger.warning(
+                f"Ungültiges registration_closes-Format: {registration_closes!r}")
             return await ctx.respond(
                 "❌ Bitte gib den Anmeldeschluss im Format `YYYY-MM-DD HH:MM` an.",
                 ephemeral=True
             )
-
         try:
             start_dt = datetime.strptime(start_time, "%Y-%m-%d %H:%M")
         except ValueError:
-            logger.warning(f"Ungültiges start_time: {start_time!r}")
+            logger.warning(f"Ungültiges start_time-Format: {start_time!r}")
             return await ctx.respond(
                 "❌ Bitte gib die Startzeit im Format `YYYY-MM-DD HH:MM` an.",
                 ephemeral=True
             )
 
-        # Turnier anlegen
+        # Turnier-Daten laden und ID erzeugen
         tournaments = load_tournaments()
         tourney_id = f"tourney_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-        logger.debug(f"Erzeugte tourney_id: {tourney_id}")
+        logger.debug(f"Erstellte Turnier-ID: {tourney_id}")
 
+        # Neues Turnier-Objekt
         new_tourney = {
             "id": tourney_id,
             "name": name,
@@ -96,10 +104,12 @@ class TourneyCog(commands.Cog):
             "registrationMessageId": None
         }
 
+        # Speichern
         tournaments.append(new_tourney)
         save_tournaments(tournaments)
         logger.info(f"Turnier {tourney_id!r} erstellt und gespeichert")
 
+        # Ephemeral-Bestätigung
         await ctx.respond(
             f"✅ Turnier **{name}** (`{tourney_id}`) erstellt!\n"
             f"• Spiel: {game}\n"
