@@ -3,19 +3,19 @@ import logging
 from datetime import datetime
 
 import discord
-from discord import Option, Object, app_commands
+from discord import Object
 from discord.ext import commands
+from discord.app_commands import Option, guilds
 
 from .data_loader import load_tournaments, save_tournaments
 
-# Logger für das Tourney-Cog
+# Logger
 logger = logging.getLogger("cogs.tourney.cog")
 
-# Guild-Konfiguration
-GUILD_ID = int(os.getenv("server_id"))
-GUILD = Object(id=GUILD_ID)
+# Guild-ID
+GUILD = Object(id=int(os.getenv("server_id")))
 
-# Check: Rolle "Community Mod" ODER Admin-Berechtigung
+# Rollen-Check
 mod_or_admin = commands.check_any(
     commands.has_role("Community Mod"),
     commands.has_guild_permissions(administrator=True)
