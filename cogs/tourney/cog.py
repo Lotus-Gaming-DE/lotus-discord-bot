@@ -9,13 +9,13 @@ from discord.app_commands import Option, guilds
 
 from .data_loader import load_tournaments, save_tournaments
 
-# Logger
+# Logger für das Tourney-Cog
 logger = logging.getLogger("cogs.tourney.cog")
 
-# Guild-ID
+# Guild-ID aus der Env-Var
 GUILD = Object(id=int(os.getenv("server_id")))
 
-# Rollen-Check
+# Check: Rolle "Community Mod" ODER Administrator-Rechte
 mod_or_admin = commands.check_any(
     commands.has_role("Community Mod"),
     commands.has_guild_permissions(administrator=True)
@@ -27,14 +27,10 @@ class TourneyCog(commands.Cog):
         self.bot = bot
         logger.info("TourneyCog initialisiert")
 
-    @app_commands.guilds(GUILD)
+    @guilds(GUILD)
     @commands.hybrid_group(name="tourney", description="Turnier-Verwaltung")
     @mod_or_admin
     async def tourney(self, ctx: commands.Context):
-        """
-        Basisgruppe für alle Turnier-Befehle.
-        Nur Community Mods oder Admins dürfen hier Befehle nutzen.
-        """
         if ctx.invoked_subcommand is None:
             await ctx.send_help(ctx.command)
 
@@ -54,11 +50,8 @@ class TourneyCog(commands.Cog):
         registration_closes: Option(str, "Anmeldeschluss (YYYY-MM-DD HH:MM)"),
         start_time: Option(str, "Startzeit (YYYY-MM-DD HH:MM)")
     ):
-        """
-        Legt ein neues Turnier an.
-        """
         logger.info(
-            f"{ctx.author} führt /tourney erstellen aus: name={name!r}, game={game!r}, mode={mode!r}")
+            f"{ctx.author} startet /tourney erstellen: name={name}, game={game}, mode={mode}")
 
         # Datum/Uhrzeit validieren
         try:
@@ -80,12 +73,11 @@ class TourneyCog(commands.Cog):
                 ephemeral=True
             )
 
-        # Turnier-Daten laden und ID erzeugen
+        # Turnier anlegen
         tournaments = load_tournaments()
         tourney_id = f"tourney_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
         logger.debug(f"Erzeugte tourney_id: {tourney_id}")
 
-        # Neues Turnier-Objekt zusammenstellen
         new_tourney = {
             "id": tourney_id,
             "name": name,
@@ -104,12 +96,10 @@ class TourneyCog(commands.Cog):
             "registrationMessageId": None
         }
 
-        # Speichern
         tournaments.append(new_tourney)
         save_tournaments(tournaments)
         logger.info(f"Turnier {tourney_id!r} erstellt und gespeichert")
 
-        # Bestätigung an den Mod
         await ctx.respond(
             f"✅ Turnier **{name}** (`{tourney_id}`) erstellt!\n"
             f"• Spiel: {game}\n"
