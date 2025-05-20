@@ -6,6 +6,7 @@ import logging
 import random
 import asyncio
 import datetime
+from collections import defaultdict
 from .data_loader import DataLoader
 from .question_generator import QuestionGenerator
 from .utils import check_answer, create_permutations_list
@@ -16,99 +17,86 @@ logger = logging.getLogger(__name__)
 class QuizCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # {area: {'data_loader': DataLoader, 'question_generator': QuestionGenerator}}
         self.area_data = {}
         self.current_questions = {}
-        self.wcr_question_count = 0  # Zählt die Anzahl der gestellten WCR-Fragen
-        # Anzahl der dynamischen Fragen, bevor eine Frage aus JSON gestellt wird
+        self.answered_users = defaultdict(set)  # user pro area
+        # channel_id -> nachrichtenzähler
+        self.message_counter = defaultdict(int)
+        self.wcr_question_count = 0
         self.max_wcr_dynamic_questions = 200
-        self.time_window = datetime.timedelta(
-            hours=0.25)  # Zeitfenster von 1 Stunde
+        self.time_window = datetime.timedelta(hours=0.25)
 
-        # Konfiguration der Areas mit Channel-ID und Sprache
         self.areas_config = {
             'wcr': {
-                'channel_id': 1290804058281607189,  # Ersetze mit deiner WCR-Kanal-ID
+                'channel_id': 1303261310103851008,
                 'language': 'de'
             },
             'd4': {
-                'channel_id': 1290804058281607189,  # Ersetze mit deiner D4-Kanal-ID
+                'channel_id': 1290804058281607189,
                 'language': 'de'
             },
-            # Weitere Areas können hier hinzugefügt werden
         }
 
-        # Initialisiere DataLoader und QuestionGenerator pro Area
         for area, config in self.areas_config.items():
             data_loader = DataLoader()
-            data_loader.set_language(config['language'])  # Sprache setzen
+            data_loader.set_language(config['language'])
             question_generator = QuestionGenerator(data_loader)
             self.area_data[area] = {
                 'data_loader': data_loader,
                 'question_generator': question_generator
             }
-            # Starte den Quiz-Scheduler für jede Area
             self.bot.loop.create_task(self.quiz_scheduler(area))
 
     async def quiz_scheduler(self, area):
-        """Scheduler, der das Zeitfenster verwaltet und die Fragen zu zufälligen Zeiten stellt."""
         await self.bot.wait_until_ready()
         while True:
-            # Berechne den Start und das Ende des aktuellen Zeitfensters
             now = datetime.datetime.utcnow()
             next_window_start = now.replace(second=0, microsecond=0)
             next_window_end = next_window_start + self.time_window
 
-            # Logge die Dauer des Zeitfensters
-            window_end_str = next_window_end.strftime('%H:%M:%S')
-            logger.info(f"Time window for area '{
-                        area}' until {window_end_str}.")
+            logger.info(
+                f"Time window for area '{area}' until {next_window_end.strftime('%H:%M:%S')}.")
 
-            # Berechne die späteste Zeit für die Fragenstellung (Hälfte des Zeitfensters)
             latest_question_time = next_window_start + (self.time_window / 2)
-
-            # Wähle eine zufällige Zeit zwischen jetzt und der Hälfte des Zeitfensters
             delta_seconds = (latest_question_time - now).total_seconds()
             question_time = now + \
                 datetime.timedelta(seconds=random.uniform(0, delta_seconds))
 
-            # Warte bis zur Frage
             sleep_time = (question_time - now).total_seconds()
             if sleep_time > 0:
                 await asyncio.sleep(sleep_time)
 
-            # Stelle die Frage mit dem Ende des Zeitfensters als Parameter
             await self.run_quiz(area, next_window_end)
 
-            # Warte bis zum Ende des Zeitfensters
             now = datetime.datetime.utcnow()
             sleep_until_end = (next_window_end - now).total_seconds()
             if sleep_until_end > 0:
                 await asyncio.sleep(sleep_until_end)
 
-            # Schließe die Frage, falls sie noch offen ist
             if area in self.current_questions:
                 await self.close_question(area, timed_out=True)
 
     async def run_quiz(self, area, end_time):
         config = self.areas_config[area]
-        data_loader = self.area_data[area]['data_loader']
-        question_generator = self.area_data[area]['question_generator']
         channel = self.bot.get_channel(config['channel_id'])
         if channel is None:
-            logger.error(f"Channel with ID {
-                         config['channel_id']} for area '{area}' not found.")
+            logger.error(
+                f"Channel with ID {config['channel_id']} for area '{area}' not found.")
             return
 
-        logger.info(f"Running quiz for area '{
-                    area}' in channel {channel.name}.")
+        # Nur wenn genügend echte Nachrichten geschrieben wurden
+        if self.message_counter[channel.id] < 10:
+            logger.info(
+                f"Zu wenig Aktivität in Channel {channel.id}, Frage in Area '{area}' übersprungen.")
+            return
 
-        # Prüfen, ob bereits eine Frage offen ist
+        data_loader = self.area_data[area]['data_loader']
+        question_generator = self.area_data[area]['question_generator']
+
         if area in self.current_questions:
             logger.warning(f"A question is already active in area '{area}'.")
             return
 
-        # Frage generieren
         if area == 'wcr':
             if self.wcr_question_count < self.max_wcr_dynamic_questions:
                 question_data = question_generator.generate_dynamic_wcr_question()
@@ -116,7 +104,7 @@ class QuizCog(commands.Cog):
             else:
                 question_data = question_generator.generate_question_from_json(
                     area)
-                self.wcr_question_count = 0  # Zurücksetzen des Zählers
+                self.wcr_question_count = 0
         else:
             question_data = question_generator.generate_question_from_json(
                 area)
@@ -124,8 +112,6 @@ class QuizCog(commands.Cog):
         if question_data:
             question_text, correct_answers = question_data['frage'], question_data['antwort']
             category = question_data.get('category', 'Mechanik')
-
-            # Setze die Endzeit direkt auf das Ende des Zeitfensters
             end_time_str = end_time.strftime('%H:%M:%S')
 
             message = await channel.send(f"**Quizfrage ({category}):** {question_text}")
@@ -134,79 +120,75 @@ class QuizCog(commands.Cog):
                 'correct_answers': correct_answers,
                 'end_time': end_time
             }
-            logger.info(f"Question for area '{area}' sent: {
-                        question_text} (will end at {end_time_str})")
+            self.answered_users[area].clear()
+            self.message_counter[channel.id] = 0
+            logger.info(
+                f"Question for area '{area}' sent: {question_text} (will end at {end_time_str})")
         else:
             logger.warning(
                 f"No question could be generated for area '{area}'.")
 
     async def close_question(self, area, timed_out=False):
-        """Schließt die aktuelle Frage für den angegebenen Bereich."""
         question_info = self.current_questions.pop(area, None)
         if question_info:
             channel = question_info['message'].channel
             if timed_out:
-                await channel.send("Zeit abgelaufen! Leider wurde die Frage nicht rechtzeitig beantwortet.")
+                await channel.send("⏰ Zeit abgelaufen! Leider wurde die Frage nicht rechtzeitig beantwortet.")
             else:
-                await channel.send("Die Frage wurde erfolgreich beantwortet!")
+                await channel.send("✅ Die Frage wurde erfolgreich beantwortet!")
             logger.info(f"Question in area '{area}' closed.")
 
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
-            return  # Ignoriere Nachrichten von Bots
+            return
 
-        # Füge ein Debug-Log hinzu, um zu sehen, wann die Methode aufgerufen wird
-        logger.debug(f"on_message triggered by {message.author} in {
-                     message.channel} with message ID {message.id}")
+        channel_id = message.channel.id
 
-        # Verwende eine Kopie von current_questions.items() für die Iteration
         for area, question_info in list(self.current_questions.items()):
             if message.channel.id == question_info['message'].channel.id:
-                # Überprüfe, ob das Zeitfenster abgelaufen ist
                 if datetime.datetime.utcnow() >= question_info['end_time']:
                     await self.close_question(area, timed_out=True)
-                    continue  # Zum nächsten Bereich gehen
+                    continue
 
-                # Überprüfe, ob die Nachricht eine Antwort auf die Quizfrage ist
+                # User darf nur einmal antworten
+                if message.author.id in self.answered_users[area]:
+                    await message.channel.send(f"Sorry {message.author.mention}, du hast deinen Versuch bereits gehabt.", delete_after=5)
+                    return
+
+                # Nur Antworten auf die ursprüngliche Frage zählen
                 if message.reference and message.reference.message_id == question_info['message'].id:
-                    # Antwort prüfen
                     correct_answers = question_info['correct_answers']
                     if check_answer(message.content, correct_answers):
-                        # Punkte hinzufügen
                         user_id = str(message.author.id)
                         scores = self.area_data[area]['data_loader'].load_scores(
                         )
                         scores[user_id] = scores.get(user_id, 0) + 1
                         self.area_data[area]['data_loader'].save_scores(scores)
 
-                        # Benutzer benachrichtigen
-                        await message.channel.send(f"Richtig, {message.author.mention}! Du hast einen Punkt erhalten. 🏆")
-
-                        # Frage schließen
+                        await message.channel.send(f"🏆 Richtig, {message.author.mention}! Du hast einen Punkt erhalten.")
                         await self.close_question(area)
-
-                        # Logge die richtige Antwort des Benutzers
-                        logger.info(f"User '{message.author}' answered correctly in area '{
-                                    area}' with '{message.content}'.")
-
-                        return  # Verarbeitung beenden
+                        logger.info(
+                            f"User '{message.author}' answered correctly in area '{area}' with '{message.content}'.")
+                        return
                     else:
-                        await message.channel.send(f"Das ist leider nicht korrekt, {message.author.mention}. Versuche es erneut!")
+                        await message.channel.send(f"❌ Das ist leider nicht korrekt, {message.author.mention}.")
+                        logger.info(
+                            f"User '{message.author}' answered incorrectly in area '{area}' with '{message.content}'.")
+                        self.answered_users[area].add(message.author.id)
+                        return
 
-                        # Logge die falsche Antwort des Benutzers
-                        logger.info(f"User '{message.author}' answered incorrectly in area '{
-                                    area}' with '{message.content}'.")
+                # Andere Nachricht im Quiz-Channel → nicht zählen
+                return
 
-                        return  # Verarbeitung beenden
-                else:
-                    continue  # Nachricht ist keine Antwort auf die Quizfrage
-        # Wenn die Nachricht nicht relevant war, nichts tun
+        # Falls keine aktive Frage im Channel: Nur "echte" Aktivität zählen
+        self.message_counter[channel_id] += 1
+        logger.debug(
+            f"Aktive Nachricht von {message.author} in {message.channel.name} gezählt.")
 
     @commands.command()
     @commands.has_permissions(administrator=True)
     async def set_language(self, ctx, area: str, language_code: str):
-        """Setzt die Sprache für die Quizfragen in einer bestimmten Area."""
         if area not in self.areas_config:
             await ctx.send(f"Area '{area}' existiert nicht.")
             return
