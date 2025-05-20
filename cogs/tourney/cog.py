@@ -7,17 +7,12 @@ from datetime import datetime
 import discord
 from discord import Object
 from discord.ext import commands
-from discord.app_commands import Option, guilds
+from discord.app_commands import guilds, Choice
 
 from .data_loader import load_tournaments, save_tournaments
 
-# Logger für das Tourney-Cog
 logger = logging.getLogger("cogs.tourney.cog")
-
-# Guild-ID aus der Env-Var
 GUILD = Object(id=int(os.getenv("server_id")))
-
-# Check: Rolle "Community Mod" ODER Administrator-Rechte
 mod_or_admin = commands.check_any(
     commands.has_role("Community Mod"),
     commands.has_guild_permissions(administrator=True)
@@ -25,7 +20,7 @@ mod_or_admin = commands.check_any(
 
 
 class TourneyCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot):
         self.bot = bot
         logger.info("TourneyCog initialisiert")
 
@@ -33,9 +28,6 @@ class TourneyCog(commands.Cog):
     @commands.hybrid_group(name="tourney", description="Turnier-Verwaltung")
     @mod_or_admin
     async def tourney(self, ctx: commands.Context):
-        """
-        Basiskommando /tourney. Zeigt Hilfe, wenn keine Subcommand angegeben wurde.
-        """
         if ctx.invoked_subcommand is None:
             await ctx.send_help(ctx.command)
 
@@ -44,22 +36,31 @@ class TourneyCog(commands.Cog):
         description="Neues Turnier anlegen"
     )
     @mod_or_admin
+    @guilds(GUILD)
+    @app_commands.choices(
+        game=[
+            Choice(name="Warcraft Rumble", value="Warcraft Rumble"),
+            Choice(name="Magic: The Gathering", value="Magic: The Gathering"),
+            Choice(name="Pokémon TCGP", value="Pokémon TCGP")
+        ],
+        mode=[
+            Choice(name="Single Elimination",      value="Single Elimination"),
+            Choice(name="Double Elimination",      value="Double Elimination"),
+            Choice(name="Round Robin",             value="Round Robin"),
+            Choice(name="Swiss",                   value="Swiss")
+        ]
+    )
     async def erstellen(
         self,
         ctx: commands.Context,
         name: str,
-        game: Option(str, "Spiel auswählen",
-                     choices=["Warcraft Rumble", "Magic: The Gathering", "Pokémon TCGP"]),
-        mode: Option(str, "Modus auswählen",
-                     choices=["Single Elimination", "Double Elimination", "Round Robin", "Swiss"]),
-        registration_closes: Option(str, "Anmeldeschluss (YYYY-MM-DD HH:MM)"),
-        start_time: Option(str, "Startzeit (YYYY-MM-DD HH:MM)")
+        game: str,
+        mode: str,
+        registration_closes: str,
+        start_time: str
     ):
-        """
-        Legt ein neues Turnier an und speichert es in tournaments.json.
-        """
         logger.info(
-            f"{ctx.author} nutzt /tourney erstellen: name={name!r}, game={game!r}, mode={mode!r}")
+            f"{ctx.author} nutzt /tourney erstellen: {name=}, {game=}, {mode=}")
 
         # Datum/Uhrzeit validieren
         try:
