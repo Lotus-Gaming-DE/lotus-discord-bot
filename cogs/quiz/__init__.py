@@ -1,6 +1,8 @@
-# cogs/quiz/__init__.py
 from .cog import QuizCog
+from .slash_commands import QuizCommands
 
 
 async def setup(bot):
-    await bot.add_cog(QuizCog(bot))
+    quiz_cog = QuizCog(bot)
+    await bot.add_cog(quiz_cog)
+    await bot.add_cog(QuizCommands(bot, quiz_cog))
