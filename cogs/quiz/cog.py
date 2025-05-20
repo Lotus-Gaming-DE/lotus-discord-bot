@@ -9,7 +9,7 @@ import datetime
 from collections import defaultdict
 from .data_loader import DataLoader
 from .question_generator import QuestionGenerator
-from .utils import check_answer, create_permutations_list
+from .utils import check_answer
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,8 @@ class QuizCog(commands.Cog):
         self.answered_users = defaultdict(set)  # user pro area
         # channel_id -> nachrichtenzähler
         self.message_counter = defaultdict(int)
+        # channel_id -> ob schon ein erster Versuch gemacht wurde
+        self.channel_initialized = defaultdict(bool)
         self.wcr_question_count = 0
         self.max_wcr_dynamic_questions = 200
         self.time_window = datetime.timedelta(hours=0.25)
@@ -84,8 +86,12 @@ class QuizCog(commands.Cog):
                 f"Channel with ID {config['channel_id']} for area '{area}' not found.")
             return
 
-        # Nur wenn genügend echte Nachrichten geschrieben wurden
-        if self.message_counter[channel.id] < 10:
+        # Beim ersten Start keine Aktivitätsprüfung – erst danach
+        if not self.channel_initialized[channel.id]:
+            self.channel_initialized[channel.id] = True
+            logger.info(
+                f"Initialer Durchlauf in Channel {channel.id} – Aktivität wird erst ab dem nächsten Zeitfenster geprüft.")
+        elif self.message_counter[channel.id] < 10:
             logger.info(
                 f"Zu wenig Aktivität in Channel {channel.id}, Frage in Area '{area}' übersprungen.")
             return
@@ -178,10 +184,9 @@ class QuizCog(commands.Cog):
                         self.answered_users[area].add(message.author.id)
                         return
 
-                # Andere Nachricht im Quiz-Channel → nicht zählen
-                return
+                return  # Nachricht im Quiz-Channel, aber keine Antwort
 
-        # Falls keine aktive Frage im Channel: Nur "echte" Aktivität zählen
+        # Normale Aktivität außerhalb des Quiz
         self.message_counter[channel_id] += 1
         logger.debug(
             f"Aktive Nachricht von {message.author} in {message.channel.name} gezählt.")
