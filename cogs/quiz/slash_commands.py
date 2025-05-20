@@ -4,6 +4,16 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from typing import Literal
+import os
+
+from .data_loader import DataLoader
+from .question_generator import QuestionGenerator
+
+# Server-ID aus Umgebungsvariable lesen
+SERVER_ID = os.getenv("server_id")
+if SERVER_ID is None:
+    raise ValueError("Environment variable 'server_id' is not set.")
+MAIN_SERVER_ID = int(SERVER_ID)
 
 
 class QuizCommands(commands.GroupCog, name="quiz"):
@@ -23,26 +33,28 @@ class QuizCommands(commands.GroupCog, name="quiz"):
 
     async def interaction_checks(self, interaction: discord.Interaction) -> tuple[bool, str | None]:
         if not self.is_authorized(interaction.user):
-            return False, "Du hast keine Berechtigung, diesen Befehl zu verwenden."
+            return False, "❌ Du hast keine Berechtigung, diesen Befehl zu verwenden."
 
         area = self.get_area_by_channel(interaction.channel.id)
         if not area:
-            return False, "In diesem Channel ist kein Quiz konfiguriert."
+            return False, "❌ In diesem Channel ist kein Quiz konfiguriert."
 
         return True, area
 
     @app_commands.command(name="time", description="Setze das Zeitfenster für neue Fragen (in Minuten)")
+    @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
     async def time(self, interaction: discord.Interaction, minuten: app_commands.Range[int, 1, 120]):
         ok, result = await self.interaction_checks(interaction)
         if not ok:
             await interaction.response.send_message(result, ephemeral=True)
             return
 
-        minutes = minuten
-        self.quiz_cog.time_window = discord.utils.utcnow().__class__(minutes=minutes)
-        await interaction.response.send_message(f"⏱️ Das Zeitfenster wurde auf {minutes} Minuten gesetzt.", ephemeral=True)
+        self.quiz_cog.time_window = discord.utils.utcnow().__class__(minutes=minuten)
+        await interaction.response.send_message(
+            f"⏱️ Das Zeitfenster wurde auf **{minuten} Minuten** gesetzt.", ephemeral=True)
 
     @app_commands.command(name="language", description="Setze die Sprache für das Quiz")
+    @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
     async def language(self, interaction: discord.Interaction, sprache: Literal["de", "en"]):
         ok, area = await self.interaction_checks(interaction)
         if not ok:
@@ -50,9 +62,11 @@ class QuizCommands(commands.GroupCog, name="quiz"):
             return
 
         self.quiz_cog.area_data[area]['data_loader'].set_language(sprache)
-        await interaction.response.send_message(f"🌐 Sprache für `{area}` wurde auf **{sprache}** gesetzt.", ephemeral=True)
+        await interaction.response.send_message(
+            f"🌐 Sprache für `{area}` wurde auf **{sprache}** gesetzt.", ephemeral=True)
 
     @app_commands.command(name="ask", description="Stellt sofort eine neue Frage")
+    @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
     async def ask(self, interaction: discord.Interaction):
         ok, area = await self.interaction_checks(interaction)
         if not ok:
@@ -62,9 +76,11 @@ class QuizCommands(commands.GroupCog, name="quiz"):
         channel = interaction.channel
         end_time = discord.utils.utcnow() + self.quiz_cog.time_window
         await self.quiz_cog.ask_question(area, end_time)
-        await interaction.response.send_message("✅ Frage wurde gestellt und das Zeitfenster neu gestartet.", ephemeral=False)
+        await interaction.response.send_message(
+            "✅ Frage wurde gestellt und das Zeitfenster neu gestartet.", ephemeral=False)
 
     @app_commands.command(name="answer", description="Zeigt die Antwort zur aktuellen Frage")
+    @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
     async def answer(self, interaction: discord.Interaction):
         ok, area = await self.interaction_checks(interaction)
         if not ok:
@@ -83,6 +99,7 @@ class QuizCommands(commands.GroupCog, name="quiz"):
         await interaction.response.send_message("✅ Die Antwort wurde veröffentlicht und die Frage geschlossen.", ephemeral=False)
 
     @app_commands.command(name="status", description="Zeigt den Status des aktuellen Quiz")
+    @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
     async def status(self, interaction: discord.Interaction):
         ok, area = await self.interaction_checks(interaction)
         if not ok:
@@ -96,13 +113,14 @@ class QuizCommands(commands.GroupCog, name="quiz"):
             remaining = int(
                 (question['end_time'] - discord.utils.utcnow()).total_seconds())
             await interaction.response.send_message(
-                f"📊 Eine Frage ist aktiv. Noch {remaining} Sekunden. Nachrichten seit Beginn: {msg_count}",
+                f"📊 Eine Frage ist aktiv. Noch **{remaining} Sekunden**. Nachrichten seit Beginn: **{msg_count}**",
                 ephemeral=True
             )
         else:
             await interaction.response.send_message("📊 Derzeit ist keine Frage aktiv.", ephemeral=True)
 
     @app_commands.command(name="disable", description="Deaktiviert das Quiz für diesen Channel")
+    @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
     async def disable(self, interaction: discord.Interaction):
         ok, area = await self.interaction_checks(interaction)
         if not ok:
@@ -113,6 +131,7 @@ class QuizCommands(commands.GroupCog, name="quiz"):
         await interaction.response.send_message(f"🚫 Das Quiz für `{area}` wurde deaktiviert.", ephemeral=False)
 
     @app_commands.command(name="enable", description="Aktiviert das Quiz erneut für diesen Channel")
+    @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
     async def enable(self, interaction: discord.Interaction, area_name: str, sprache: Literal["de", "en"] = "de"):
         if not self.is_authorized(interaction.user):
             await interaction.response.send_message("Du hast keine Berechtigung, diesen Befehl zu verwenden.", ephemeral=True)
