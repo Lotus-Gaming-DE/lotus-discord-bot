@@ -6,6 +6,7 @@ import logging
 import random
 import asyncio
 import datetime
+import os
 from collections import defaultdict
 from .data_loader import DataLoader
 from .question_generator import QuestionGenerator
@@ -22,31 +23,54 @@ class QuizCog(commands.Cog):
         self.answered_users = defaultdict(set)
         self.message_counter = defaultdict(int)
         self.channel_initialized = defaultdict(bool)
-        self.awaiting_activity = {}  # channel_id -> geplante Frage mit Endzeit
+        self.awaiting_activity = {}
         self.wcr_question_count = 0
         self.max_wcr_dynamic_questions = 200
         self.time_window = datetime.timedelta(hours=0.25)
 
-        self.areas_config = {
-            'wcr': {
-                'channel_id': 1303261310103851008,
-                'language': 'de'
-            },
-            'd4': {
-                'channel_id': 1290804058281607189,
-                'language': 'de'
-            },
+        # Dynamisch konfigurierte Areas über Umgebungsvariablen
+        self.areas_config = {}
+
+        env_areas = {
+            "wcr": "quiz_c_wcr",
+            "d4": "quiz_c_d4",
+            "ptcgp": "quiz_c_ptcgp"
         }
 
+        for area, env_var in env_areas.items():
+            channel_id_str = os.getenv(env_var)
+            if channel_id_str is None:
+                logger.warning(
+                    f"⚠️ Umgebungsvariable '{env_var}' nicht gesetzt – Area '{area}' wird übersprungen.")
+                continue
+
+            try:
+                channel_id = int(channel_id_str)
+            except ValueError:
+                logger.error(
+                    f"❌ Ungültige Channel-ID in Umgebungsvariable '{env_var}': {channel_id_str}")
+                continue
+
+            self.areas_config[area] = {
+                "channel_id": channel_id,
+                "language": "de"
+            }
+
+        # Initialisiere die Fragegeneratoren pro aktiver Area
         for area, config in self.areas_config.items():
             data_loader = DataLoader()
             data_loader.set_language(config['language'])
             question_generator = QuestionGenerator(data_loader)
             self.area_data[area] = {
-                'data_loader': data_loader,
-                'question_generator': question_generator
+                "data_loader": data_loader,
+                "question_generator": question_generator
             }
+
+            # Starte Quiz-Loop für die Area
             self.bot.loop.create_task(self.quiz_scheduler(area))
+
+       # 🔁 ZÄHLER INITIALISIEREN
+        self.bot.loop.create_task(self._initialize_message_counters())
 
     async def quiz_scheduler(self, area):
         await self.bot.wait_until_ready()
@@ -81,6 +105,42 @@ class QuizCog(commands.Cog):
 
             if area in self.current_questions:
                 await self.close_question(area, timed_out=True)
+
+    async def _initialize_message_counters(self):
+        await self.bot.wait_until_ready()
+
+        for area, config in self.areas_config.items():
+            channel_id = config["channel_id"]
+            channel = self.bot.get_channel(channel_id)
+            if channel is None:
+                continue
+
+            counter = 0
+            async for msg in channel.history(limit=20):
+                if msg.author.id == self.bot.user.id and msg.content.startswith("**Quizfrage"):
+                    # Quizfrage gefunden – eventuell beim Neustart offen geblieben
+                    logger.info(
+                        f"💬 Frühere Quizfrage erkannt in Channel {channel.name}.")
+
+                    # Prüfen, ob diese Frage noch aktiv ist
+                    if area not in self.current_questions:
+                        self.current_questions[area] = {
+                            "message": msg,
+                            "correct_answers": [],
+                            "end_time": datetime.datetime.utcnow()  # Dummy-Wert
+                        }
+                        await self.close_question(area, timed_out=True)
+
+                    break  # Abbruch: keine weiteren Nachrichten zählen
+
+                if not msg.author.bot:
+                    counter += 1
+                    if counter >= 10:
+                        break
+
+            self.message_counter[channel_id] = counter
+            logger.info(
+                f"📊 Initialisierte Nachrichtenzahl für {channel.name}: {counter}")
 
     async def prepare_question(self, area, end_time):
         config = self.areas_config[area]
@@ -154,15 +214,28 @@ class QuizCog(commands.Cog):
         channel_id = message.channel.id
         self.message_counter[channel_id] += 1
 
-        # Wenn auf eine alte, nicht mehr aktive Frage geantwortet wurde
+        # Wenn auf eine alte, nicht mehr aktive Quizfrage geantwortet wurde
         if message.reference:
             ref_id = message.reference.message_id
             active_message_ids = [
                 q["message"].id for q in self.current_questions.values()
             ]
             if ref_id not in active_message_ids:
-                await message.channel.send(f"❌ {message.author.mention}, diese Frage ist nicht mehr aktiv.", delete_after=5)
-                return
+                try:
+                    referenced = await message.channel.fetch_message(ref_id)
+
+                    # Nur reagieren, wenn es sich um eine vom Bot stammende Quizfrage handelt
+                    if (
+                        referenced.author.id == self.bot.user.id and
+                        referenced.content.startswith("**Quizfrage")
+                    ):
+                        await message.channel.send(
+                            f"❌ {message.author.mention}, diese Frage ist nicht mehr aktiv.",
+                            delete_after=5
+                        )
+                        return
+                except discord.NotFound:
+                    pass
 
         # Nachgelagerte Prüfung für zurückgestellte Fragen
         if channel_id in self.awaiting_activity:
