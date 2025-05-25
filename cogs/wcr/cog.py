@@ -1,13 +1,12 @@
 # cogs/wcr/cog.py
+
 import discord
 from discord.ext import commands
-from discord import app_commands
 import os
 import logging
 from . import data_loader
 from . import helpers
 from .views import MiniSelectView
-import traceback
 import itertools
 
 logger = logging.getLogger(__name__)
@@ -27,178 +26,186 @@ class WCRCog(commands.Cog):
         self.pictures = data_loader.load_pictures()
         self.emojis = data_loader.load_emojis()
 
-    # Autocomplete-Funktionen
+    # ─── Autocomplete-Callbacks ─────────────────────────────────────────
     async def cost_autocomplete(self, interaction: discord.Interaction, current: str):
         costs = sorted(set(unit["cost"] for unit in self.units))
         return [
-            app_commands.Choice(name=str(c), value=str(c))
+            discord.app_commands.Choice(name=str(c), value=str(c))
             for c in costs if current.lower() in str(c).lower()
-        ][:25]  # Maximal 25 Einträge zurückgeben
+        ][:25]
 
     async def speed_autocomplete(self, interaction: discord.Interaction, current: str):
         speeds = self.languages['en']['categories']['speeds']
-        choices = [
-            app_commands.Choice(name=s['name'], value=str(s['id']))
+        return [
+            discord.app_commands.Choice(name=s['name'], value=str(s['id']))
             for s in speeds if current.lower() in s['name'].lower()
-        ]
-        return choices[:25]
+        ][:25]
 
     async def faction_autocomplete(self, interaction: discord.Interaction, current: str):
         factions = self.languages['en']['categories']['factions']
-        choices = [
-            app_commands.Choice(name=f['name'], value=str(f['id']))
+        return [
+            discord.app_commands.Choice(name=f['name'], value=str(f['id']))
             for f in factions if current.lower() in f['name'].lower()
-        ]
-        return choices[:25]
+        ][:25]
 
     async def type_autocomplete(self, interaction: discord.Interaction, current: str):
         types = self.languages['en']['categories']['types']
-        choices = [
-            app_commands.Choice(name=t['name'], value=str(t['id']))
+        return [
+            discord.app_commands.Choice(name=t['name'], value=str(t['id']))
             for t in types if current.lower() in t['name'].lower()
-        ]
-        return choices[:25]
+        ][:25]
 
     async def trait_autocomplete(self, interaction: discord.Interaction, current: str):
         traits = self.languages['en']['categories']['traits']
-        choices = [
-            app_commands.Choice(name=t['name'], value=str(t['id']))
+        return [
+            discord.app_commands.Choice(name=t['name'], value=str(t['id']))
             for t in traits if current.lower() in t['name'].lower()
-        ]
-        return choices[:25]
+        ][:25]
 
-    @app_commands.command(name="filter", description="Filtert Minis basierend auf verschiedenen Kriterien.")
-    @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
-    @app_commands.describe(
-        cost="Kosten des Minis",
-        speed="Geschwindigkeit des Minis",
-        faction="Fraktion des Minis",
-        type="Typ des Minis",
-        trait="Merkmal des Minis",
-        lang="Sprache"
-    )
-    @app_commands.autocomplete(
-        cost=cost_autocomplete,
-        speed=speed_autocomplete,
-        faction=faction_autocomplete,
-        type=type_autocomplete,
-        trait=trait_autocomplete
-    )
-    async def filter(self, interaction: discord.Interaction, cost: str = None, speed: str = None,
-                     faction: str = None, type: str = None, trait: str = None, lang: str = "de"):
-        logger.info(f"Befehl /filter ausgeführt von {interaction.user} mit Parametern: cost={
-                    cost}, speed={speed}, faction={faction}, type={type}, trait={trait}, lang={lang}")
+    # ─── Ausgelagerte Slash-Logik ────────────────────────────────────────
+    async def cmd_filter(
+        self,
+        interaction: discord.Interaction,
+        cost: str = None,
+        speed: str = None,
+        faction: str = None,
+        type: str = None,
+        trait: str = None,
+        lang: str = "de"
+    ):
+        """Logik für /wcr filter"""
+        logger.info(f"[WCR] /wcr filter von {interaction.user} - "
+                    f"cost={cost}, speed={speed}, faction={faction}, type={type}, trait={trait}, lang={lang}")
 
         if lang not in self.languages:
-            await interaction.response.send_message("Sprache nicht unterstützt. Verfügbar: " + ", ".join(self.languages.keys()), ephemeral=True)
+            await interaction.response.send_message(
+                "Sprache nicht unterstützt. Verfügbar: " +
+                ", ".join(self.languages.keys()),
+                ephemeral=True
+            )
             return
 
         texts = self.languages[lang]
-
-        # Starte mit allen Einheiten
         filtered_units = self.units
 
-        # Wende Filter an, wenn Parameter angegeben sind
+        # Kosten filtern
         if cost is not None:
             try:
                 cost_value = int(cost)
             except ValueError:
-                await interaction.response.send_message(f"Kosten '{cost}' ist keine gültige Zahl.", ephemeral=True)
+                await interaction.response.send_message(
+                    f"Kosten '{cost}' ist keine gültige Zahl.",
+                    ephemeral=True
+                )
                 return
             filtered_units = [
                 u for u in filtered_units if u.get("cost") == cost_value]
 
+        # Geschwindigkeit filtern
         if speed is not None:
-            speed_id = None
-            if speed.isdigit():
-                speed_id = int(speed)
-            else:
-                speed_id = helpers.find_category_id(
-                    speed, 'speeds', lang, self.languages)
-                if speed_id is None:
-                    await interaction.response.send_message(f"Geschwindigkeit '{speed}' nicht gefunden.", ephemeral=True)
-                    return
+            speed_id = int(speed) if speed.isdigit() else helpers.find_category_id(
+                speed, 'speeds', lang, self.languages)
+            if speed_id is None:
+                await interaction.response.send_message(
+                    f"Geschwindigkeit '{speed}' nicht gefunden.",
+                    ephemeral=True
+                )
+                return
             filtered_units = [
                 u for u in filtered_units if u.get("speed_id") == speed_id]
 
+        # Fraktion filtern
         if faction is not None:
-            faction_id = None
-            if faction.isdigit():
-                faction_id = int(faction)
-            else:
-                faction_id = helpers.find_category_id(
-                    faction, 'factions', lang, self.languages)
-                if faction_id is None:
-                    await interaction.response.send_message(f"Fraktion '{faction}' nicht gefunden.", ephemeral=True)
-                    return
+            faction_id = int(faction) if faction.isdigit() else helpers.find_category_id(
+                faction, 'factions', lang, self.languages)
+            if faction_id is None:
+                await interaction.response.send_message(
+                    f"Fraktion '{faction}' nicht gefunden.",
+                    ephemeral=True
+                )
+                return
             filtered_units = [u for u in filtered_units if u.get(
                 "faction_id") == faction_id]
 
+        # Typ filtern
         if type is not None:
-            type_id = None
-            if type.isdigit():
-                type_id = int(type)
-            else:
-                type_id = helpers.find_category_id(
-                    type, 'types', lang, self.languages)
-                if type_id is None:
-                    await interaction.response.send_message(f"Typ '{type}' nicht gefunden.", ephemeral=True)
-                    return
+            type_id = int(type) if type.isdigit() else helpers.find_category_id(
+                type, 'types', lang, self.languages)
+            if type_id is None:
+                await interaction.response.send_message(
+                    f"Typ '{type}' nicht gefunden.",
+                    ephemeral=True
+                )
+                return
             filtered_units = [
                 u for u in filtered_units if u.get("type_id") == type_id]
 
+        # Merkmal filtern
         if trait is not None:
-            trait_id = None
-            if trait.isdigit():
-                trait_id = int(trait)
-            else:
-                trait_id = helpers.find_category_id(
-                    trait, 'traits', lang, self.languages)
-                if trait_id is None:
-                    await interaction.response.send_message(f"Merkmal '{trait}' nicht gefunden.", ephemeral=True)
-                    return
+            trait_id = int(trait) if trait.isdigit() else helpers.find_category_id(
+                trait, 'traits', lang, self.languages)
+            if trait_id is None:
+                await interaction.response.send_message(
+                    f"Merkmal '{trait}' nicht gefunden.",
+                    ephemeral=True
+                )
+                return
             filtered_units = [
                 u for u in filtered_units if trait_id in u.get("traits_ids", [])]
 
         if not filtered_units:
-            await interaction.response.send_message("Keine Minis gefunden, die den angegebenen Kriterien entsprechen.", ephemeral=True)
+            await interaction.response.send_message(
+                "Keine Minis gefunden, die den angegebenen Kriterien entsprechen.",
+                ephemeral=True
+            )
             return
 
-        # Begrenze die Anzahl der Ergebnisse
         if len(filtered_units) > 25:
-            await interaction.response.send_message("Zu viele Ergebnisse. Bitte verfeinere deine Filter.", ephemeral=True)
+            await interaction.response.send_message(
+                "Zu viele Ergebnisse. Bitte verfeinere deine Filter.",
+                ephemeral=True
+            )
             return
 
-        # Erstelle die Optionen für das Dropdown-Menü
         options = []
         for unit in filtered_units:
             unit_id = unit["id"]
             unit_text = next(
                 (u for u in texts["units"] if u["id"] == unit_id), {})
             unit_name = unit_text.get("name", "Unbekannt")
+            emoji = self.emojis.get(
+                helpers.get_faction_icon(unit["faction_id"], self.pictures), {}
+            ).get("syntax", "")
+            options.append(discord.SelectOption(
+                label=unit_name, value=str(unit_id), emoji=emoji
+            ))
 
-            # Fraktions-Emoji abrufen
-            faction_emoji = self.emojis.get(
-                helpers.get_faction_icon(unit["faction_id"], self.pictures), {}).get("syntax", "")
-
-            options.append(discord.SelectOption(label=unit_name,
-                                                value=str(unit_id), emoji=faction_emoji))
-
-        # Erstelle das Dropdown-Menü
         view = MiniSelectView(options, self, lang)
-
         await interaction.response.send_message("Gefundene Minis:", view=view, ephemeral=True)
 
-    @app_commands.command(name="name", description="Zeigt Details zu einem Mini basierend auf dem Namen an.")
-    @app_commands.guilds(discord.Object(id=MAIN_SERVER_ID))
-    @app_commands.describe(name="Name des Minis", lang="Sprache")
-    async def name(self, interaction: discord.Interaction, name: str, lang: str = "de"):
+    async def cmd_name(
+        self,
+        interaction: discord.Interaction,
+        name: str,
+        lang: str = "de"
+    ):
+        """Logik für /wcr name"""
         logger.info(
-            f"Befehl /name ausgeführt von {interaction.user} mit Name: {name} und Sprache: {lang}")
-        await interaction.response.defer(ephemeral=True)  # Ephemere Antwort
-        embed, logo_file = self.create_mini_embed(name, lang)
+            f"[WCR] /wcr name von {interaction.user} - name={name}, lang={lang}")
+        await interaction.response.defer(ephemeral=True)
+
+        try:
+            embed, logo_file = self.create_mini_embed(name, lang)
+        except Exception as e:
+            logger.error(f"Fehler in create_mini_embed: {e}", exc_info=True)
+            await interaction.followup.send("Ein Fehler ist aufgetreten.", ephemeral=True)
+            return
+
         if embed is None:
-            await interaction.followup.send(f"Mini mit Namen '{name}' nicht gefunden.", ephemeral=True)
+            await interaction.followup.send(
+                f"Mini mit Namen '{name}' nicht gefunden.",
+                ephemeral=True
+            )
         else:
             if logo_file:
                 await interaction.followup.send(embed=embed, file=logo_file, ephemeral=True)
@@ -499,14 +506,16 @@ class WCRCog(commands.Cog):
         try:
             embed, logo_file = self.create_mini_embed(unit_id, lang)
             if embed is None:
-                await interaction.followup.send(f"Details für Mini mit ID '{unit_id}' nicht gefunden.", ephemeral=True)
+                await interaction.followup.send(
+                    f"Details für Mini mit ID '{unit_id}' nicht gefunden.",
+                    ephemeral=True
+                )
             else:
                 if logo_file:
                     await interaction.followup.send(embed=embed, file=logo_file, ephemeral=True)
                 else:
                     await interaction.followup.send(embed=embed, ephemeral=True)
         except Exception as e:
-            error_message = f"Fehler beim Senden des Embeds für unit_id {
-                unit_id}: {e}"
-            logger.error(error_message, exc_info=True)
-            await interaction.followup.send("Es ist ein Fehler aufgetreten. Bitte versuche es erneut.", ephemeral=True)
+            logger.error(
+                f"Fehler beim Senden des Embeds für unit_id {unit_id}: {e}", exc_info=True)
+            await interaction.followup.send("Ein Fehler ist aufgetreten.", ephemeral=True)
