@@ -9,127 +9,110 @@ import logging
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s:%(name)s: %(message)s')
 
-# Logger für dein Bot-Modul
 logger = logging.getLogger('bot')
 
 intents = discord.Intents.default()
-intents.message_content = True  # Notwendig für den quiz_cog
-intents.guilds = True  # Notwendig für Guild-Events und Befehle
+intents.message_content = True
+intents.guilds = True
 
 
 class MyBot(commands.Bot):
     def __init__(self, **kwargs):
         super().__init__(command_prefix='§', intents=intents, **kwargs)
-        # Server-ID aus der Umgebungsvariablen lesen
         self.main_server_id = os.getenv('server_id')
 
         if self.main_server_id is None:
             logger.error(
-                "Die Environment-Variable 'server_id' wurde nicht gefunden. Bitte stelle sicher, dass sie gesetzt ist.")
+                "Die Environment-Variable 'server_id' wurde nicht gefunden.")
             exit(1)
 
     async def setup_hook(self):
-        # Lade deine Cogs hier
+        # Lade alle Cogs (Dateien + Unterverzeichnisse mit __init__.py)
         for filename in os.listdir('./cogs'):
             filepath = os.path.join('./cogs', filename)
             if filename.endswith('.py'):
-                # Lade einzelne .py Dateien als Cogs
                 extension = f'cogs.{filename[:-3]}'
                 try:
                     await self.load_extension(extension)
                     logger.info(f'Extension {extension} geladen.')
                 except Exception as e:
-                    logger.error(f'Fehler beim Laden der Extension {
-                                 extension}: {e}', exc_info=True)
+                    logger.error(
+                        f'Fehler beim Laden der Extension {extension}: {e}', exc_info=True)
             elif os.path.isdir(filepath) and not filename.startswith('__'):
-                # Lade Unterverzeichnisse als Cogs, ignoriere Verzeichnisse, die mit '__' beginnen
                 if '__init__.py' in os.listdir(filepath):
                     extension = f'cogs.{filename}'
                     try:
                         await self.load_extension(extension)
                         logger.info(f'Extension {extension} geladen.')
                     except Exception as e:
-                        logger.error(f'Fehler beim Laden der Extension {
-                                     extension}: {e}', exc_info=True)
+                        logger.error(
+                            f'Fehler beim Laden der Extension {extension}: {e}', exc_info=True)
                 else:
                     logger.warning(
                         f'Verzeichnis {filepath} enthält keine __init__.py und wird ignoriert.')
             else:
                 logger.warning(f'Ignoriere {filepath}')
 
-        # Emojis laden und Befehle synchronisieren
+        # Emojis laden und Slash-Befehle aktualisieren
         await self.load_emojis_and_sync_commands()
-
-        # Synchronisiere die Befehle für den Hauptserver
-        try:
-            guild = discord.Object(id=int(self.main_server_id))
-            await self.tree.sync(guild=guild)
-            logger.info(
-                f'Slash-Befehle wurden für den Server {self.main_server_id} synchronisiert.')
-        except Exception as e:
-            logger.error(
-                f"Fehler beim Synchronisieren der Slash-Befehle: {e}", exc_info=True)
 
     async def load_emojis_and_sync_commands(self):
         try:
-            # Emojis vom Hauptserver laden
-            main_guild = self.get_guild(int(self.main_server_id))
-            if main_guild is None:
-                main_guild = await self.fetch_guild(int(self.main_server_id))
-            if main_guild:
+            guild_id = int(self.main_server_id)
+            guild = self.get_guild(guild_id) or await self.fetch_guild(guild_id)
+
+            # Emojis laden
+            if guild:
                 emojis_data = {}
-                for emoji in main_guild.emojis:
+                for emoji in guild.emojis:
                     emojis_data[emoji.name] = {
                         "id": emoji.id,
                         "animated": emoji.animated,
                         "syntax": f"{'<a:' if emoji.animated else '<:'}{emoji.name}:{emoji.id}>"
                     }
 
-                # Speichern in JSON-Datei im data-Ordner
                 os.makedirs("data", exist_ok=True)
                 with open("data/emojis.json", "w", encoding="utf-8") as f:
                     json.dump(emojis_data, f, indent=4, ensure_ascii=False)
 
-                logger.info(
-                    "Emoji-Liste vom Hauptserver wurde erfolgreich in 'data/emojis.json' gespeichert.")
+                logger.info("✅ Emojis gespeichert in 'data/emojis.json'.")
             else:
-                logger.warning(f"Hauptserver mit ID {
-                               self.main_server_id} nicht gefunden.")
+                logger.warning(
+                    f"⚠️ Hauptserver mit ID {self.main_server_id} nicht gefunden.")
 
-            # Synchronisiere die Befehle
-            guild = discord.Object(id=int(self.main_server_id))
-
-            # **Globale Befehle löschen**
+            # 🔴 Globale Slash-Befehle löschen
             self.tree.clear_commands(guild=None)
             await self.tree.sync(guild=None)
-            logger.info('Globale Befehle wurden gelöscht.')
+            logger.info("🌐 Globale Slash-Befehle gelöscht.")
 
-            # **Guild-spezifische Befehle synchronisieren**
-            await self.tree.sync(guild=guild)
-            logger.info(f'Befehle wurden für den Server {
-                        self.main_server_id} synchronisiert.')
+            # 🧹 Guild-spezifische Slash-Befehle löschen
+            guild_obj = discord.Object(id=guild_id)
+            self.tree.clear_commands(guild=guild_obj)
+            logger.info(f"🧹 Slash-Befehle für Guild {guild_id} gelöscht.")
+
+            # 🔁 Danach neu synchronisieren
+            await self.tree.sync(guild=guild_obj)
+            logger.info(
+                f"🔁 Slash-Befehle für Server {guild_id} neu registriert.")
 
         except Exception as e:
-            logger.error(f"Ein Fehler ist beim Laden der Emojis und Synchronisieren der Befehle aufgetreten: {
-                         e}", exc_info=True)
+            logger.error(
+                f"❌ Fehler beim Laden der Emojis/Synchronisieren der Befehle:\n{e}", exc_info=True)
 
     async def on_ready(self):
-        logger.info(f'Bot ist online als {self.user}.')
+        logger.info(f'✅ Bot ist online als {self.user}.')
 
     async def on_message(self, message):
         if message.author.bot:
-            return  # Ignoriere Nachrichten von Bots
-
-        # Verarbeite Befehle, falls du welche verwendest
+            return
         await self.process_commands(message)
 
 
 if __name__ == '__main__':
-    # Lies den Token aus der Environment-Variable
     bot_token = os.getenv('bot_key')
     if bot_token is None:
         logger.error(
-            "Bot Token nicht gefunden. Stelle sicher, dass die Environment-Variable 'bot_key' gesetzt ist.")
+            "❌ Bot Token nicht gefunden – Environment-Variable 'bot_key' fehlt.")
     else:
         bot = MyBot()
         bot.run(bot_token)
