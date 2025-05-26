@@ -4,9 +4,32 @@ import os
 import json
 import logging
 from pathlib import Path
+from threading import Thread
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import discord
 from discord.ext import commands
+
+# ─── Health-Check HTTP-Server ─────────────────────────────────────────────
+
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        # Immer 200 OK zurückgeben, damit Cloud Run den Container als gesund ansieht
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+
+def run_health_server():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(("", port), HealthHandler)
+    server.serve_forever()
+
+
+# Starte den Health-Server im Hintergrund
+Thread(target=run_health_server, daemon=True).start()
+
 
 # ─── Logging configuration ────────────────────────────────────────────────
 logging.basicConfig(
@@ -28,10 +51,10 @@ class MyBot(commands.Bot):
         super().__init__(
             command_prefix="§",
             intents=intents,
-            sync_commands=False  # we sync only guild commands
+            sync_commands=False  # wir synchronisieren nur guild-commands
         )
 
-        # load guild id from environment
+        # Guild-ID aus Env-Var auslesen
         guild_id = os.getenv("server_id")
         if not guild_id:
             logger.error("Environment variable 'server_id' is not set.")
@@ -39,10 +62,10 @@ class MyBot(commands.Bot):
         self.main_guild = discord.Object(id=int(guild_id))
 
     async def setup_hook(self):
-        # 1) export emojis
+        # 1) Emojis exportieren
         await self._export_emojis()
 
-        # 2) load all Cogs under cogs/ (recursively)
+        # 2) Alle Cogs unter cogs/ laden
         for path in Path("./cogs").rglob("*.py"):
             if path.name == "__init__.py":
                 continue
@@ -54,7 +77,7 @@ class MyBot(commands.Bot):
                 logger.error(
                     f"[bot] Failed to load extension {module}: {e}", exc_info=True)
 
-        # 3) sync guild-specific slash commands
+        # 3) Slash-Commands in der Main-Guild synchronisieren
         try:
             await self.tree.sync(guild=self.main_guild)
             logger.info(
@@ -75,7 +98,6 @@ class MyBot(commands.Bot):
                         "animated": emoji.animated,
                         "syntax": f"{'<a:' if emoji.animated else '<:'}{emoji.name}:{emoji.id}>"
                     }
-                # ensure data directory exists
                 Path("data").mkdir(exist_ok=True)
                 with open("data/emojis.json", "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=4, ensure_ascii=False)
