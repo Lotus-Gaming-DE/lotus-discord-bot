@@ -1,0 +1,39 @@
+# cloudbuild.yaml
+
+# 1) Baue das Docker-Image und pushe es in dein Artifact Registry Repo
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$_PROJECT/cloud-run-source-deploy/$_SERVICE/$_SERVICE:$SHORT_SHA'
+      - '.'
+
+# 2) Exportiere das soeben gepushte Image als Build-Artifact
+images:
+  - '$_REGION-docker.pkg.dev/$_PROJECT/cloud-run-source-deploy/$_SERVICE/$_SERVICE:$SHORT_SHA'
+
+# 3) Deploye den Service nach Cloud Run (Test)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run deploy $_SERVICE \
+          --image=$_REGION-docker.pkg.dev/$_PROJECT/cloud-run-source-deploy/$_SERVICE/$_SERVICE:$SHORT_SHA \
+          --region=$_REGION \
+          --platform=managed \
+          --allow-unauthenticated \
+          --memory=512Mi \
+          --cpu=1 \
+          --concurrency=80 \
+          --port=8080 \
+          --set-env-vars=server_id=${_SERVER_ID},bot_key=${_BOT_KEY}
+
+# Variablen, die du im Build-Trigger definieren musst
+substitutions:
+  _PROJECT: 'lotus-gaming-bot'
+  _REGION: 'europe-west1'
+  _SERVICE: 'lotusgamingde'
+  _SERVER_ID: ''    # hier deine Discord-Guild-ID
+  _BOT_KEY: ''      # hier dein Bot-Token oder Secret-Manager-Referenz
