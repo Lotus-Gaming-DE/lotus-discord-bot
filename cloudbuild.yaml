@@ -1,29 +1,33 @@
 # cloudbuild.yaml
 
-# ─── Optionen ──────────────────────────────────────────────────────────────
-# Da du ein benutzerdefiniertes Service-Konto als Standard
-# im UI festgelegt hast, verlangt Cloud Build, dass du
-# eine Logging-Option angibst.
+# 0) Damit Cloud Build mit Deinem gewählten Service-Account (aus den Einstellungen)
+#    laufen kann, ohne extra logs_bucket anzugeben:
 options:
-  logging: CLOUD_LOGGING_ONLY
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
 
-# ─── Build-Schritte ────────────────────────────────────────────────────────
 steps:
-  # 1) Docker-Image bauen und in Artifact Registry pushen
+  # 1) Docker-Build
   - name: gcr.io/cloud-builders/docker
     args:
       - build
       - -t
-      - "${_REGION}-docker.pkg.dev/${_PROJECT}/cloud-run-source-deploy/${_SERVICE}:${SHORT_SHA}"
-      - .
-  # 2) Service auf Cloud Run deployen
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${_SERVICE}:${SHORT_SHA}"
+      - "."
+
+  # 2) Docker-Push
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${_SERVICE}:${SHORT_SHA}"
+
+  # 3) Deploy in Cloud Run
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: bash
     args:
       - -c
       - |
         gcloud run deploy "${_SERVICE}" \
-          --image="${_REGION}-docker.pkg.dev/${_PROJECT}/cloud-run-source-deploy/${_SERVICE}:${SHORT_SHA}" \
+          --image="${_REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${_SERVICE}:${SHORT_SHA}" \
           --region="${_REGION}" \
           --platform=managed \
           --allow-unauthenticated \
@@ -31,16 +35,17 @@ steps:
           --cpu=1 \
           --concurrency=80 \
           --port=8080 \
-          --set-env-vars=server_id=${_SERVER_ID},bot_key=${_BOT_KEY}
+          --set-env-vars="server_id=${_SERVER_ID},bot_key=${_BOT_KEY}"
 
-# ─── Images zum Exportieren ─────────────────────────────────────────────────
-images:
-  - "${_REGION}-docker.pkg.dev/${_PROJECT}/cloud-run-source-deploy/${_SERVICE}:${SHORT_SHA}"
-
-# ─── Platzhalter / Substitutionen ───────────────────────────────────────────
+# Liste aller Variablen, die DU in Deinem Build-Trigger überschreiben kannst:
 substitutions:
-  _PROJECT:   "lotus-gaming-bot"   # dein GCP-Projekt
-  _REGION:    "europe-west1"       # Region von Artifact Registry & Cloud Run
-  _SERVICE:   "lotusgamingde"      # Cloud Run Service-Name
-  _SERVER_ID: ""                   # <- Wert im Trigger setzen!
-  _BOT_KEY:   ""                   # <- Wert im Trigger setzen!
+  # Standort & Projektdaten (kann hier stehen, muss in Trigger nicht wiederholt werden)
+  _REGION: "europe-west1"
+  _SERVICE: "lotusgamingde"
+
+  # Discord-spezifische Secrets – IM TRIGGER befüllen!
+  _SERVER_ID: "PUT_YOUR_SERVER_ID_HERE"
+  _BOT_KEY:   "PUT_YOUR_BOT_TOKEN_HERE"
+
+# Max. 20 Minuten Timeout (falls Dein Build mal länger braucht):
+timeout: "1200s"
