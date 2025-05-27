@@ -1,23 +1,30 @@
 # cloudbuild.yaml
 
-# 1) Baue das Docker‐Image und pushe es ins Artifact Registry Repo
-steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'build'
-      - '-t'
-      - '$_REGION-docker.pkg.dev/$_PROJECT/cloud-run-source-deploy/$_SERVICE/$_SERVICE:$SHORT_SHA'
-      - '.'
+# ─── Optionen ──────────────────────────────────────────────────────────────
+# Da du ein benutzerdefiniertes Service-Konto als Standard
+# im UI festgelegt hast, verlangt Cloud Build, dass du
+# eine Logging-Option angibst.
+options:
+  logging: CLOUD_LOGGING_ONLY
 
-  # 2) Deploye den Service nach Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'bash'
+# ─── Build-Schritte ────────────────────────────────────────────────────────
+steps:
+  # 1) Docker-Image bauen und in Artifact Registry pushen
+  - name: gcr.io/cloud-builders/docker
     args:
-      - '-c'
+      - build
+      - -t
+      - "${_REGION}-docker.pkg.dev/${_PROJECT}/cloud-run-source-deploy/${_SERVICE}:${SHORT_SHA}"
+      - .
+  # 2) Service auf Cloud Run deployen
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
       - |
-        gcloud run deploy $_SERVICE \
-          --image=$_REGION-docker.pkg.dev/$_PROJECT/cloud-run-source-deploy/$_SERVICE/$_SERVICE:$SHORT_SHA \
-          --region=$_REGION \
+        gcloud run deploy "${_SERVICE}" \
+          --image="${_REGION}-docker.pkg.dev/${_PROJECT}/cloud-run-source-deploy/${_SERVICE}:${SHORT_SHA}" \
+          --region="${_REGION}" \
           --platform=managed \
           --allow-unauthenticated \
           --memory=512Mi \
@@ -26,13 +33,14 @@ steps:
           --port=8080 \
           --set-env-vars=server_id=${_SERVER_ID},bot_key=${_BOT_KEY}
 
-# 3) Exportiere das gerade gebaute Image als Build‐Artifact
+# ─── Images zum Exportieren ─────────────────────────────────────────────────
 images:
-  - '$_REGION-docker.pkg.dev/$_PROJECT/cloud-run-source-deploy/$_SERVICE/$_SERVICE:$SHORT_SHA'
+  - "${_REGION}-docker.pkg.dev/${_PROJECT}/cloud-run-source-deploy/${_SERVICE}:${SHORT_SHA}"
 
-# Variablen (Substitutions) definierst Du im Trigger:
+# ─── Platzhalter / Substitutionen ───────────────────────────────────────────
 substitutions:
-  _PROJECT: 'lotus-gaming-bot'
-  _REGION: 'europe-west1'
-  _SERVICE: 'lotusgamingde'
-  # _SERVER_ID und _BOT_KEY setzt Du bereits im Trigger im Cloud Console UI
+  _PROJECT:   "lotus-gaming-bot"   # dein GCP-Projekt
+  _REGION:    "europe-west1"       # Region von Artifact Registry & Cloud Run
+  _SERVICE:   "lotusgamingde"      # Cloud Run Service-Name
+  _SERVER_ID: ""                   # <- Wert im Trigger setzen!
+  _BOT_KEY:   ""                   # <- Wert im Trigger setzen!
