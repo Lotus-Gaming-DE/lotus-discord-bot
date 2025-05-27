@@ -39,3 +39,5 @@ substitutions:
   _PROJECT: 'lotus-gaming-bot'
   _REGION: 'europe-west1'
   _SERVICE: 'lotusgamingde'
+  _SERVER_ID: ''    # im Trigger setzen: deine Discord-Guild-ID
+  _BOT_KEY: ''      # im Trigger setzen: dein Bot-Token oder Secret-Manager-Referenz
