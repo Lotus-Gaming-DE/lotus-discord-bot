@@ -1,23 +1,27 @@
 # cloudbuild.yaml
 
+# 1) Baue das Docker-Image und pushe es in dein Artifact Registry Repo
 steps:
-  # 1) Docker-Image bauen und taggen
   - name: 'gcr.io/cloud-builders/docker'
     args:
-      - build
+      - 'build'
       - '-t'
-      - '${_REGION}-docker.pkg.dev/${_PROJECT}/cloud-run-source-deploy/${_SERVICE}/${_SERVICE}:${SHORT_SHA}'
+      - '$_REGION-docker.pkg.dev/$_PROJECT/cloud-run-source-deploy/$_SERVICE/$_SERVICE:$SHORT_SHA'
       - '.'
 
-  # 2) Mit gcloud in Cloud Run deployen
+# 2) Exportiere das soeben gepushte Image als Build-Artifact
+images:
+  - '$_REGION-docker.pkg.dev/$_PROJECT/cloud-run-source-deploy/$_SERVICE/$_SERVICE:$SHORT_SHA'
+
+# 3) Deploye den Service nach Cloud Run (Test)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: bash
+    entrypoint: 'bash'
     args:
-      - -c
+      - '-c'
       - |
-        gcloud run deploy ${_SERVICE} \
-          --image=${_REGION}-docker.pkg.dev/${_PROJECT}/cloud-run-source-deploy/${_SERVICE}/${_SERVICE}:${SHORT_SHA} \
-          --region=${_REGION} \
+        gcloud run deploy $_SERVICE \
+          --image=$_REGION-docker.pkg.dev/$_PROJECT/cloud-run-source-deploy/$_SERVICE/$_SERVICE:$SHORT_SHA \
+          --region=$_REGION \
           --platform=managed \
           --allow-unauthenticated \
           --memory=512Mi \
@@ -26,15 +30,12 @@ steps:
           --port=8080 \
           --set-env-vars=server_id=${_SERVER_ID},bot_key=${_BOT_KEY}
 
-# 3) Damit das erzeugte Image in der History auftaucht
-images:
-  - '${_REGION}-docker.pkg.dev/${_PROJECT}/cloud-run-source-deploy/${_SERVICE}/${_SERVICE}:${SHORT_SHA}'
+# 4) Optionen für Logging hinzufügen
+options:
+  logging: CLOUD_LOGGING_ONLY
 
-# Nur Konstanten hier, alles andere kommt aus Deinem Trigger
+# 5) Variablen, die du im Build-Trigger setzt
 substitutions:
-  _PROJECT: 'lotus-gaming-bot'      # Dein GCP-Projekt
-  _REGION: 'europe-west1'           # Region Deiner Registry/Cloud Run
-  _SERVICE: 'lotusgamingde'         # Name Deines Cloud-Run-Services
-
-# Verlängere Timeout auf 10 Minuten (optional)
-timeout: '600s'
+  _PROJECT: 'lotus-gaming-bot'
+  _REGION: 'europe-west1'
+  _SERVICE: 'lotusgamingde'
