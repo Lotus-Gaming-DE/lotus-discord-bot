@@ -48,7 +48,6 @@ class QuizCog(commands.Cog):
                 )
                 continue
 
-            # initialize DataLoader and QuestionGenerator
             loader = DataLoader()
             loader.set_language("de")
             generator = QuestionGenerator(loader)
@@ -59,36 +58,26 @@ class QuizCog(commands.Cog):
                 "question_generator": generator
             }
 
-            # start quiz scheduler for this area
             self.bot.loop.create_task(self.quiz_scheduler(area))
 
-        # initialize message counters on startup
         self.bot.loop.create_task(self._initialize_message_counters())
 
     async def _initialize_message_counters(self):
-        """
-        Initialisiert die Nachrichtenzähler für alle aktiven Quiz-Areas,
-        die in area_data registriert sind.
-        """
         for area, cfg in self.area_data.items():
             channel_id = cfg["channel_id"]
-            channel = await self.bot.fetch_channel(channel_id)
-            if not channel:
+            try:
+                channel = await self.bot.fetch_channel(channel_id)
+            except Exception:
                 logger.warning(
                     f"[QuizCog] Channel-ID {channel_id} für Area '{area}' nicht gefunden.")
                 continue
 
             question = self.current_questions.get(area)
             if question:
-
-                # Wurde Frage gespeichert, aber ist jetzt schon abgelaufen? → Still löschen
                 if datetime.datetime.utcnow() > question["end_time"]:
                     logger.info(
                         f"[QuizCog] Removing expired question for '{area}' during startup (silent)")
                     self.current_questions.pop(area, None)
-                    # auch Zähler nicht initialisieren, aber Aktivität auf "bereits gestartet" setzen
-                    self.channel_initialized[channel.id] = True
-                    continue
                 else:
                     logger.info(
                         f"[QuizCog] Found previous quiz question in {channel.name}")
@@ -100,6 +89,8 @@ class QuizCog(commands.Cog):
                         continue
                     count += 1
                 self.message_counter[channel.id] = count
+                # WICHTIG: immer initialisieren
+                self.channel_initialized[channel.id] = True
                 logger.info(
                     f"[QuizCog] Initialized message counter for {channel.name}: {count}")
             except discord.Forbidden:
@@ -119,7 +110,6 @@ class QuizCog(commands.Cog):
                 f"[QuizCog] time window for '{area}' until {window_end.strftime('%H:%M:%S')}"
             )
 
-            # pick a random time in first half of window
             latest = window_start + (self.time_window / 2)
             delta = (latest - now).total_seconds()
             next_time = now + \
@@ -129,14 +119,10 @@ class QuizCog(commands.Cog):
             await asyncio.sleep(max((next_time - now).total_seconds(), 0))
             await self.prepare_question(area, window_end)
 
-            # wait until window end
             await asyncio.sleep(max((window_end - datetime.datetime.utcnow()).total_seconds(), 0))
-
-            # clear any postponed questions
             cid = self.area_data[area]["channel_id"]
             self.awaiting_activity.pop(cid, None)
 
-            # close active question if still open
             if area in self.current_questions:
                 await self.close_question(area, timed_out=True)
 
@@ -145,8 +131,7 @@ class QuizCog(commands.Cog):
         channel = self.bot.get_channel(cfg["channel_id"])
         if channel is None:
             logger.error(
-                f"[QuizCog] channel {cfg['channel_id']} not found for area '{area}'"
-            )
+                f"[QuizCog] channel {cfg['channel_id']} not found for area '{area}'")
             return
 
         if area in self.current_questions:
@@ -157,12 +142,10 @@ class QuizCog(commands.Cog):
         if not self.channel_initialized[cid]:
             self.channel_initialized[cid] = True
             logger.info(
-                f"[QuizCog] first start in channel {channel.name}, skipping activity check"
-            )
+                f"[QuizCog] first start in channel {channel.name}, skipping activity check")
         elif self.message_counter[cid] < 10:
             logger.info(
-                f"[QuizCog] low activity in {channel.name}, postponing question for '{area}'"
-            )
+                f"[QuizCog] low activity in {channel.name}, postponing question for '{area}'")
             self.awaiting_activity[cid] = (area, end_time)
             return
 
@@ -183,25 +166,20 @@ class QuizCog(commands.Cog):
 
         if not qd:
             logger.warning(
-                f"[QuizCog] could not generate question for '{area}'"
-            )
+                f"[QuizCog] could not generate question for '{area}'")
             return
 
-        question_text = qd["frage"]
-        correct_answers = qd["antwort"]
-        category = qd.get("category", "Mechanik")
-
-        message = await channel.send(f"**Quizfrage ({category}):** {question_text}")
+        message = await channel.send(f"**Quizfrage ({qd.get('category', 'Mechanik')}):** {qd['frage']}")
         self.current_questions[area] = {
             "message": message,
-            "correct_answers": correct_answers,
+            "correct_answers": qd["antwort"],
             "end_time": end_time
         }
         self.answered_users[area].clear()
         self.message_counter[channel.id] = 0
         self.awaiting_activity.pop(channel.id, None)
 
-        logger.info(f"[QuizCog] question sent for '{area}': {question_text}")
+        logger.info(f"[QuizCog] question sent for '{area}': {qd['frage']}")
 
     async def close_question(self, area: str, timed_out: bool = False):
         info = self.current_questions.pop(area, None)
@@ -213,8 +191,7 @@ class QuizCog(commands.Cog):
         else:
             await channel.send("✅ Die Frage wurde erfolgreich beantwortet!")
         logger.info(
-            f"[QuizCog] question closed for '{area}'{' (timeout)' if timed_out else ''}"
-        )
+            f"[QuizCog] question closed for '{area}'{' (timeout)' if timed_out else ''}")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -224,19 +201,14 @@ class QuizCog(commands.Cog):
         cid = message.channel.id
         self.message_counter[cid] += 1
 
-        # Antwort auf alte Frage
         if message.reference:
             ref_id = message.reference.message_id
             active_ids = [
-                q["message"].id for q in self.current_questions.values()
-            ]
+                q["message"].id for q in self.current_questions.values()]
             if ref_id not in active_ids:
                 try:
                     ref = await message.channel.fetch_message(ref_id)
-                    if (
-                        ref.author.id == self.bot.user.id
-                        and ref.content.startswith("**Quizfrage")
-                    ):
+                    if ref.author.id == self.bot.user.id and ref.content.startswith("**Quizfrage"):
                         await message.channel.send(
                             f"❌ {message.author.mention}, diese Frage ist nicht mehr aktiv.",
                             delete_after=5
@@ -245,17 +217,14 @@ class QuizCog(commands.Cog):
                 except discord.NotFound:
                     pass
 
-        # verspätete Fragen freigeben
         if cid in self.awaiting_activity and self.message_counter[cid] >= 10:
             area, end_time = self.awaiting_activity[cid]
             await self.ask_question(area, end_time)
 
-        # aktive Frage prüfen
         for area, info in list(self.current_questions.items()):
             if message.channel.id != info["message"].channel.id:
                 continue
 
-            # Timeout?
             if datetime.datetime.utcnow() >= info["end_time"]:
                 await self.close_question(area, timed_out=True)
                 continue
@@ -268,11 +237,7 @@ class QuizCog(commands.Cog):
                 )
                 return
 
-            # Antwort prüfen
-            if (
-                message.reference
-                and message.reference.message_id == info["message"].id
-            ):
+            if message.reference and message.reference.message_id == info["message"].id:
                 if check_answer(message.content, info["correct_answers"]):
                     user_key = str(uid)
                     scores = self.area_data[area]["data_loader"].load_scores()
@@ -283,8 +248,7 @@ class QuizCog(commands.Cog):
                     )
                     await self.close_question(area)
                     logger.info(
-                        f"[QuizCog] {message.author} answered correctly in '{area}': {message.content}"
-                    )
+                        f"[QuizCog] {message.author} answered correctly in '{area}': {message.content}")
                     return
                 else:
                     await message.channel.send(
@@ -292,20 +256,13 @@ class QuizCog(commands.Cog):
                         delete_after=5
                     )
                     logger.info(
-                        f"[QuizCog] {message.author} answered incorrectly in '{area}': {message.content}"
-                    )
+                        f"[QuizCog] {message.author} answered incorrectly in '{area}': {message.content}")
                     self.answered_users[area].add(uid)
                     return
 
     @commands.command()
     @commands.has_permissions(administrator=True)
-    async def set_language(
-        self,
-        ctx: commands.Context,
-        area: str,
-        language_code: str
-    ):
-        """Sprache für eine Area festlegen."""
+    async def set_language(self, ctx: commands.Context, area: str, language_code: str):
         if area not in self.area_data:
             await ctx.send(f"❌ Area '{area}' existiert nicht.")
             return
