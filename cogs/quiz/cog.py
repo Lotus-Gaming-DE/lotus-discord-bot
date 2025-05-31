@@ -66,41 +66,45 @@ class QuizCog(commands.Cog):
         self.bot.loop.create_task(self._initialize_message_counters())
 
     async def _initialize_message_counters(self):
-        await self.bot.wait_until_ready()
+        """
+        Initialisiert die Nachrichtenzähler für alle aktiven Quiz-Areas,
+        die in area_data registriert sind.
+        """
         for area, cfg in self.area_data.items():
-            channel = self.bot.get_channel(cfg["channel_id"])
-            if channel is None:
+            channel_id = cfg["channel_id"]
+            channel = self.bot.get_channel(channel_id)
+            if not channel:
+                logger.warning(
+                    f"[QuizCog] Channel-ID {channel_id} für Area '{area}' nicht gefunden.")
                 continue
 
-            counter = 0
-            async for msg in channel.history(limit=20):
-                # ⛔ Bereits erkannte Quizfrage überspringen
-                if (
-                    msg.author.id == self.bot.user.id
-                    and msg.content.startswith("**Quizfrage")
-                ):
-                    if area in self.current_questions and self.current_questions[area]["message"].id == msg.id:
-                        continue  # schon behandelt
-
+            question = self.current_questions.get(area)
+            if question:
+                # Wurde Frage gespeichert, aber ist jetzt schon abgelaufen? → Still löschen
+                if datetime.utcnow() > question["end_time"]:
+                    logger.info(
+                        f"[QuizCog] Removing expired question for '{area}' during startup (silent)")
+                    self.current_questions.pop(area, None)
+                    continue  # keine Zählung nötig
+                else:
                     logger.info(
                         f"[QuizCog] Found previous quiz question in {channel.name}")
-                    self.current_questions[area] = {
-                        "message": msg,
-                        "correct_answers": [],
-                        "end_time": datetime.datetime.utcnow()
-                    }
-                    await self.close_question(area, timed_out=True)
-                    break
 
-                if not msg.author.bot:
-                    counter += 1
-                    if counter >= 10:
-                        break
-
-            self.message_counter[cfg["channel_id"]] = counter
-            self.channel_initialized[cfg["channel_id"]] = True
-            logger.info(
-                f"[QuizCog] Initialized message counter for {channel.name}: {counter}")
+            try:
+                count = 0
+                async for msg in channel.history(limit=20):
+                    if msg.author.bot:
+                        continue
+                    count += 1
+                self.message_counter[channel.id] = count
+                logger.info(
+                    f"[QuizCog] Initialized message counter for {channel.name}: {count}")
+            except discord.Forbidden:
+                logger.error(
+                    f"[QuizCog] Missing permissions to read history in {channel.name}")
+            except Exception as e:
+                logger.error(
+                    f"[QuizCog] Error initializing message counter for {channel.name}: {e}", exc_info=True)
 
     async def quiz_scheduler(self, area: str):
         await self.bot.wait_until_ready()
