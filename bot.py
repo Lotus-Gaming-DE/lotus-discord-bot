@@ -6,6 +6,8 @@ from pathlib import Path
 import discord
 from discord.ext import commands
 
+print(os.getenv('bot_key'))
+
 # ─── Logging configuration ────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
