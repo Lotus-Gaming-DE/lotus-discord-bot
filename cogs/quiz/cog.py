@@ -80,12 +80,15 @@ class QuizCog(commands.Cog):
 
             question = self.current_questions.get(area)
             if question:
+
                 # Wurde Frage gespeichert, aber ist jetzt schon abgelaufen? → Still löschen
-                if datetime.utcnow() > question["end_time"]:
+                if datetime.datetime.utcnow() > question["end_time"]:
                     logger.info(
                         f"[QuizCog] Removing expired question for '{area}' during startup (silent)")
                     self.current_questions.pop(area, None)
-                    continue  # keine Zählung nötig
+                    # auch Zähler nicht initialisieren, aber Aktivität auf "bereits gestartet" setzen
+                    self.channel_initialized[channel.id] = True
+                    continue
                 else:
                     logger.info(
                         f"[QuizCog] Found previous quiz question in {channel.name}")
