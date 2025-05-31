@@ -2,8 +2,6 @@ import os
 import json
 import logging
 from pathlib import Path
-import socket
-import threading
 
 import discord
 from discord.ext import commands
@@ -94,20 +92,6 @@ class MyBot(commands.Bot):
 
 # ─── entry point ──────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    # HTTP-Server für Cloud Run Health Checks (Keep-Alive)
-    def _keep_alive():
-        port = int(os.environ.get("PORT", 8080))
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(("0.0.0.0", port))
-        sock.listen(1)
-        logger.info(f"[bot] HTTP keep-alive listening on port {port}")
-        while True:
-            conn, _ = sock.accept()
-            conn.close()
-
-    threading.Thread(target=_keep_alive, daemon=True).start()
-
-    # Bot-Token aus Umgebungsvariablen laden und starten
     token = os.getenv("bot_key")
     if not token:
         logger.error("Environment variable 'bot_key' is not set.")
