@@ -72,7 +72,7 @@ class QuizCog(commands.Cog):
         """
         for area, cfg in self.area_data.items():
             channel_id = cfg["channel_id"]
-            channel = self.bot.get_channel(channel_id)
+            channel = await self.bot.fetch_channel(channel_id)
             if not channel:
                 logger.warning(
                     f"[QuizCog] Channel-ID {channel_id} für Area '{area}' nicht gefunden.")
