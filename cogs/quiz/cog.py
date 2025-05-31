@@ -37,13 +37,15 @@ class QuizCog(commands.Cog):
             cid_str = os.getenv(env_var)
             if not cid_str:
                 logger.warning(
-                    f"[QuizCog] env var '{env_var}' not set, skipping area '{area}'")
+                    f"[QuizCog] env var '{env_var}' not set, skipping area '{area}'"
+                )
                 continue
             try:
                 channel_id = int(cid_str)
             except ValueError:
                 logger.error(
-                    f"[QuizCog] invalid channel ID in '{env_var}': {cid_str}")
+                    f"[QuizCog] invalid channel ID in '{env_var}': {cid_str}"
+                )
                 continue
 
             # initialize DataLoader and QuestionGenerator
@@ -78,7 +80,8 @@ class QuizCog(commands.Cog):
                     and msg.content.startswith("**Quizfrage")
                 ):
                     logger.info(
-                        f"[QuizCog] Found previous quiz question in {channel.name}")
+                        f"[QuizCog] Found previous quiz question in {channel.name}"
+                    )
                     if area not in self.current_questions:
                         # close it immediately
                         self.current_questions[area] = {
@@ -97,7 +100,8 @@ class QuizCog(commands.Cog):
             self.message_counter[cfg["channel_id"]] = counter
             self.channel_initialized[cfg["channel_id"]] = True
             logger.info(
-                f"[QuizCog] Initialized message counter for {channel.name}: {counter}")
+                f"[QuizCog] Initialized message counter for {channel.name}: {counter}"
+            )
 
     async def quiz_scheduler(self, area: str):
         await self.bot.wait_until_ready()
@@ -106,7 +110,8 @@ class QuizCog(commands.Cog):
             window_start = now.replace(second=0, microsecond=0)
             window_end = window_start + self.time_window
             logger.info(
-                f"[QuizCog] time window for '{area}' until {window_end.strftime('%H:%M:%S')}")
+                f"[QuizCog] time window for '{area}' until {window_end.strftime('%H:%M:%S')}"
+            )
 
             # pick a random time in first half of window
             latest = window_start + (self.time_window / 2)
@@ -134,7 +139,8 @@ class QuizCog(commands.Cog):
         channel = self.bot.get_channel(cfg["channel_id"])
         if channel is None:
             logger.error(
-                f"[QuizCog] channel {cfg['channel_id']} not found for area '{area}'")
+                f"[QuizCog] channel {cfg['channel_id']} not found for area '{area}'"
+            )
             return
 
         if area in self.current_questions:
@@ -145,10 +151,12 @@ class QuizCog(commands.Cog):
         if not self.channel_initialized[cid]:
             self.channel_initialized[cid] = True
             logger.info(
-                f"[QuizCog] first start in channel {channel.name}, skipping activity check")
+                f"[QuizCog] first start in channel {channel.name}, skipping activity check"
+            )
         elif self.message_counter[cid] < 10:
             logger.info(
-                f"[QuizCog] low activity in {channel.name}, postponing question for '{area}'")
+                f"[QuizCog] low activity in {channel.name}, postponing question for '{area}'"
+            )
             self.awaiting_activity[cid] = (area, end_time)
             return
 
@@ -169,7 +177,8 @@ class QuizCog(commands.Cog):
 
         if not qd:
             logger.warning(
-                f"[QuizCog] could not generate question for '{area}'")
+                f"[QuizCog] could not generate question for '{area}'"
+            )
             return
 
         question_text = qd["frage"]
@@ -198,7 +207,8 @@ class QuizCog(commands.Cog):
         else:
             await channel.send("✅ Die Frage wurde erfolgreich beantwortet!")
         logger.info(
-            f"[QuizCog] question closed for '{area}'{' (timeout)' if timed_out else ''}")
+            f"[QuizCog] question closed for '{area}'{' (timeout)' if timed_out else ''}"
+        )
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -212,7 +222,8 @@ class QuizCog(commands.Cog):
         if message.reference:
             ref_id = message.reference.message_id
             active_ids = [
-                q["message"].id for q in self.current_questions.values()]
+                q["message"].id for q in self.current_questions.values()
+            ]
             if ref_id not in active_ids:
                 try:
                     ref = await message.channel.fetch_message(ref_id)

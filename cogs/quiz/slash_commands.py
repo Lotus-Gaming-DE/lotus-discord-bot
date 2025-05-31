@@ -1,3 +1,5 @@
+# cogs/quiz/slash_commands.py
+
 import os
 import logging
 import datetime
@@ -11,7 +13,7 @@ from .cog import QuizCog
 from .data_loader import DataLoader
 from .question_generator import QuestionGenerator
 
-logger = logging.getLogger(__name__)  # e.g. 'cogs.quiz.slash_commands'
+logger = logging.getLogger(__name__)  # z.B. "cogs.quiz.slash_commands"
 
 SERVER_ID = os.getenv("server_id")
 if not SERVER_ID:
@@ -25,15 +27,19 @@ class QuizCommands(commands.GroupCog, name="quiz", description="Quiz-Befehle"):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
+        # Wir greifen später direkt auf die Instanz von QuizCog zu,
+        # die in cogs/quiz/__init__.py angelegt wurde.
         self.quiz_cog: QuizCog = bot.get_cog("QuizCog")
 
     def is_authorized(self, user: discord.Member) -> bool:
+        # Nur Rollen mit Name "Community Mod" oder Administrator dürfen Befehle ausführen
         return (
             any(r.name == "Community Mod" for r in user.roles)
             or user.guild_permissions.administrator
         )
 
     def get_area_by_channel(self, channel_id: int) -> Optional[str]:
+        # In welcher "Área" (z.B. "wcr", "d4", "ptcgp") befinden wir uns basierend auf der Channel-ID?
         for area, cfg in self.quiz_cog.area_data.items():
             if cfg["channel_id"] == channel_id:
                 return area
@@ -42,6 +48,10 @@ class QuizCommands(commands.GroupCog, name="quiz", description="Quiz-Befehle"):
     async def interaction_checks(
         self, interaction: discord.Interaction
     ) -> Tuple[bool, str]:
+        """
+        Prüft (1) ob der User authorisiert ist und (2) ob in diesem Kanal
+        überhaupt ein Quiz aktiv ist. Liefert ein Tupel (ok, area_or_error_msg).
+        """
         if not self.is_authorized(interaction.user):
             return False, "❌ Du hast keine Berechtigung für diesen Befehl."
 
@@ -64,7 +74,8 @@ class QuizCommands(commands.GroupCog, name="quiz", description="Quiz-Befehle"):
             return
 
         logger.info(
-            f"[QuizCommands] /quiz time by {interaction.user} -> {minutes}min")
+            f"[QuizCommands] /quiz time by {interaction.user} → {minutes}min"
+        )
         self.quiz_cog.time_window = datetime.timedelta(minutes=minutes)
         await interaction.response.send_message(
             f"⏱️ Zeitfenster auf **{minutes} Minuten** gesetzt.", ephemeral=True
@@ -84,7 +95,8 @@ class QuizCommands(commands.GroupCog, name="quiz", description="Quiz-Befehle"):
         area = area_or_msg
 
         logger.info(
-            f"[QuizCommands] /quiz language by {interaction.user} -> {area} = {lang}")
+            f"[QuizCommands] /quiz language by {interaction.user} → {area} = {lang}"
+        )
         loader = self.quiz_cog.area_data[area]["data_loader"]
         loader.set_language(lang)
         await interaction.response.send_message(
@@ -101,7 +113,8 @@ class QuizCommands(commands.GroupCog, name="quiz", description="Quiz-Befehle"):
         area = area_or_msg
 
         logger.info(
-            f"[QuizCommands] /quiz ask by {interaction.user} in {area}")
+            f"[QuizCommands] /quiz ask by {interaction.user} in {area}"
+        )
         end_time = datetime.datetime.utcnow() + self.quiz_cog.time_window
         await self.quiz_cog.ask_question(area, end_time)
         await interaction.response.send_message(
@@ -129,7 +142,8 @@ class QuizCommands(commands.GroupCog, name="quiz", description="Quiz-Befehle"):
         answers = question["correct_answers"]
         text = ", ".join(f"`{a}`" for a in answers)
         logger.info(
-            f"[QuizCommands] /quiz answer by {interaction.user} in {area}")
+            f"[QuizCommands] /quiz answer by {interaction.user} in {area}"
+        )
         await interaction.channel.send(f"📢 Die richtige Antwort ist: {text}")
         await self.quiz_cog.close_question(area)
         await interaction.response.send_message(
@@ -149,8 +163,8 @@ class QuizCommands(commands.GroupCog, name="quiz", description="Quiz-Befehle"):
         count = self.quiz_cog.message_counter.get(interaction.channel.id, 0)
         if question:
             remaining = int(
-                (question["end_time"] -
-                 datetime.datetime.utcnow()).total_seconds()
+                (question["end_time"]
+                 - datetime.datetime.utcnow()).total_seconds()
             )
             await interaction.response.send_message(
                 f"📊 Aktive Frage: noch **{remaining}s**. Nachrichten seit Start: **{count}**.",
@@ -171,7 +185,8 @@ class QuizCommands(commands.GroupCog, name="quiz", description="Quiz-Befehle"):
         area = area_or_msg
 
         logger.info(
-            f"[QuizCommands] /quiz disable by {interaction.user} in {area}")
+            f"[QuizCommands] /quiz disable by {interaction.user} in {area}"
+        )
         self.quiz_cog.area_data.pop(area, None)
         await interaction.response.send_message(
             f"🚫 Quiz für **{area}** deaktiviert.", ephemeral=False
@@ -195,7 +210,8 @@ class QuizCommands(commands.GroupCog, name="quiz", description="Quiz-Befehle"):
 
         area = area_name.lower()
         logger.info(
-            f"[QuizCommands] /quiz enable by {interaction.user} -> {area} ({lang})")
+            f"[QuizCommands] /quiz enable by {interaction.user} → {area} ({lang})"
+        )
         cfg = {"channel_id": interaction.channel.id, "language": lang}
         loader = DataLoader()
         loader.set_language(lang)
@@ -204,7 +220,7 @@ class QuizCommands(commands.GroupCog, name="quiz", description="Quiz-Befehle"):
             "channel_id": interaction.channel.id,
             "language": lang,
             "data_loader": loader,
-            "question_generator": gen
+            "question_generator": gen,
         }
         self.bot.loop.create_task(self.quiz_cog.quiz_scheduler(area))
 

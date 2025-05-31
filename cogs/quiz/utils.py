@@ -1,9 +1,11 @@
+# cogs/quiz/utils.py
+
 import logging
 import re
 import difflib
 from unidecode import unidecode
 
-logger = logging.getLogger(__name__)  # e.g. 'cogs.quiz.utils'
+logger = logging.getLogger(__name__)  # z. B. 'cogs.quiz.utils'
 
 
 def check_answer(user_answer: str, correct_answers: list, threshold: float = 0.6) -> bool:
@@ -16,13 +18,17 @@ def check_answer(user_answer: str, correct_answers: list, threshold: float = 0.6
         normalized_correct = normalize_text(ans)
         # Direktes Enthalten
         if normalized_user in normalized_correct or normalized_correct in normalized_user:
+            logger.debug(
+                f"[utils] exact/partial match: '{normalized_user}' ~ '{normalized_correct}'")
             return True
-        # Levenshtein-ähnlichkeit
+        # Levenshtein-Ähnlichkeit
         similarity = difflib.SequenceMatcher(
-            None, normalized_user, normalized_correct
-        ).ratio()
+            None, normalized_user, normalized_correct).ratio()
         if similarity >= threshold:
+            logger.debug(
+                f"[utils] fuzzy match: '{normalized_user}' ~ '{normalized_correct}' ({similarity:.2f})")
             return True
+    logger.debug(f"[utils] no match: '{user_answer}'")
     return False
 
 

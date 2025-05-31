@@ -3,7 +3,10 @@ import os
 from .cog import WCRCog
 from .slash_commands import wcr_group
 
-MAIN_SERVER_ID = int(os.getenv('server_id'))
+SERVER_ID = os.getenv("server_id")
+if SERVER_ID is None:
+    raise ValueError("Environment variable 'server_id' is not set.")
+MAIN_SERVER_ID = int(SERVER_ID)
 
 
 async def setup(bot):
