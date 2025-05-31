@@ -74,22 +74,22 @@ class QuizCog(commands.Cog):
 
             counter = 0
             async for msg in channel.history(limit=20):
-                # detect leftover question
+                # ⛔ Bereits erkannte Quizfrage überspringen
                 if (
                     msg.author.id == self.bot.user.id
                     and msg.content.startswith("**Quizfrage")
                 ):
+                    if area in self.current_questions and self.current_questions[area]["message"].id == msg.id:
+                        continue  # schon behandelt
+
                     logger.info(
-                        f"[QuizCog] Found previous quiz question in {channel.name}"
-                    )
-                    if area not in self.current_questions:
-                        # close it immediately
-                        self.current_questions[area] = {
-                            "message": msg,
-                            "correct_answers": [],
-                            "end_time": datetime.datetime.utcnow()
-                        }
-                        await self.close_question(area, timed_out=True)
+                        f"[QuizCog] Found previous quiz question in {channel.name}")
+                    self.current_questions[area] = {
+                        "message": msg,
+                        "correct_answers": [],
+                        "end_time": datetime.datetime.utcnow()
+                    }
+                    await self.close_question(area, timed_out=True)
                     break
 
                 if not msg.author.bot:
@@ -100,8 +100,7 @@ class QuizCog(commands.Cog):
             self.message_counter[cfg["channel_id"]] = counter
             self.channel_initialized[cfg["channel_id"]] = True
             logger.info(
-                f"[QuizCog] Initialized message counter for {channel.name}: {counter}"
-            )
+                f"[QuizCog] Initialized message counter for {channel.name}: {counter}")
 
     async def quiz_scheduler(self, area: str):
         await self.bot.wait_until_ready()

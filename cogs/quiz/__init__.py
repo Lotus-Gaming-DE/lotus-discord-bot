@@ -1,13 +1,28 @@
+# cogs/quiz/__init__.py
+
+import os
+import discord
 import logging
-from discord.ext import commands
+
 from .cog import QuizCog
-from .slash_commands import QuizCommands
+from .slash_commands import quiz_group
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # z.B. 'cogs.quiz.__init__'
+
+SERVER_ID = os.getenv("server_id")
+if SERVER_ID is None:
+    raise ValueError("Environment variable 'server_id' is not set.")
+MAIN_SERVER_ID = int(SERVER_ID)
 
 
-async def setup(bot: commands.Bot):
-    await bot.add_cog(QuizCog(bot))
-    await bot.add_cog(QuizCommands(bot))
-    logger.info(
-        "[QuizCog] Cog und Slash-Command-Gruppe erfolgreich registriert.")
+async def setup(bot: discord.ext.commands.Bot):
+    try:
+        await bot.add_cog(QuizCog(bot))
+        bot.tree.add_command(
+            quiz_group,
+            guild=discord.Object(id=MAIN_SERVER_ID)
+        )
+        logger.info(
+            "[QuizCog] Cog und Slash-Command-Gruppe erfolgreich registriert.")
+    except Exception as e:
+        logger.error(f"[QuizCog] Fehler beim Setup: {e}", exc_info=True)
