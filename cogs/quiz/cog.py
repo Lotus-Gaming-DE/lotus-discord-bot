@@ -63,42 +63,54 @@ class QuizCog(commands.Cog):
         self.bot.loop.create_task(self._initialize_message_counters())
 
     async def _initialize_message_counters(self):
+        """
+        Initialisiert die Nachrichtenzähler für alle aktiven Quiz-Areas.
+        Berücksichtigt dabei, ob seit der letzten Quizfrage 10 echte Nachrichten gepostet wurden.
+        """
         for area, cfg in self.area_data.items():
             channel_id = cfg["channel_id"]
             try:
                 channel = await self.bot.fetch_channel(channel_id)
-            except Exception:
+            except Exception as e:
                 logger.warning(
-                    f"[QuizCog] Channel-ID {channel_id} für Area '{area}' nicht gefunden.")
+                    f"[QuizCog] Channel-ID {channel_id} für Area '{area}' nicht gefunden: {e}")
                 continue
 
-            question = self.current_questions.get(area)
-            if question:
-                if datetime.datetime.utcnow() > question["end_time"]:
-                    logger.info(
-                        f"[QuizCog] Removing expired question for '{area}' during startup (silent)")
-                    self.current_questions.pop(area, None)
-                else:
-                    logger.info(
-                        f"[QuizCog] Found previous quiz question in {channel.name}")
-
             try:
-                count = 0
-                async for msg in channel.history(limit=20):
-                    if msg.author.bot:
-                        continue
-                    count += 1
-                self.message_counter[channel.id] = count
-                # WICHTIG: immer initialisieren
-                self.channel_initialized[channel.id] = True
-                logger.info(
-                    f"[QuizCog] Initialized message counter for {channel.name}: {count}")
+                messages = []
+                async for msg in channel.history(limit=20, oldest_first=False):
+                    messages.append(msg)
+
+                # Suche nach der letzten Quizfrage
+                quiz_index = next(
+                    (i for i, msg in enumerate(messages)
+                     if msg.author.id == self.bot.user.id and msg.content.startswith("**Quizfrage")),
+                    None
+                )
+
+                if quiz_index is not None:
+                    # Alle Nachrichten NACH der Quizfrage zählen (echte Nutzer)
+                    real_messages = [
+                        msg for msg in messages[:quiz_index] if not msg.author.bot
+                    ]
+                    count = len(real_messages)
+                    self.message_counter[channel.id] = count
+                    self.channel_initialized[channel.id] = True
+                    logger.info(
+                        f"[QuizCog] Nachrichtenzähler für {channel.name} gesetzt: {count} (nach letzter Quizfrage)")
+                else:
+                    # Keine Quizfrage gefunden → 0 setzen
+                    self.message_counter[channel.id] = 0
+                    self.channel_initialized[channel.id] = True
+                    logger.info(
+                        f"[QuizCog] Keine Quizfrage gefunden in {channel.name}, Zähler auf 0 gesetzt.")
+
             except discord.Forbidden:
                 logger.error(
-                    f"[QuizCog] Missing permissions to read history in {channel.name}")
+                    f"[QuizCog] Fehlende Berechtigung zum Lesen des Verlaufs in {channel.name}")
             except Exception as e:
                 logger.error(
-                    f"[QuizCog] Error initializing message counter for {channel.name}: {e}", exc_info=True)
+                    f"[QuizCog] Fehler beim Initialisieren des Counters für {channel.name}: {e}", exc_info=True)
 
     async def quiz_scheduler(self, area: str):
         await self.bot.wait_until_ready()
