@@ -1,0 +1,23 @@
+[
+    {
+      "name": "Ultimate Champion",
+      "threshold": 750
+    },
+    {
+      "name": "Epic Champion",
+      "threshold": 500
+    },
+    {
+      "name": "Renowned Champion",
+      "threshold": 300
+    },
+    {
+      "name": "Seasoned Champion",
+      "threshold": 150
+    },
+    {
+      "name": "Emerging Champion",
+      "threshold": 50
+    }
+  ]
+  
