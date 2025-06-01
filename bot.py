@@ -53,15 +53,14 @@ class MyBot(commands.Bot):
     async def setup_hook(self):
         # ─────────────────────────────────────────────────────────────────────────
         # 1. Alte, globale Slash-Commands LÖSCHEN (funktioniert synchron, daher ohne await)
-        #    Dadurch werden alle global registrierten Commands entfernt.
-        # <— kein await! (clear_commands ist nicht async)
+        # <-- KEIN await, weil clear_commands synchron ist
         self.tree.clear_commands(guild=None)
         # ─────────────────────────────────────────────────────────────────────────
 
-        # 2. Emojis exportieren (wie gehabt)
+        # 2. Emojis exportieren
         await self._export_emojis()
 
-        # 3. Gemeinsame Daten laden
+        # 3. Gemeinsame Daten laden (z. B. wcr, quiz)
         self.data = {
             "emojis": self._load_emojis_from_file(),
             "wcr": {
@@ -75,7 +74,7 @@ class MyBot(commands.Bot):
             }
         }
 
-        # 4. Alle Cogs laden
+        # 4. Alle Cogs laden (einschließlich cogs.champion, das nun champion_group registriert)
         for path in Path("./cogs").rglob("__init__.py"):
             module = ".".join(path.with_suffix("").parts)
             try:

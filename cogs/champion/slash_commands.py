@@ -1,14 +1,12 @@
-# cogs/champion/slash_commands.py
-
 import discord
 from discord import app_commands
 from discord.ext import commands
 from typing import Optional
 import logging
 
-logger = logging.getLogger(__name__)  # z. B. 'cogs.champion.slash_commands'
+logger = logging.getLogger(__name__)  # cogs.champion.slash_commands
 
-# Erstelle die Command-Gruppe /champion
+# 1) Erstelle die Command-Gruppe /champion
 champion_group = app_commands.Group(
     name="champion",
     description="Verwalte Champion-Punkte"
@@ -18,11 +16,9 @@ champion_group = app_commands.Group(
 class ChampionCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        # Referenz auf den ChampionCog, der die DB-Logik enthält
         self.cog = bot.get_cog("ChampionCog")
 
     def is_authorized(self, user: discord.Member) -> bool:
-        # Mods mit Rolle "Community Mod" oder Administratoren dürfen
         return (
             any(role.name == "Community Mod" for role in user.roles)
             or user.guild_permissions.administrator
@@ -45,7 +41,6 @@ class ChampionCommands(commands.Cog):
         punkte: int,
         grund: str
     ):
-        """Vergibt eine positive Punkte-Änderung an den angegebenen User."""
         if not self.is_authorized(interaction.user):
             await interaction.response.send_message(
                 "❌ Du hast keine Berechtigung.", ephemeral=True
@@ -77,7 +72,6 @@ class ChampionCommands(commands.Cog):
         punkte: int,
         grund: str
     ):
-        """Zieht Punkte vom angegebenen User ab."""
         if not self.is_authorized(interaction.user):
             await interaction.response.send_message(
                 "❌ Du hast keine Berechtigung.", ephemeral=True
@@ -109,7 +103,6 @@ class ChampionCommands(commands.Cog):
         punkte: int,
         grund: str
     ):
-        """Setzt die Gesamtpunktzahl eines Users auf einen exakten Wert."""
         if not self.is_authorized(interaction.user):
             await interaction.response.send_message(
                 "❌ Du hast keine Berechtigung.", ephemeral=True
@@ -137,7 +130,6 @@ class ChampionCommands(commands.Cog):
         interaction: discord.Interaction,
         user: discord.Member
     ):
-        """Setzt die Punktzahl des Users auf 0, falls >0."""
         if not self.is_authorized(interaction.user):
             await interaction.response.send_message(
                 "❌ Du hast keine Berechtigung.", ephemeral=True
@@ -165,7 +157,6 @@ class ChampionCommands(commands.Cog):
     )
     @app_commands.default_permissions(send_messages=True)
     async def info(self, interaction: discord.Interaction):
-        """Gibt dem aufrufenden User die aktuelle Gesamtpunktzahl zurück."""
         user_id_str = str(interaction.user.id)
         total = await self.cog.data.get_total(user_id_str)
         logger.info(
@@ -186,7 +177,6 @@ class ChampionCommands(commands.Cog):
         interaction: discord.Interaction,
         user: discord.Member
     ):
-        """Zeigt bis zu 10 letzte Änderungen der Punktzahl eines Users."""
         user_id_str = str(user.id)
         history = await self.cog.data.get_history(user_id_str, limit=10)
         logger.info(
@@ -222,10 +212,6 @@ class ChampionCommands(commands.Cog):
         interaction: discord.Interaction,
         page: Optional[int] = 1
     ):
-        """
-        Zeigt das Leaderboard in Blöcken von 10 Einträgen an.
-        Parameter 'page' (1-basierter Index) bestimmt Offset.
-        """
         if page < 1:
             page = 1
         limit = 10
@@ -252,13 +238,12 @@ class ChampionCommands(commands.Cog):
 
 
 async def setup(bot: commands.Bot):
-    # Stelle sicher, dass ChampionCog bereits geladen ist (für Zugriff auf self.cog.data)
     from .cog import ChampionCog
     cog = bot.get_cog("ChampionCog")
     if cog is None:
         cog = ChampionCog(bot)
         await bot.add_cog(cog)
 
-    # Registriere die Slash-Commands-Klasse, die die /champion-Group enthält
+    # 2) Registriere die ChampionCommands-Cog, damit die Gruppe /champion bekannt ist
     await bot.add_cog(ChampionCommands(bot))
     logger.info("[ChampionCommands] Slash-Befehle geladen und registriert.")
