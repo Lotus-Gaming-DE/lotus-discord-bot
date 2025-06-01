@@ -36,16 +36,27 @@ class AnswerModal(Modal, title="Antwort eingeben"):
             )
             return
 
-        if eingabe.lower() in (a.lower() for a in self.correct_answers):
+        # Prüfe, ob Antwort korrekt ist (case-insensitive)
+        matched = next(
+            (a for a in self.correct_answers if a.lower() == eingabe.lower()), None
+        )
+
+        if matched is not None:
             scores = self.data_loader.load_scores()
             scores[str(user_id)] = scores.get(str(user_id), 0) + 1
             self.data_loader.save_scores(scores)
             await interaction.response.send_message(
                 "🏆 Richtig! Du erhältst einen Punkt.", ephemeral=True
             )
-            await self.cog.close_question(self.area)
+            # Frage schließen und Gewinner + richtige Antwort übergeben
+            await self.cog.close_question(
+                area=self.area,
+                timed_out=False,
+                winner=interaction.user,
+                correct_answer=matched
+            )
             logger.info(
-                f"[QuizCog] {interaction.user} richtig in '{self.area}': {eingabe}")
+                f"[QuizCog] {interaction.user} richtig in '{self.area}': {matched}")
         else:
             self.cog.answered_users[self.area].add(user_id)
             await interaction.response.send_message(
@@ -65,7 +76,6 @@ class AnswerButtonView(View):
 
     @button(label="Antworten", style=discord.ButtonStyle.primary)
     async def answer_button(self, interaction: discord.Interaction, button: Button):
-        # Jetzt ist 'interaction' korrekt das Interaction-Objekt, nicht der Button
         user_id = interaction.user.id
         if user_id in self.cog.answered_users[self.area]:
             await interaction.response.send_message(
@@ -217,9 +227,11 @@ class QuizCog(commands.Cog):
             # Zufälliger Zeitpunkt in der ersten Hälfte des Fensters
             latest = window_start + (self.time_window / 2)
             delta = (latest - now).total_seconds()
-            next_time = now + datetime.timedelta(
-                seconds=random.uniform(0, delta)
-            ) if delta > 0 else now
+            next_time = (
+                now + datetime.timedelta(seconds=random.uniform(0, delta))
+                if delta > 0
+                else now
+            )
 
             # Kurze zusätzliche Zufallsverzögerung (bis zu Hälfte des Fensters)
             delay = random.uniform(0, (self.time_window.total_seconds() / 2))
@@ -280,8 +292,7 @@ class QuizCog(commands.Cog):
         # Falls Counter <10, merken und verschieben
         elif self.message_counter[cid] < 10:
             logger.info(
-                f"[QuizCog] Zu wenig Aktivität in {channel.name}, verschiebe Frage."
-            )
+                f"[QuizCog] Zu wenig Aktivität in {channel.name}, verschiebe Frage.")
             self.awaiting_activity[cid] = (area, end_time)
             return
 
@@ -353,9 +364,17 @@ class QuizCog(commands.Cog):
         await asyncio.sleep(max(verbleibende, 0))
         await self.close_question(area, timed_out=True)
 
-    async def close_question(self, area: str, timed_out: bool = False):
+    async def close_question(
+        self,
+        area: str,
+        timed_out: bool = False,
+        winner: discord.User = None,
+        correct_answer: str = None
+    ):
         """
         Schließt die aktuell laufende Frage (beim Timeout oder korrekter Antwort).
+        Wenn ein Gewinner existiert, wird sein Name angezeigt.
+        Die korrekte(n) Antwort(en) werden im Embed unter einem eigenen Field ergänzt.
         """
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
@@ -365,11 +384,34 @@ class QuizCog(commands.Cog):
         qinfo = self.current_questions.pop(area)
         try:
             msg = await channel.fetch_message(qinfo["message_id"])
-            footer = " ⏰ Zeit abgelaufen!" if timed_out else " ✅ Richtig beantwortet!"
             embed = msg.embeds[0]
+
+            # Roter Rahmen, um abzuschließen
             embed.color = discord.Color.red()
-            embed.set_footer(text=embed.footer.text + footer)
-            # Remove die View (Buttons), damit niemand mehr klicken kann
+
+            # Entferne Footer-Text "Klicke auf 'Antworten'" und Buttons
+            footer_text = ""
+            if timed_out:
+                footer_text = "⏰ Zeit abgelaufen!"
+            else:
+                footer_text = "✅ Richtig beantwortet!"
+
+            if winner:
+                footer_text += f" • {winner.display_name} hat gewonnen."
+            embed.set_footer(text=footer_text)
+
+            # Füge Bereich "Richtige Antwort" hinzu
+            if timed_out:
+                # Bei Timeout zeigen wir alle möglichen Antworten
+                antwort_text = ", ".join(qinfo["answers"])
+                embed.add_field(name="Richtige Antwort",
+                                value=antwort_text, inline=False)
+            else:
+                # Gewinner existiert: zeige nur die eine richtige Antwort
+                embed.add_field(name="Richtige Antwort",
+                                value=correct_answer, inline=False)
+
+            # Bearbeite Nachricht: entferne View (Buttons)
             await msg.edit(embed=embed, view=None)
         except Exception as e:
             logger.warning(
@@ -378,8 +420,13 @@ class QuizCog(commands.Cog):
 
         # Channel darf beim nächsten Fenster erneut Activity-Check überspringen
         self.channel_initialized[cfg["channel_id"]] = False
-        logger.info(
-            f"[QuizCog] Frage beendet in '{area}'{' (Timeout)' if timed_out else ''}")
+
+        if timed_out:
+            logger.info(
+                f"[QuizCog] Frage in '{area}' (Timeout) beendet; richtige Antwort: {', '.join(qinfo['answers'])}")
+        else:
+            logger.info(
+                f"[QuizCog] Frage in '{area}' richtig beantwortet von {winner.display_name}: {correct_answer}")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
