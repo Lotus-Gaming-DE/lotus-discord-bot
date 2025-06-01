@@ -51,10 +51,13 @@ class MyBot(commands.Bot):
         self.shared_data_loader.set_language("de")
 
     async def setup_hook(self):
-        # 1. Emojis exportieren
+        # 1. Alte, globale Slash-Commands löschen
+        await self.tree.clear_commands(guild=None)  # None = global löschen
+
+        # 2. Emojis exportieren
         await self._export_emojis()
 
-        # 2. Gemeinsame Daten laden
+        # 3. Gemeinsame Daten laden
         self.data = {
             "emojis": self._load_emojis_from_file(),
             "wcr": {
@@ -68,7 +71,7 @@ class MyBot(commands.Bot):
             }
         }
 
-        # 3. Alle Cogs laden
+        # 4. Alle Cogs laden
         for path in Path("./cogs").rglob("__init__.py"):
             module = ".".join(path.with_suffix("").parts)
             try:
@@ -78,7 +81,7 @@ class MyBot(commands.Bot):
                 logger.error(
                     f"[bot] Failed to load extension {module}: {e}", exc_info=True)
 
-        # 4. Slash-Commands synchronisieren
+        # 5. Slash-Commands synchronisieren
         try:
             await self.tree.sync(guild=self.main_guild)
             logger.info(
