@@ -8,11 +8,77 @@ from collections import defaultdict
 
 import discord
 from discord.ext import commands
+from discord.ui import View, Modal, TextInput, button
 
 from .utils import check_answer
 from .wcr_question_provider import WCRQuestionProvider
 
 logger = logging.getLogger(__name__)
+
+
+class AnswerModal(Modal, title="Antwort eingeben"):
+    answer = TextInput(label="Deine Antwort")
+
+    def __init__(self, area: str, correct_answers: set, data_loader, cog):
+        super().__init__()
+        self.area = area
+        self.correct_answers = correct_answers
+        self.data_loader = data_loader
+        self.cog: QuizCog = cog
+
+    async def on_submit(self, interaction: discord.Interaction):
+        eingabe = self.answer.value.strip()
+        user_id = interaction.user.id
+
+        if user_id in self.cog.answered_users[self.area]:
+            await interaction.response.send_message(
+                "⚠️ Du hast bereits geantwortet.", ephemeral=True
+            )
+            return
+
+        if eingabe.lower() in (a.lower() for a in self.correct_answers):
+            scores = self.data_loader.load_scores()
+            scores[str(user_id)] = scores.get(str(user_id), 0) + 1
+            self.data_loader.save_scores(scores)
+            await interaction.response.send_message(
+                "🏆 Richtig! Du erhältst einen Punkt.", ephemeral=True
+            )
+            await self.cog.close_question(self.area)
+            logger.info(
+                f"[QuizCog] {interaction.user} richtig in '{self.area}': {eingabe}")
+        else:
+            self.cog.answered_users[self.area].add(user_id)
+            await interaction.response.send_message(
+                "❌ Falsch.", ephemeral=True
+            )
+            logger.info(
+                f"[QuizCog] {interaction.user} falsch in '{self.area}': {eingabe}")
+
+
+class AnswerButtonView(View):
+    def __init__(self, area: str, correct_answers: set, data_loader, cog):
+        super().__init__(timeout=None)
+        self.area = area
+        self.correct_answers = correct_answers
+        self.data_loader = data_loader
+        self.cog: QuizCog = cog
+
+    @button(label="Antworten", style=discord.ButtonStyle.primary)
+    async def answer_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+        user_id = interaction.user.id
+        if user_id in self.cog.answered_users[self.area]:
+            await interaction.response.send_message(
+                "⚠️ Du hast bereits geantwortet.", ephemeral=True
+            )
+            return
+
+        modal = AnswerModal(
+            self.area,
+            self.correct_answers,
+            self.data_loader,
+            self.cog
+        )
+        await interaction.response.send_modal(modal)
 
 
 class QuizCog(commands.Cog):
@@ -124,7 +190,7 @@ class QuizCog(commands.Cog):
         """
         Startet für jede Area ein sich wiederholendes Zeitfenster:
         - Berechnet ein Zeitfenster (jetzt bis jetzt+time_window)
-        - Wählt innerhalb der ersten Hälfte einen zufälligen Zeitpunkt, um prepare_question() aufzurufen
+        - Wählt innerhalb der ersten Hälfte einen zufälligen Zeitpunkt, um Fragen‐Logik aufzurufen
         - Wartet bis zum Ende des Fensters, räumt auf und startet Schleife neu
         """
         await self.bot.wait_until_ready()
@@ -143,15 +209,17 @@ class QuizCog(commands.Cog):
                 datetime.timedelta(seconds=random.uniform(
                     0, delta)) if delta > 0 else now
 
+            # Kurze zusätzliche Zufallsverzögerung (bis zu Hälfte des Fensters)
+            delay = random.uniform(0, (self.time_window.total_seconds() / 2))
+            actual_post_time = next_time + datetime.timedelta(seconds=delay)
+
             # **Logging des genauen Frage‐Zeitpunkts**
             logger.info(
-                f"[QuizCog] Für '{area}' geplante Frage ungefähr um {next_time.strftime('%H:%M:%S')}")
+                f"[QuizCog] Für '{area}' geplante Frage ungefähr um {actual_post_time.strftime('%H:%M:%S')}")
 
             # Bis zum geplanten Zeitpunkt warten
             await asyncio.sleep(max((next_time - now).total_seconds(), 0))
-
-            # Kurze zusätzliche Zufallsverzögerung (bis zu Hälfte des Fensters)
-            delay = random.uniform(0, (self.time_window.total_seconds() / 2))
+            # Dann noch Verzögerung abwarten
             await asyncio.sleep(delay)
 
             # Versuche, eine Frage zu stellen
@@ -228,7 +296,8 @@ class QuizCog(commands.Cog):
             return
 
         frage_text = qd["frage"]
-        antworten = qd["antwort"]
+        correct_answers = set(qd["antwort"])
+        data_loader = cfg["data_loader"]
 
         embed = discord.Embed(
             title=f"Quiz für {area.upper()}",
@@ -237,18 +306,22 @@ class QuizCog(commands.Cog):
         )
         embed.add_field(name="Kategorie", value=qd.get(
             "category", "–"), inline=False)
-        answer_list = "\n".join(f"- {a}" for a in antworten)
-        embed.add_field(name="Antwortmöglichkeiten",
-                        value=answer_list, inline=False)
-        embed.set_footer(text="Schicke deine Antwort als Textnachricht!")
+        embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
 
-        sent_msg = await channel.send(embed=embed)
+        view = AnswerButtonView(
+            area=area,
+            correct_answers=correct_answers,
+            data_loader=data_loader,
+            cog=self
+        )
+
+        sent_msg = await channel.send(embed=embed, view=view)
 
         # Frage speichern: message_id, Endzeitpunkt und korrekte Antworten
         self.current_questions[area] = {
             "message_id": sent_msg.id,
             "end_time": end_time,
-            "answers": set(antworten)
+            "answers": correct_answers
         }
         # Zurücksetzen: wer schon geantwortet hat
         self.answered_users[area].clear()
@@ -281,21 +354,24 @@ class QuizCog(commands.Cog):
             embed = msg.embeds[0]
             embed.color = discord.Color.red()
             embed.set_footer(text=embed.footer.text + footer)
-            await msg.edit(embed=embed)
+            await msg.edit(embed=embed, view=None)
         except Exception as e:
             logger.warning(
-                f"[QuizCog] Beim Schließen der Frage für '{area}' ist ein Fehler aufgetreten: {e}")
+                f"[QuizCog] Beim Schließen der Frage für '{area}' ist ein Fehler aufgetreten: {e}"
+            )
 
         # Channel darf beim nächsten Fenster erneut Activity-Check überspringen
         self.channel_initialized[cfg["channel_id"]] = False
         logger.info(
-            f"[QuizCog] Frage beendet in '{area}'{' (Timeout)' if timed_out else ''}")
+            f"[QuizCog] Frage beendet in '{area}'{' (Timeout)' if timed_out else ''}"
+        )
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """
-        Zählt echte User-Nachrichten pro Channel und überprüft,
-        ob jemand auf eine laufende Frage richtig antwortet.
+        Zählt echte User-Nachrichten pro Channel (live increment)
+        und überprüft nur Interrupts für verspätete Freigaben.
+        Antworten erfolgen ausschließlich über die Buttons/Modals.
         """
         if message.author.bot:
             return
@@ -304,39 +380,10 @@ class QuizCog(commands.Cog):
         # Live-Zähler: Erhöhe bei jeder User-Nachricht
         self.message_counter[cid] += 1
         logger.debug(
-            f"[QuizCog] Counter für {message.channel.name}: {self.message_counter[cid]}")
+            f"[QuizCog] Counter für {message.channel.name}: {self.message_counter[cid]}"
+        )
 
-        # Prüfen, ob Nachricht eine Antwort auf die aktive Frage ist
-        for area, qinfo in self.current_questions.items():
-            if cid == self.bot.quiz_data[area]["channel_id"]:
-                uid = message.author.id
-                if uid in self.answered_users[area]:
-                    return
-
-                eingabe = message.content.strip()
-                if eingabe.lower() in (a.lower() for a in qinfo["answers"]):
-                    data_loader = self.bot.quiz_data[area]["data_loader"]
-                    scores = data_loader.load_scores()
-                    scores[str(uid)] = scores.get(str(uid), 0) + 1
-                    data_loader.save_scores(scores)
-
-                    await message.channel.send(
-                        f"🏆 Richtig, {message.author.mention}! Du hast einen Punkt erhalten."
-                    )
-                    await self.close_question(area)
-                    logger.info(
-                        f"[QuizCog] {message.author} richtig in '{area}': {eingabe}")
-                    return
-                else:
-                    self.answered_users[area].add(uid)
-                    await message.channel.send(
-                        f"❌ Das ist leider nicht korrekt, {message.author.mention}.", delete_after=5
-                    )
-                    logger.info(
-                        f"[QuizCog] {message.author} falsch in '{area}': {eingabe}")
-                    return
-
-        # Verspätete Freigabe: Wenn zuvor <10 Nachrichten und jetzt >=10
+        # Verspätete Freigabe: Wenn zuvor <10 Nachrichten & jetzt ≥10
         if cid in self.awaiting_activity and self.message_counter[cid] >= 10:
             area, end_time = self.awaiting_activity[cid]
             await self.ask_question(area, end_time)
