@@ -1,3 +1,4 @@
+# bot.py
 import os
 import json
 import logging
@@ -6,7 +7,9 @@ from pathlib import Path
 import discord
 from discord.ext import commands
 
-# ─── Logging configuration ────────────────────────────────────────────────
+from cogs.quiz.data_loader import DataLoader  # <- das ist neu
+
+# Logging wie gehabt
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s:%(name)s: %(message)s"
@@ -15,12 +18,9 @@ logging.getLogger("discord").setLevel(logging.WARNING)
 
 logger = logging.getLogger("bot")
 
-# ─── Intents ───────────────────────────────────────────────────────────────
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
-
-# ─── Bot class ────────────────────────────────────────────────────────────
 
 
 class MyBot(commands.Bot):
@@ -38,11 +38,13 @@ class MyBot(commands.Bot):
 
         self.main_guild = discord.Object(id=int(guild_id))
 
+        # 🔁 Zentrale Daten einmal laden
+        self.shared_data_loader = DataLoader()
+        self.shared_data_loader.set_language("de")
+
     async def setup_hook(self):
-        # 1) Emojis exportieren
         await self._export_emojis()
 
-        # 2) Nur __init__.py-Dateien als Cogs laden
         for path in Path("./cogs").rglob("__init__.py"):
             module = ".".join(path.with_suffix("").parts)
             try:
@@ -53,15 +55,13 @@ class MyBot(commands.Bot):
                     f"[bot] Failed to load extension {module}: {e}", exc_info=True
                 )
 
-        # 3) Slash-Befehle synchronisieren
         try:
             await self.tree.sync(guild=self.main_guild)
             logger.info(
                 f"[bot] Slash commands synced for guild {self.main_guild.id}")
         except Exception as e:
             logger.error(
-                f"[bot] Failed to sync slash commands: {e}", exc_info=True
-            )
+                f"[bot] Failed to sync slash commands: {e}", exc_info=True)
 
     async def _export_emojis(self):
         guild_id = self.main_guild.id
@@ -79,7 +79,6 @@ class MyBot(commands.Bot):
                 Path("data").mkdir(exist_ok=True)
                 with open("data/emojis.json", "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=4, ensure_ascii=False)
-
                 logger.info(f"[bot] Emojis saved to 'data/emojis.json'")
             else:
                 logger.warning(
@@ -96,7 +95,6 @@ class MyBot(commands.Bot):
         await self.process_commands(message)
 
 
-# ─── Entry Point ──────────────────────────────────────────────────────────
 if __name__ == "__main__":
     token = os.getenv("bot_key")
     if not token:
