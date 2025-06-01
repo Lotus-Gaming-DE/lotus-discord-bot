@@ -8,8 +8,7 @@ import logging
 
 logger = logging.getLogger(__name__)  # z. B. 'cogs.champion.slash_commands'
 
-
-# Erstelle die Command‐Gruppe /champion
+# Erstelle die Command-Gruppe /champion
 champion_group = app_commands.Group(
     name="champion",
     description="Verwalte Champion-Punkte"
@@ -19,9 +18,11 @@ champion_group = app_commands.Group(
 class ChampionCommands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.cog = bot.get_cog("ChampionCog")  # Verweise auf den Cog selbst
+        # Referenz auf den ChampionCog, der die DB-Logik enthält
+        self.cog = bot.get_cog("ChampionCog")
 
     def is_authorized(self, user: discord.Member) -> bool:
+        # Mods mit Rolle "Community Mod" oder Administratoren dürfen
         return (
             any(role.name == "Community Mod" for role in user.roles)
             or user.guild_permissions.administrator
@@ -44,6 +45,7 @@ class ChampionCommands(commands.Cog):
         punkte: int,
         grund: str
     ):
+        """Vergibt eine positive Punkte-Änderung an den angegebenen User."""
         if not self.is_authorized(interaction.user):
             await interaction.response.send_message(
                 "❌ Du hast keine Berechtigung.", ephemeral=True
@@ -52,7 +54,8 @@ class ChampionCommands(commands.Cog):
 
         new_total = await self.cog.update_user_score(user.id, punkte, grund)
         logger.info(
-            f"[ChampionCommands] {interaction.user} vergibt +{punkte} an {user} ({grund})")
+            f"[ChampionCommands] {interaction.user} vergibt +{punkte} an {user} ({grund})"
+        )
         await interaction.response.send_message(
             f"✅ {user.mention} hat nun insgesamt {new_total} Punkte."
         )
@@ -74,6 +77,7 @@ class ChampionCommands(commands.Cog):
         punkte: int,
         grund: str
     ):
+        """Zieht Punkte vom angegebenen User ab."""
         if not self.is_authorized(interaction.user):
             await interaction.response.send_message(
                 "❌ Du hast keine Berechtigung.", ephemeral=True
@@ -82,7 +86,8 @@ class ChampionCommands(commands.Cog):
 
         new_total = await self.cog.update_user_score(user.id, -punkte, grund)
         logger.info(
-            f"[ChampionCommands] {interaction.user} zieht {punkte} von {user} ab ({grund})")
+            f"[ChampionCommands] {interaction.user} zieht {punkte} von {user} ab ({grund})"
+        )
         await interaction.response.send_message(
             f"⚠️ {user.mention} hat nun insgesamt {new_total} Punkte."
         )
@@ -104,18 +109,19 @@ class ChampionCommands(commands.Cog):
         punkte: int,
         grund: str
     ):
+        """Setzt die Gesamtpunktzahl eines Users auf einen exakten Wert."""
         if not self.is_authorized(interaction.user):
             await interaction.response.send_message(
                 "❌ Du hast keine Berechtigung.", ephemeral=True
             )
             return
 
-        # Alten Stand abfragen
         old_total = await self.cog.data.get_total(str(user.id))
         delta = punkte - old_total
         new_total = await self.cog.update_user_score(user.id, delta, grund)
         logger.info(
-            f"[ChampionCommands] {interaction.user} setzt {user} von {old_total} auf {punkte} Punkte ({grund})")
+            f"[ChampionCommands] {interaction.user} setzt {user} von {old_total} auf {punkte} Punkte ({grund})"
+        )
         await interaction.response.send_message(
             f"🔧 {user.mention} wurde auf {new_total} Punkte gesetzt."
         )
@@ -131,6 +137,7 @@ class ChampionCommands(commands.Cog):
         interaction: discord.Interaction,
         user: discord.Member
     ):
+        """Setzt die Punktzahl des Users auf 0, falls >0."""
         if not self.is_authorized(interaction.user):
             await interaction.response.send_message(
                 "❌ Du hast keine Berechtigung.", ephemeral=True
@@ -144,10 +151,10 @@ class ChampionCommands(commands.Cog):
             )
             return
 
-        # Delta berechnen, sodass neuer Total = 0
         new_total = await self.cog.update_user_score(user.id, -old_total, "Reset durch Mod")
         logger.info(
-            f"[ChampionCommands] {interaction.user} setzt {user} zurück (von {old_total} auf 0).")
+            f"[ChampionCommands] {interaction.user} setzt {user} zurück (von {old_total} auf 0)."
+        )
         await interaction.response.send_message(
             f"🔄 {user.mention} wurde auf 0 Punkte zurückgesetzt."
         )
@@ -158,10 +165,12 @@ class ChampionCommands(commands.Cog):
     )
     @app_commands.default_permissions(send_messages=True)
     async def info(self, interaction: discord.Interaction):
+        """Gibt dem aufrufenden User die aktuelle Gesamtpunktzahl zurück."""
         user_id_str = str(interaction.user.id)
         total = await self.cog.data.get_total(user_id_str)
         logger.info(
-            f"[ChampionCommands] {interaction.user} ruft /champion info auf.")
+            f"[ChampionCommands] {interaction.user} ruft /champion info auf."
+        )
         await interaction.response.send_message(
             f"🏅 Du hast aktuell {total} Punkte."
         )
@@ -177,10 +186,12 @@ class ChampionCommands(commands.Cog):
         interaction: discord.Interaction,
         user: discord.Member
     ):
+        """Zeigt bis zu 10 letzte Änderungen der Punktzahl eines Users."""
         user_id_str = str(user.id)
         history = await self.cog.data.get_history(user_id_str, limit=10)
         logger.info(
-            f"[ChampionCommands] {interaction.user} ruft /champion history für {user} auf.")
+            f"[ChampionCommands] {interaction.user} ruft /champion history für {user} auf."
+        )
 
         if not history:
             await interaction.response.send_message(
@@ -202,7 +213,7 @@ class ChampionCommands(commands.Cog):
 
     @champion_group.command(
         name="leaderboard",
-        description="Zeigt die Top 10 (Punkte‐Ranking)"
+        description="Zeigt die Top 10 (Punkte-Ranking)"
     )
     @app_commands.describe(page="Welche Seite des Leaderboards (10 Einträge pro Seite)")
     @app_commands.default_permissions(send_messages=True)
@@ -211,6 +222,10 @@ class ChampionCommands(commands.Cog):
         interaction: discord.Interaction,
         page: Optional[int] = 1
     ):
+        """
+        Zeigt das Leaderboard in Blöcken von 10 Einträgen an.
+        Parameter 'page' (1-basierter Index) bestimmt Offset.
+        """
         if page < 1:
             page = 1
         limit = 10
@@ -228,7 +243,8 @@ class ChampionCommands(commands.Cog):
             entries.append(f"{idx}. {name} – {total} Punkte")
 
         logger.info(
-            f"[ChampionCommands] {interaction.user} ruft /champion leaderboard Page {page} auf.")
+            f"[ChampionCommands] {interaction.user} ruft /champion leaderboard Page {page} auf."
+        )
         text = "\n".join(entries)
         await interaction.response.send_message(
             f"🏆 **Top {offset+1}–{offset+len(top)}**:\n{text}"
@@ -236,13 +252,13 @@ class ChampionCommands(commands.Cog):
 
 
 async def setup(bot: commands.Bot):
-    # Stelle sicher, dass ChampionCog schon geladen ist
+    # Stelle sicher, dass ChampionCog bereits geladen ist (für Zugriff auf self.cog.data)
     from .cog import ChampionCog
     cog = bot.get_cog("ChampionCog")
     if cog is None:
         cog = ChampionCog(bot)
         await bot.add_cog(cog)
 
-    # Registriere die Befehlsklasse
+    # Registriere die Slash-Commands-Klasse, die die /champion-Group enthält
     await bot.add_cog(ChampionCommands(bot))
     logger.info("[ChampionCommands] Slash-Befehle geladen und registriert.")
