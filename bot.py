@@ -1,4 +1,5 @@
 # bot.py
+
 import os
 import json
 import logging
@@ -33,7 +34,7 @@ class MyBot(commands.Bot):
         super().__init__(
             command_prefix="§",
             intents=intents,
-            sync_commands=False
+            sync_commands=False  # Wir synchronisieren manuell in setup_hook
         )
 
         guild_id = os.getenv("server_id")
@@ -42,17 +43,18 @@ class MyBot(commands.Bot):
             exit(1)
         self.main_guild = discord.Object(id=int(guild_id))
 
-        # Diese Variable wird in setup_hook befüllt
+        # Gemeinsame Datenstruktur, wird in setup_hook befüllt
         self.data = {}
 
-        # Quiz-Daten (z. B. Fragen & asked.json)
+        # Quiz-Daten (z. B. Fragen & asked.json)
         self.shared_data_loader = DataLoader()
         self.shared_data_loader.set_language("de")
 
     async def setup_hook(self):
+        # 1. Emojis exportieren
         await self._export_emojis()
 
-        # 🔁 Gemeinsame Daten laden
+        # 2. Gemeinsame Daten laden
         self.data = {
             "emojis": self._load_emojis_from_file(),
             "wcr": {
@@ -66,7 +68,7 @@ class MyBot(commands.Bot):
             }
         }
 
-        # Alle Cogs laden
+        # 3. Alle Cogs laden
         for path in Path("./cogs").rglob("__init__.py"):
             module = ".".join(path.with_suffix("").parts)
             try:
@@ -74,9 +76,9 @@ class MyBot(commands.Bot):
                 logger.info(f"[bot] Extension loaded: {module}")
             except Exception as e:
                 logger.error(
-                    f"[bot] Failed to load extension {module}: {e}", exc_info=True
-                )
+                    f"[bot] Failed to load extension {module}: {e}", exc_info=True)
 
+        # 4. Slash-Commands synchronisieren
         try:
             await self.tree.sync(guild=self.main_guild)
             logger.info(
