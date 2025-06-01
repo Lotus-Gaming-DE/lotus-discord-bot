@@ -8,13 +8,14 @@ from pathlib import Path
 import discord
 from discord.ext import commands
 
-from cogs.quiz.data_loader import DataLoader  # Nur für quiz-spezifische Daten
+from cogs.quiz.data_loader import DataLoader  # Für Quiz-spezifische Daten
 from cogs.wcr.data_loader import (
     load_units as load_wcr_units,
     load_languages as load_wcr_languages,
     load_pictures as load_wcr_pictures
 )
 
+# ──────────────────────────────────────────────────────────────────────────────
 # Logging-Konfiguration
 logging.basicConfig(
     level=logging.INFO,
@@ -22,6 +23,7 @@ logging.basicConfig(
 )
 logging.getLogger("discord").setLevel(logging.WARNING)
 logger = logging.getLogger("bot")
+# ──────────────────────────────────────────────────────────────────────────────
 
 # Discord-Intents
 intents = discord.Intents.default()
@@ -51,16 +53,17 @@ class MyBot(commands.Bot):
         self.shared_data_loader.set_language("de")
 
     async def setup_hook(self):
-        # ─────────────────────────────────────────────────────────────────────────
-        # 1. Alte, globale Slash-Commands LÖSCHEN (funktioniert synchron, daher ohne await)
-        # <-- KEIN await, weil clear_commands synchron ist
+        # ──────────────────────────────────────────────────────────────────────
+        # 1. Alte globale Slash-Commands löschen (synchron, ohne await)
+        #    Dadurch werden alle global registrierten Commands entfernt.
+        #    Wichtig: clear_commands() ist KEIN async, daher kein "await"
         self.tree.clear_commands(guild=None)
-        # ─────────────────────────────────────────────────────────────────────────
+        # ──────────────────────────────────────────────────────────────────────
 
         # 2. Emojis exportieren
         await self._export_emojis()
 
-        # 3. Gemeinsame Daten laden (z. B. wcr, quiz)
+        # 3. Gemeinsame Daten laden
         self.data = {
             "emojis": self._load_emojis_from_file(),
             "wcr": {
@@ -74,7 +77,7 @@ class MyBot(commands.Bot):
             }
         }
 
-        # 4. Alle Cogs laden (einschließlich cogs.champion, das nun champion_group registriert)
+        # 4. Alle Cogs laden
         for path in Path("./cogs").rglob("__init__.py"):
             module = ".".join(path.with_suffix("").parts)
             try:
@@ -82,8 +85,7 @@ class MyBot(commands.Bot):
                 logger.info(f"[bot] Extension loaded: {module}")
             except Exception as e:
                 logger.error(
-                    f"[bot] Failed to load extension {module}: {e}", exc_info=True
-                )
+                    f"[bot] Failed to load extension {module}: {e}", exc_info=True)
 
         # 5. Guild-spezifische Slash-Commands synchronisieren
         try:
