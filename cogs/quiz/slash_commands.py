@@ -10,7 +10,6 @@ from discord import app_commands
 from discord.ext import commands
 
 from .cog import QuizCog
-from .data_loader import DataLoader
 from .question_generator import QuestionGenerator
 
 logger = logging.getLogger(__name__)  # z.B. "cogs.quiz.slash_commands"
@@ -68,8 +67,7 @@ class QuizCommands(commands.Cog):
             return
 
         logger.info(
-            f"[QuizCommands] /quiz time by {interaction.user} → {minutes}min"
-        )
+            f"[QuizCommands] /quiz time by {interaction.user} → {minutes}min")
         self.quiz_cog.time_window = datetime.timedelta(minutes=minutes)
         await interaction.response.send_message(
             f"⏱️ Zeitfenster auf **{minutes} Minuten** gesetzt.", ephemeral=True
@@ -88,10 +86,9 @@ class QuizCommands(commands.Cog):
         area = area_or_msg
 
         logger.info(
-            f"[QuizCommands] /quiz language by {interaction.user} → {area} = {lang}"
-        )
-        loader = self.quiz_cog.area_data[area]["data_loader"]
-        loader.set_language(lang)
+            f"[QuizCommands] /quiz language by {interaction.user} → {area} = {lang}")
+        self.quiz_cog.area_data[area]["language"] = lang
+        self.quiz_cog.area_data[area]["question_generator"].language = lang
         await interaction.response.send_message(
             f"🌐 Sprache für **{area}** auf **{lang}** gesetzt.", ephemeral=True
         )
@@ -151,9 +148,7 @@ class QuizCommands(commands.Cog):
         count = self.quiz_cog.message_counter.get(interaction.channel.id, 0)
         if question:
             remaining = int(
-                (question["end_time"] -
-                 datetime.datetime.utcnow()).total_seconds()
-            )
+                (question["end_time"] - datetime.datetime.utcnow()).total_seconds())
             await interaction.response.send_message(
                 f"📊 Aktive Frage: noch **{remaining}s**. Nachrichten seit Start: **{count}**.",
                 ephemeral=True,
@@ -193,17 +188,18 @@ class QuizCommands(commands.Cog):
 
         area = area_name.lower()
         logger.info(
-            f"[QuizCommands] /quiz enable by {interaction.user} → {area} ({lang})"
-        )
-        cfg = {"channel_id": interaction.channel.id, "language": lang}
-        loader = DataLoader()
-        loader.set_language(lang)
-        gen = QuestionGenerator(loader)
+            f"[QuizCommands] /quiz enable by {interaction.user} → {area} ({lang})")
         self.quiz_cog.area_data[area] = {
             "channel_id": interaction.channel.id,
             "language": lang,
-            "data_loader": loader,
-            "question_generator": gen,
+            "question_generator": QuestionGenerator(
+                questions_by_area=self.bot.data["quiz"]["questions_by_area"],
+                asked_questions=self.bot.data["quiz"]["data_loader"].load_asked_questions(
+                ),
+                dynamic_providers={
+                    "wcr": self.bot.quiz_data["wcr"]["question_generator"].dynamic_providers.get("wcr")
+                }
+            ),
         }
         self.bot.loop.create_task(self.quiz_cog.quiz_scheduler(area))
 

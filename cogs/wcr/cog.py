@@ -21,10 +21,10 @@ MAIN_SERVER_ID = int(SERVER_ID)
 class WCRCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.units = data_loader.load_units()
-        self.languages = data_loader.load_languages()
-        self.pictures = data_loader.load_pictures()
-        self.emojis = data_loader.load_emojis()
+        self.units = bot.quiz_data["wcr_units"]
+        self.languages = bot.quiz_data["wcr_locals"]
+        self.pictures = bot.quiz_data["wcr_pictures"]
+        self.emojis = bot.quiz_data["emojis"]
 
     # ─── Autocomplete-Callbacks ─────────────────────────────────────────
     async def cost_autocomplete(self, interaction: discord.Interaction, current: str):
