@@ -25,11 +25,11 @@ class QuizCog(commands.Cog):
         self.current_questions: dict[str, dict] = {}
         # Wer bereits bei der laufenden Frage geantwortet hat (pro Area)
         self.answered_users: dict[str, set[int]] = defaultdict(set)
-        # Zähler echter User-Nachrichten pro Channel
+        # Zähler echter User-Nachrichten pro Channel (live hochgezählt in on_message)
         self.message_counter: dict[int, int] = defaultdict(int)
         # Merkt, ob Channel schon initialisiert wurde (History geprüft)
         self.channel_initialized: dict[int, bool] = defaultdict(bool)
-        # Wenn weniger als 10 Nachrichten, hier merken, wann wir nachschauen
+        # Wenn <10 Nachrichten, merken wir uns hier, dass wir später freigeben müssen
         self.awaiting_activity: dict[int, tuple[str, datetime.datetime]] = {}
 
         # Nur für WCR: wie viele dynamische Fragen max pro Lauf
@@ -39,7 +39,7 @@ class QuizCog(commands.Cog):
         # Zeitfenster für Quiz (z.B. 15 Minuten)
         self.time_window = datetime.timedelta(minutes=15)
 
-        # Scheduler für jede Area starten
+        # Scheduler für jede konfigurierte Area starten
         for area in self.bot.quiz_data.keys():
             self.bot.loop.create_task(self.quiz_scheduler(area))
 
@@ -51,6 +51,8 @@ class QuizCog(commands.Cog):
         Initialisiert Nachrichtenzähler für alle Areas, indem
         die letzten 20 Nachrichten durchsucht werden und
         echte User-Nachrichten seit der letzten Quizfrage gezählt werden.
+        Falls keine alte Frage gefunden wird, setzen wir Counter = 10,
+        damit sofort eine neue Frage möglich ist.
         """
         await self.bot.wait_until_ready()
 
@@ -94,11 +96,11 @@ class QuizCog(commands.Cog):
                     logger.info(
                         f"[QuizCog] Nachrichtenzähler für {channel.name} gesetzt: {count} (nach letzter Quizfrage)")
                 else:
-                    # Keine Quizfrage gefunden → Counter = 0
-                    self.message_counter[channel.id] = 0
+                    # Keine Quizfrage gefunden → Counter = 10 (sofort aktiv genug)
+                    self.message_counter[channel.id] = 10
                     self.channel_initialized[channel.id] = True
                     logger.info(
-                        f"[QuizCog] Keine Quizfrage gefunden in {channel.name}, Zähler auf 0 gesetzt.")
+                        f"[QuizCog] Keine Quizfrage gefunden in {channel.name}, Zähler absichtlich auf 10 gesetzt.")
             except discord.Forbidden:
                 logger.error(
                     f"[QuizCog] Keine Berechtigung, um History in {channel.name} zu lesen.")
@@ -121,9 +123,9 @@ class QuizCog(commands.Cog):
     async def quiz_scheduler(self, area: str):
         """
         Startet für jede Area ein sich wiederholendes Zeitfenster:
-        - Wählt zufällig einen Zeitpunkt innerhalb des Fensters
-        - Versucht, eine neue Frage zu stellen (wenn Aktivität > 10)
-        - Schließt das Fenster und ggf. alte Fragen
+        - Berechnet ein Zeitfenster (jetzt bis jetzt+time_window)
+        - Wählt innerhalb der ersten Hälfte einen zufälligen Zeitpunkt, um prepare_question() aufzurufen
+        - Wartet bis zum Ende des Fensters, räumt auf und startet Schleife neu
         """
         await self.bot.wait_until_ready()
         while True:
@@ -141,13 +143,18 @@ class QuizCog(commands.Cog):
                 datetime.timedelta(seconds=random.uniform(
                     0, delta)) if delta > 0 else now
 
+            # **Logging des genauen Frage‐Zeitpunkts**
+            logger.info(
+                f"[QuizCog] Für '{area}' geplante Frage ungefähr um {next_time.strftime('%H:%M:%S')}")
+
+            # Bis zum geplanten Zeitpunkt warten
             await asyncio.sleep(max((next_time - now).total_seconds(), 0))
 
             # Kurze zusätzliche Zufallsverzögerung (bis zu Hälfte des Fensters)
             delay = random.uniform(0, (self.time_window.total_seconds() / 2))
             await asyncio.sleep(delay)
 
-            # Versuche, Frage zu stellen
+            # Versuche, eine Frage zu stellen
             await self.prepare_question(area, window_end)
 
             # Warte bis Ende des Fensters
@@ -183,24 +190,25 @@ class QuizCog(commands.Cog):
 
         cid = channel.id
 
-        # Erster Start: Initialisiert, ohne Aktivitätscheck
+        # Erster Start (nach Init): einfach aktiv genug, ohne Aktivitätscheck
         if not self.channel_initialized[cid]:
             self.channel_initialized[cid] = True
             logger.info(
                 f"[QuizCog] Erster Start in {channel.name}, überspringe Aktivitätsprüfung.")
+        # Falls Counter <10, merken und verschieben
         elif self.message_counter[cid] < 10:
             logger.info(
                 f"[QuizCog] Zu wenig Aktivität in {channel.name}, verschiebe Frage.")
             self.awaiting_activity[cid] = (area, end_time)
             return
 
-        # Wenn genügend Aktivität, stelle Frage
+        # Wenn genügend Aktivität, neue Frage stellen
         await self.ask_question(area, end_time)
 
     async def ask_question(self, area: str, end_time: datetime.datetime):
         """
         Sendet die Quizfrage (dynamisch für WCR oder aus JSON)
-        und startet Timer bis close_question.
+        und startet Timer, damit später close_question aufgerufen wird.
         """
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
@@ -244,14 +252,14 @@ class QuizCog(commands.Cog):
         }
         # Zurücksetzen: wer schon geantwortet hat
         self.answered_users[area].clear()
-        # Reset des Counters im Channel
+        # Counter im Channel zurücksetzen (wir zählen erst wieder ab hier neu)
         self.message_counter[channel.id] = 0
-        # Offenbar keine verspätete Freigabe mehr nötig
+        # Falls bis geradehin eine verspätete Freigabe geplant war, aufräumen
         self.awaiting_activity.pop(channel.id, None)
 
         logger.info(f"[QuizCog] Frage gesendet in '{area}': {frage_text}")
 
-        # Timer bis close_question
+        # Timer bis close_question (Timeout)
         now = datetime.datetime.utcnow()
         verbleibende = (end_time - now).total_seconds()
         await asyncio.sleep(max(verbleibende, 0))
@@ -259,7 +267,7 @@ class QuizCog(commands.Cog):
 
     async def close_question(self, area: str, timed_out: bool = False):
         """
-        Schließt die aktuell laufende Frage (Timeout oder korrekte Antwort).
+        Schließt die aktuell laufende Frage (beim Timeout oder korrekter Antwort).
         """
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
@@ -278,6 +286,7 @@ class QuizCog(commands.Cog):
             logger.warning(
                 f"[QuizCog] Beim Schließen der Frage für '{area}' ist ein Fehler aufgetreten: {e}")
 
+        # Channel darf beim nächsten Fenster erneut Activity-Check überspringen
         self.channel_initialized[cfg["channel_id"]] = False
         logger.info(
             f"[QuizCog] Frage beendet in '{area}'{' (Timeout)' if timed_out else ''}")
@@ -292,6 +301,7 @@ class QuizCog(commands.Cog):
             return
 
         cid = message.channel.id
+        # Live-Zähler: Erhöhe bei jeder User-Nachricht
         self.message_counter[cid] += 1
         logger.debug(
             f"[QuizCog] Counter für {message.channel.name}: {self.message_counter[cid]}")
@@ -326,7 +336,7 @@ class QuizCog(commands.Cog):
                         f"[QuizCog] {message.author} falsch in '{area}': {eingabe}")
                     return
 
-        # Verspätete Freigabe: Wenn vorher weniger als 10 Nachrichten und jetzt >=10
+        # Verspätete Freigabe: Wenn zuvor <10 Nachrichten und jetzt >=10
         if cid in self.awaiting_activity and self.message_counter[cid] >= 10:
             area, end_time = self.awaiting_activity[cid]
             await self.ask_question(area, end_time)
