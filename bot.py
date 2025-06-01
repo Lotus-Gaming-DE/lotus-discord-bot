@@ -54,10 +54,11 @@ class MyBot(commands.Bot):
 
     async def setup_hook(self):
         # ──────────────────────────────────────────────────────────────────────
-        # 1. Alte globale Slash-Commands löschen (synchron, ohne await)
-        #    Dadurch werden alle global registrierten Commands entfernt.
-        #    Wichtig: clear_commands() ist KEIN async, daher kein "await"
-        self.tree.clear_commands(guild=None)
+        # 1. Veraltete Guild‐Commands löschen
+        #    Dadurch werden alle Slash‐Commands, die zuvor für unser Guild (MAIN_GUILD)
+        #    registriert waren, vollständig entfernt – bevor wir neu synchronisieren.
+        #    Wichtig: clear_commands() ist KEIN async, daher kein "await".
+        self.tree.clear_commands(guild=self.main_guild)
         # ──────────────────────────────────────────────────────────────────────
 
         # 2. Emojis exportieren
