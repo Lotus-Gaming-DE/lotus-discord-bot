@@ -1,3 +1,5 @@
+# bot.py
+
 import os
 import json
 import logging
@@ -6,14 +8,14 @@ from pathlib import Path
 import discord
 from discord.ext import commands
 
-from cogs.quiz.data_loader import DataLoader
+from cogs.quiz.data_loader import DataLoader  # Nur für quiz-spezifische Daten
 from cogs.wcr.data_loader import (
     load_units as load_wcr_units,
     load_languages as load_wcr_languages,
     load_pictures as load_wcr_pictures
 )
 
-# Logging
+# Logging-Konfiguration
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s:%(name)s: %(message)s"
@@ -32,7 +34,7 @@ class MyBot(commands.Bot):
         super().__init__(
             command_prefix="§",
             intents=intents,
-            sync_commands=False  # wir synchronisieren manuell
+            sync_commands=False  # Wir synchronisieren manuell in setup_hook
         )
 
         guild_id = os.getenv("server_id")
@@ -41,20 +43,22 @@ class MyBot(commands.Bot):
             exit(1)
         self.main_guild = discord.Object(id=int(guild_id))
 
-        # Gemeinsame Daten-Container
+        # Gemeinsame Datenstruktur, wird in setup_hook befüllt
         self.data = {}
 
-        # Quiz-Daten initial laden
+        # Quiz-Daten (z. B. Fragen & asked.json)
         self.shared_data_loader = DataLoader()
         self.shared_data_loader.set_language("de")
 
     async def setup_hook(self):
         # ─────────────────────────────────────────────────────────────────────────
-        # 1. Alte, globale Slash-Commands LÖSCHEN (ASYNC-AUFRUF!)
-        await self.tree.clear_commands(guild=None)
+        # 1. Alte, globale Slash-Commands LÖSCHEN (funktioniert synchron, daher ohne await)
+        #    Dadurch werden alle global registrierten Commands entfernt.
+        # <— kein await! (clear_commands ist nicht async)
+        self.tree.clear_commands(guild=None)
         # ─────────────────────────────────────────────────────────────────────────
 
-        # 2. Emojis exportieren
+        # 2. Emojis exportieren (wie gehabt)
         await self._export_emojis()
 
         # 3. Gemeinsame Daten laden
