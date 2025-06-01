@@ -8,7 +8,7 @@ from collections import defaultdict
 
 import discord
 from discord.ext import commands
-from discord.ui import View, Modal, TextInput, button
+from discord.ui import View, Modal, TextInput, button, Button
 
 from .utils import check_answer
 from .wcr_question_provider import WCRQuestionProvider
@@ -64,7 +64,8 @@ class AnswerButtonView(View):
         self.cog: QuizCog = cog
 
     @button(label="Antworten", style=discord.ButtonStyle.primary)
-    async def answer_button(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def answer_button(self, interaction: discord.Interaction, button: Button):
+        # Jetzt ist 'interaction' korrekt das Interaction-Objekt, nicht der Button
         user_id = interaction.user.id
         if user_id in self.cog.answered_users[self.area]:
             await interaction.response.send_message(
@@ -129,11 +130,13 @@ class QuizCog(commands.Cog):
                 channel = await self.bot.fetch_channel(channel_id)
                 if not channel:
                     logger.warning(
-                        f"[QuizCog] Channel-ID {channel_id} für Area '{area}' nicht gefunden.")
+                        f"[QuizCog] Channel-ID {channel_id} für Area '{area}' nicht gefunden."
+                    )
                     continue
             except Exception as e:
                 logger.warning(
-                    f"[QuizCog] Channel-ID {channel_id} für Area '{area}' nicht gefunden: {e}")
+                    f"[QuizCog] Channel-ID {channel_id} für Area '{area}' nicht gefunden: {e}"
+                )
                 continue
 
             try:
@@ -143,42 +146,50 @@ class QuizCog(commands.Cog):
 
                 # Suche nach der letzten Quizfrage (Embed-Titel "Quiz für AREA")
                 quiz_index = next(
-                    (i for i, msg in enumerate(messages)
-                     if msg.author.id == self.bot.user.id
-                     and msg.embeds
-                     and msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")),
-                    None
+                    (
+                        i
+                        for i, msg in enumerate(messages)
+                        if msg.author.id == self.bot.user.id
+                        and msg.embeds
+                        and msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")
+                    ),
+                    None,
                 )
 
                 if quiz_index is not None:
                     # Count echte User-Messages nach letzter Frage
                     real_messages = [
-                        msg for msg in messages[:quiz_index]
-                        if not msg.author.bot
+                        msg for msg in messages[:quiz_index] if not msg.author.bot
                     ]
                     count = len(real_messages)
                     self.message_counter[channel.id] = count
                     self.channel_initialized[channel.id] = True
                     logger.info(
-                        f"[QuizCog] Nachrichtenzähler für {channel.name} gesetzt: {count} (nach letzter Quizfrage)")
+                        f"[QuizCog] Nachrichtenzähler für {channel.name} gesetzt: {count} (nach letzter Quizfrage)"
+                    )
                 else:
                     # Keine Quizfrage gefunden → Counter = 10 (sofort aktiv genug)
                     self.message_counter[channel.id] = 10
                     self.channel_initialized[channel.id] = True
                     logger.info(
-                        f"[QuizCog] Keine Quizfrage gefunden in {channel.name}, Zähler absichtlich auf 10 gesetzt.")
+                        f"[QuizCog] Keine Quizfrage gefunden in {channel.name}, Zähler absichtlich auf 10 gesetzt."
+                    )
             except discord.Forbidden:
                 logger.error(
-                    f"[QuizCog] Keine Berechtigung, um History in {channel.name} zu lesen.")
+                    f"[QuizCog] Keine Berechtigung, um History in {channel.name} zu lesen."
+                )
             except Exception as e:
                 logger.error(
-                    f"[QuizCog] Fehler beim Lesen des Verlaufs in {channel.name}: {e}", exc_info=True)
+                    f"[QuizCog] Fehler beim Lesen des Verlaufs in {channel.name}: {e}",
+                    exc_info=True,
+                )
 
             # Entferne abgelaufene Fragen (falls vorhanden)
             question = self.current_questions.get(area)
             if question and datetime.datetime.utcnow() > question["end_time"]:
                 logger.info(
-                    f"[QuizCog] Entferne abgelaufene Frage für '{area}' beim Start.")
+                    f"[QuizCog] Entferne abgelaufene Frage für '{area}' beim Start."
+                )
                 self.current_questions.pop(area, None)
                 self.channel_initialized[channel.id] = True
 
@@ -200,14 +211,15 @@ class QuizCog(commands.Cog):
             window_end = window_start + self.time_window
 
             logger.info(
-                f"[QuizCog] Time window für '{area}' bis {window_end.strftime('%H:%M:%S')}")
+                f"[QuizCog] Time window für '{area}' bis {window_end.strftime('%H:%M:%S')}"
+            )
 
             # Zufälliger Zeitpunkt in der ersten Hälfte des Fensters
             latest = window_start + (self.time_window / 2)
             delta = (latest - now).total_seconds()
-            next_time = now + \
-                datetime.timedelta(seconds=random.uniform(
-                    0, delta)) if delta > 0 else now
+            next_time = now + datetime.timedelta(
+                seconds=random.uniform(0, delta)
+            ) if delta > 0 else now
 
             # Kurze zusätzliche Zufallsverzögerung (bis zu Hälfte des Fensters)
             delay = random.uniform(0, (self.time_window.total_seconds() / 2))
@@ -215,7 +227,8 @@ class QuizCog(commands.Cog):
 
             # **Logging des genauen Frage‐Zeitpunkts**
             logger.info(
-                f"[QuizCog] Für '{area}' geplante Frage ungefähr um {actual_post_time.strftime('%H:%M:%S')}")
+                f"[QuizCog] Für '{area}' geplante Frage ungefähr um {actual_post_time.strftime('%H:%M:%S')}"
+            )
 
             # Bis zum geplanten Zeitpunkt warten
             await asyncio.sleep(max((next_time - now).total_seconds(), 0))
@@ -262,11 +275,13 @@ class QuizCog(commands.Cog):
         if not self.channel_initialized[cid]:
             self.channel_initialized[cid] = True
             logger.info(
-                f"[QuizCog] Erster Start in {channel.name}, überspringe Aktivitätsprüfung.")
+                f"[QuizCog] Erster Start in {channel.name}, überspringe Aktivitätsprüfung."
+            )
         # Falls Counter <10, merken und verschieben
         elif self.message_counter[cid] < 10:
             logger.info(
-                f"[QuizCog] Zu wenig Aktivität in {channel.name}, verschiebe Frage.")
+                f"[QuizCog] Zu wenig Aktivität in {channel.name}, verschiebe Frage."
+            )
             self.awaiting_activity[cid] = (area, end_time)
             return
 
@@ -354,6 +369,7 @@ class QuizCog(commands.Cog):
             embed = msg.embeds[0]
             embed.color = discord.Color.red()
             embed.set_footer(text=embed.footer.text + footer)
+            # Remove die View (Buttons), damit niemand mehr klicken kann
             await msg.edit(embed=embed, view=None)
         except Exception as e:
             logger.warning(
@@ -363,8 +379,7 @@ class QuizCog(commands.Cog):
         # Channel darf beim nächsten Fenster erneut Activity-Check überspringen
         self.channel_initialized[cfg["channel_id"]] = False
         logger.info(
-            f"[QuizCog] Frage beendet in '{area}'{' (Timeout)' if timed_out else ''}"
-        )
+            f"[QuizCog] Frage beendet in '{area}'{' (Timeout)' if timed_out else ''}")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -380,8 +395,7 @@ class QuizCog(commands.Cog):
         # Live-Zähler: Erhöhe bei jeder User-Nachricht
         self.message_counter[cid] += 1
         logger.debug(
-            f"[QuizCog] Counter für {message.channel.name}: {self.message_counter[cid]}"
-        )
+            f"[QuizCog] Counter für {message.channel.name}: {self.message_counter[cid]}")
 
         # Verspätete Freigabe: Wenn zuvor <10 Nachrichten & jetzt ≥10
         if cid in self.awaiting_activity and self.message_counter[cid] >= 10:
