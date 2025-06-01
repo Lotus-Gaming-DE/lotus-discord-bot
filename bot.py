@@ -51,10 +51,14 @@ class MyBot(commands.Bot):
         self.shared_data_loader.set_language("de")
 
     async def setup_hook(self):
-        # 1. Alte, globale Slash-Commands löschen
-        await self.tree.clear_commands(guild=None)  # None = global löschen
+        # ─────────────────────────────────────────────────────────────────────────
+        # 1. Alte, globale Slash-Commands LÖSCHEN (funktioniert synchron, daher ohne await)
+        #    Dadurch werden alle global registrierten Commands entfernt.
+        # <— kein await! (clear_commands ist nicht async)
+        self.tree.clear_commands(guild=None)
+        # ─────────────────────────────────────────────────────────────────────────
 
-        # 2. Emojis exportieren
+        # 2. Emojis exportieren (wie gehabt)
         await self._export_emojis()
 
         # 3. Gemeinsame Daten laden
@@ -79,9 +83,10 @@ class MyBot(commands.Bot):
                 logger.info(f"[bot] Extension loaded: {module}")
             except Exception as e:
                 logger.error(
-                    f"[bot] Failed to load extension {module}: {e}", exc_info=True)
+                    f"[bot] Failed to load extension {module}: {e}", exc_info=True
+                )
 
-        # 5. Slash-Commands synchronisieren
+        # 5. Guild-spezifische Slash-Commands synchronisieren
         try:
             await self.tree.sync(guild=self.main_guild)
             logger.info(
