@@ -21,10 +21,16 @@ MAIN_SERVER_ID = int(SERVER_ID)
 class WCRCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.units = bot.quiz_data["wcr_units"]
-        self.languages = bot.quiz_data["wcr_locals"]
-        self.pictures = bot.quiz_data["wcr_pictures"]
-        self.emojis = bot.quiz_data["emojis"]
+
+        # === WICHTIG ===
+        # Statt bot.quiz_data[...] nutzen wir jetzt bot.data["wcr"][...],
+        # das bereits in bot.py im setup_hook gefüllt wird.
+        self.units = bot.data["wcr"]["units"]
+        self.languages = bot.data["wcr"]["languages"]
+        self.pictures = bot.data["wcr"]["pictures"]
+
+        # Emojis liegen in bot.data["emojis"]
+        self.emojis = bot.data["emojis"]
 
     # ─── Autocomplete-Callbacks ─────────────────────────────────────────
     async def cost_autocomplete(self, interaction: discord.Interaction, current: str):
@@ -221,12 +227,10 @@ class WCRCog(commands.Cog):
         # Versuche, name_or_id als ID zu behandeln
         try:
             unit_id = int(name_or_id)
-            # Finde die Einheit in der units-Liste anhand der ID
             matching_unit = next(
                 (unit for unit in self.units if unit["id"] == unit_id), None)
             if not matching_unit:
                 return None, None
-            # Hole den Einheitentext
             matching_unit_text = next(
                 (unit for unit in texts["units"] if unit["id"] == unit_id), None)
             if not matching_unit_text:
@@ -293,7 +297,6 @@ class WCRCog(commands.Cog):
         faction_data = helpers.get_faction_data(faction_id, self.pictures)
         embed_color_hex = faction_data.get("color", "#3498db")
         embed_color = int(embed_color_hex.strip("#"), 16)
-        # Suchen nach 'icon' für das Emoji
         faction_emoji_name = faction_data.get("icon", "")
         faction_emoji = self.emojis.get(
             faction_emoji_name, {}).get("syntax", "")
@@ -397,7 +400,25 @@ class WCRCog(commands.Cog):
         used_stats_keys = {'damage', 'area_damage',
                            'attack_speed', 'dps', 'health'}
 
-        for stat_key, emoji_name in [("range", "wcr_range"), ("duration", "wcr_duration"), ("healing", "wcr_healing"), ("radius", "wcr_radius"), ("lvl_advantage", "wcr_advantage"), ("percent_dmg", "wcr_percent_dmg"), ("percent_dps", "wcr_percent_dps"), ("fan_damage", "wcr_fan_damage"), ("crash_damage", "wcr_crash_damage"), ("area_healing", "wcr_area_healing"), ("dwarf_dmg", "wcr_damage"), ("bear_dmg", "wcr_damage"), ("dwarf_dps", "wcr_dps"), ("bear_dps", "wcr_dps"), ("dwarf_health", "wcr_health"), ("bear_health", "wcr_health"), ("dwarf_range", "wcr_range")]:
+        for stat_key, emoji_name in [
+            ("range", "wcr_range"),
+            ("duration", "wcr_duration"),
+            ("healing", "wcr_healing"),
+            ("radius", "wcr_radius"),
+            ("lvl_advantage", "wcr_advantage"),
+            ("percent_dmg", "wcr_percent_dmg"),
+            ("percent_dps", "wcr_percent_dps"),
+            ("fan_damage", "wcr_fan_damage"),
+            ("crash_damage", "wcr_crash_damage"),
+            ("area_healing", "wcr_area_healing"),
+            ("dwarf_dmg", "wcr_damage"),
+            ("bear_dmg", "wcr_damage"),
+            ("dwarf_dps", "wcr_dps"),
+            ("bear_dps", "wcr_dps"),
+            ("dwarf_health", "wcr_health"),
+            ("bear_health", "wcr_health"),
+            ("dwarf_range", "wcr_range")
+        ]:
             if stat_key in stats and stat_key not in used_stats_keys:
                 label = stat_labels.get(stat_key, stat_key.capitalize())
                 extra_stats.append({
@@ -415,15 +436,14 @@ class WCRCog(commands.Cog):
         )
 
         # Kleiner Absatz nach der Beschreibung
-        embed.description += "\n"
-        embed.description += "\n **Stats**"
+        embed.description += "\n\n**Stats**"
 
         # Stats hinzufügen
         if row1_stats:
             for stat in row1_stats:
                 embed.add_field(
                     name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
-            # Fülle die Reihe auf, wenn weniger als 3 Felder
+            # Auffüllen, falls weniger als 3 Felder
             while len(row1_stats) < 3:
                 embed.add_field(name="\u200b", value="\u200b", inline=True)
                 row1_stats.append(None)
@@ -451,14 +471,12 @@ class WCRCog(commands.Cog):
                 for stat in group:
                     embed.add_field(
                         name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
-                # Fülle die Reihe auf, wenn weniger als 3 Felder
                 while len(group) < 3:
                     embed.add_field(name="\u200b", value="\u200b", inline=True)
                     group.append(None)
 
         # Talente hinzufügen
         if talents:
-            # Kleiner Abstand vor den Talenten
             embed.add_field(name="\u200b", value="**Talents**", inline=False)
             for talent in talents[:3]:
                 talent_name = talent.get("name", "Unbekanntes Talent")
@@ -466,7 +484,6 @@ class WCRCog(commands.Cog):
                     "description", "Beschreibung fehlt")
                 embed.add_field(name=talent_name,
                                 value=talent_description, inline=True)
-            # Falls weniger als 3 Talente, Reihe auffüllen
             if len(talents[:3]) % 3 != 0:
                 for _ in range(3 - (len(talents[:3]) % 3)):
                     embed.add_field(name="\u200b", value="\u200b", inline=True)
