@@ -292,7 +292,7 @@ class QuizCog(commands.Cog):
         # Falls Counter <10, merken und verschieben
         elif self.message_counter[cid] < 10:
             logger.info(
-                f"[QuizCog] Zu wenig Aktivität in {channel.name}, verschiebe Frage.")
+                f"[QuizCog] Zu wenig Aktivität in {channel.name} ({self.message_counter[cid]} Nachrichten), verschiebe Frage.")
             self.awaiting_activity[cid] = (area, end_time)
             return
 
