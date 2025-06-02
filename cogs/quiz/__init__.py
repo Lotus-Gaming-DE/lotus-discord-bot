@@ -40,7 +40,6 @@ async def setup(bot: discord.ext.commands.Bot):
         # ─── QuestionGenerator ────────────────────────────────────────────
         generator = QuestionGenerator(
             questions_by_area=questions_by_area,
-            asked_questions=state.state["history"],  # gesamte Historie laden
             dynamic_providers={"wcr": wcr_provider}
         )
 
