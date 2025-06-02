@@ -3,7 +3,6 @@
 import logging
 import discord
 from discord.ui import View, Modal, TextInput, button, Button
-from .question_state import remove_question
 
 logger = logging.getLogger(__name__)
 
