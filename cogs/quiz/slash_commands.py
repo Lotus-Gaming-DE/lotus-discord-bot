@@ -22,7 +22,7 @@ GUILD_ID = int(SERVER_ID)
 quiz_group = app_commands.Group(
     name="quiz",
     description="Quiz-Befehle",
-    guild_ids=[GUILD_ID]  # Nur in dieser Guild registrieren
+    guild_ids=[GUILD_ID]  # Nur in dieser Guild
 )
 
 
@@ -50,7 +50,7 @@ async def interaction_checks(
     if not is_authorized(interaction.user):
         return False, "❌ Du hast keine Berechtigung für diesen Befehl."
 
-    # 2) Ist dieser Channel überhaupt als Quiz-Channel konfiguriert?
+    # 2) Ist dieser Channel als Quiz-Channel konfiguriert?
     area = get_area_by_channel(bot, interaction.channel.id)
     if not area:
         return False, "❌ In diesem Channel ist kein Quiz konfiguriert."
@@ -122,7 +122,6 @@ async def language(
 async def ask(
     interaction: discord.Interaction,
 ):
-    # Interaction-Check (Autorisierung + Channel-Konfiguration) durchführen
     ok, area_or_msg = await interaction_checks(interaction.client, interaction)
     if not ok:
         await interaction.response.send_message(area_or_msg, ephemeral=True)
@@ -130,26 +129,23 @@ async def ask(
     area = area_or_msg
 
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
+    end_time = datetime.datetime.utcnow() + quiz_cog.time_window
     logger.info(f"[QuizCommands] /quiz ask by {interaction.user} in {area}")
 
-    # 1) Antwort an Discord sofort senden, damit die 3-Sekunden-Grenze eingehalten wird
-    await interaction.response.send_message(
-        "🔄 Deine Frage wird jetzt erstellt…", ephemeral=False
+    # WICHTIG: Erst die Interaction sofort beantworten (defer),
+    # damit wir kein 3-Sekunden-Timeout bekommen.
+    await interaction.response.defer(thinking=True)
+
+    # Frage im Hintergrund posten:
+    # (die ask_question-Methode selbst sitzt in QuizCog und wartet dann bis end_time,
+    # um die Frage ggf. automatisch zu schließen)
+    interaction.client.loop.create_task(quiz_cog.ask_question(area, end_time))
+
+    # Jetzt eine finale Follow-Up-Nachricht schicken
+    await interaction.followup.send(
+        "✅ Deine Frage wurde erstellt und läuft bis zum Ende des Zeitfensters.",
+        ephemeral=True
     )
-
-    # 2) Hintergrund-Task starten, welche später quiz_cog.ask_question() aufruft
-    #    (so laufen wir nicht in das 3-Sekunden-Timeout von Discord hinein)
-    async def _ask_in_background():
-        # Berechne End-Zeitpunkt: jetzt + time_window
-        end_time = datetime.datetime.utcnow() + quiz_cog.time_window
-        try:
-            await quiz_cog.ask_question(area, end_time)
-        except Exception as e:
-            logger.error(
-                f"[QuizCommands] Fehler in ask_question (Hintergrund): {e}", exc_info=True)
-
-    # Starte die Hintergrund-Task
-    interaction.client.loop.create_task(_ask_in_background())
 
 
 @quiz_group.command(
@@ -174,14 +170,58 @@ async def answer(
         )
         return
 
+    # Die Liste aller korrekten Antworten aus dem Question-Objekt
     answers = question["answers"]
     text = ", ".join(f"`{a}`" for a in answers)
+
     logger.info(f"[QuizCommands] /quiz answer by {interaction.user} in {area}")
-    # Erst öffentlich im Channel posten, dann Frage schließen
-    await interaction.channel.send(f"📢 Die richtige Antwort ist: {text}")
-    await quiz_cog.close_question(area)
-    await interaction.response.send_message(
-        "✅ Antwort veröffentlicht und Frage geschlossen.", ephemeral=False
+
+    # *1. Schritt:* Interaction sofort mit defer() acken,
+    # damit Nutzer nicht “The application did not respond” sieht.
+    await interaction.response.defer(thinking=True)
+
+    # *2. Schritt:* Öffentliche Nachricht im Quiz-Channel, die die Antwort preisgibt
+    channel = interaction.channel
+    await channel.send(f"📢 Die richtige Antwort ist: {text}")
+
+    # *3. Schritt:* Jetzt das Embed der Frage dahingehend anpassen, dass
+    #             • die Farbe auf Rot wechselt
+    #             • ein Feld “Richtige Antwort” mit dem Text (Variable text) eingefügt wird
+    #             • der Footer “✋ Frage durch Mod beendet.” gesetzt wird
+    #
+    # Dazu holen wir uns zunächst die Message anhand von message_id:
+    try:
+        msg = await channel.fetch_message(question["message_id"])
+        embed = msg.embeds[0]
+
+        # Roter Rahmen, um Abschluss zu markieren
+        embed.color = discord.Color.red()
+        # Footer anpassen, damit klar ist: Mod hat manuell beendet
+        embed.set_footer(text="✋ Frage durch Mod beendet.")
+
+        # Feld “Richtige Antwort” einfügen (mit text-Inhalt)
+        # (WICHTIG: inline=False, damit es in neuer Zeile erscheint)
+        embed.add_field(name="Richtige Antwort", value=text, inline=False)
+
+        # Buttons entfernen (View abwaret)
+        await msg.edit(embed=embed, view=None)
+    except Exception as e:
+        logger.error(
+            f"[QuizCommands] Fehler beim Bearbeiten des Frage-Embeds: {e}", exc_info=True)
+
+    # *4. Schritt:* QuizCog internal aufräumen (frage aus current_questions entfernen,
+    #             channel_initialized zurücksetzen) – analog zur close_question()
+    quiz_cog.current_questions.pop(area, None)
+    # Channel darf beim nächsten Fenster erneut Activity-Check überspringen
+    cfg = quiz_cog.bot.quiz_data.get(area)
+    if cfg:
+        cid = cfg["channel_id"]
+        quiz_cog.channel_initialized[cid] = False
+
+    # *5. Schritt:* Abschließende Follow-Up-Antwort an den Mod, dass alles getan wurde
+    await interaction.followup.send(
+        "✅ Die Frage wurde per Mod-Befehl beantwortet und beendet.",
+        ephemeral=True
     )
 
 
@@ -264,8 +304,7 @@ async def enable(
     area = area_name.lower()
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
     logger.info(
-        f"[QuizCommands] /quiz enable by {interaction.user} → {area} ({lang})"
-    )
+        f"[QuizCommands] /quiz enable by {interaction.user} → {area} ({lang})")
 
     # Frage-Generator neu anlegen (DataLoader/QuestionGenerator)
     q_loader = quiz_cog.bot.data["quiz"]["data_loader"]
@@ -273,11 +312,13 @@ async def enable(
         questions_by_area=quiz_cog.bot.data["quiz"]["questions_by_area"],
         asked_questions=q_loader.load_asked_questions(),
         dynamic_providers={
-            "wcr": quiz_cog.bot.quiz_data.get("wcr", {})
-            .get("question_generator")
-            .dynamic_providers.get("wcr")
-            if quiz_cog.bot.quiz_data.get("wcr")
-            else None
+            "wcr": (
+                quiz_cog.bot.quiz_data.get("wcr", {})
+                .get("question_generator")
+                .dynamic_providers.get("wcr")
+                if quiz_cog.bot.quiz_data.get("wcr")
+                else None
+            )
         }
     )
 
@@ -290,7 +331,8 @@ async def enable(
     quiz_cog.bot.loop.create_task(quiz_cog.quiz_scheduler(area))
 
     await interaction.response.send_message(
-        f"✅ Quiz für **{area}** aktiviert.", ephemeral=False
+        f"✅ Quiz für **{area}** aktiviert.",
+        ephemeral=False
     )
 
 
@@ -301,5 +343,6 @@ async def on_quiz_error(interaction: discord.Interaction, error: app_commands.Ap
     # Standard-Antwort an Discord ist ausreichend, daher kein weiteres send_message nötig.
 
 
-# Hinweis: Hier wird **KEINE** setup(...)-Funktion mehr benötigt,
-# weil die Gruppe /quiz bereits in cogs/quiz/__init__.py mit bot.tree.add_command(...) registriert wird.
+# ─────────── Hinweis ─────────────────────────────────────────────────────────────
+# In dieser Datei ist keine eigene setup(...)-Funktion mehr nötig,
+# weil die Gruppe `quiz_group` bereits in cogs/quiz/__init__.py registriert wird.
