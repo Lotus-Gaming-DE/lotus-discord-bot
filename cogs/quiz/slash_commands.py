@@ -5,6 +5,7 @@ from typing import Literal, Optional, Tuple
 
 import discord
 from discord import app_commands
+from discord.ext import commands
 
 from .cog import QuizCog
 from .question_generator import QuestionGenerator
@@ -33,7 +34,7 @@ def is_authorized(user: discord.Member) -> bool:
     )
 
 
-def get_area_by_channel(bot: discord.Bot, channel_id: int) -> Optional[str]:
+def get_area_by_channel(bot: commands.Bot, channel_id: int) -> Optional[str]:
     # Sucht in quiz_data die Area, deren channel_id passt
     quiz_cog: QuizCog = bot.get_cog("QuizCog")
     for area, cfg in quiz_cog.bot.quiz_data.items():
@@ -43,7 +44,7 @@ def get_area_by_channel(bot: discord.Bot, channel_id: int) -> Optional[str]:
 
 
 async def interaction_checks(
-    bot: discord.Bot, interaction: discord.Interaction
+    bot: commands.Bot, interaction: discord.Interaction
 ) -> Tuple[bool, str]:
     # 1) Autorisierung prüfen
     if not is_authorized(interaction.user):
@@ -256,8 +257,11 @@ async def enable(
         questions_by_area=quiz_cog.bot.data["quiz"]["questions_by_area"],
         asked_questions=q_loader.load_asked_questions(),
         dynamic_providers={
-            "wcr": quiz_cog.bot.quiz_data.get("wcr", {}).get("question_generator").dynamic_providers.get("wcr")
-            if quiz_cog.bot.quiz_data.get("wcr") else None
+            "wcr": quiz_cog.bot.quiz_data.get("wcr", {})
+            .get("question_generator")
+            .dynamic_providers.get("wcr")
+            if quiz_cog.bot.quiz_data.get("wcr")
+            else None
         }
     )
 
@@ -278,8 +282,7 @@ async def enable(
 async def on_quiz_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     # Fängt grundsätzlich AppCommand‐Fehler auf und loggt sie
     logger.exception(f"[QuizCommands] Fehler: {error}")
-    # Antworten wirft man hier normalerweise nicht, weil Discord ohnehin sagt „Es ist ein Fehler aufgetreten“
-    # Falls gewünscht, kann man interaction.response.send_message(...) aufrufen.
+    # Standard‐Antwort an Discord ist ausreichend, daher kein weiteres send_message nötig.
 
 
 # ─────────── Setup‐Funktion, wird von quiz/__init__.py aufgerufen ───────────
