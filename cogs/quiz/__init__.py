@@ -19,30 +19,27 @@ MAIN_SERVER_ID = int(SERVER_ID)
 
 async def setup(bot: discord.ext.commands.Bot):
     try:
-        # ─── DataLoader ───────────────────────────────────────────────────
         loader = bot.data["quiz"]["data_loader"]
+        loader.set_language("de")
+
         questions_by_area = loader.questions_by_area
+        state_manager = QuestionStateManager(
+            "data/pers/quiz/question_state.json")
 
-        # ─── Persistent Question-State ────────────────────────────────────
-        state = QuestionStateManager("data/pers/quiz/question_state.json")
-
-        # ─── WCR‐Provider ─────────────────────────────────────────────────
-        wcr_units = bot.data["wcr"]["units"]
-        wcr_languages = bot.data["wcr"]["languages"]
+        # WCR-spezifischer Fragentyp
         wcr_provider = WCRQuestionProvider(
-            units=wcr_units,
-            locals_data=wcr_languages,
+            units=bot.data["wcr"]["units"],
+            locals_data=bot.data["wcr"]["languages"],
             language="de"
         )
 
-        # ─── QuestionGenerator ────────────────────────────────────────────
+        # Generator
         generator = QuestionGenerator(
             questions_by_area=questions_by_area,
-            state_manager=state,
+            state_manager=state_manager,
             dynamic_providers={"wcr": wcr_provider}
         )
 
-        # ─── bot.quiz_data ───────────────────────────────────────────────
         quiz_data = {}
         env_areas = {
             "wcr": "quiz_c_wcr",
@@ -53,36 +50,28 @@ async def setup(bot: discord.ext.commands.Bot):
             cid_str = os.getenv(env_var)
             if not cid_str:
                 logger.warning(
-                    f"[QuizCog] env var '{env_var}' nicht gesetzt, überspringe area '{area}'"
-                )
+                    f"[QuizCog] env var '{env_var}' nicht gesetzt, überspringe '{area}'")
                 continue
+
             try:
-                channel_id = int(cid_str)
+                cid = int(cid_str)
             except ValueError:
                 logger.error(
-                    f"[QuizCog] Ungültige Channel-ID in '{env_var}': {cid_str}"
-                )
+                    f"[QuizCog] Ungültige Channel-ID in '{env_var}': {cid_str}")
                 continue
 
             quiz_data[area] = {
-                "channel_id": channel_id,
+                "channel_id": cid,
                 "data_loader": loader,
                 "question_generator": generator,
-                "question_state": state
+                "question_state": state_manager
             }
 
         bot.quiz_data = quiz_data
 
-        # ─── Cog registrieren ────────────────────────────────────────────
         await bot.add_cog(QuizCog(bot))
-
-        # ─── Tracker initialisieren ───────────────────────────────────────
-        await bot.quiz_cog.tracker.initialize()
-
-        # ─── Slash-Command-Group registrieren ─────────────────────────────
         bot.tree.add_command(
             quiz_group, guild=discord.Object(id=MAIN_SERVER_ID))
-
         logger.info(
             "[QuizCog] Cog und Slash‐Command‐Gruppe erfolgreich registriert.")
     except Exception as e:

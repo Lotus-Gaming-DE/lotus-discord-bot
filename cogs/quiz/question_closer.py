@@ -9,11 +9,19 @@ class QuestionCloser:
         self.bot = bot
         self.state = state
 
-    async def close_question(self, area: str, qinfo: dict, timed_out=False, winner: discord.User = None, correct_answer: str = None):
+    async def close_question(self, area: str, qinfo: dict = None, timed_out=False, winner: discord.User = None, correct_answer: str = None):
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
 
         try:
+            # Hole ggf. aktuelle Frage
+            if not qinfo:
+                qinfo = self.bot.quiz_cog.current_questions.get(area)
+                if not qinfo:
+                    logger.warning(
+                        f"[Closer] Keine aktive Frage für '{area}' gefunden.")
+                    return
+
             msg = await channel.fetch_message(qinfo["message_id"])
             embed = msg.embeds[0]
             embed.color = discord.Color.red()

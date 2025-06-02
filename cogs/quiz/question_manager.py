@@ -1,5 +1,3 @@
-# cogs/quiz/question_manager.py
-
 import logging
 import datetime
 import discord
@@ -27,16 +25,13 @@ class QuestionManager:
             return
 
         cid = channel.id
-
         if not self.cog.tracker.is_initialized(cid):
-            self.cog.tracker.set_initialized(cid)
             logger.info(
-                f"[QuestionManager] Channel '{channel.name}' ({area}) initialisiert – überspringe Aktivitätsprüfung.")
-
+                f"[QuestionManager] Channel {cid} nicht initialisiert – überspringe Aktivitätsprüfung.")
+            self.cog.tracker.set_initialized(cid)
         elif self.cog.tracker.get(cid) < 10:
             logger.info(
-                f"[QuestionManager] Nachrichtenzähler für '{area}': {self.cog.tracker.get(cid)}/10 – warte auf Aktivität.")
-
+                f"[QuestionManager] Aktivität in '{area}' unzureichend ({self.cog.tracker.get(cid)}/10).")
             self.cog.awaiting_activity[cid] = (area, end_time)
             return
 
@@ -78,7 +73,7 @@ class QuestionManager:
         view = AnswerButtonView(area, correct_answers, self.cog)
         sent_msg = await channel.send(embed=embed, view=view)
         logger.debug(
-            f"[QuestionManager] Nachricht ID {sent_msg.id} an Channel {channel.id} gesendet.")
+            f"[QuestionManager] Frage-ID {sent_msg.id} an Channel {channel.id} gesendet.")
 
         qinfo = {
             "message_id": sent_msg.id,
