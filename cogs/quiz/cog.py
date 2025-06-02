@@ -340,11 +340,9 @@ class QuizCog(commands.Cog):
         # ── Hier passt der neue Block, um aus List oder String immer ein Set[str] zu machen:
         raw_answer = qd["antwort"]
         if isinstance(raw_answer, list):
-            # Wenn "antwort" in der JSON schon eine Liste von Strings ist
-            correct_answers = set(raw_answer)
+            correct_answers = raw_answer  # Belasse es als List
         else:
-            # Wenn "antwort" nur ein String ist
-            correct_answers = {raw_answer}
+            correct_answers = [raw_answer]
 
         data_loader = cfg["data_loader"]
 
@@ -420,13 +418,8 @@ class QuizCog(commands.Cog):
             embed.set_footer(text=footer_text)
 
             # 2) „Richtige Antwort“ sauber formatieren (kein Set sichtbar)
-            answers_set = qinfo["answers"]
-
-            if isinstance(answers_set, set) or isinstance(answers_set, list):
-                ans_text = ", ".join(answers_set)
-            else:
-                ans_text = str(answers_set)
-
+            answers_list = qinfo["answers"]
+            ans_text = ", ".join(answers_list)
             embed.add_field(name="Richtige Antwort",
                             value=ans_text, inline=False)
 
