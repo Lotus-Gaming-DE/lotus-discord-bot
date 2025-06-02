@@ -46,22 +46,39 @@ class QuizCog(commands.Cog):
             try:
                 end_time = datetime.datetime.fromisoformat(active["end_time"])
                 if end_time > datetime.datetime.utcnow():
-                    self.current_questions[area] = {
-                        "message_id": active["message_id"],
-                        "end_time": end_time,
-                        "answers": active["answers"]
-                    }
-                    self.answered_users[area].clear()
-                    logger.info(
-                        f"[QuizCog] Wiederhergestellte Frage in '{area}' läuft bis {end_time}.")
-                    delay = (end_time - datetime.datetime.utcnow()
-                             ).total_seconds()
-                    self.bot.loop.create_task(self._auto_close(area, delay))
+                    self.bot.loop.create_task(
+                        self._repost_view(area, active, end_time))
                 else:
                     self.state.clear_active_question(area)
             except Exception as e:
                 logger.error(
                     f"[QuizCog] Fehler beim Wiederherstellen von '{area}': {e}", exc_info=True)
+
+    async def _repost_view(self, area: str, qinfo: dict, end_time: datetime.datetime):
+        await self.bot.wait_until_ready()
+        cfg = self.bot.quiz_data[area]
+        channel = self.bot.get_channel(cfg["channel_id"])
+        if not channel:
+            return
+
+        try:
+            msg = await channel.fetch_message(qinfo["message_id"])
+            view = AnswerButtonView(
+                area=area, correct_answers=qinfo["answers"], cog=self)
+            await msg.edit(view=view)
+            logger.info(f"[QuizCog] View in '{area}' erneut gesetzt.")
+        except Exception as e:
+            logger.warning(
+                f"[QuizCog] Fehler beim Setzen der View in '{area}': {e}")
+
+        self.current_questions[area] = {
+            "message_id": qinfo["message_id"],
+            "end_time": end_time,
+            "answers": qinfo["answers"]
+        }
+        self.answered_users[area].clear()
+        delay = (end_time - datetime.datetime.utcnow()).total_seconds()
+        self.bot.loop.create_task(self._auto_close(area, delay))
 
     async def _auto_close(self, area: str, delay: float):
         await asyncio.sleep(delay)
