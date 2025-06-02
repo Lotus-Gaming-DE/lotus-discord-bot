@@ -89,7 +89,7 @@ async def history(interaction: discord.Interaction, user: discord.Member):
     await interaction.response.send_message(f"📜 Punkteverlauf von {user.display_name}:\n{text}")
 
 
-@champion_group.command(name="leaderboard", description="Zeigt die Top 30 gruppiert nach Champion-Rolle")
+@champion_group.command(name="leaderboard", description="Zeigt die Top 30 gruppiert nach Champion-Rolle als Tabelle")
 async def leaderboard(interaction: discord.Interaction):
     await interaction.response.defer(thinking=True)
 
@@ -100,9 +100,8 @@ async def leaderboard(interaction: discord.Interaction):
         await interaction.followup.send("🤷 Keine Einträge im Leaderboard.")
         return
 
-    # Emojis aus Bot-Daten laden
+    # Emojis laden
     emoji_data = interaction.client.data.get("emojis", {})
-
     icon_map = {
         "Ultimate Champion": emoji_data.get("challenger_5", {}).get("syntax", ""),
         "Epic Champion": emoji_data.get("challenger_4", {}).get("syntax", ""),
@@ -112,34 +111,36 @@ async def leaderboard(interaction: discord.Interaction):
         "Keine Rolle": emoji_data.get("challenger_0", {}).get("syntax", "")
     }
 
-    grouped: dict[str, list[str]] = {}
+    # Gruppieren
+    grouped: dict[str, list[tuple[int, str, int]]] = {}
     rank = 1
 
     for user_id_str, total in top:
-        # Erst aus dem Cache holen
-        member = interaction.guild.get_member(int(user_id_str))
-        if not member:
-            try:
-                member = await interaction.guild.fetch_member(int(user_id_str))
-            except discord.NotFound:
-                member = None
-
+        # Member-Name
+        member = interaction.guild.get_member(int(user_id_str)) or \
+            await interaction.guild.fetch_member(int(user_id_str))
         name = member.display_name if member else f"Unbekannt ({user_id_str})"
         role = cog.get_current_role(total) or "Keine Rolle"
-        grouped.setdefault(role, []).append(
-            f"  {rank}. {name} – {total} Punkte")
+        grouped.setdefault(role, []).append((rank, name, total))
         rank += 1
 
+    # Rollen-Reihenfolge
     role_order = [r[0] for r in cog.roles] + ["Keine Rolle"]
 
+    # Ausgabe formatieren
     output = []
     for role_name in role_order:
         if role_name not in grouped:
             continue
+
         icon = icon_map.get(role_name, "")
         output.append(f"{icon} **{role_name}**")
-        output.extend(grouped[role_name])
-        output.append("")
 
-    text = "\n".join(output).strip()
-    await interaction.followup.send(text)
+        lines = ["```text", "Rang Name                 Punkte",
+                 "---- -------------------- ------"]
+        for rank, name, score in grouped[role_name]:
+            lines.append(f"{rank:>4} {name:<20} {score:>6}")
+        lines.append("```")
+        output.append("\n".join(lines))
+
+    await interaction.followup.send("\n".join(output))
