@@ -23,7 +23,7 @@ async def setup(bot: discord.ext.commands.Bot):
     try:
         # ─── DataLoader ───────────────────────────────────────────────────
         loader = bot.data["quiz"]["data_loader"]
-        questions_by_area = bot.data["quiz"]["questions_by_area"]
+        questions_by_area = bot.data["quiz"]["data_loader"].questions_by_area
 
         # ─── Persistent Question-State ────────────────────────────────────
         state = QuestionStateManager("data/pers/quiz/question_state.json")

@@ -50,12 +50,4 @@ class QuizCog(commands.Cog):
         if message.author.bot:
             return
 
-        cid = message.channel.id
-        area = self.tracker.register_message(message)
-
-        if area and cid in self.awaiting_activity and self.tracker.get_count(cid) >= 10:
-            logger.info(
-                f"[QuizCog] Aktivität erreicht in '{area}' ({self.tracker.get_count(cid)}/10) – Frage wird gestellt."
-            )
-            _, end_time = self.awaiting_activity.pop(cid)
-            await self.manager.ask_question(area, end_time)
+        self.tracker.register_message(message)

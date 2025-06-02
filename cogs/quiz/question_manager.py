@@ -75,6 +75,8 @@ class QuestionManager:
 
         view = AnswerButtonView(area, correct_answers, self.cog)
         sent_msg = await channel.send(embed=embed, view=view)
+        logger.debug(
+            f"[QuestionManager] Nachricht ID {sent_msg.id} an Channel {channel.id} gesendet.")
 
         qinfo = {
             "message_id": sent_msg.id,
