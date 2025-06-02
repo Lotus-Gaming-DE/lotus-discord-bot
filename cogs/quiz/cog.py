@@ -217,8 +217,7 @@ class QuizCog(commands.Cog):
          5) Warte bis window_end, rufe close_question wenn nötig
          6) Neu starten
         """
-
-        # ── NEU: Falls Area inzwischen deaktiviert wurde, sofort abbrechen
+        # ── Falls Area inzwischen deaktiviert wurde, sofort abbrechen
         await self.bot.wait_until_ready()
         if area not in self.bot.quiz_data:
             return
@@ -254,7 +253,7 @@ class QuizCog(commands.Cog):
             # Warte dann noch die „delay“
             await asyncio.sleep(delay)
 
-            # ── NEU: Falls Area inzwischen deaktiviert wurde, abbrechen
+            # ── Falls Area inzwischen deaktiviert wurde, abbrechen
             if area not in self.bot.quiz_data:
                 return
 
@@ -278,7 +277,7 @@ class QuizCog(commands.Cog):
         Wenn im Channel ≥ 10 User-Nachrichten seit letzter Frage,
         wird ask_question aufgerufen. Sonst merken wir uns „awaiting_activity“.
         """
-        # ── NEU: Falls Area inzwischen deaktiviert wurde, sofort abbrechen
+        # ── Falls Area inzwischen deaktiviert wurde, sofort abbrechen
         if area not in self.bot.quiz_data:
             return
 
@@ -337,8 +336,16 @@ class QuizCog(commands.Cog):
             return
 
         frage_text = qd["frage"]
-        # ── HIER wurde geändert: aus set(qd["antwort"]) → {qd["antwort"]}
-        correct_answers = {qd["antwort"]}
+
+        # ── Hier passt der neue Block, um aus List oder String immer ein Set[str] zu machen:
+        raw_answer = qd["antwort"]
+        if isinstance(raw_answer, list):
+            # Wenn "antwort" in der JSON schon eine Liste von Strings ist
+            correct_answers = set(raw_answer)
+        else:
+            # Wenn "antwort" nur ein String ist
+            correct_answers = {raw_answer}
+
         data_loader = cfg["data_loader"]
 
         embed = discord.Embed(
@@ -418,9 +425,9 @@ class QuizCog(commands.Cog):
                 ans_text = correct_answer
             else:
                 # Fall: Timeout oder Mod-Befehl → zeige alle möglichen Antworten
-                # z. B. {"2023"} oder {"Kyovashad"}
+                # e.g. {"2023"} oder {"Kyovashad"}
                 answers_set = qinfo["answers"]
-                # Ergibt "2023" oder "Kyovashad"
+                # ergibt "2023" oder "Kyovashad"
                 ans_text = ", ".join(answers_set)
             embed.add_field(name="Richtige Antwort",
                             value=ans_text, inline=False)
