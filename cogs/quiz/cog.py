@@ -18,25 +18,22 @@ logger = logging.getLogger(__name__)
 class QuizCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.bot.quiz_cog = self  # Referenz für andere Klassen
+        self.bot.quiz_cog = self
 
-        # Interner Zustand
-        self.current_questions: dict[str, dict] = {}
-        self.answered_users: dict[str, set[int]] = defaultdict(set)
-        self.awaiting_activity: dict[int, tuple[str, float]] = {}
+        self.current_questions = {}
+        self.answered_users = defaultdict(set)
+        self.awaiting_activity = {}
 
-        # State, Tracker, Manager
         self.state = QuestionStateManager("data/pers/quiz/question_state.json")
         self.tracker = MessageTracker(bot=self.bot)
+        self.bot.loop.create_task(self.tracker.initialize())  # ⬅️ wichtig!
+
         self.manager = QuestionManager(self)
         self.closer = QuestionCloser(bot=self.bot, state=self.state)
-
-        # Wiederherstellen
         self.restorer = QuestionRestorer(
             bot=self.bot, state_manager=self.state)
         self.restorer.restore_all()
 
-        # Pro Area: Scheduler starten
         for area in self.bot.quiz_data:
             QuizScheduler(
                 bot=self.bot,
