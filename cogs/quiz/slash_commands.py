@@ -1,3 +1,5 @@
+# cogs/quiz/slash_commands.py
+
 import os
 import logging
 import datetime
@@ -65,7 +67,7 @@ async def language(interaction: discord.Interaction, lang: Literal["de", "en"]):
     state = quiz_cog.bot.quiz_data[area]["question_state"]
     new_generator = QuestionGenerator(
         questions_by_area={area: this_area_dict},
-        state_manager=quiz_cog.bot.quiz_data[area]["question_state"],
+        state_manager=state,
         dynamic_providers=quiz_cog.bot.quiz_data[area]["question_generator"].dynamic_providers
     )
 
@@ -85,7 +87,8 @@ async def ask(interaction: discord.Interaction):
 
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
     end_time = datetime.datetime.utcnow() + quiz_cog.time_window
-    interaction.client.loop.create_task(quiz_cog.ask_question(area, end_time))
+    interaction.client.loop.create_task(
+        quiz_cog.manager.ask_question(area, end_time))
     await interaction.response.send_message("✅ Die Frage wurde erstellt.", ephemeral=False)
 
 
@@ -134,7 +137,7 @@ async def status(interaction: discord.Interaction):
 
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
     question_data = quiz_cog.current_questions.get(area)
-    count = quiz_cog.message_counter.get(interaction.channel.id, 0)
+    count = quiz_cog.tracker.get(interaction.channel.id)
     if question_data:
         remaining = int(
             (question_data["end_time"] - datetime.datetime.utcnow()).total_seconds())
@@ -167,21 +170,23 @@ async def enable(interaction: discord.Interaction, area_name: str, lang: Literal
 
     q_loader = quiz_cog.bot.data["quiz"]["data_loader"]
     q_loader.set_language(lang)
-    q_generator = QuestionGenerator(
-        questions_by_area={area: q_loader.questions_by_area.get(area, {})},
-        # oder area statt wcr, wenn du `question_state` separat speicherst
-        state_manager=quiz_cog.bot.quiz_data[area]["question_state"],
-        dynamic_providers={...}
+    questions = q_loader.questions_by_area.get(area, {})
+
+    state = QuestionStateManager(f"data/pers/quiz/state_{area}.json")
+    generator = QuestionGenerator(
+        questions_by_area={area: questions},
+        state_manager=state,
+        dynamic_providers={}  # optional: anpassen bei Bedarf
     )
 
     quiz_cog.bot.quiz_data[area] = {
         "channel_id": interaction.channel.id,
         "data_loader": q_loader,
-        "question_generator": q_generator,
+        "question_generator": generator,
+        "question_state": state,
         "language": lang
     }
 
-    interaction.client.loop.create_task(quiz_cog.quiz_scheduler(area))
     await interaction.response.send_message(f"✅ Quiz für **{area}** aktiviert.", ephemeral=False)
 
 

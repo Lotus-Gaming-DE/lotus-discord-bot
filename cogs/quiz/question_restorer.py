@@ -43,15 +43,24 @@ class QuestionRestorer:
             return
 
         try:
-            msg = await channel.fetch_message(qinfo["message_id"])
+            try:
+                msg = await channel.fetch_message(qinfo["message_id"])
+
+            except discord.NotFound:
+                logger.warning(
+                    f"[Restorer] Ursprüngliche Nachricht für '{area}' nicht mehr vorhanden – lösche Zustand.")
+                self.state.clear_active_question(area)
+                return
+
             if msg.embeds and (
                 msg.embeds[0].color == discord.Color.red()
                 or "Zeit abgelaufen" in msg.embeds[0].footer.text
                 or "hat richtig geantwortet" in msg.embeds[0].footer.text
             ):
+                logger.info(
+                    f"[Restorer] Frage in '{area}' war bereits rot markiert oder hatte Footer – wird nicht wiederhergestellt.")
                 logger.warning(
-                    f"[Restorer] Nachricht in '{area}' wurde bereits geschlossen – überspringe."
-                )
+                    f"[Restorer] Nachricht in '{area}' wurde bereits geschlossen – überspringe.")
                 self.state.clear_active_question(area)
                 return
 

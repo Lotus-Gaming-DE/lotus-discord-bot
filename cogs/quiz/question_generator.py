@@ -28,7 +28,7 @@ class QuestionGenerator:
             self.state.reset_asked_questions(area)
             remaining = category_questions.copy()
             logger.info(
-                f"[QuestionGenerator] All questions asked for area '{area}'. Resetting.")
+                f"[QuestionGenerator] Alle Fragen für Bereich '{area}' wurden gestellt. Setze Historie zurück.")
 
         question_data = random.choice(remaining)
         self.state.mark_question_as_asked(area, question_data["id"])

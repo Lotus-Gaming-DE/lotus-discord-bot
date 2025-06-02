@@ -1,5 +1,3 @@
-# bot.py
-
 import os
 import json
 import logging
@@ -48,23 +46,17 @@ class MyBot(commands.Bot):
         # Gemeinsame Datenstruktur, wird in setup_hook befüllt
         self.data = {}
 
-        # Quiz-Daten (z. B. Fragen & asked.json)
+        # Quiz-Daten (z. B. Fragen)
         self.shared_data_loader = DataLoader()
-        self.shared_data_loader.set_language("de")
 
     async def setup_hook(self):
         # ──────────────────────────────────────────────────────────────────────
-        # 1. Veraltete Guild‐Commands löschen
-        #    Dadurch werden alle Slash‐Commands, die zuvor für unser Guild (MAIN_GUILD)
-        #    registriert waren, vollständig entfernt – bevor wir neu synchronisieren.
-        #    Wichtig: clear_commands() ist KEIN async, daher kein "await".
         self.tree.clear_commands(guild=self.main_guild)
-        # ──────────────────────────────────────────────────────────────────────
 
-        # 2. Emojis exportieren
+        # Emojis exportieren
         await self._export_emojis()
 
-        # 3. Gemeinsame Daten laden
+        # Gemeinsame Daten laden
         self.data = {
             "emojis": self._load_emojis_from_file(),
             "wcr": {
@@ -73,12 +65,13 @@ class MyBot(commands.Bot):
                 "pictures": load_wcr_pictures()
             },
             "quiz": {
-                "data_loader": self.shared_data_loader,
-                "questions_by_area": self.shared_data_loader.questions_by_area
+                "data_loader": self.shared_data_loader
             }
         }
+        logger.info(
+            f"[bot] Gemeinsame Daten geladen: {list(self.data.keys())}")
 
-        # 4. Alle Cogs laden
+        # Alle Cogs laden
         for path in Path("./cogs").rglob("__init__.py"):
             module = ".".join(path.with_suffix("").parts)
             try:
@@ -88,7 +81,7 @@ class MyBot(commands.Bot):
                 logger.error(
                     f"[bot] Failed to load extension {module}: {e}", exc_info=True)
 
-        # 5. Guild-spezifische Slash-Commands synchronisieren
+        # Slash-Commands synchronisieren
         try:
             await self.tree.sync(guild=self.main_guild)
             logger.info(
@@ -135,6 +128,10 @@ class MyBot(commands.Bot):
     async def on_message(self, message):
         if message.author.bot:
             return
+
+        if hasattr(self, "quiz_cog"):
+            await self.quiz_cog.on_message(message)
+
         await self.process_commands(message)
 
 

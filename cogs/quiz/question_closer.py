@@ -33,9 +33,10 @@ class QuestionCloser:
             await msg.edit(embed=embed, view=None)
 
             logger.info(f"[Closer] Frage in '{area}' geschlossen: {footer}")
+
         except Exception as e:
             logger.warning(
-                f"[Closer] Fehler beim Schließen der Frage in '{area}': {e}", exc_info=True)
+                f"[Closer] Fehler beim Schließen der Frage in '{area}' – Nachricht ggf. gelöscht? Fehler: {e}", exc_info=True)
 
         self.bot.quiz_cog.current_questions.pop(area, None)
         self.state.clear_active_question(area)

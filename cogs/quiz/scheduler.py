@@ -50,6 +50,8 @@ class QuizScheduler:
                     f"[Scheduler] '{self.area}' nicht mehr in quiz_data.")
                 return
 
+            logger.debug(
+                f"[Scheduler] Wache auf – prüfe Bedingungen für '{self.area}'...")
             await self.prepare_question(self.area, window_end)
 
             await asyncio.sleep(max((window_end - datetime.datetime.utcnow()).total_seconds(), 0))

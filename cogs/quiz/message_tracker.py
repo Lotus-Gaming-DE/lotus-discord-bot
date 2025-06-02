@@ -42,24 +42,36 @@ class MessageTracker:
                 logger.error(
                     f"[Tracker] Fehler bei der Initialisierung von '{area}': {e}", exc_info=True)
 
-    def increment(self, message):
+    def register_message(self, message: discord.Message) -> str | None:
         if message.author.bot:
-            return
+            return None
 
         cid = message.channel.id
         before = self.message_counter.get(cid, 0)
-        self.message_counter[cid] = before + 1
-        after = self.message_counter[cid]
+        self.message_counter[cid] = after = before + 1
 
-        logger.info(
-            f"[Tracker] Nachrichtenzähler in Channel {cid}: {before} → {after}")
+        area = self._find_area_for_channel(cid)
+        if area:
+            logger.info(
+                f"[Tracker] Nachrichtenzähler für '{area}' (Channel {cid}): {before} → {after}")
 
         if cid in self.bot.quiz_cog.awaiting_activity and after >= 10:
-            area, end_time = self.bot.quiz_cog.awaiting_activity[cid]
+            if area is None:
+                area, _ = self.bot.quiz_cog.awaiting_activity[cid]
             logger.info(
                 f"[Tracker] Aktivität erreicht in '{area}' ({after}/10) – Frage wird gestellt.")
             self.bot.loop.create_task(
-                self.bot.quiz_cog.ask_question(area, end_time))
+                self.bot.quiz_cog.manager.ask_question(
+                    area, self.bot.quiz_cog.awaiting_activity[cid][1])
+            )
+
+        return area
+
+    def _find_area_for_channel(self, channel_id: int) -> str | None:
+        for area, cfg in self.bot.quiz_data.items():
+            if cfg["channel_id"] == channel_id:
+                return area
+        return None
 
     def get(self, channel_id):
         return self.message_counter.get(channel_id, 0)

@@ -56,6 +56,8 @@ class QuestionManager:
                 self.cog.wcr_question_count = 0
 
         if not qd:
+            logger.warning(
+                f"[QuestionManager] Keine Frage generiert für '{area}'.")
             return
 
         frage_text = qd["frage"]

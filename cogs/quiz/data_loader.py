@@ -34,6 +34,9 @@ class DataLoader:
             if os.path.exists(questions_file):
                 with open(questions_file, 'r', encoding='utf-8') as f:
                     questions = json.load(f)
+                    logger.info(
+                        f"[DataLoader] Fragen geladen: {len(questions)} Fragen in {len(questions.keys())} Bereichen.")
+
                 self.questions_by_area = questions
                 logger.info(
                     f"[DataLoader] Questions loaded from '{questions_file}'.")
