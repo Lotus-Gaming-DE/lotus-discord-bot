@@ -222,50 +222,59 @@ class QuizCog(commands.Cog):
 
     async def repost_question(self, area: str, qinfo: dict):
         cfg = self.bot.quiz_data[area]
-        try:
-            channel = await self.bot.fetch_channel(cfg["channel_id"])
-        except Exception as e:
-            logger.warning(
-                f"[QuizCog] Channel für Area '{area}' konnte nicht geladen werden: {e}")
-            return
-        correct_answers = qinfo["answers"] if isinstance(
-            qinfo["answers"], list) else [qinfo["answers"]]
-
-        embed = discord.Embed(
-            title=f"Quiz für {area.upper()} (wiederhergestellt)",
-            description="(Frage nicht gespeichert)",
-            color=discord.Color.blue()
-        )
-        embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
-
-        view = AnswerButtonView(area, correct_answers, self)
+        channel = self.bot.get_channel(cfg["channel_id"])
+        state: QuestionStateManager = cfg["question_state"]
 
         try:
             msg = await channel.fetch_message(qinfo["message_id"])
+
+            # Wenn die Nachricht bereits geschlossen wurde (rotes Embed / Footer-Hinweis)
+            if msg.embeds and (
+                msg.embeds[0].color == discord.Color.red()
+                or "Zeit abgelaufen" in msg.embeds[0].footer.text
+                or "hat richtig geantwortet" in msg.embeds[0].footer.text
+            ):
+                logger.warning(
+                    f"[QuizCog] Frage in '{area}' wurde bereits beendet – wird nicht erneut angezeigt.")
+                state.clear_active_question(area)
+                return
+
+            correct_answers = qinfo["answers"] if isinstance(
+                qinfo["answers"], list) else [qinfo["answers"]]
+
+            embed = discord.Embed(
+                title=f"Quiz für {area.upper()} (wiederhergestellt)",
+                description="Frage nicht gespeichert",
+                color=discord.Color.blue()
+            )
+            embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
+
+            view = AnswerButtonView(
+                area=area,
+                correct_answers=correct_answers,
+                cog=self
+            )
+
             await msg.edit(embed=embed, view=view)
+
+            end_time = datetime.datetime.fromisoformat(qinfo["end_time"])
+            self.current_questions[area] = {
+                "message_id": msg.id,
+                "end_time": end_time,
+                "answers": correct_answers
+            }
+            self.answered_users[area].clear()
+
+            delay = max(
+                (end_time - datetime.datetime.utcnow()).total_seconds(), 0)
+            self.bot.loop.create_task(self._auto_close(area, delay))
+
             logger.info(
-                f"[QuizCog] Frage in {area} wurde erfolgreich wiederhergestellt.")
-        except discord.NotFound:
-            logger.warning(
-                f"[QuizCog] Ursprüngliche Nachricht in {area} wurde gelöscht – neue wird gesendet.")
-            msg = await channel.send(embed=embed, view=view)
-            qinfo["message_id"] = msg.id
-            self.state.set_active_question(area, qinfo)
+                f"[QuizCog] Frage in '{area}' wurde erfolgreich wiederhergestellt.")
         except Exception as e:
             logger.error(
-                f"[QuizCog] Fehler beim Wiederherstellen von {area}: {e}", exc_info=True)
-            return
-
-        end_time = datetime.datetime.fromisoformat(qinfo["end_time"])
-        self.current_questions[area] = {
-            "message_id": qinfo["message_id"],
-            "end_time": end_time,
-            "answers": correct_answers
-        }
-        self.answered_users[area].clear()
-
-        await asyncio.sleep((end_time - datetime.datetime.utcnow()).total_seconds())
-        await self.close_question(area, timed_out=True)
+                f"[QuizCog] Fehler beim Wiederherstellen von '{area}': {e}", exc_info=True)
+            state.clear_active_question(area)
 
     async def close_question(self, area: str, timed_out: bool = False, winner: discord.User = None, correct_answer: str = None):
         cfg = self.bot.quiz_data[area]
