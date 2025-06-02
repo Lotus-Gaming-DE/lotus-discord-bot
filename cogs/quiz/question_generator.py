@@ -6,9 +6,9 @@ logger = logging.getLogger(__name__)
 
 
 class QuestionGenerator:
-    def __init__(self, questions_by_area, asked_questions, dynamic_providers=None):
+    def __init__(self, questions_by_area, state_manager, dynamic_providers=None):
         self.questions_by_area = questions_by_area
-        self.asked_questions = asked_questions
+        self.state = state_manager
         self.dynamic_providers = dynamic_providers or {}
         logger.info("QuestionGenerator initialized.")
 
@@ -21,17 +21,17 @@ class QuestionGenerator:
 
         category = random.choice(list(area_questions.keys()))
         category_questions = area_questions[category]
-        asked = self.asked_questions.get(area, [])
+        asked = self.state.get_asked_questions(area)
         remaining = [q for q in category_questions if q["id"] not in asked]
 
         if not remaining:
-            self.asked_questions[area] = []
+            self.state.reset_asked_questions(area)
             remaining = category_questions.copy()
             logger.info(
                 f"[QuestionGenerator] All questions asked for area '{area}'. Resetting.")
 
         question_data = random.choice(remaining)
-        self.asked_questions.setdefault(area, []).append(question_data["id"])
+        self.state.mark_question_as_asked(area, question_data["id"])
 
         logger.info(
             f"[QuestionGenerator] Generated question for area '{area}', category '{category}': {question_data['frage']}"

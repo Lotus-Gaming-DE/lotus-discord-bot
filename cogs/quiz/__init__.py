@@ -9,10 +9,10 @@ from .data_loader import DataLoader
 from .question_generator import QuestionGenerator
 from .wcr_question_provider import WCRQuestionProvider
 from .slash_commands import quiz_group
+from .question_state import QuestionStateManager
 
 logger = logging.getLogger(__name__)
 
-# Guild‐ID aus der Umgebung
 SERVER_ID = os.getenv("server_id")
 if SERVER_ID is None:
     raise ValueError("Environment variable 'server_id' is not set.")
@@ -21,13 +21,14 @@ MAIN_SERVER_ID = int(SERVER_ID)
 
 async def setup(bot: discord.ext.commands.Bot):
     try:
-        # ─── DataLoader initialisieren ────────────────────────────────────
-        loader = DataLoader()
-        loader.set_language("de")
-        questions_by_area = loader.questions_by_area
-        asked_questions = loader.load_asked_questions()
+        # ─── DataLoader ───────────────────────────────────────────────────
+        loader = bot.data["quiz"]["data_loader"]
+        questions_by_area = bot.data["quiz"]["questions_by_area"]
 
-        # ─── WCR‐Provider anlegen ───────────────────────────────────────────
+        # ─── Persistent Question-State ────────────────────────────────────
+        state = QuestionStateManager("data/pers/quiz/question_state.json")
+
+        # ─── WCR‐Provider ─────────────────────────────────────────────────
         wcr_units = bot.data["wcr"]["units"]
         wcr_languages = bot.data["wcr"]["languages"]
         wcr_provider = WCRQuestionProvider(
@@ -36,14 +37,14 @@ async def setup(bot: discord.ext.commands.Bot):
             language="de"
         )
 
-        # ─── QuestionGenerator erzeugen ────────────────────────────────────
+        # ─── QuestionGenerator ────────────────────────────────────────────
         generator = QuestionGenerator(
             questions_by_area=questions_by_area,
-            asked_questions=asked_questions,
+            asked_questions=state.state["history"],  # gesamte Historie laden
             dynamic_providers={"wcr": wcr_provider}
         )
 
-        # ─── bot.quiz_data für alle konfigurierten Areas füllen ────────────
+        # ─── bot.quiz_data ───────────────────────────────────────────────
         quiz_data = {}
         env_areas = {
             "wcr": "quiz_c_wcr",
@@ -68,20 +69,18 @@ async def setup(bot: discord.ext.commands.Bot):
             quiz_data[area] = {
                 "channel_id": channel_id,
                 "data_loader": loader,
-                "question_generator": generator
+                "question_generator": generator,
+                "question_state": state  # neu
             }
 
-        # Setze bot.quiz_data VOR dem Hinzufügen des QuizCog
         bot.quiz_data = quiz_data
 
-        # ─── QuizCog laden (Scheduler, Frage‐Logik, Button/Modal etc.) ─────
+        # ─── QuizCog laden ───────────────────────────────────────────────
         await bot.add_cog(QuizCog(bot))
 
-        # ─── Slash‐Command‐Gruppe “/quiz” in den Command‐Tree einfügen ─────
+        # ─── Slash-Command-Group registrieren ─────────────────────────────
         bot.tree.add_command(
-            quiz_group,
-            guild=discord.Object(id=MAIN_SERVER_ID)
-        )
+            quiz_group, guild=discord.Object(id=MAIN_SERVER_ID))
 
         logger.info(
             "[QuizCog] Cog und Slash‐Command‐Gruppe erfolgreich registriert.")

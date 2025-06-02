@@ -1,15 +1,2 @@
-# Ignoriere die SQLite-Datenbank mit den Champion-Punkten
-data/champion/points.db
-
-# Falls zukünftige JSON-Dateien oder Logs nicht in Git sollen,
-# können wir hier weitere Pfade eintragen, z. B.:
-# data/quiz/scores.json
-# data/wcr/cache.json
-
-# Standard­Ignorier­regeln für Python-Projekte:
-__pycache__/
-*.py[cod]
-*.so
-*.log
-.venv/
-env/
+# Ignoriere persistente Daten (liegen im Railway Volume)
+data/pers/

@@ -1,5 +1,3 @@
-# cogs/quiz/slash_commands.py
-
 import os
 import logging
 import datetime
@@ -11,16 +9,15 @@ from discord.ext import commands
 
 from .cog import QuizCog
 from .question_generator import QuestionGenerator
+from .question_state import QuestionStateManager
 
 logger = logging.getLogger(__name__)
 
-# Die Guild‐ID als Ganzzahl aus der ENV lesen, damit wir die Befehle nur dort registrieren
 SERVER_ID = os.getenv("server_id")
 if not SERVER_ID:
     raise ValueError("Environment variable 'server_id' is not set.")
 GUILD_ID = int(SERVER_ID)
 
-# Slash‐Command‐Gruppe /quiz
 quiz_group = app_commands.Group(
     name="quiz",
     description="Quiz‐Befehle",
@@ -46,12 +43,8 @@ async def time(interaction: discord.Interaction, minutes: app_commands.Range[int
         return
 
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
-    logger.info(
-        f"[QuizCommands] /quiz time by {interaction.user} → {minutes}min")
     quiz_cog.time_window = datetime.timedelta(minutes=minutes)
-    await interaction.response.send_message(
-        f"⏱️ Zeitfenster auf **{minutes} Minuten** gesetzt.", ephemeral=True
-    )
+    await interaction.response.send_message(f"⏱️ Zeitfenster auf **{minutes} Minuten** gesetzt.", ephemeral=True)
 
 
 @quiz_group.command(name="language", description="Sprache (de / en) für dieses Quiz setzen")
@@ -64,30 +57,22 @@ async def language(interaction: discord.Interaction, lang: Literal["de", "en"]):
         return
 
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
-    logger.info(
-        f"[QuizCommands] /quiz language by {interaction.user} → {area} = {lang}")
-
     data_loader = quiz_cog.bot.data["quiz"]["data_loader"]
     data_loader.set_language(lang)
-
     questions_by_area = data_loader.questions_by_area
-    asked_questions = data_loader.load_asked_questions()
     this_area_dict = questions_by_area.get(area, {})
 
+    state = quiz_cog.bot.quiz_data[area]["question_state"]
     new_generator = QuestionGenerator(
         questions_by_area={area: this_area_dict},
-        asked_questions=asked_questions,
-        dynamic_providers=quiz_cog.bot.quiz_data[area]
-        .get("question_generator")
-        .dynamic_providers
+        state_manager=state,
+        dynamic_providers=...
     )
 
     quiz_cog.bot.quiz_data[area]["question_generator"] = new_generator
     quiz_cog.bot.quiz_data[area]["language"] = lang
 
-    await interaction.response.send_message(
-        f"🌐 Sprache für **{area}** auf **{lang}** gesetzt.", ephemeral=True
-    )
+    await interaction.response.send_message(f"🌐 Sprache für **{area}** auf **{lang}** gesetzt.", ephemeral=True)
 
 
 @quiz_group.command(name="ask", description="Sofort eine Quizfrage posten")
@@ -100,12 +85,8 @@ async def ask(interaction: discord.Interaction):
 
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
     end_time = datetime.datetime.utcnow() + quiz_cog.time_window
-    logger.info(f"[QuizCommands] /quiz ask by {interaction.user} in {area}")
     interaction.client.loop.create_task(quiz_cog.ask_question(area, end_time))
-
-    await interaction.response.send_message(
-        "✅ Deine Frage wurde erstellt und läuft bis zum Ende des Zeitfensters.", ephemeral=False
-    )
+    await interaction.response.send_message("✅ Die Frage wurde erstellt.", ephemeral=False)
 
 
 @quiz_group.command(name="answer", description="Zeige die richtige Antwort und schließe die Frage")
@@ -130,11 +111,8 @@ async def answer(interaction: discord.Interaction):
         embed.color = discord.Color.red()
 
         answers = question_data["answers"]
-        if isinstance(answers, (list, set)):
-            answer_text = ", ".join(str(a) for a in answers)
-        else:
-            answer_text = str(answers)
-
+        answer_text = ", ".join(str(a) for a in answers) if isinstance(
+            answers, (list, set)) else str(answers)
         embed.add_field(name="Richtige Antwort",
                         value=answer_text, inline=False)
         embed.set_footer(text="✋ Frage durch Mod beendet.")
@@ -143,7 +121,7 @@ async def answer(interaction: discord.Interaction):
         logger.warning(f"[QuizCog] Fehler beim Mod-Beenden der Frage: {e}")
 
     quiz_cog.current_questions.pop(area, None)
-    await interaction.response.send_message("✅ Die Frage wurde per Mod-Befehl beendet.", ephemeral=True)
+    await interaction.response.send_message("✅ Die Frage wurde beendet.", ephemeral=True)
 
 
 @quiz_group.command(name="status", description="Status (Restzeit & Nachrichten‐Zähler) der aktuellen Frage anzeigen")
@@ -161,8 +139,7 @@ async def status(interaction: discord.Interaction):
         remaining = int(
             (question_data["end_time"] - datetime.datetime.utcnow()).total_seconds())
         await interaction.response.send_message(
-            f"📊 Aktive Frage: noch **{remaining}s**. Nachrichten seit Start: **{count}**.",
-            ephemeral=True
+            f"📊 Aktive Frage: noch **{remaining}s**. Nachrichten seit Start: **{count}**.", ephemeral=True
         )
     else:
         await interaction.response.send_message("📊 Aktuell ist keine Frage aktiv.", ephemeral=True)
@@ -178,34 +155,22 @@ async def disable(interaction: discord.Interaction):
 
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
     quiz_cog.bot.quiz_data.pop(area, None)
-    logger.info(
-        f"[QuizCommands] /quiz disable by {interaction.user} in {area}")
-
     await interaction.response.send_message(f"🚫 Quiz für **{area}** deaktiviert.", ephemeral=False)
 
 
 @quiz_group.command(name="enable", description="Quiz in diesem Channel wieder aktivieren")
-@app_commands.describe(
-    area_name="Name der Area (z. B. wcr, d4, ptcgp)",
-    lang="de oder en"
-)
+@app_commands.describe(area_name="Name der Area (z. B. wcr, d4, ptcgp)", lang="de oder en")
 @app_commands.default_permissions(manage_guild=True)
-async def enable(
-    interaction: discord.Interaction,
-    area_name: str,
-    lang: Literal["de", "en"] = "de"
-):
+async def enable(interaction: discord.Interaction, area_name: str, lang: Literal["de", "en"] = "de"):
     area = area_name.lower()
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
-    logger.info(
-        f"[QuizCommands] /quiz enable by {interaction.user} → {area} ({lang})")
 
     q_loader = quiz_cog.bot.data["quiz"]["data_loader"]
+    q_loader.set_language(lang)
     q_generator = QuestionGenerator(
-        questions_by_area=quiz_cog.bot.data["quiz"]["questions_by_area"],
-        asked_questions=q_loader.load_asked_questions(),
+        questions_by_area={area: q_loader.questions_by_area.get(area, {})},
         dynamic_providers={
-            "wcr": quiz_cog.bot.quiz_data.get("wcr", {}).get("question_generator").dynamic_providers.get("wcr")
+            "wcr": quiz_cog.bot.quiz_data.get("wcr", {}).get("question_generator", {}).dynamic_providers.get("wcr")
             if quiz_cog.bot.quiz_data.get("wcr") else None
         }
     )
@@ -219,6 +184,19 @@ async def enable(
 
     interaction.client.loop.create_task(quiz_cog.quiz_scheduler(area))
     await interaction.response.send_message(f"✅ Quiz für **{area}** aktiviert.", ephemeral=False)
+
+
+@quiz_group.command(name="reset", description="Setzt die Frage-Historie für diesen Channel zurück")
+@app_commands.default_permissions(manage_guild=True)
+async def reset(interaction: discord.Interaction):
+    area = get_area_by_channel(interaction.client, interaction.channel.id)
+    if not area:
+        await interaction.response.send_message("❌ Kein Quiz in diesem Channel.", ephemeral=True)
+        return
+
+    state = interaction.client.quiz_data[area]["question_state"]
+    state.reset_asked_questions(area)
+    await interaction.response.send_message(f"♻️ Frageverlauf für **{area}** wurde zurückgesetzt.", ephemeral=True)
 
 
 @quiz_group.error
