@@ -65,7 +65,8 @@ class MyBot(commands.Bot):
                 "pictures": load_wcr_pictures()
             },
             "quiz": {
-                "data_loader": self.shared_data_loader
+                "data_loader": self.shared_data_loader,
+                "questions_by_area": self.shared_data_loader.questions_by_area
             }
         }
         logger.info(

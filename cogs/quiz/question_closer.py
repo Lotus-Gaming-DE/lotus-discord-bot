@@ -1,5 +1,3 @@
-# cogs/quiz/question_closer.py
-
 import logging
 import discord
 
@@ -33,11 +31,10 @@ class QuestionCloser:
             await msg.edit(embed=embed, view=None)
 
             logger.info(f"[Closer] Frage in '{area}' geschlossen: {footer}")
-
         except Exception as e:
             logger.warning(
-                f"[Closer] Fehler beim Schließen der Frage in '{area}' – Nachricht ggf. gelöscht? Fehler: {e}", exc_info=True)
+                f"[Closer] Fehler beim Schließen der Frage in '{area}': {e}", exc_info=True)
 
         self.bot.quiz_cog.current_questions.pop(area, None)
         self.state.clear_active_question(area)
-        self.bot.quiz_cog.message_tracker.set_initialized(cfg["channel_id"])
+        self.bot.quiz_cog.tracker.set_initialized(cfg["channel_id"])
