@@ -1,5 +1,3 @@
-# cogs/quiz/cog.py
-
 import logging
 import random
 import asyncio
@@ -36,19 +34,21 @@ class AnswerModal(Modal, title="Antwort eingeben"):
             )
             return
 
-        # Prüfe, ob Antwort korrekt ist (case-insensitive)
+        # Prüfen, ob Antwort korrekt (case‐insensitive)
         matched = next(
             (a for a in self.correct_answers if a.lower() == eingabe.lower()), None
         )
 
         if matched is not None:
+            # Punktestand updaten
             scores = self.data_loader.load_scores()
             scores[str(user_id)] = scores.get(str(user_id), 0) + 1
             self.data_loader.save_scores(scores)
+
             await interaction.response.send_message(
                 "🏆 Richtig! Du erhältst einen Punkt.", ephemeral=True
             )
-            # Frage schließen und Gewinner + richtige Antwort übergeben
+            # Frage schließen (mit Winner und korrekter Antwort)
             await self.cog.close_question(
                 area=self.area,
                 timed_out=False,
@@ -93,59 +93,57 @@ class AnswerButtonView(View):
 
 
 class QuizCog(commands.Cog):
-    """Core quiz logic: scheduling, asking and checking answers."""
+    """Core‐Quiz‐Logic: Scheduling, Fragen posten, Antworten verarbeiten"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-        # Merkt sich aktuell laufende Fragen pro Area
+        # Aktuell laufende Fragen pro Area
         self.current_questions: dict[str, dict] = {}
-        # Wer bereits bei der laufenden Frage geantwortet hat (pro Area)
+        # Welche Nutzer bereits geantwortet haben (pro Area)
         self.answered_users: dict[str, set[int]] = defaultdict(set)
-        # Zähler echter User-Nachrichten pro Channel (live hochgezählt in on_message)
+        # Zähler echter User‐Nachrichten pro Channel
         self.message_counter: dict[int, int] = defaultdict(int)
-        # Merkt, ob Channel schon initialisiert wurde (History geprüft)
+        # Haben wir in diesem Channel bereits die History geprüft?
         self.channel_initialized: dict[int, bool] = defaultdict(bool)
-        # Wenn <10 Nachrichten, merken wir uns hier, dass wir später freigeben müssen
+        # Wenn <10 Nachrichten, merken wir uns (area, end_time), bis es 10 werden
         self.awaiting_activity: dict[int, tuple[str, datetime.datetime]] = {}
 
-        # Nur für WCR: wie viele dynamische Fragen max pro Lauf
+        # Für WCR‐dynamische Fragen: maximal 5 pro Zyklus
         self.max_wcr_dynamic_questions = 5
         self.wcr_question_count = 0
 
-        # Zeitfenster für Quiz (z.B. 15 Minuten)
+        # Standard‐Zeitfenster: 15 Minuten
         self.time_window = datetime.timedelta(minutes=15)
 
-        # Scheduler für jede konfigurierte Area starten
+        # Für jede konfigurierte Area sofort den Scheduler‐Loop starten
         for area in self.bot.quiz_data.keys():
             self.bot.loop.create_task(self.quiz_scheduler(area))
 
-        # Einmalig History prüfen, Counter setzen
+        # Einmalig: Nachrichtenzähler initialisieren (sobald Bot ready)
         self.bot.loop.create_task(self._initialize_message_counters())
 
     async def _initialize_message_counters(self):
         """
-        Initialisiert Nachrichtenzähler für alle Areas, indem
-        die letzten 20 Nachrichten durchsucht werden und
-        echte User-Nachrichten seit der letzten Quizfrage gezählt werden.
-        Falls keine alte Frage gefunden wird, setzen wir Counter = 10,
-        damit sofort eine neue Frage möglich ist.
+        Wir prüfen die letzten 20 Nachrichten in jedem Quiz‐Channel,
+        zählen die User‐Nachrichten seit der letzten Quizfrage und
+        setzen dann self.message_counter dort.
+        Wenn keine alte Frage gefunden → Counter=10 (sofort posten).
         """
         await self.bot.wait_until_ready()
 
         for area, cfg in self.bot.quiz_data.items():
             channel_id = cfg["channel_id"]
-
             try:
                 channel = await self.bot.fetch_channel(channel_id)
                 if not channel:
                     logger.warning(
-                        f"[QuizCog] Channel-ID {channel_id} für Area '{area}' nicht gefunden."
+                        f"[QuizCog] Channel‐ID {channel_id} für Area '{area}' nicht gefunden."
                     )
                     continue
             except Exception as e:
                 logger.warning(
-                    f"[QuizCog] Channel-ID {channel_id} für Area '{area}' nicht gefunden: {e}"
+                    f"[QuizCog] Channel‐ID {channel_id} für Area '{area}' nicht gefunden: {e}"
                 )
                 continue
 
@@ -154,7 +152,7 @@ class QuizCog(commands.Cog):
                 async for msg in channel.history(limit=20, oldest_first=False):
                     messages.append(msg)
 
-                # Suche nach der letzten Quizfrage (Embed-Titel "Quiz für AREA")
+                # Suche nach der letzten Quizfrage (Embed‐Titel „Quiz für AREA“)
                 quiz_index = next(
                     (
                         i
@@ -167,7 +165,7 @@ class QuizCog(commands.Cog):
                 )
 
                 if quiz_index is not None:
-                    # Count echte User-Messages nach letzter Frage
+                    # Echte User‐Nachrichten nach dieser Embed
                     real_messages = [
                         msg for msg in messages[:quiz_index] if not msg.author.bot
                     ]
@@ -178,7 +176,7 @@ class QuizCog(commands.Cog):
                         f"[QuizCog] Nachrichtenzähler für {channel.name} gesetzt: {count} (nach letzter Quizfrage)"
                     )
                 else:
-                    # Keine Quizfrage gefunden → Counter = 10 (sofort aktiv genug)
+                    # Keine Quizfrage gefunden → sofort aktiv (Counter=10)
                     self.message_counter[channel.id] = 10
                     self.channel_initialized[channel.id] = True
                     logger.info(
@@ -194,7 +192,7 @@ class QuizCog(commands.Cog):
                     exc_info=True,
                 )
 
-            # Entferne abgelaufene Fragen (falls vorhanden)
+            # Falls beim Start noch eine abgelaufene Frage existiert, entfernen
             question = self.current_questions.get(area)
             if question and datetime.datetime.utcnow() > question["end_time"]:
                 logger.info(
@@ -209,10 +207,13 @@ class QuizCog(commands.Cog):
 
     async def quiz_scheduler(self, area: str):
         """
-        Startet für jede Area ein sich wiederholendes Zeitfenster:
-        - Berechnet ein Zeitfenster (jetzt bis jetzt+time_window)
-        - Wählt innerhalb der ersten Hälfte einen zufälligen Zeitpunkt, um Fragen‐Logik aufzurufen
-        - Wartet bis zum Ende des Fensters, räumt auf und startet Schleife neu
+        Für jede Area läuft fortlaufend:
+         1) Neues Zeitfenster [jetzt, jetzt + self.time_window]
+         2) Wähle zufälligen Zeitpunkt in erster Hälfte
+         3) Warte bis dahin + leichte Zufallsverzögerung
+         4) Rufe prepare_question(area, window_end) auf
+         5) Warte bis window_end, rufe close_question wenn nötig
+         6) Neu starten
         """
         await self.bot.wait_until_ready()
         while True:
@@ -224,7 +225,7 @@ class QuizCog(commands.Cog):
                 f"[QuizCog] Time window für '{area}' bis {window_end.strftime('%H:%M:%S')}"
             )
 
-            # Zufälliger Zeitpunkt in der ersten Hälfte des Fensters
+            # Zufälliger Zeitpunkt in erster Hälfte
             latest = window_start + (self.time_window / 2)
             delta = (latest - now).total_seconds()
             next_time = (
@@ -233,21 +234,20 @@ class QuizCog(commands.Cog):
                 else now
             )
 
-            # Kurze zusätzliche Zufallsverzögerung (bis zu Hälfte des Fensters)
+            # Zusätzliche Zufallsverzögerung (bis zu Hälfte des Fensters)
             delay = random.uniform(0, (self.time_window.total_seconds() / 2))
             actual_post_time = next_time + datetime.timedelta(seconds=delay)
 
-            # **Logging des genauen Frage‐Zeitpunkts**
             logger.info(
                 f"[QuizCog] Für '{area}' geplante Frage ungefähr um {actual_post_time.strftime('%H:%M:%S')}"
             )
 
-            # Bis zum geplanten Zeitpunkt warten
+            # Warte bis zum ersten Zeitpunkt
             await asyncio.sleep(max((next_time - now).total_seconds(), 0))
-            # Dann noch Verzögerung abwarten
+            # Warte dann noch die „delay“
             await asyncio.sleep(delay)
 
-            # Versuche, eine Frage zu stellen
+            # Versuche, Frage zu stellen
             await self.prepare_question(area, window_end)
 
             # Warte bis Ende des Fensters
@@ -256,18 +256,16 @@ class QuizCog(commands.Cog):
             if seconds_to_end > 0:
                 await asyncio.sleep(seconds_to_end)
 
-            # Nach Ende des Fensters: aufräumen
+            # Nach Ende: ggf. offene Frage schließen
             cid = self.bot.quiz_data[area]["channel_id"]
             self.awaiting_activity.pop(cid, None)
-
             if area in self.current_questions:
                 await self.close_question(area, timed_out=True)
 
     async def prepare_question(self, area: str, end_time: datetime.datetime):
         """
-        Prüft, ob im entsprechenden Channel genügend Nachrichten
-        (>=10) seit letzter Frage gepostet wurden. Wenn ja, stellt
-        ask_question; andernfalls merkt sich, dass gewartet werden muss.
+        Wenn im Channel ≥ 10 User‐Nachrichten seit letzter Frage, 
+        wird ask_question aufgerufen. Sonst merken wir uns „awaiting_activity“.
         """
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
@@ -276,39 +274,39 @@ class QuizCog(commands.Cog):
                 f"[QuizCog] Channel für Area '{area}' nicht gefunden.")
             return
 
-        # Wenn bereits eine Frage aktiv, nichts tun
+        # Wenn bereits aktive Frage, abbrechen
         if area in self.current_questions:
             logger.warning(f"[QuizCog] Frage für '{area}' läuft bereits.")
             return
 
         cid = channel.id
 
-        # Erster Start (nach Init): einfach aktiv genug, ohne Aktivitätscheck
+        # Erster Start: skip Activity‐Check
         if not self.channel_initialized[cid]:
             self.channel_initialized[cid] = True
             logger.info(
-                f"[QuizCog] Erster Start in {channel.name}, überspringe Aktivitätsprüfung."
-            )
-        # Falls Counter <10, merken und verschieben
+                f"[QuizCog] Erster Start in {channel.name}, überspringe Aktivitätsprüfung.")
+        # Wenn <10 Nachrichten, auf später verschieben
         elif self.message_counter[cid] < 10:
             logger.info(
-                f"[QuizCog] Zu wenig Aktivität in {channel.name} ({self.message_counter[cid]} Nachrichten), verschiebe Frage.")
+                f"[QuizCog] Zu wenig Aktivität in {channel.name} ({self.message_counter[cid]} Nachrichten), verschiebe Frage."
+            )
             self.awaiting_activity[cid] = (area, end_time)
             return
 
-        # Wenn genügend Aktivität, neue Frage stellen
+        # Ansonsten: neue Frage
         await self.ask_question(area, end_time)
 
     async def ask_question(self, area: str, end_time: datetime.datetime):
         """
-        Sendet die Quizfrage (dynamisch für WCR oder aus JSON)
-        und startet Timer, damit später close_question aufgerufen wird.
+        Baut das Embed + Button‐View, postet es und speichert qinfo. 
+        Dann wartet es bis end_time und ruft close_question(area, timed_out=True).
         """
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
         qg = cfg["question_generator"]
 
-        # Dynamische WCR-Fragen begrenzen
+        # Dynamische WCR‐Fragen nur bis max_wcr_dynamic_questions
         if area == "wcr" and self.wcr_question_count < self.max_wcr_dynamic_questions:
             qd = qg.generate_dynamic_question("wcr")
             self.wcr_question_count += 1
@@ -343,22 +341,18 @@ class QuizCog(commands.Cog):
 
         sent_msg = await channel.send(embed=embed, view=view)
 
-        # Frage speichern: message_id, Endzeitpunkt und korrekte Antworten
+        # Speichern: message_id, Endzeit, Antworten
         self.current_questions[area] = {
             "message_id": sent_msg.id,
             "end_time": end_time,
             "answers": correct_answers
         }
-        # Zurücksetzen: wer schon geantwortet hat
         self.answered_users[area].clear()
-        # Counter im Channel zurücksetzen (wir zählen erst wieder ab hier neu)
         self.message_counter[channel.id] = 0
-        # Falls bis geradehin eine verspätete Freigabe geplant war, aufräumen
         self.awaiting_activity.pop(channel.id, None)
 
         logger.info(f"[QuizCog] Frage gesendet in '{area}': {frage_text}")
 
-        # Timer bis close_question (Timeout)
         now = datetime.datetime.utcnow()
         verbleibende = (end_time - now).total_seconds()
         await asyncio.sleep(max(verbleibende, 0))
@@ -372,9 +366,10 @@ class QuizCog(commands.Cog):
         correct_answer: str = None
     ):
         """
-        Schließt die aktuell laufende Frage (beim Timeout oder korrekter Antwort).
-        Wenn ein Gewinner existiert, wird sein Name angezeigt.
-        Die korrekte(n) Antwort(en) werden im Embed unter einem eigenen Field ergänzt.
+        Schließt die laufende Frage: 
+        • Rot färben, Footer aktualisieren, Winner‐Name einfügen 
+        • Richtige Antwort als eigenes Field hinzufügen 
+        • Buttons/View entfernen
         """
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
@@ -385,66 +380,64 @@ class QuizCog(commands.Cog):
         try:
             msg = await channel.fetch_message(qinfo["message_id"])
             embed = msg.embeds[0]
-
-            # Roter Rahmen, um abzuschließen
             embed.color = discord.Color.red()
 
-            # Entferne Footer-Text "Klicke auf 'Antworten'" und Buttons
             footer_text = ""
             if timed_out:
                 footer_text = "⏰ Zeit abgelaufen!"
             else:
                 footer_text = "✅ Richtig beantwortet!"
-
             if winner:
                 footer_text += f" • {winner.display_name} hat gewonnen."
             embed.set_footer(text=footer_text)
 
-            # Füge Bereich "Richtige Antwort" hinzu
+            # „Richtige Antwort“‐Field ergänzen
             if timed_out:
-                # Bei Timeout zeigen wir alle möglichen Antworten
+                # Alle möglichen Antworten anzeigen
                 antwort_text = ", ".join(qinfo["answers"])
                 embed.add_field(name="Richtige Antwort",
                                 value=antwort_text, inline=False)
             else:
-                # Gewinner existiert: zeige nur die eine richtige Antwort
+                # Nur die eine korrekte Antwort
                 embed.add_field(name="Richtige Antwort",
                                 value=correct_answer, inline=False)
 
-            # Bearbeite Nachricht: entferne View (Buttons)
+            # Buttons/View entfernen und Embed updaten
             await msg.edit(embed=embed, view=None)
         except Exception as e:
             logger.warning(
-                f"[QuizCog] Beim Schließen der Frage für '{area}' ist ein Fehler aufgetreten: {e}"
-            )
+                f"[QuizCog] Fehler beim Schließen der Frage für '{area}': {e}")
 
-        # Channel darf beim nächsten Fenster erneut Activity-Check überspringen
+        # Nächstes Fenster wieder „neu initialisiert“
         self.channel_initialized[cfg["channel_id"]] = False
 
         if timed_out:
             logger.info(
-                f"[QuizCog] Frage in '{area}' (Timeout) beendet; richtige Antwort: {', '.join(qinfo['answers'])}")
+                f"[QuizCog] Frage in '{area}' (Timeout) beendet; richtige Antwort: {', '.join(qinfo['answers'])}"
+            )
         else:
             logger.info(
-                f"[QuizCog] Frage in '{area}' richtig beantwortet von {winner.display_name}: {correct_answer}")
+                f"[QuizCog] Frage in '{area}' richtig beantwortet von {winner.display_name}: {correct_answer}"
+            )
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """
-        Zählt echte User-Nachrichten pro Channel (live increment)
-        und überprüft nur Interrupts für verspätete Freigaben.
-        Antworten erfolgen ausschließlich über die Buttons/Modals.
+        Erhöht den Live‐Nachrichten‐Zähler; 
+        wenn wir zuvor <10 Nachrichten hatten und jetzt >=10, 
+        rufen wir ask_question(…) auf.
+        Antworten selbst laufen über Buttons/Modals (nicht hier).
         """
         if message.author.bot:
             return
 
         cid = message.channel.id
-        # Live-Zähler: Erhöhe bei jeder User-Nachricht
+        # Live‐Zähler hochzählen
         self.message_counter[cid] += 1
         logger.debug(
             f"[QuizCog] Counter für {message.channel.name}: {self.message_counter[cid]}")
 
-        # Verspätete Freigabe: Wenn zuvor <10 Nachrichten & jetzt ≥10
+        # Wenn gerade „awaiting_activity“ aktiv war und nun ≥10 Nachrichten:
         if cid in self.awaiting_activity and self.message_counter[cid] >= 10:
             area, end_time = self.awaiting_activity[cid]
             await self.ask_question(area, end_time)
