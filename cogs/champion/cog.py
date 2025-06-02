@@ -228,9 +228,15 @@ class ChampionCog(commands.Cog):
             logger.warning("[ChampionCog] Guild nicht gefunden.")
             return
 
-        member = guild.get_member(int(user_id_str))
-        if not member:
-            logger.info(f"[ChampionCog] Member {user_id_str} nicht im Server.")
+        try:
+            member = await guild.fetch_member(int(user_id_str))
+        except discord.NotFound:
+            logger.info(
+                f"[ChampionCog] Member {user_id_str} nicht gefunden (vermutlich nicht mehr im Server).")
+            return
+        except discord.HTTPException as e:
+            logger.error(
+                f"[ChampionCog] Fehler beim Laden von Member {user_id_str}: {e}", exc_info=True)
             return
 
         # Zielrolle ermitteln
