@@ -1,5 +1,3 @@
-# cogs/quiz/message_tracker.py
-
 import logging
 import discord
 
@@ -25,9 +23,11 @@ class MessageTracker:
                     continue
 
                 messages = [msg async for msg in channel.history(limit=20)]
-                quiz_index = next((i for i, msg in enumerate(messages)
-                                   if msg.author.id == self.bot.user.id and msg.embeds and
-                                   msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")), None)
+                quiz_index = next(
+                    (i for i, msg in enumerate(messages)
+                     if msg.author.id == self.bot.user.id and msg.embeds and
+                     msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")), None
+                )
 
                 if quiz_index is not None:
                     count = len(
@@ -38,10 +38,12 @@ class MessageTracker:
 
                 self.channel_initialized[channel.id] = True
                 logger.info(
-                    f"[Tracker] Nachrichtenzähler für '{area}' gesetzt: {self.message_counter[channel.id]}")
+                    f"[Tracker] Nachrichtenzähler für '{area}' initialisiert mit {self.message_counter[channel.id]}."
+                )
             except Exception as e:
                 logger.error(
-                    f"[Tracker] Fehler bei der Initialisierung von '{area}': {e}", exc_info=True)
+                    f"[Tracker] Fehler bei Initialisierung für Area '{area}': {e}", exc_info=True
+                )
 
     def register_message(self, message: discord.Message) -> str | None:
         if message.author.bot:
@@ -54,16 +56,19 @@ class MessageTracker:
         area = self._find_area_for_channel(cid)
         if area:
             logger.info(
-                f"[Tracker] Nachrichtenzähler für '{area}' (Channel {cid}): {before} → {after}")
+                f"[Tracker] Nachrichtenzähler für '{area}' (Channel {cid}): {before} → {after}"
+            )
 
         if cid in self.bot.quiz_cog.awaiting_activity and after >= 10:
             if area is None:
                 area, _ = self.bot.quiz_cog.awaiting_activity[cid]
             logger.info(
-                f"[Tracker] Aktivität erreicht in '{area}' ({after}/10) – Frage wird gestellt.")
+                f"[Tracker] Aktivität erreicht in '{area}' ({after}/10) – Frage wird gestellt."
+            )
             self.bot.loop.create_task(
                 self.bot.quiz_cog.manager.ask_question(
-                    area, self.bot.quiz_cog.awaiting_activity[cid][1])
+                    area, self.bot.quiz_cog.awaiting_activity[cid][1]
+                )
             )
 
         return area

@@ -28,13 +28,15 @@ class QuestionManager:
 
         cid = channel.id
 
-        if not self.cog.channel_initialized[cid]:
-            self.cog.channel_initialized[cid] = True
+        if not self.cog.tracker.is_initialized(cid):
+            self.cog.tracker.set_initialized(cid)
             logger.info(
                 f"[QuestionManager] Channel '{channel.name}' ({area}) initialisiert – überspringe Aktivitätsprüfung.")
-        elif self.cog.message_counter[cid] < 10:
+
+        elif self.cog.tracker.get(cid) < 10:
             logger.info(
-                f"[QuestionManager] Nachrichtenzähler für '{area}': {self.cog.message_counter[cid]}/10 – warte auf Aktivität.")
+                f"[QuestionManager] Nachrichtenzähler für '{area}': {self.cog.tracker.get(cid)}/10 – warte auf Aktivität.")
+
             self.cog.awaiting_activity[cid] = (area, end_time)
             return
 
@@ -90,7 +92,7 @@ class QuestionManager:
             "answers": correct_answers
         }
         self.cog.answered_users[area].clear()
-        self.cog.message_counter[channel.id] = 0
+        self.cog.tracker.reset(channel.id)
         self.cog.awaiting_activity.pop(channel.id, None)
         self.cog.state.set_active_question(area, qinfo)
 

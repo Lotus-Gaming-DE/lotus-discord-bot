@@ -78,12 +78,13 @@ async def setup(bot: discord.ext.commands.Bot):
         # ─── QuizCog laden ───────────────────────────────────────────────
         await bot.add_cog(QuizCog(bot))
 
-        # ─── Tracker initialisieren ──────────────────────────────────────
-        await bot.quiz_cog.tracker.initialize()
-
         # ─── Slash-Command-Group registrieren ─────────────────────────────
         bot.tree.add_command(
             quiz_group, guild=discord.Object(id=MAIN_SERVER_ID))
+
+        # ─── MessageTracker initialisieren ────────────────────────────────
+        tracker: MessageTracker = bot.get_cog("QuizCog").tracker
+        await tracker.initialize()
 
         logger.info(
             "[QuizCog] Cog und Slash‐Command‐Gruppe erfolgreich registriert.")
