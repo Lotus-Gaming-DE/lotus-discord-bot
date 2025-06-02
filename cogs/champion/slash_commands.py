@@ -1,3 +1,5 @@
+# cogs/champion/slash_commands.py
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -7,9 +9,12 @@ import logging
 logger = logging.getLogger(__name__)  # cogs.champion.slash_commands
 
 # 1) Erstelle die Command-Gruppe /champion
+SERVER_ID = int(os.getenv("server_id"))
 champion_group = app_commands.Group(
     name="champion",
-    description="Verwalte Champion-Punkte"
+    description="Verwalte Champion-Punkte",
+    # <- Dadurch weiß Discord sofort, dass alle Subcommands hierhin gehören
+    guild_ids=[SERVER_ID]
 )
 
 
@@ -235,15 +240,3 @@ class ChampionCommands(commands.Cog):
         await interaction.response.send_message(
             f"🏆 **Top {offset+1}–{offset+len(top)}**:\n{text}"
         )
-
-
-async def setup(bot: commands.Bot):
-    from .cog import ChampionCog
-    cog = bot.get_cog("ChampionCog")
-    if cog is None:
-        cog = ChampionCog(bot)
-        await bot.add_cog(cog)
-
-    # 2) Registriere die ChampionCommands-Cog, damit die Gruppe /champion bekannt ist
-    await bot.add_cog(ChampionCommands(bot))
-    logger.info("[ChampionCommands] Slash-Befehle geladen und registriert.")
