@@ -109,10 +109,34 @@ async def language(
 
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
     logger.info(
-        f"[QuizCommands] /quiz language by {interaction.user} → {area} = {lang}")
-    # Die Fragegenerator‐Einstellungen aktualisieren
+        f"[QuizCommands] /quiz language by {interaction.user} → {area} = {lang}"
+    )
+
+    # === HIER: Nur DataLoader updaten, keine eigene JSON‐Logik mehr ===
+    data_loader: DataLoader = quiz_cog.bot.data["quiz"]["data_loader"]
+    data_loader.set_language(lang)  # intern lädt questions_{lang}.json
+
+    # Jetzt liegen in data_loader.questions_by_area alle relevanten Fragen
+    questions_by_area = data_loader.questions_by_area
+    asked_questions = data_loader.load_asked_questions()
+
+    # Extrahiere nur 'area'
+    this_area_dict = questions_by_area.get(area, {})
+
+    # Baue neuen QuestionGenerator
+    new_generator = QuestionGenerator(
+        questions_by_area={area: this_area_dict},
+        asked_questions=asked_questions,
+        dynamic_providers=quiz_cog.bot.quiz_data[area]
+        .get("question_generator")
+        .dynamic_providers
+    )
+
+    # Speichere neuen Generator
+    quiz_cog.bot.quiz_data[area]["question_generator"] = new_generator
     quiz_cog.bot.quiz_data[area]["language"] = lang
-    quiz_cog.bot.quiz_data[area]["question_generator"].language = lang
+
+    # Antwort an den Mod
     await interaction.response.send_message(
         f"🌐 Sprache für **{area}** auf **{lang}** gesetzt.", ephemeral=True
     )
