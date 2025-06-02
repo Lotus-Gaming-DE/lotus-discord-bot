@@ -337,7 +337,8 @@ class QuizCog(commands.Cog):
             return
 
         frage_text = qd["frage"]
-        correct_answers = set(qd["antwort"])
+        # ── HIER wurde geändert: aus set(qd["antwort"]) → {qd["antwort"]}
+        correct_answers = {qd["antwort"]}
         data_loader = cfg["data_loader"]
 
         embed = discord.Embed(
@@ -419,7 +420,7 @@ class QuizCog(commands.Cog):
                 # Fall: Timeout oder Mod-Befehl → zeige alle möglichen Antworten
                 # z. B. {"2023"} oder {"Kyovashad"}
                 answers_set = qinfo["answers"]
-                # Ergibt z. B. "2023" oder "Kyovashad"
+                # Ergibt "2023" oder "Kyovashad"
                 ans_text = ", ".join(answers_set)
             embed.add_field(name="Richtige Antwort",
                             value=ans_text, inline=False)
