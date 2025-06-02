@@ -31,11 +31,11 @@ class QuizCog(commands.Cog):
 
         self.state = QuestionStateManager("data/pers/quiz/question_state.json")
 
-        for area in self.bot.quiz_data.keys():
-            self.bot.loop.create_task(self.quiz_scheduler(area))
-
         self.bot.loop.create_task(self._initialize_message_counters())
         self._restore_active_questions()
+
+        for area in self.bot.quiz_data.keys():
+            self.bot.loop.create_task(self.quiz_scheduler(area))
 
     def _restore_active_questions(self):
         for area, cfg in self.bot.quiz_data.items():
@@ -62,37 +62,34 @@ class QuizCog(commands.Cog):
 
     async def _initialize_message_counters(self):
         await self.bot.wait_until_ready()
-
         for area, cfg in self.bot.quiz_data.items():
             channel_id = cfg["channel_id"]
             try:
                 channel = await self.bot.fetch_channel(channel_id)
-            except Exception as e:
-                logger.warning(
-                    f"[QuizCog] Channel-ID {channel_id} für '{area}' nicht gefunden: {e}")
-                continue
+                if not channel:
+                    logger.warning(
+                        f"[QuizCog] Channel {channel_id} nicht gefunden.")
+                    continue
 
-            try:
-                messages = []
-                async for msg in channel.history(limit=20):
-                    messages.append(msg)
-
+                messages = [msg async for msg in channel.history(limit=20)]
                 quiz_index = next((i for i, msg in enumerate(messages)
-                                   if msg.author.id == self.bot.user.id and msg.embeds
-                                   and msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")
-                                   ), None)
+                                   if msg.author.id == self.bot.user.id and msg.embeds and
+                                   msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")), None)
 
                 if quiz_index is not None:
-                    real_messages = [
-                        m for m in messages[:quiz_index] if not m.author.bot]
-                    self.message_counter[channel.id] = len(real_messages)
+                    count = len(
+                        [m for m in messages[:quiz_index] if not m.author.bot])
+                    self.message_counter[channel.id] = count
                 else:
                     self.message_counter[channel.id] = 10
 
                 self.channel_initialized[channel.id] = True
+                logger.info(
+                    f"[QuizCog] Nachrichtenzähler für '{area}' gesetzt: {self.message_counter[channel.id]}")
+
             except Exception as e:
                 logger.error(
-                    f"[QuizCog] Fehler beim Initialisieren von {channel.name}: {e}", exc_info=True)
+                    f"[QuizCog] Fehler bei der Initialisierung von '{area}': {e}", exc_info=True)
 
     async def quiz_scheduler(self, area: str):
         await self.bot.wait_until_ready()
@@ -112,10 +109,7 @@ class QuizCog(commands.Cog):
             post_time = next_time + datetime.timedelta(seconds=delay)
 
             logger.info(
-                f"[QuizCog] Neues Zeitfenster für '{area}': "
-                f"{window_start:%H:%M:%S} bis {window_end:%H:%M:%S} – "
-                f"Frage geplant für ca. {post_time:%H:%M:%S}"
-            )
+                f"[QuizCog] Neues Zeitfenster für '{area}': {window_start:%H:%M:%S} bis {window_end:%H:%M:%S} – Frage geplant für ca. {post_time:%H:%M:%S}")
 
             await asyncio.sleep((next_time - now).total_seconds())
             await asyncio.sleep(delay)
@@ -133,9 +127,6 @@ class QuizCog(commands.Cog):
                 await self.close_question(area, timed_out=True)
 
     async def prepare_question(self, area: str, end_time: datetime.datetime):
-        if area not in self.bot.quiz_data:
-            return
-
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
         if not channel:
@@ -148,22 +139,16 @@ class QuizCog(commands.Cog):
 
         cid = channel.id
 
-        # Erststart: Channel aktivieren
         if not self.channel_initialized[cid]:
             self.channel_initialized[cid] = True
             logger.info(
-                f"[QuizCog] Erstinitialisierung von Channel '{channel.name}' ({area}) – überspringe Aktivitätscheck.")
-        # Aktivitätsprüfung
+                f"[QuizCog] Channel '{channel.name}' ({area}) initialisiert – überspringe Aktivitätsprüfung.")
         elif self.message_counter[cid] < 10:
             logger.info(
-                f"[QuizCog] Nachrichtenzähler für '{area}': {self.message_counter[cid]}/10")
-            logger.info(f"[QuizCog] Noch nicht genug Aktivität – warte ab.")
+                f"[QuizCog] Nachrichtenzähler für '{area}': {self.message_counter[cid]}/10 – warte auf Aktivität.")
             self.awaiting_activity[cid] = (area, end_time)
             return
 
-        # Alles erfüllt, Frage wird gestellt
-        logger.info(
-            f"[QuizCog] Nachrichtenzähler für '{area}': {self.message_counter[cid]}/10")
         logger.info(
             f"[QuizCog] Bedingungen erfüllt – sende Frage für '{area}'.")
         await self.ask_question(area, end_time)
@@ -190,10 +175,7 @@ class QuizCog(commands.Cog):
         data_loader = cfg["data_loader"]
 
         embed = discord.Embed(
-            title=f"Quiz für {area.upper()}",
-            description=frage_text,
-            color=discord.Color.blue()
-        )
+            title=f"Quiz für {area.upper()}", description=frage_text, color=discord.Color.blue())
         embed.add_field(name="Kategorie", value=qd.get(
             "category", "–"), inline=False)
         embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
@@ -204,7 +186,8 @@ class QuizCog(commands.Cog):
         qinfo = {
             "message_id": sent_msg.id,
             "end_time": end_time.isoformat(),
-            "answers": correct_answers
+            "answers": correct_answers,
+            "frage": frage_text
         }
         self.current_questions[area] = {
             "message_id": sent_msg.id,
@@ -217,44 +200,39 @@ class QuizCog(commands.Cog):
         self.state.set_active_question(area, qinfo)
 
         logger.info(f"[QuizCog] Frage gesendet in '{area}': {frage_text}")
-        await asyncio.sleep(max((end_time - datetime.datetime.utcnow()).total_seconds(), 0))
-        await self.close_question(area, timed_out=True)
 
     async def repost_question(self, area: str, qinfo: dict):
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
-        state: QuestionStateManager = cfg["question_state"]
+        if not channel:
+            logger.error(f"[QuizCog] Channel für '{area}' nicht verfügbar.")
+            return
 
         try:
             msg = await channel.fetch_message(qinfo["message_id"])
-
-            # Wenn die Nachricht bereits geschlossen wurde (rotes Embed / Footer-Hinweis)
             if msg.embeds and (
                 msg.embeds[0].color == discord.Color.red()
                 or "Zeit abgelaufen" in msg.embeds[0].footer.text
                 or "hat richtig geantwortet" in msg.embeds[0].footer.text
             ):
                 logger.warning(
-                    f"[QuizCog] Frage in '{area}' wurde bereits beendet – wird nicht erneut angezeigt.")
-                state.clear_active_question(area)
+                    f"[QuizCog] Nachricht in '{area}' wurde bereits geschlossen – überspringe Wiederherstellung.")
+                self.state.clear_active_question(area)
                 return
 
             correct_answers = qinfo["answers"] if isinstance(
                 qinfo["answers"], list) else [qinfo["answers"]]
+            frage_text = qinfo.get("frage", "Frage nicht gespeichert")
 
             embed = discord.Embed(
                 title=f"Quiz für {area.upper()} (wiederhergestellt)",
-                description="Frage nicht gespeichert",
+                description=frage_text,
                 color=discord.Color.blue()
             )
             embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
 
             view = AnswerButtonView(
-                area=area,
-                correct_answers=correct_answers,
-                cog=self
-            )
-
+                area=area, correct_answers=correct_answers, cog=self)
             await msg.edit(embed=embed, view=view)
 
             end_time = datetime.datetime.fromisoformat(qinfo["end_time"])
@@ -274,7 +252,7 @@ class QuizCog(commands.Cog):
         except Exception as e:
             logger.error(
                 f"[QuizCog] Fehler beim Wiederherstellen von '{area}': {e}", exc_info=True)
-            state.clear_active_question(area)
+            self.state.clear_active_question(area)
 
     async def close_question(self, area: str, timed_out: bool = False, winner: discord.User = None, correct_answer: str = None):
         cfg = self.bot.quiz_data[area]
@@ -290,22 +268,20 @@ class QuizCog(commands.Cog):
             embed = msg.embeds[0]
             embed.color = discord.Color.red()
 
-            footer = "⏰ Zeit abgelaufen!" if timed_out else "✅ Richtig beantwortet!"
-            if winner:
-                footer += f" • {winner.display_name} hat gewonnen."
-            if not timed_out and winner is None and correct_answer is None:
+            if timed_out:
+                footer = "⏰ Zeit abgelaufen!"
+            elif winner:
+                footer = f"✅ {winner.display_name} hat gewonnen."
+            else:
                 footer = "✋ Frage durch Mod beendet."
+
             embed.set_footer(text=footer)
-
-            ans_text = ", ".join(qinfo["answers"]) if isinstance(
-                qinfo["answers"], list) else str(qinfo["answers"])
-            embed.add_field(name="Richtige Antwort",
-                            value=ans_text.strip(), inline=False)
-
+            embed.add_field(name="Richtige Antwort", value=", ".join(
+                qinfo["answers"]), inline=False)
             await msg.edit(embed=embed, view=None)
         except Exception as e:
             logger.warning(
-                f"[QuizCog] Fehler beim Schließen der Frage in '{area}': {e}")
+                f"[QuizCog] Fehler beim Schließen der Frage in '{area}': {e}", exc_info=True)
 
         self.channel_initialized[cfg["channel_id"]] = False
 
@@ -316,7 +292,11 @@ class QuizCog(commands.Cog):
 
         cid = message.channel.id
         self.message_counter[cid] += 1
+        logger.debug(
+            f"[QuizCog] Nachricht erhalten in Channel {cid}, Zähler: {self.message_counter[cid]}")
 
         if cid in self.awaiting_activity and self.message_counter[cid] >= 10:
             area, end_time = self.awaiting_activity[cid]
+            logger.info(
+                f"[QuizCog] Schwelle erreicht – sende Frage für '{area}' sofort.")
             await self.ask_question(area, end_time)
