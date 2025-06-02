@@ -108,7 +108,7 @@ async def leaderboard(interaction: discord.Interaction):
         "Renowned Champion": emoji_data.get("challenger_3", {}).get("syntax", ""),
         "Seasoned Champion": emoji_data.get("challenger_2", {}).get("syntax", ""),
         "Emerging Champion": emoji_data.get("challenger_1", {}).get("syntax", ""),
-        "Keine Rolle": emoji_data.get("challenger_0", {}).get("syntax", "")
+        "Champion": emoji_data.get("challenger_0", {}).get("syntax", "")
     }
 
     # Gruppieren
@@ -120,12 +120,12 @@ async def leaderboard(interaction: discord.Interaction):
         member = interaction.guild.get_member(int(user_id_str)) or \
             await interaction.guild.fetch_member(int(user_id_str))
         name = member.display_name if member else f"Unbekannt ({user_id_str})"
-        role = cog.get_current_role(total) or "Keine Rolle"
+        role = cog.get_current_role(total) or "Champion"
         grouped.setdefault(role, []).append((rank, name, total))
         rank += 1
 
     # Rollen-Reihenfolge
-    role_order = [r[0] for r in cog.roles] + ["Keine Rolle"]
+    role_order = [r[0] for r in cog.roles] + ["Champion"]
 
     # Ausgabe formatieren
     output = []
