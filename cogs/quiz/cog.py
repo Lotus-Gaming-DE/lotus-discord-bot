@@ -202,7 +202,12 @@ class QuizCog(commands.Cog):
 
     async def repost_question(self, area: str, qinfo: dict):
         cfg = self.bot.quiz_data[area]
-        channel = self.bot.get_channel(cfg["channel_id"])
+        try:
+            channel = await self.bot.fetch_channel(cfg["channel_id"])
+        except Exception as e:
+            logger.warning(
+                f"[QuizCog] Channel für Area '{area}' konnte nicht geladen werden: {e}")
+            return
         correct_answers = qinfo["answers"] if isinstance(
             qinfo["answers"], list) else [qinfo["answers"]]
 
