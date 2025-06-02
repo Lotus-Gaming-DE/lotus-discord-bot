@@ -34,7 +34,7 @@ class AnswerModal(Modal, title="Antwort eingeben"):
             )
             return
 
-        # Prüfen, ob Antwort korrekt (case‐insensitive)
+        # Prüfen, ob Antwort korrekt (case-insensitive)
         matched = next(
             (a for a in self.correct_answers if a.lower() == eingabe.lower()), None
         )
@@ -56,14 +56,16 @@ class AnswerModal(Modal, title="Antwort eingeben"):
                 correct_answer=matched
             )
             logger.info(
-                f"[QuizCog] {interaction.user} richtig in '{self.area}': {matched}")
+                f"[QuizCog] {interaction.user} richtig in '{self.area}': {matched}"
+            )
         else:
             self.cog.answered_users[self.area].add(user_id)
             await interaction.response.send_message(
                 "❌ Falsch.", ephemeral=True
             )
             logger.info(
-                f"[QuizCog] {interaction.user} falsch in '{self.area}': {eingabe}")
+                f"[QuizCog] {interaction.user} falsch in '{self.area}': {eingabe}"
+            )
 
 
 class AnswerButtonView(View):
@@ -93,7 +95,7 @@ class AnswerButtonView(View):
 
 
 class QuizCog(commands.Cog):
-    """Core‐Quiz‐Logic: Scheduling, Fragen posten, Antworten verarbeiten"""
+    """Core-Quiz-Logic: Scheduling, Fragen posten, Antworten verarbeiten"""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -102,21 +104,21 @@ class QuizCog(commands.Cog):
         self.current_questions: dict[str, dict] = {}
         # Welche Nutzer bereits geantwortet haben (pro Area)
         self.answered_users: dict[str, set[int]] = defaultdict(set)
-        # Zähler echter User‐Nachrichten pro Channel
+        # Zähler echter User-Nachrichten pro Channel
         self.message_counter: dict[int, int] = defaultdict(int)
         # Haben wir in diesem Channel bereits die History geprüft?
         self.channel_initialized: dict[int, bool] = defaultdict(bool)
         # Wenn <10 Nachrichten, merken wir uns (area, end_time), bis es 10 werden
         self.awaiting_activity: dict[int, tuple[str, datetime.datetime]] = {}
 
-        # Für WCR‐dynamische Fragen: maximal 5 pro Zyklus
+        # Für WCR-dynamische Fragen: maximal 5 pro Zyklus
         self.max_wcr_dynamic_questions = 5
         self.wcr_question_count = 0
 
-        # Standard‐Zeitfenster: 15 Minuten
+        # Standard-Zeitfenster: 15 Minuten
         self.time_window = datetime.timedelta(minutes=15)
 
-        # Für jede konfigurierte Area sofort den Scheduler‐Loop starten
+        # Für jede konfigurierte Area sofort den Scheduler-Loop starten
         for area in self.bot.quiz_data.keys():
             self.bot.loop.create_task(self.quiz_scheduler(area))
 
@@ -125,8 +127,8 @@ class QuizCog(commands.Cog):
 
     async def _initialize_message_counters(self):
         """
-        Wir prüfen die letzten 20 Nachrichten in jedem Quiz‐Channel,
-        zählen die User‐Nachrichten seit der letzten Quizfrage und
+        Wir prüfen die letzten 20 Nachrichten in jedem Quiz-Channel,
+        zählen die User-Nachrichten seit der letzten Quizfrage und
         setzen dann self.message_counter dort.
         Wenn keine alte Frage gefunden → Counter=10 (sofort posten).
         """
@@ -138,12 +140,12 @@ class QuizCog(commands.Cog):
                 channel = await self.bot.fetch_channel(channel_id)
                 if not channel:
                     logger.warning(
-                        f"[QuizCog] Channel‐ID {channel_id} für Area '{area}' nicht gefunden."
+                        f"[QuizCog] Channel-ID {channel_id} für Area '{area}' nicht gefunden."
                     )
                     continue
             except Exception as e:
                 logger.warning(
-                    f"[QuizCog] Channel‐ID {channel_id} für Area '{area}' nicht gefunden: {e}"
+                    f"[QuizCog] Channel-ID {channel_id} für Area '{area}' nicht gefunden: {e}"
                 )
                 continue
 
@@ -152,7 +154,7 @@ class QuizCog(commands.Cog):
                 async for msg in channel.history(limit=20, oldest_first=False):
                     messages.append(msg)
 
-                # Suche nach der letzten Quizfrage (Embed‐Titel „Quiz für AREA“)
+                # Suche nach der letzten Quizfrage (Embed-Titel „Quiz für AREA“)
                 quiz_index = next(
                     (
                         i
@@ -165,7 +167,7 @@ class QuizCog(commands.Cog):
                 )
 
                 if quiz_index is not None:
-                    # Echte User‐Nachrichten nach dieser Embed
+                    # Echte User-Nachrichten nach dieser Embed
                     real_messages = [
                         msg for msg in messages[:quiz_index] if not msg.author.bot
                     ]
@@ -215,7 +217,12 @@ class QuizCog(commands.Cog):
          5) Warte bis window_end, rufe close_question wenn nötig
          6) Neu starten
         """
+
+        # ── NEU: Falls Area inzwischen deaktiviert wurde, sofort abbrechen
         await self.bot.wait_until_ready()
+        if area not in self.bot.quiz_data:
+            return
+
         while True:
             now = datetime.datetime.utcnow()
             window_start = now.replace(second=0, microsecond=0)
@@ -247,6 +254,10 @@ class QuizCog(commands.Cog):
             # Warte dann noch die „delay“
             await asyncio.sleep(delay)
 
+            # ── NEU: Falls Area inzwischen deaktiviert wurde, abbrechen
+            if area not in self.bot.quiz_data:
+                return
+
             # Versuche, Frage zu stellen
             await self.prepare_question(area, window_end)
 
@@ -264,14 +275,19 @@ class QuizCog(commands.Cog):
 
     async def prepare_question(self, area: str, end_time: datetime.datetime):
         """
-        Wenn im Channel ≥ 10 User‐Nachrichten seit letzter Frage, 
+        Wenn im Channel ≥ 10 User-Nachrichten seit letzter Frage, 
         wird ask_question aufgerufen. Sonst merken wir uns „awaiting_activity“.
         """
+        # ── NEU: Falls Area inzwischen deaktiviert wurde, sofort abbrechen
+        if area not in self.bot.quiz_data:
+            return
+
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
         if not channel:
             logger.error(
-                f"[QuizCog] Channel für Area '{area}' nicht gefunden.")
+                f"[QuizCog] Channel für Area '{area}' nicht gefunden."
+            )
             return
 
         # Wenn bereits aktive Frage, abbrechen
@@ -281,11 +297,12 @@ class QuizCog(commands.Cog):
 
         cid = channel.id
 
-        # Erster Start: skip Activity‐Check
+        # Erster Start: skip Activity-Check
         if not self.channel_initialized[cid]:
             self.channel_initialized[cid] = True
             logger.info(
-                f"[QuizCog] Erster Start in {channel.name}, überspringe Aktivitätsprüfung.")
+                f"[QuizCog] Erster Start in {channel.name}, überspringe Aktivitätsprüfung."
+            )
         # Wenn <10 Nachrichten, auf später verschieben
         elif self.message_counter[cid] < 10:
             logger.info(
@@ -299,14 +316,14 @@ class QuizCog(commands.Cog):
 
     async def ask_question(self, area: str, end_time: datetime.datetime):
         """
-        Baut das Embed + Button‐View, postet es und speichert qinfo. 
+        Baut das Embed + Button-View, postet es und speichert qinfo. 
         Dann wartet es bis end_time und ruft close_question(area, timed_out=True).
         """
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
         qg = cfg["question_generator"]
 
-        # Dynamische WCR‐Fragen nur bis max_wcr_dynamic_questions
+        # Dynamische WCR-Fragen nur bis max_wcr_dynamic_questions
         if area == "wcr" and self.wcr_question_count < self.max_wcr_dynamic_questions:
             qd = qg.generate_dynamic_question("wcr")
             self.wcr_question_count += 1
@@ -367,7 +384,7 @@ class QuizCog(commands.Cog):
     ):
         """
         Schließt die laufende Frage: 
-        • Rot färben, Footer aktualisieren, Winner‐Name einfügen 
+        • Rot färben, Footer aktualisieren, Winner-Name einfügen 
         • Richtige Antwort als eigenes Field hinzufügen 
         • Buttons/View entfernen
         """
@@ -391,7 +408,7 @@ class QuizCog(commands.Cog):
                 footer_text += f" • {winner.display_name} hat gewonnen."
             embed.set_footer(text=footer_text)
 
-            # „Richtige Antwort“‐Field ergänzen
+            # „Richtige Antwort“-Field ergänzen
             if timed_out:
                 # Alle möglichen Antworten anzeigen
                 antwort_text = ", ".join(qinfo["answers"])
@@ -406,7 +423,8 @@ class QuizCog(commands.Cog):
             await msg.edit(embed=embed, view=None)
         except Exception as e:
             logger.warning(
-                f"[QuizCog] Fehler beim Schließen der Frage für '{area}': {e}")
+                f"[QuizCog] Fehler beim Schließen der Frage für '{area}': {e}"
+            )
 
         # Nächstes Fenster wieder „neu initialisiert“
         self.channel_initialized[cfg["channel_id"]] = False
@@ -423,8 +441,8 @@ class QuizCog(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """
-        Erhöht den Live‐Nachrichten‐Zähler; 
-        wenn wir zuvor <10 Nachrichten hatten und jetzt >=10, 
+        Erhöht den Live-Nachrichten-Zähler; 
+        wenn wir zuvor <10 Nachrichten hatten und jetzt ≥10, 
         rufen wir ask_question(…) auf.
         Antworten selbst laufen über Buttons/Modals (nicht hier).
         """
@@ -432,10 +450,11 @@ class QuizCog(commands.Cog):
             return
 
         cid = message.channel.id
-        # Live‐Zähler hochzählen
+        # Live-Zähler hochzählen
         self.message_counter[cid] += 1
         logger.debug(
-            f"[QuizCog] Counter für {message.channel.name}: {self.message_counter[cid]}")
+            f"[QuizCog] Counter für {message.channel.name}: {self.message_counter[cid]}"
+        )
 
         # Wenn gerade „awaiting_activity“ aktiv war und nun ≥10 Nachrichten:
         if cid in self.awaiting_activity and self.message_counter[cid] >= 10:
