@@ -89,29 +89,53 @@ async def history(interaction: discord.Interaction, user: discord.Member):
     await interaction.response.send_message(f"📜 Punkteverlauf von {user.display_name}:\n{text}")
 
 
-@champion_group.command(name="leaderboard", description="Zeigt die Top 10 (Punkte-Ranking)")
-@app_commands.describe(page="Welche Seite des Leaderboards (10 Einträge pro Seite)")
-async def leaderboard(interaction: discord.Interaction, page: int = 1):
+@champion_group.command(name="leaderboard", description="Zeigt die Top 30 gruppiert nach Champion-Rolle")
+async def leaderboard(interaction: discord.Interaction):
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
-    if page < 1:
-        page = 1
-
-    limit = 10
-    offset = (page - 1) * limit
-    top = await cog.data.get_leaderboard(limit=limit, offset=offset)
+    top = await cog.data.get_leaderboard(limit=30)
 
     if not top:
         await interaction.response.send_message("🤷 Keine Einträge im Leaderboard.")
         return
 
-    entries = []
-    for idx, (user_id_str, total) in enumerate(top, start=offset + 1):
+    # Mapping: Rollenname → Icon
+    icon_map = {
+        "Ultimate Champion": ":challenger_5:",
+        "Epic Champion": ":challenger_4:",
+        "Renowned Champion": ":challenger_3:",
+        "Seasoned Champion": ":challenger_2:",
+        "Emerging Champion": ":challenger_1:",
+        "Keine Rolle": ":challenger_0:"
+    }
+
+    # Einträge nach Rolle gruppieren
+    grouped: dict[str, list[str]] = {}
+    rank = 1
+
+    for user_id_str, total in top:
         try:
             member = await interaction.guild.fetch_member(int(user_id_str))
             name = member.display_name
         except discord.NotFound:
             name = f"Unbekannt ({user_id_str})"
-        entries.append(f"{idx}. {name} – {total} Punkte")
 
-    text = "\n".join(entries)
-    await interaction.response.send_message(f"🏆 **Top {offset+1}–{offset+len(top)}**:\n{text}")
+        role = cog.get_current_role(total) or "Keine Rolle"
+        grouped.setdefault(role, []).append(
+            f"  {rank}. {name} – {total} Punkte")
+        rank += 1
+
+    # Ausgabe zusammenbauen (in der Reihenfolge aus cog.roles)
+    output = []
+
+    role_order = [r[0] for r in cog.roles] + ["Keine Rolle"]
+
+    for role_name in role_order:
+        if role_name not in grouped:
+            continue
+        icon = icon_map.get(role_name, "")
+        output.append(f"{icon} **{role_name}**")
+        output.extend(grouped[role_name])
+        output.append("")  # Leerzeile zwischen Gruppen
+
+    text = "\n".join(output).strip()
+    await interaction.response.send_message(text)
