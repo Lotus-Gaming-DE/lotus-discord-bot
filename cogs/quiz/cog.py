@@ -9,7 +9,7 @@ from collections import defaultdict
 import discord
 from discord.ext import commands
 
-from .views import AnswerButtonView, send_quiz_message
+from .views import AnswerButtonView
 from .question_state import QuestionStateManager
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,6 @@ class QuizCog(commands.Cog):
         self.wcr_question_count = 0
         self.time_window = datetime.timedelta(minutes=15)
 
-        # Frage-Historie & aktive Fragen
         self.state = QuestionStateManager("data/pers/quiz/question_state.json")
 
         for area in self.bot.quiz_data.keys():
@@ -46,39 +45,15 @@ class QuizCog(commands.Cog):
             try:
                 end_time = datetime.datetime.fromisoformat(active["end_time"])
                 if end_time > datetime.datetime.utcnow():
+                    logger.info(
+                        f"[QuizCog] Wiederhergestellte Frage in '{area}' läuft bis {end_time}.")
                     self.bot.loop.create_task(
-                        self._repost_view(area, active, end_time))
+                        self.repost_question(area, active))
                 else:
                     self.state.clear_active_question(area)
             except Exception as e:
                 logger.error(
                     f"[QuizCog] Fehler beim Wiederherstellen von '{area}': {e}", exc_info=True)
-
-    async def _repost_view(self, area: str, qinfo: dict, end_time: datetime.datetime):
-        await self.bot.wait_until_ready()
-        cfg = self.bot.quiz_data[area]
-        channel = self.bot.get_channel(cfg["channel_id"])
-        if not channel:
-            return
-
-        try:
-            msg = await channel.fetch_message(qinfo["message_id"])
-            view = AnswerButtonView(
-                area=area, correct_answers=qinfo["answers"], cog=self)
-            await msg.edit(view=view)
-            logger.info(f"[QuizCog] View in '{area}' erneut gesetzt.")
-        except Exception as e:
-            logger.warning(
-                f"[QuizCog] Fehler beim Setzen der View in '{area}': {e}")
-
-        self.current_questions[area] = {
-            "message_id": qinfo["message_id"],
-            "end_time": end_time,
-            "answers": qinfo["answers"]
-        }
-        self.answered_users[area].clear()
-        delay = (end_time - datetime.datetime.utcnow()).total_seconds()
-        self.bot.loop.create_task(self._auto_close(area, delay))
 
     async def _auto_close(self, area: str, delay: float):
         await asyncio.sleep(delay)
@@ -135,6 +110,9 @@ class QuizCog(commands.Cog):
                 datetime.timedelta(seconds=random.uniform(0, delta))
             delay = random.uniform(0, self.time_window.total_seconds() / 2)
 
+            logger.info(
+                f"[QuizCog] Nächstes Zeitfenster für '{area}': Frage wird gegen {next_time + datetime.timedelta(seconds=delay)} gepostet.")
+
             await asyncio.sleep((next_time - now).total_seconds())
             await asyncio.sleep(delay)
 
@@ -186,11 +164,22 @@ class QuizCog(commands.Cog):
         if not qd:
             return
 
+        frage_text = qd["frage"]
         correct_answers = qd["antwort"] if isinstance(
             qd["antwort"], list) else [qd["antwort"]]
-        view = AnswerButtonView(
-            area=area, correct_answers=correct_answers, cog=self)
-        sent_msg = await send_quiz_message(channel, area, qd, view)
+        data_loader = cfg["data_loader"]
+
+        embed = discord.Embed(
+            title=f"Quiz für {area.upper()}",
+            description=frage_text,
+            color=discord.Color.blue()
+        )
+        embed.add_field(name="Kategorie", value=qd.get(
+            "category", "–"), inline=False)
+        embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
+
+        view = AnswerButtonView(area, correct_answers, self)
+        sent_msg = await channel.send(embed=embed, view=view)
 
         qinfo = {
             "message_id": sent_msg.id,
@@ -207,8 +196,50 @@ class QuizCog(commands.Cog):
         self.awaiting_activity.pop(channel.id, None)
         self.state.set_active_question(area, qinfo)
 
-        logger.info(f"[QuizCog] Frage gesendet in '{area}': {qd['frage']}")
+        logger.info(f"[QuizCog] Frage gesendet in '{area}': {frage_text}")
         await asyncio.sleep(max((end_time - datetime.datetime.utcnow()).total_seconds(), 0))
+        await self.close_question(area, timed_out=True)
+
+    async def repost_question(self, area: str, qinfo: dict):
+        cfg = self.bot.quiz_data[area]
+        channel = self.bot.get_channel(cfg["channel_id"])
+        correct_answers = qinfo["answers"] if isinstance(
+            qinfo["answers"], list) else [qinfo["answers"]]
+
+        embed = discord.Embed(
+            title=f"Quiz für {area.upper()} (wiederhergestellt)",
+            description="(Frage nicht gespeichert)",
+            color=discord.Color.blue()
+        )
+        embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
+
+        view = AnswerButtonView(area, correct_answers, self)
+
+        try:
+            msg = await channel.fetch_message(qinfo["message_id"])
+            await msg.edit(embed=embed, view=view)
+            logger.info(
+                f"[QuizCog] Frage in {area} wurde erfolgreich wiederhergestellt.")
+        except discord.NotFound:
+            logger.warning(
+                f"[QuizCog] Ursprüngliche Nachricht in {area} wurde gelöscht – neue wird gesendet.")
+            msg = await channel.send(embed=embed, view=view)
+            qinfo["message_id"] = msg.id
+            self.state.set_active_question(area, qinfo)
+        except Exception as e:
+            logger.error(
+                f"[QuizCog] Fehler beim Wiederherstellen von {area}: {e}", exc_info=True)
+            return
+
+        end_time = datetime.datetime.fromisoformat(qinfo["end_time"])
+        self.current_questions[area] = {
+            "message_id": qinfo["message_id"],
+            "end_time": end_time,
+            "answers": correct_answers
+        }
+        self.answered_users[area].clear()
+
+        await asyncio.sleep((end_time - datetime.datetime.utcnow()).total_seconds())
         await self.close_question(area, timed_out=True)
 
     async def close_question(self, area: str, timed_out: bool = False, winner: discord.User = None, correct_answer: str = None):
