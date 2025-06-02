@@ -275,7 +275,7 @@ class QuizCog(commands.Cog):
 
     async def prepare_question(self, area: str, end_time: datetime.datetime):
         """
-        Wenn im Channel ≥ 10 User-Nachrichten seit letzter Frage, 
+        Wenn im Channel ≥ 10 User-Nachrichten seit letzter Frage,
         wird ask_question aufgerufen. Sonst merken wir uns „awaiting_activity“.
         """
         # ── NEU: Falls Area inzwischen deaktiviert wurde, sofort abbrechen
@@ -316,7 +316,7 @@ class QuizCog(commands.Cog):
 
     async def ask_question(self, area: str, end_time: datetime.datetime):
         """
-        Baut das Embed + Button-View, postet es und speichert qinfo. 
+        Baut das Embed + Button-View, postet es und speichert qinfo.
         Dann wartet es bis end_time und ruft close_question(area, timed_out=True).
         """
         cfg = self.bot.quiz_data[area]
@@ -383,9 +383,9 @@ class QuizCog(commands.Cog):
         correct_answer: str = None
     ):
         """
-        Schließt die laufende Frage: 
-        • Rot färben, Footer aktualisieren, Winner-Name einfügen 
-        • Richtige Antwort als eigenes Field hinzufügen 
+        Schließt die laufende Frage:
+        • Rot färben, Footer aktualisieren, Winner-Name einfügen
+        • Richtige Antwort als eigenes Field hinzufügen
         • Buttons/View entfernen
         """
         cfg = self.bot.quiz_data[area]
@@ -399,50 +399,62 @@ class QuizCog(commands.Cog):
             embed = msg.embeds[0]
             embed.color = discord.Color.red()
 
-            footer_text = ""
+            # 1) Footer-Text anpassen
             if timed_out:
                 footer_text = "⏰ Zeit abgelaufen!"
             else:
                 footer_text = "✅ Richtig beantwortet!"
             if winner:
                 footer_text += f" • {winner.display_name} hat gewonnen."
+            # Falls per Mod-Befehl beendet (winner=None, correct_answer=None):
+            if not timed_out and winner is None and correct_answer is None:
+                footer_text = "✋ Frage durch Mod beendet."
             embed.set_footer(text=footer_text)
 
-            # „Richtige Antwort“-Field ergänzen
-            if timed_out:
-                # Alle möglichen Antworten anzeigen
-                antwort_text = ", ".join(qinfo["answers"])
-                embed.add_field(name="Richtige Antwort",
-                                value=antwort_text, inline=False)
+            # 2) „Richtige Antwort“ als reiner String (kein Set)
+            if correct_answer:
+                # Fall: Ein User hat die Frage richtig beantwortet
+                ans_text = correct_answer
             else:
-                # Nur die eine korrekte Antwort
-                embed.add_field(name="Richtige Antwort",
-                                value=correct_answer, inline=False)
+                # Fall: Timeout oder Mod-Befehl → zeige alle möglichen Antworten
+                # z. B. {"2023"} oder {"Kyovashad"}
+                answers_set = qinfo["answers"]
+                # Ergibt z. B. "2023" oder "Kyovashad"
+                ans_text = ", ".join(answers_set)
+            embed.add_field(name="Richtige Antwort",
+                            value=ans_text, inline=False)
 
-            # Buttons/View entfernen und Embed updaten
+            # 3) Entferne die Button-View und editiere das Embed
             await msg.edit(embed=embed, view=None)
         except Exception as e:
             logger.warning(
                 f"[QuizCog] Fehler beim Schließen der Frage für '{area}': {e}"
             )
 
-        # Nächstes Fenster wieder „neu initialisiert“
+        # Kanal für das nächste Zeitfenster wieder neu initialisieren
         self.channel_initialized[cfg["channel_id"]] = False
 
+        # 4) Logging:
         if timed_out:
             logger.info(
                 f"[QuizCog] Frage in '{area}' (Timeout) beendet; richtige Antwort: {', '.join(qinfo['answers'])}"
             )
-        else:
+        elif winner:
             logger.info(
-                f"[QuizCog] Frage in '{area}' richtig beantwortet von {winner.display_name}: {correct_answer}"
+                f"[QuizCog] Frage in '{area}' richtig beantwortet von "
+                f"{winner.display_name}: {correct_answer}"
+            )
+        else:
+            # Mod hat die Frage manuell beendet
+            logger.info(
+                f"[QuizCog] Frage in '{area}' per Mod-Befehl beendet; Antwort(en): {', '.join(qinfo['answers'])}"
             )
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """
-        Erhöht den Live-Nachrichten-Zähler; 
-        wenn wir zuvor <10 Nachrichten hatten und jetzt ≥10, 
+        Erhöht den Live-Nachrichten-Zähler;
+        wenn wir zuvor <10 Nachrichten hatten und jetzt ≥10,
         rufen wir ask_question(…) auf.
         Antworten selbst laufen über Buttons/Modals (nicht hier).
         """
