@@ -419,16 +419,9 @@ class QuizCog(commands.Cog):
                 footer_text = "✋ Frage durch Mod beendet."
             embed.set_footer(text=footer_text)
 
-            # 2) „Richtige Antwort“ als reiner String (kein Set)
-            if correct_answer:
-                # Fall: Ein User hat die Frage richtig beantwortet
-                ans_text = correct_answer
-            else:
-                # Fall: Timeout oder Mod-Befehl → zeige alle möglichen Antworten
-                # e.g. {"2023"} oder {"Kyovashad"}
-                answers_set = qinfo["answers"]
-                # ergibt "2023" oder "Kyovashad"
-                ans_text = ", ".join(answers_set)
+            # 2) „Richtige Antwort“ sauber formatieren (kein Set sichtbar)
+            answers_set = qinfo["answers"]
+            ans_text = ", ".join(answers_set)
             embed.add_field(name="Richtige Antwort",
                             value=ans_text, inline=False)
 
