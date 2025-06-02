@@ -80,31 +80,31 @@ LotusGamingDE/
 
 ### Champion Modul
 ```bash
-/champion give       # Punkte vergeben
-/champion remove     # Punkte abziehen
-/champion set        # Punkte direkt setzen
-/champion reset      # Punkte zurücksetzen
-/champion info       # Eigene Punkte anzeigen
-/champion history    # Verlauf einzelner User
-/champion leaderboard# Rangliste anzeigen
+/champion give         # Punkte vergeben
+/champion remove       # Punkte abziehen
+/champion set          # Punkte direkt setzen
+/champion reset        # Punkte zurücksetzen
+/champion info         # Eigene Punkte anzeigen
+/champion history      # Verlauf einzelner User
+/champion leaderboard  # Rangliste anzeigen
 ```
 
 ### Quiz Modul
 ```bash
-/quiz ask            # Stelle sofort eine neue Frage
-/quiz answer         # Beende aktive Frage und zeige Lösung
-/quiz status         # Zeige Status (Restzeit, Aktivität)
-/quiz disable        # Quiz in diesem Channel deaktivieren
-/quiz enable         # Quiz aktivieren (mit Area und Sprache)
-/quiz language       # Sprache für diesen Channel wechseln
-/quiz time           # Zeitfenster (z. B. alle 15 Minuten)
-/quiz reset          # Fragehistorie zurücksetzen
+/quiz ask              # Stelle sofort eine neue Frage
+/quiz answer           # Beende aktive Frage und zeige Lösung
+/quiz status           # Zeige Status (Restzeit, Aktivität)
+/quiz disable          # Quiz in diesem Channel deaktivieren
+/quiz enable           # Quiz aktivieren (mit Area und Sprache)
+/quiz language         # Sprache für diesen Channel wechseln
+/quiz time             # Zeitfenster (z. B. alle 15 Minuten)
+/quiz reset            # Fragehistorie zurücksetzen
 ```
 
 ### WCR Modul
 ```bash
-/wcr name            # Detailabfrage zu einer Mini
-/wcr filter          # Finde passende Einheiten nach Filter
+/wcr name              # Detailabfrage zu einer Mini
+/wcr filter            # Finde passende Einheiten nach Filter
 ```
 
 Autocomplete & Permutationssuche sind integriert.
