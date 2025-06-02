@@ -212,8 +212,13 @@ async def answer(
         msg = await channel.fetch_message(question_data["message_id"])
         embed = msg.embeds[0]
         embed.color = discord.Color.red()
+        answers = question_data["answers"]
+        if isinstance(answers, (list, set)):
+            answer_text = ", ".join(str(a) for a in answers)
+        else:
+            answer_text = str(answers)
         embed.add_field(name="Richtige Antwort",
-                        value=str(question_data["answers"]), inline=False)
+                        value=answer_text, inline=False)
         embed.set_footer(text="✋ Frage durch Mod beendet.")
         await msg.edit(embed=embed, view=None)
     except Exception as e:
