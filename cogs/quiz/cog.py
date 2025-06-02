@@ -419,9 +419,15 @@ class QuizCog(commands.Cog):
 
             # 2) „Richtige Antwort“ sauber formatieren (kein Set sichtbar)
             answers_list = qinfo["answers"]
-            ans_text = ", ".join(answers_list)
+
+            # Falls answers_list versehentlich noch ein Set oder String ist, umwandeln:
+            if isinstance(answers_list, (set, list)):
+                ans_text = ", ".join(answers_list)
+            else:
+                ans_text = str(answers_list)
+
             embed.add_field(name="Richtige Antwort",
-                            value=ans_text, inline=False)
+                            value=ans_text.strip(), inline=False)
 
             # 3) Entferne die Button-View und editiere das Embed
             await msg.edit(embed=embed, view=None)
