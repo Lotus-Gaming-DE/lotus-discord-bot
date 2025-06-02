@@ -23,7 +23,7 @@ async def setup(bot: discord.ext.commands.Bot):
     try:
         # ─── DataLoader ───────────────────────────────────────────────────
         loader = bot.data["quiz"]["data_loader"]
-        questions_by_area = bot.data["quiz"]["data_loader"].questions_by_area
+        questions_by_area = loader.questions_by_area
 
         # ─── Persistent Question-State ────────────────────────────────────
         state = QuestionStateManager("data/pers/quiz/question_state.json")
@@ -70,13 +70,16 @@ async def setup(bot: discord.ext.commands.Bot):
                 "channel_id": channel_id,
                 "data_loader": loader,
                 "question_generator": generator,
-                "question_state": state  # neu
+                "question_state": state
             }
 
         bot.quiz_data = quiz_data
 
         # ─── QuizCog laden ───────────────────────────────────────────────
         await bot.add_cog(QuizCog(bot))
+
+        # ─── Tracker initialisieren ──────────────────────────────────────
+        await bot.quiz_cog.tracker.initialize()
 
         # ─── Slash-Command-Group registrieren ─────────────────────────────
         bot.tree.add_command(
