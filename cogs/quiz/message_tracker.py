@@ -1,3 +1,5 @@
+# cogs/quiz/message_tracker.py
+
 import logging
 import discord
 
@@ -11,39 +13,46 @@ class MessageTracker:
         self.channel_initialized = {}
 
     async def initialize(self):
-        await self.bot.wait_until_ready()
+        try:
+            logger.info("[Tracker] Initialisierung gestartet.")
+            await self.bot.wait_until_ready()
 
-        for area, cfg in self.bot.quiz_data.items():
-            channel_id = cfg["channel_id"]
-            try:
-                channel = await self.bot.fetch_channel(channel_id)
-                if not channel:
-                    logger.warning(
-                        f"[Tracker] Channel {channel_id} nicht gefunden.")
-                    continue
+            for area, cfg in self.bot.quiz_data.items():
+                channel_id = cfg["channel_id"]
+                try:
+                    channel = await self.bot.fetch_channel(channel_id)
+                    if not channel:
+                        logger.warning(
+                            f"[Tracker] Channel {channel_id} nicht gefunden.")
+                        continue
 
-                messages = [msg async for msg in channel.history(limit=20)]
-                quiz_index = next(
-                    (i for i, msg in enumerate(messages)
-                     if msg.author.id == self.bot.user.id and msg.embeds and
-                     msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")), None
-                )
+                    messages = [msg async for msg in channel.history(limit=20)]
+                    quiz_index = next(
+                        (i for i, msg in enumerate(messages)
+                         if msg.author.id == self.bot.user.id and msg.embeds and
+                         msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")),
+                        None
+                    )
 
-                if quiz_index is not None:
-                    count = len(
-                        [m for m in messages[:quiz_index] if not m.author.bot])
-                    self.message_counter[channel.id] = count
-                else:
-                    self.message_counter[channel.id] = 10
+                    if quiz_index is not None:
+                        count = len(
+                            [m for m in messages[:quiz_index] if not m.author.bot])
+                        self.message_counter[channel.id] = count
+                    else:
+                        self.message_counter[channel.id] = 10
 
-                self.channel_initialized[channel.id] = True
-                logger.info(
-                    f"[Tracker] Nachrichtenzähler für '{area}' initialisiert mit {self.message_counter[channel.id]}."
-                )
-            except Exception as e:
-                logger.error(
-                    f"[Tracker] Fehler bei Initialisierung für Area '{area}': {e}", exc_info=True
-                )
+                    self.channel_initialized[channel.id] = True
+                    logger.info(
+                        f"[Tracker] Nachrichtenzähler für '{area}' gesetzt: {self.message_counter[channel.id]}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"[Tracker] Fehler bei '{area}': {e}", exc_info=True)
+
+            logger.info("[Tracker] Initialisierung abgeschlossen.")
+        except Exception as e:
+            logger.error(
+                f"[Tracker] Initialisierung fehlgeschlagen: {e}", exc_info=True)
 
     def register_message(self, message: discord.Message) -> str | None:
         if message.author.bot:
