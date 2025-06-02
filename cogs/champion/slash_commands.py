@@ -98,14 +98,17 @@ async def leaderboard(interaction: discord.Interaction):
         await interaction.response.send_message("🤷 Keine Einträge im Leaderboard.")
         return
 
-    # Mapping: Rollenname → Icon
+    # Emojis aus Bot-Daten laden
+    emoji_data = interaction.client.data.get("emojis", {})
+
+    # Mapping: Rollenname → Emoji-Syntax
     icon_map = {
-        "Ultimate Champion": ":challenger_5:",
-        "Epic Champion": ":challenger_4:",
-        "Renowned Champion": ":challenger_3:",
-        "Seasoned Champion": ":challenger_2:",
-        "Emerging Champion": ":challenger_1:",
-        "Keine Rolle": ":challenger_0:"
+        "Ultimate Champion": emoji_data.get("challenger_5", {}).get("syntax", ""),
+        "Epic Champion": emoji_data.get("challenger_4", {}).get("syntax", ""),
+        "Renowned Champion": emoji_data.get("challenger_3", {}).get("syntax", ""),
+        "Seasoned Champion": emoji_data.get("challenger_2", {}).get("syntax", ""),
+        "Emerging Champion": emoji_data.get("challenger_1", {}).get("syntax", ""),
+        "Keine Rolle": emoji_data.get("challenger_0", {}).get("syntax", "")
     }
 
     # Einträge nach Rolle gruppieren
@@ -124,10 +127,11 @@ async def leaderboard(interaction: discord.Interaction):
             f"  {rank}. {name} – {total} Punkte")
         rank += 1
 
-    # Ausgabe zusammenbauen (in der Reihenfolge aus cog.roles)
-    output = []
-
+    # Rollen-Reihenfolge definieren
     role_order = [r[0] for r in cog.roles] + ["Keine Rolle"]
+
+    # Ausgabe formatieren
+    output = []
 
     for role_name in role_order:
         if role_name not in grouped:
