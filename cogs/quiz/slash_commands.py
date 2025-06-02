@@ -12,17 +12,17 @@ from .question_generator import QuestionGenerator
 
 logger = logging.getLogger(__name__)
 
-# Die Guild‐ID als Ganzzahl aus der ENV lesen, damit wir die Befehle nur dort registrieren
+# Die Guild-ID als Ganzzahl aus der ENV lesen, damit wir die Befehle nur dort registrieren
 SERVER_ID = os.getenv("server_id")
 if not SERVER_ID:
     raise ValueError("Environment variable 'server_id' is not set.")
 GUILD_ID = int(SERVER_ID)
 
-# Slash‐Command‐Gruppe /quiz
+# Slash-Command-Gruppe /quiz
 quiz_group = app_commands.Group(
     name="quiz",
-    description="Quiz‐Befehle",
-    guild_ids=[GUILD_ID]  # Nur in dieser Guild
+    description="Quiz-Befehle",
+    guild_ids=[GUILD_ID]  # Nur in dieser Guild registrieren
 )
 
 
@@ -50,7 +50,7 @@ async def interaction_checks(
     if not is_authorized(interaction.user):
         return False, "❌ Du hast keine Berechtigung für diesen Befehl."
 
-    # 2) Ist dieser Channel überhaupt als Quiz‐Channel konfiguriert?
+    # 2) Ist dieser Channel überhaupt als Quiz-Channel konfiguriert?
     area = get_area_by_channel(bot, interaction.channel.id)
     if not area:
         return False, "❌ In diesem Channel ist kein Quiz konfiguriert."
@@ -106,7 +106,7 @@ async def language(
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
     logger.info(
         f"[QuizCommands] /quiz language by {interaction.user} → {area} = {lang}")
-    # Die Fragegenerator‐Einstellungen aktualisieren
+    # Die Fragegenerator-Einstellungen aktualisieren
     quiz_cog.bot.quiz_data[area]["language"] = lang
     quiz_cog.bot.quiz_data[area]["question_generator"].language = lang
     await interaction.response.send_message(
@@ -122,6 +122,7 @@ async def language(
 async def ask(
     interaction: discord.Interaction,
 ):
+    # Interaction-Check (Autorisierung + Channel-Konfiguration) durchführen
     ok, area_or_msg = await interaction_checks(interaction.client, interaction)
     if not ok:
         await interaction.response.send_message(area_or_msg, ephemeral=True)
@@ -129,12 +130,26 @@ async def ask(
     area = area_or_msg
 
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
-    end_time = datetime.datetime.utcnow() + quiz_cog.time_window
     logger.info(f"[QuizCommands] /quiz ask by {interaction.user} in {area}")
-    await quiz_cog.ask_question(area, end_time)
+
+    # 1) Antwort an Discord sofort senden, damit die 3-Sekunden-Grenze eingehalten wird
     await interaction.response.send_message(
-        "✅ Frage gestellt und Timer zurückgesetzt.", ephemeral=False
+        "🔄 Deine Frage wird jetzt erstellt…", ephemeral=False
     )
+
+    # 2) Hintergrund-Task starten, welche später quiz_cog.ask_question() aufruft
+    #    (so laufen wir nicht in das 3-Sekunden-Timeout von Discord hinein)
+    async def _ask_in_background():
+        # Berechne End-Zeitpunkt: jetzt + time_window
+        end_time = datetime.datetime.utcnow() + quiz_cog.time_window
+        try:
+            await quiz_cog.ask_question(area, end_time)
+        except Exception as e:
+            logger.error(
+                f"[QuizCommands] Fehler in ask_question (Hintergrund): {e}", exc_info=True)
+
+    # Starte die Hintergrund-Task
+    interaction.client.loop.create_task(_ask_in_background())
 
 
 @quiz_group.command(
@@ -172,7 +187,7 @@ async def answer(
 
 @quiz_group.command(
     name="status",
-    description="Status (Restzeit & Nachrichten‐Zähler) der aktuellen Frage anzeigen"
+    description="Status (Restzeit & Nachrichten-Zähler) der aktuellen Frage anzeigen"
 )
 @app_commands.default_permissions(manage_guild=True)
 async def status(
@@ -239,7 +254,7 @@ async def enable(
     area_name: str,
     lang: Literal["de", "en"] = "de",
 ):
-    # Hier reicht ein Rollencheck (Admin/Community Mod); Channel‐Check entfällt
+    # Hier reicht ein Rollencheck (Admin/Community Mod); Channel-Check entfällt
     if not is_authorized(interaction.user):
         await interaction.response.send_message(
             "❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral=True
@@ -249,9 +264,10 @@ async def enable(
     area = area_name.lower()
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
     logger.info(
-        f"[QuizCommands] /quiz enable by {interaction.user} → {area} ({lang})")
+        f"[QuizCommands] /quiz enable by {interaction.user} → {area} ({lang})"
+    )
 
-    # Frage‐Generator neu anlegen (DataLoader/QuestionGenerator)
+    # Frage-Generator neu anlegen (DataLoader/QuestionGenerator)
     q_loader = quiz_cog.bot.data["quiz"]["data_loader"]
     q_generator = QuestionGenerator(
         questions_by_area=quiz_cog.bot.data["quiz"]["questions_by_area"],
@@ -270,7 +286,7 @@ async def enable(
         "language": lang,
         "question_generator": q_generator
     }
-    # Neue Scheduler‐Task starten
+    # Neue Scheduler-Task starten
     quiz_cog.bot.loop.create_task(quiz_cog.quiz_scheduler(area))
 
     await interaction.response.send_message(
@@ -280,11 +296,10 @@ async def enable(
 
 @quiz_group.error
 async def on_quiz_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    # Fängt grundsätzlich AppCommand‐Fehler auf und loggt sie
+    # Fängt grundsätzlich AppCommand-Fehler auf und loggt sie
     logger.exception(f"[QuizCommands] Fehler: {error}")
-    # Standard‐Antwort an Discord ist ausreichend, daher kein weiteres send_message nötig.
+    # Standard-Antwort an Discord ist ausreichend, daher kein weiteres send_message nötig.
 
 
-# ─────────── Setup‐Funktion, wird von quiz/__init__.py aufgerufen ───────────
-# (In dieser Datei brauchen wir keine eigene setup(...)-Funktion mehr,
-#  weil wir die slash_group bereits im __init__.py registrieren.)
+# Hinweis: Hier wird **KEINE** setup(...)-Funktion mehr benötigt,
+# weil die Gruppe /quiz bereits in cogs/quiz/__init__.py mit bot.tree.add_command(...) registriert wird.
