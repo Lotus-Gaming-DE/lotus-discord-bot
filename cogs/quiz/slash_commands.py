@@ -65,8 +65,8 @@ async def language(interaction: discord.Interaction, lang: Literal["de", "en"]):
     state = quiz_cog.bot.quiz_data[area]["question_state"]
     new_generator = QuestionGenerator(
         questions_by_area={area: this_area_dict},
-        state_manager=state,
-        dynamic_providers=...
+        state_manager=quiz_cog.bot.quiz_data[area]["question_state"],
+        dynamic_providers=quiz_cog.bot.quiz_data[area]["question_generator"].dynamic_providers
     )
 
     quiz_cog.bot.quiz_data[area]["question_generator"] = new_generator
@@ -169,10 +169,9 @@ async def enable(interaction: discord.Interaction, area_name: str, lang: Literal
     q_loader.set_language(lang)
     q_generator = QuestionGenerator(
         questions_by_area={area: q_loader.questions_by_area.get(area, {})},
-        dynamic_providers={
-            "wcr": quiz_cog.bot.quiz_data.get("wcr", {}).get("question_generator", {}).dynamic_providers.get("wcr")
-            if quiz_cog.bot.quiz_data.get("wcr") else None
-        }
+        # oder area statt wcr, wenn du `question_state` separat speicherst
+        state_manager=quiz_cog.bot.quiz_data[area]["question_state"],
+        dynamic_providers={...}
     )
 
     quiz_cog.bot.quiz_data[area] = {
