@@ -9,7 +9,7 @@ from collections import defaultdict
 import discord
 from discord.ext import commands
 
-from .views import AnswerButtonView
+from .views import AnswerButtonView, send_quiz_message
 from .question_state import QuestionStateManager
 
 logger = logging.getLogger(__name__)
@@ -169,22 +169,11 @@ class QuizCog(commands.Cog):
         if not qd:
             return
 
-        frage_text = qd["frage"]
         correct_answers = qd["antwort"] if isinstance(
             qd["antwort"], list) else [qd["antwort"]]
-        data_loader = cfg["data_loader"]
-
-        embed = discord.Embed(
-            title=f"Quiz für {area.upper()}",
-            description=frage_text,
-            color=discord.Color.blue()
-        )
-        embed.add_field(name="Kategorie", value=qd.get(
-            "category", "–"), inline=False)
-        embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
-
-        view = AnswerButtonView(area, correct_answers, data_loader, self)
-        sent_msg = await channel.send(embed=embed, view=view)
+        view = AnswerButtonView(
+            area=area, correct_answers=correct_answers, cog=self)
+        sent_msg = await send_quiz_message(channel, area, qd, view)
 
         qinfo = {
             "message_id": sent_msg.id,
@@ -201,7 +190,7 @@ class QuizCog(commands.Cog):
         self.awaiting_activity.pop(channel.id, None)
         self.state.set_active_question(area, qinfo)
 
-        logger.info(f"[QuizCog] Frage gesendet in '{area}': {frage_text}")
+        logger.info(f"[QuizCog] Frage gesendet in '{area}': {qd['frage']}")
         await asyncio.sleep(max((end_time - datetime.datetime.utcnow()).total_seconds(), 0))
         await self.close_question(area, timed_out=True)
 
