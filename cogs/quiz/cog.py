@@ -109,9 +109,13 @@ class QuizCog(commands.Cog):
             next_time = now + \
                 datetime.timedelta(seconds=random.uniform(0, delta))
             delay = random.uniform(0, self.time_window.total_seconds() / 2)
+            post_time = next_time + datetime.timedelta(seconds=delay)
 
             logger.info(
-                f"[QuizCog] Nächstes Zeitfenster für '{area}': Frage wird gegen {next_time + datetime.timedelta(seconds=delay)} gepostet.")
+                f"[QuizCog] Neues Zeitfenster für '{area}': "
+                f"{window_start:%H:%M:%S} bis {window_end:%H:%M:%S} – "
+                f"Frage geplant für ca. {post_time:%H:%M:%S}"
+            )
 
             await asyncio.sleep((next_time - now).total_seconds())
             await asyncio.sleep(delay)
@@ -135,17 +139,31 @@ class QuizCog(commands.Cog):
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
         if not channel:
+            logger.warning(
+                f"[QuizCog] Channel für '{area}' nicht gefunden (prepare_question).")
             return
 
         if area in self.current_questions:
+            logger.info(
+                f"[QuizCog] Frage für '{area}' bereits aktiv – überspringe Posting.")
             return
 
-        if not self.channel_initialized[channel.id]:
-            self.channel_initialized[channel.id] = True
-        elif self.message_counter[channel.id] < 10:
-            self.awaiting_activity[channel.id] = (area, end_time)
+        cid = channel.id
+        msg_count = self.message_counter.get(cid, 0)
+        logger.info(
+            f"[QuizCog] Nachrichtenzähler für '{area}': {msg_count}/10")
+
+        if not self.channel_initialized[cid]:
+            logger.debug(f"[QuizCog] Channel '{cid}' wurde initialisiert.")
+            self.channel_initialized[cid] = True
+        elif msg_count < 10:
+            logger.info(
+                f"[QuizCog] Zu wenig Aktivität in '{area}', Frage wird aufgeschoben.")
+            self.awaiting_activity[cid] = (area, end_time)
             return
 
+        logger.info(
+            f"[QuizCog] Bedingungen erfüllt – sende Frage für '{area}'.")
         await self.ask_question(area, end_time)
 
     async def ask_question(self, area: str, end_time: datetime.datetime):
