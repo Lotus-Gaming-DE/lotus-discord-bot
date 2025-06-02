@@ -421,7 +421,12 @@ class QuizCog(commands.Cog):
 
             # 2) „Richtige Antwort“ sauber formatieren (kein Set sichtbar)
             answers_set = qinfo["answers"]
-            ans_text = ", ".join(answers_set)
+
+            if isinstance(answers_set, set) or isinstance(answers_set, list):
+                ans_text = ", ".join(answers_set)
+            else:
+                ans_text = str(answers_set)
+
             embed.add_field(name="Richtige Antwort",
                             value=ans_text, inline=False)
 
