@@ -1,109 +1,137 @@
-![Logo von Lotus Gaming](./data/LotusGamingColorless.png)
-# Lotus Gaming Discord Bot!
 
+![Logo von Lotus Gaming](./data/LotusGamingColorless.png)
+
+# Lotus Gaming Discord Bot
 
 Willkommen zum **Lotus Gaming Discord Bot** Projekt! Dieser Bot wurde entwickelt, um das Spielerlebnis innerhalb unserer Community zu verbessern, indem er nützliche Funktionen und Interaktionen rund um unsere Lieblingsspiele bereitstellt. Der Bot ist modular aufgebaut, was eine einfache Erweiterung und Wartung verschiedener Funktionen ermöglicht.
 
-## Inhaltsverzeichnis
-
-- [Übersicht](#übersicht)
-- [Funktionen](#funktionen)
-  - [Warcraft Rumble (WCR) Modul](#warcraft-rumble-wcr-modul)
-- [Nutzung](#nutzung)
-- [Befehle](#befehle)
-  - [/filter](#/filter)
-  - [/name](#/name)
-- [Kontakt](#kontakt)
-- [Empfohlene Bilder](#empfohlene-bilder)
-
 ## Übersicht
 
-Der Bot konzentriert sich derzeit darauf, detaillierte Informationen und Tools für **Warcraft Rumble (WCR)** Spieler bereitzustellen. Er ist live und wird aktiv auf unserem Discord-Server genutzt: [discord.gg/LotusGaming](https://discord.gg/LotusGaming).
+Der **Lotus Gaming Bot** ist aktuell in drei Hauptmodule unterteilt:
+- **Champion Modul**: Verwaltung und Tracking von Champion-Punkten.
+- **Quiz Modul**: Interaktives Quiz zu verschiedenen Spielebereichen (z.B. WCR, D4, PTCGP).
+- **WCR Modul**: Datenbank-Integration und Befehle für Warcraft Rumble.
 
-## Funktionen
+Der Bot läuft ausschließlich auf unserem Discord-Server und benötigt keine Installation auf anderen Systemen.
 
-### Warcraft Rumble (WCR) Modul
+## Dateistruktur
 
-Das **WCR-Modul** bietet eine Reihe von Befehlen, die Spielern helfen, Spieldaten effizient abzurufen:
-
-- **Filtern von Minis**: Mit dem Befehl `/filter` kannst du Minis basierend auf spezifischen Kriterien wie Kosten, Geschwindigkeit, Fraktion, Typ, Merkmal und Sprache suchen.
-- **Detaillierte Informationen zu Minis**: Der Befehl `/name` liefert umfassende Details zu einem bestimmten Mini, einschließlich Statistiken, Talenten, Merkmalen und Bildern.
-- **Autocomplete-Unterstützung**: Befehle bieten Autocomplete-Vorschläge, um die Eingabe schneller und präziser zu gestalten.
-- **Mehrsprachige Unterstützung**: Das Modul unterstützt mehrere Sprachen, derzeit Deutsch (`de`) und Englisch (`en`), um einer vielfältigen Nutzerbasis gerecht zu werden. Deutsch ist die Standardsprache.
-- **Permutationssuche**: Du kannst Minis auch dann finden, wenn du ihren Namen nicht exakt kennst. Der Bot erkennt Permutationen und findet Minis auch in anderen Sprachen.
-
-**Hinweis:** Nach der Auswahl eines Minis im Popup erhältst du ein Embed mit den detaillierten Informationen zum Mini.
-
-## Nutzung
-
-### Befehle
-
-#### `/filter`
-
-Filtere Minis basierend auf verschiedenen Kriterien.
-
-**Verwendung:**
-
-```bash
-/filter cost:<Wert> speed:<Wert> faction:<Wert> type:<Wert> trait:<Wert> lang:<Wert>
+```
+LotusGamingDE/
+├─ bot.py
+├─ README.md
+├─ requirements.txt
+├─ cogs/
+│  ├─ champion/
+│  │  ├─ __init__.py
+│  │  ├─ cog.py
+│  │  └─ slash_commands.py
+│  ├─ quiz/
+│  │  ├─ __init__.py
+│  │  ├─ cog.py
+│  │  ├─ data_loader.py
+│  │  ├─ question_generator.py
+│  │  ├─ slash_commands.py
+│  │  ├─ utils.py
+│  │  ├─ views.py
+│  │  └─ wcr_question_provider.py
+│  └─ wcr/
+│     ├─ __init__.py
+│     ├─ cog.py
+│     ├─ data_loader.py
+│     ├─ helpers.py
+│     ├─ slash_commands.py
+│     └─ views.py
+└─ data/
+   ├─ champion/
+   │  ├─ points.db
+   │  └─ roles.json
+   ├─ media/
+   │  └─ LotusGamingColorless.png
+   ├─ quiz/
+   │  ├─ asked_questions.json
+   │  ├─ questions_de.json
+   │  ├─ questions_en.json
+   │  └─ scores.json
+   └─ wcr/
+      ├─ locals/
+      │  └─ (Sprachdateien JSON)
+      ├─ pictures.json
+      └─ units.json
 ```
 
-**Parameter:**
+### Kurzbeschreibung der Ordner
 
-- `cost` (optional): Die Kosten des Minis.
-- `speed` (optional): Die Geschwindigkeitskategorie des Minis.
-- `faction` (optional): Die Fraktion, zu der das Mini gehört.
-- `type` (optional): Der Typ des Minis (z.B. Truppe, Held).
-- `trait` (optional): Spezifische Merkmale des Minis.
-- `lang` (optional): Sprache für die Antwort (`de` oder `en`). Standard ist `de`.
+- **bot.py**: Einstiegspunkt und Initialisierung des Bots.
+- **requirements.txt**: Liste der Python-Abhängigkeiten.
+- **README.md**: Diese Datei, Überblick über das Projekt.
 
-**Beispiel:**
+- **cogs/champion/**: 
+  - `__init__.py`: Registriert das Champion-Modul und die Slash-Command-Gruppe.
+  - `cog.py`: Enthält die Kern-Logik für Champion-Punkteverwaltung (Datenbank, Rollen-Logik).
+  - `slash_commands.py`: Definiert alle Slash-Commands (`/champion give`, `/champion remove`, `/champion set`, `/champion info`, `/champion history`, `/champion leaderboard`).
 
-```bash
-/filter faction:Allianz type:Fernkämpfer lang:de
-```
+- **cogs/quiz/**:
+  - `__init__.py`: Initialisiert das Quiz-Modul, lädt Daten, startet Scheduler-Tasks und registriert `/quiz`-Slash-Gruppe.
+  - `cog.py`: Kern-Logik des Quiz (Fragen-Erstellung, Scheduling, Antwort-Handling).
+  - `data_loader.py`: Lädt und speichert Quiz-Fragen, Scores und bearbeitete Fragen.
+  - `question_generator.py`: Erzeugt neue Fragen, kombiniert statische und dynamische Provider (z.B. WCR-Fragen).
+  - `slash_commands.py`: Definiert alle `/quiz`-Slash-Commands (z.B. `ask`, `answer`, `status`, `disable`, `enable`, `time`, `language`).
+  - `utils.py`: Hilfsfunktionen (z.B. Antwortprüfung).
+  - `views.py`: Discord-UI-Komponenten (Buttons, Modals) für das Quiz.
+  - `wcr_question_provider.py`: Dynamischer Fragen-Provider für WCR basierend auf API-/Datenbank-Abfragen.
 
-Dieser Befehl liefert eine Liste von Fernkämpfer-Minis aus der Fraktion Allianz, angezeigt auf Deutsch.
+- **cogs/wcr/**:
+  - `__init__.py`: Initialisiert das WCR-Modul und registriert `/wcr`-Slash-Gruppe.
+  - `cog.py`: Kern-Logik für Datenverarbeitung, Caching und Interaktionen.
+  - `data_loader.py`: Lädt WCR-Daten (Einheiten, Bilder, Sprachdateien).
+  - `helpers.py`: Unterstützende Funktionen (z.B. Permutationssuche, Normalisierung).
+  - `slash_commands.py`: Definiert alle `/wcr`-Slash-Commands (z.B. `filter`, `name`).
+  - `views.py`: Discord-UI-Komponenten für WCR (z.B. interaktive Auswahl).
 
-**Ablauf:**
+- **data/**:
+  - **champion/**: Speichert die SQLite-Datenbank (`points.db`) und Rollen-Konfiguration (`roles.json`).
+  - **media/**: Enthält Assets wie das Lotus Gaming Logo.
+  - **quiz/**: Statistische Quiz-Daten, bearbeitete Fragen und Scores in JSON-Dateien.
+  - **wcr/**: Statische WCR-Daten in JSON (Einheiten, Bilder, lokale Texte).
 
-1. Nach Eingabe des Befehls erscheint ein Popup mit einer Liste der gefilterten Minis.
-2. Nach Auswahl eines Minis erhältst du ein Embed mit den detaillierten Informationen zum Mini.
+## Funktionen im Überblick
 
-#### `/name`
+### Champion Modul
 
-Erhalte detaillierte Informationen zu einem spezifischen Mini anhand des Namens oder der ID.
+- `/champion give <user> <punkte> <grund>`: Gibt einem User Champion-Punkte (nur Mods/Admins).
+- `/champion remove <user> <punkte> <grund>`: Entfernt Punkte von einem User (nur Mods/Admins).
+- `/champion set <user> <punkte> <grund>`: Setzt den Punktestand eines Users (nur Mods/Admins).
+- `/champion reset <user>`: Setzt die Punkte eines Users auf 0 (nur Mods/Admins).
+- `/champion info`: Zeigt deine aktuellen Punkte an.
+- `/champion history <user>`: Zeigt die letzten 10 Punkt-Änderungen eines Users.
+- `/champion leaderboard [page]`: Zeigt Top 10-Ranking (10 Einträge pro Seite).
 
-**Verwendung:**
+### Quiz Modul
 
-```bash
-/name name:<mini_name_or_id> lang:<Wert>
-```
+- `/quiz ask`: Sofortige Quizfrage im aktuellen Channel. Frage bleibt bis zum Ende des Zeitfensters aktiv oder bis sie beantwortet wird.
+- `/quiz answer`: Zeigt die richtige Antwort und beendet die aktuelle Frage (Mod-Befehl).
+- `/quiz status`: Zeigt Status (Restzeit & Nachrichten-Zähler) der aktuellen Frage an.
+- `/quiz time <minutes>`: Setzt das Zeitfenster (1–120 Minuten) für dieses Quiz (pro Channel).
+- `/quiz language <de|en>`: Ändert Sprache für die Quiz-Fragen dieses Channels.
+- `/quiz disable`: Deaktiviert Quiz für diesen Channel (Fragen werden nicht mehr automatisch gestellt).
+- `/quiz enable <area_name> [lang]`: Aktiviert Quiz in diesem Channel für eine bestimmte Area (z.B. `d4`, `wcr`) und Sprache (de oder en).
+- **Automatisches Scheduling**: Der Bot prüft in einem definierten Zeitfenster (Standard 15 Minuten), ob genügend Activity (≥10 Nachrichten) vorhanden ist, um eine Frage zu posten. Andernfalls wird die Frage verschoben.
 
-**Parameter:**
+### WCR Modul
 
-- `name`: Der Name oder die ID des Minis. Dank der Permutationssuche kannst du Minis auch finden, wenn du den Namen nicht exakt kennst.
-- `lang` (optional): Sprache für die Antwort (`de` oder `en`). Standard ist `de`.
-
-**Beispiel:**
-
-```bash
-/name name:"S.A.F.E. Pilot" lang:de
-```
-
-Dieser Befehl zeigt detaillierte Informationen zum Mini "S.A.F.E. Pilot" auf Deutsch an.
-
-**Hinweis zu Permutationen:**
-
-Du kannst Teile des Namens oder verschiedene Wortreihenfolgen verwenden, und der Bot versucht, das passende Mini zu finden.  
-**Beispiel:** Selbst wenn du "Pilot S.A.F.E." eingibst, wird der Bot das richtige Mini finden.
+- `/wcr filter [cost] [speed] [faction] [type] [trait] [lang]`: Filtert Minis basierend auf Kosten, Geschwindigkeit, Fraktion, Typ, Merkmal und Sprache (de/en). Liefert interaktive Auswahl.
+- `/wcr name <name> [lang]`: Zeigt Details zu einem Mini anhand des Namens. Unterstützt Autocomplete und Permutationssuche. Liefert Embed mit Statistiken, Talenten, Merkmalen und Medien (Bilder).
+- **Autocomplete**: Vorschläge in den Slash-Commands für Werte (cost, speed, faction, type, trait) basierend auf geladenen WCR-Daten.
+- **Mehrsprachigkeit**: Standardmäßig Deutsch, kann mit optionalem `lang`-Parameter auf Englisch umgestellt werden.
 
 ## Kontakt
 
-Für weitere Informationen oder wenn du Fragen hast, kannst du dich gerne melden:
+Für Fragen oder Feedback erreichst du uns über unseren Discord-Server:
 
 - **Discord Server**: [Lotus Gaming](https://discord.gg/LotusGaming)
 - **Discord Benutzer**: gs3rr4 (Discord User ID: 163375118096007168)
 - **E-Mail**: [lotusgamingde@gmail.com](mailto:lotusgamingde@gmail.com)
 
-Wir freuen uns auf deine Teilnahme und dein Feedback!
+---
+
