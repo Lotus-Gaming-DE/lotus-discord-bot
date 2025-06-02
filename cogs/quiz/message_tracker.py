@@ -1,0 +1,74 @@
+# cogs/quiz/message_tracker.py
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class MessageTracker:
+    def __init__(self, bot):
+        self.bot = bot
+        self.message_counter = {}
+        self.channel_initialized = {}
+
+    async def initialize(self):
+        await self.bot.wait_until_ready()
+
+        for area, cfg in self.bot.quiz_data.items():
+            channel_id = cfg["channel_id"]
+            try:
+                channel = await self.bot.fetch_channel(channel_id)
+                if not channel:
+                    logger.warning(
+                        f"[Tracker] Channel {channel_id} nicht gefunden.")
+                    continue
+
+                messages = [msg async for msg in channel.history(limit=20)]
+                quiz_index = next((i for i, msg in enumerate(messages)
+                                   if msg.author.id == self.bot.user.id and msg.embeds and
+                                   msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")), None)
+
+                if quiz_index is not None:
+                    count = len(
+                        [m for m in messages[:quiz_index] if not m.author.bot])
+                    self.message_counter[channel.id] = count
+                else:
+                    self.message_counter[channel.id] = 10
+
+                self.channel_initialized[channel.id] = True
+                logger.info(
+                    f"[Tracker] Nachrichtenzähler für '{area}' gesetzt: {self.message_counter[channel.id]}")
+            except Exception as e:
+                logger.error(
+                    f"[Tracker] Fehler bei der Initialisierung von '{area}': {e}", exc_info=True)
+
+    def increment(self, message):
+        if message.author.bot:
+            return
+
+        cid = message.channel.id
+        before = self.message_counter.get(cid, 0)
+        self.message_counter[cid] = before + 1
+        after = self.message_counter[cid]
+
+        logger.info(
+            f"[Tracker] Nachrichtenzähler in Channel {cid}: {before} → {after}")
+
+        if cid in self.bot.quiz_cog.awaiting_activity and after >= 10:
+            area, end_time = self.bot.quiz_cog.awaiting_activity[cid]
+            logger.info(
+                f"[Tracker] Aktivität erreicht in '{area}' ({after}/10) – Frage wird gestellt.")
+            self.bot.loop.create_task(
+                self.bot.quiz_cog.ask_question(area, end_time))
+
+    def get(self, channel_id):
+        return self.message_counter.get(channel_id, 0)
+
+    def is_initialized(self, channel_id):
+        return self.channel_initialized.get(channel_id, False)
+
+    def set_initialized(self, channel_id):
+        self.channel_initialized[channel_id] = True
+
+    def reset(self, channel_id):
+        self.message_counter[channel_id] = 0

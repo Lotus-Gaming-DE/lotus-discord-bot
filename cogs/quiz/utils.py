@@ -8,46 +8,51 @@ from unidecode import unidecode
 logger = logging.getLogger(__name__)  # z. B. 'cogs.quiz.utils'
 
 
-def check_answer(user_answer: str, correct_answers: list, threshold: float = 0.6) -> bool:
+def check_answer(user_answer: str, correct_answers: list[str], threshold: float = 0.6) -> bool:
     """
-    Vergleicht die Nutzer-Antwort mit der Liste der korrekten Antworten.
-    Liefert True, wenn exact match, Teilstring oder Ähnlichkeit >= threshold.
+    Prüft, ob eine Nutzerantwort mit einer der richtigen Antworten übereinstimmt.
+    Verwendet Normalisierung, Teilstringsuche und Levenshtein-Ähnlichkeit.
     """
     normalized_user = normalize_text(user_answer)
-    for ans in correct_answers:
-        normalized_correct = normalize_text(ans)
-        # Direktes Enthalten
+
+    for correct in correct_answers:
+        normalized_correct = normalize_text(correct)
+
+        # Teilstring oder vollständige Übereinstimmung
         if normalized_user in normalized_correct or normalized_correct in normalized_user:
             logger.debug(
-                f"[utils] exact/partial match: '{normalized_user}' ~ '{normalized_correct}'")
+                f"[check_answer] partial match: '{normalized_user}' <-> '{normalized_correct}'"
+            )
             return True
-        # Levenshtein-Ähnlichkeit
+
+        # Levenshtein-basierte Ähnlichkeit
         similarity = difflib.SequenceMatcher(
             None, normalized_user, normalized_correct).ratio()
         if similarity >= threshold:
             logger.debug(
-                f"[utils] fuzzy match: '{normalized_user}' ~ '{normalized_correct}' ({similarity:.2f})")
+                f"[check_answer] fuzzy match: '{normalized_user}' <-> '{normalized_correct}' ({similarity:.2f})"
+            )
             return True
-    logger.debug(f"[utils] no match: '{user_answer}'")
+
+    logger.debug(f"[check_answer] no match: '{user_answer}'")
     return False
 
 
-def create_permutations(answer: str) -> list:
+def create_permutations(answer: str) -> list[str]:
     """
-    Erzeugt verschiedene Normalisierungen einer Antwort (Kleinbuchstaben,
-    ohne Akzente, ohne Sonderzeichen).
+    Erzeugt Varianten einer Antwort (Kleinschreibung, ASCII, ohne Sonderzeichen).
+    Wird z. B. für Fuzzy Matching oder alternative Datenquellen verwendet.
     """
     perms = {answer.lower(), unidecode(answer.lower())}
-    # ohne Sonderzeichen
     cleaned = re.sub(r'[^\w\s]', '', answer.lower())
     perms.add(cleaned)
     perms.add(unidecode(cleaned))
     return list(perms)
 
 
-def create_permutations_list(answers: list) -> list:
+def create_permutations_list(answers: list[str]) -> list[str]:
     """
-    Kombiniert die Permutationen für mehrere Antworten.
+    Erstellt eine kombinierte Permutationsliste für mehrere Antworten.
     """
     all_perms = set()
     for ans in answers:

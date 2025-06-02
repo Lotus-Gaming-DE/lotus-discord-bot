@@ -4,6 +4,8 @@ import logging
 import discord
 from discord.ui import View, Modal, TextInput, button, Button
 
+from .utils import check_answer
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,13 +28,10 @@ class AnswerModal(Modal, title="Antwort eingeben"):
             )
             return
 
-        eingabe = self.answer.value.strip().lower()
+        eingabe = self.answer.value.strip()
         self.cog.answered_users[self.area].add(user_id)
 
-        matched = next(
-            (a for a in self.correct_answers if a.lower() == eingabe), None)
-
-        if matched is not None:
+        if check_answer(eingabe, self.correct_answers):
             # Punkt im Champion-System vergeben
             champion_cog = self.cog.bot.get_cog("ChampionCog")
             if champion_cog:
@@ -45,17 +44,17 @@ class AnswerModal(Modal, title="Antwort eingeben"):
                 area=self.area,
                 timed_out=False,
                 winner=user,
-                correct_answer=matched
+                correct_answer=eingabe
             )
             logger.info(
-                f"[Quiz] {user.name} hat richtig geantwortet in '{self.area}': {matched}"
+                f"[Quiz] {user.name} hat richtig geantwortet in '{self.area}': {eingabe}"
             )
         else:
             await interaction.response.send_message(
                 "❌ Das ist leider falsch.", ephemeral=True
             )
             logger.info(
-                f"[Quiz] {user.name} hat falsch geantwortet in '{self.area}': {self.answer.value.strip()}"
+                f"[Quiz] {user.name} hat falsch geantwortet in '{self.area}': {eingabe}"
             )
 
 
@@ -77,58 +76,3 @@ class AnswerButtonView(View):
 
         modal = AnswerModal(self.area, self.correct_answers, self.cog)
         await interaction.response.send_modal(modal)
-
-
-async def send_quiz_message(channel: discord.TextChannel, area: str, question: dict, view: View) -> discord.Message:
-    """
-    Sendet eine Quizfrage in den Channel mit Embed und Button.
-    """
-    embed = discord.Embed(
-        title=f"Quiz für {area.upper()}",
-        description=question["frage"],
-        color=discord.Color.blue()
-    )
-    embed.add_field(name="Kategorie", value=question.get(
-        "category", "–"), inline=False)
-    embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
-
-    msg = await channel.send(embed=embed, view=view)
-    logger.info(
-        f"[views] Quizfrage für '{area}' gesendet: {question['frage']}")
-    return msg
-
-
-async def update_quiz_message(
-    message: discord.Message,
-    timed_out: bool,
-    winner: discord.User = None,
-    correct_answers: list[str] = None
-):
-    """
-    Aktualisiert die Frage mit roter Farbe, Footer und richtiger Antwort.
-    """
-    try:
-        embed = message.embeds[0]
-        embed.color = discord.Color.red()
-
-        if timed_out:
-            footer_text = "⏰ Zeit abgelaufen!"
-        elif winner:
-            footer_text = f"✅ {winner.display_name} hat richtig geantwortet!"
-        else:
-            footer_text = "✋ Frage wurde manuell beendet."
-
-        embed.set_footer(text=footer_text)
-
-        if correct_answers:
-            embed.add_field(
-                name="Richtige Antwort",
-                value=", ".join(correct_answers),
-                inline=False
-            )
-
-        await message.edit(embed=embed, view=None)
-        logger.info("[views] Quizfrage wurde aktualisiert.")
-    except Exception as e:
-        logger.error(
-            f"[views] Fehler beim Aktualisieren der Quizfrage: {e}", exc_info=True)
