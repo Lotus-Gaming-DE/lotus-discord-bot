@@ -1,6 +1,7 @@
 # cogs/quiz/message_tracker.py
 
 import logging
+import discord
 
 logger = logging.getLogger(__name__)
 
