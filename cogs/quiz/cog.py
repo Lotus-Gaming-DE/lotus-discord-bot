@@ -139,29 +139,31 @@ class QuizCog(commands.Cog):
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
         if not channel:
-            logger.warning(
-                f"[QuizCog] Channel für '{area}' nicht gefunden (prepare_question).")
+            logger.warning(f"[QuizCog] Channel für '{area}' nicht gefunden.")
             return
 
         if area in self.current_questions:
-            logger.info(
-                f"[QuizCog] Frage für '{area}' bereits aktiv – überspringe Posting.")
+            logger.info(f"[QuizCog] Frage für '{area}' läuft bereits.")
             return
 
         cid = channel.id
-        msg_count = self.message_counter.get(cid, 0)
-        logger.info(
-            f"[QuizCog] Nachrichtenzähler für '{area}': {msg_count}/10")
 
+        # Erststart: Channel aktivieren
         if not self.channel_initialized[cid]:
-            logger.debug(f"[QuizCog] Channel '{cid}' wurde initialisiert.")
             self.channel_initialized[cid] = True
-        elif msg_count < 10:
             logger.info(
-                f"[QuizCog] Zu wenig Aktivität in '{area}', Frage wird aufgeschoben.")
+                f"[QuizCog] Erstinitialisierung von Channel '{channel.name}' ({area}) – überspringe Aktivitätscheck.")
+        # Aktivitätsprüfung
+        elif self.message_counter[cid] < 10:
+            logger.info(
+                f"[QuizCog] Nachrichtenzähler für '{area}': {self.message_counter[cid]}/10")
+            logger.info(f"[QuizCog] Noch nicht genug Aktivität – warte ab.")
             self.awaiting_activity[cid] = (area, end_time)
             return
 
+        # Alles erfüllt, Frage wird gestellt
+        logger.info(
+            f"[QuizCog] Nachrichtenzähler für '{area}': {self.message_counter[cid]}/10")
         logger.info(
             f"[QuizCog] Bedingungen erfüllt – sende Frage für '{area}'.")
         await self.ask_question(area, end_time)
