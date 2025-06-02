@@ -28,7 +28,7 @@ class QuizCog(commands.Cog):
         # State, Tracker, Manager
         self.state = QuestionStateManager("data/pers/quiz/question_state.json")
         self.tracker = MessageTracker(bot=self.bot)
-        self.manager = QuestionManager(bot=self.bot, state=self.state)
+        self.manager = QuestionManager(self)
         self.closer = QuestionCloser(bot=self.bot, state=self.state)
 
         # Wiederherstellen
