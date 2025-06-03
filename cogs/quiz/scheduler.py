@@ -1,5 +1,3 @@
-# cogs/quiz/scheduler.py
-
 import logging
 import random
 import asyncio
@@ -14,8 +12,6 @@ class QuizScheduler:
         self.area = area
         self.prepare_question = prepare_question_callback
         self.close_question = close_question_callback
-        self.time_window = datetime.timedelta(minutes=15)
-
         self.task = self.bot.loop.create_task(self.run())
 
     async def run(self):
@@ -26,15 +22,20 @@ class QuizScheduler:
             return
 
         while True:
+            # Zeitfenster aus quiz_data lesen
+            area_cfg = self.bot.quiz_data[self.area]
+            time_window = area_cfg.get(
+                "time_window", datetime.timedelta(minutes=15))
+
             now = datetime.datetime.utcnow()
             window_start = now.replace(second=0, microsecond=0)
-            window_end = window_start + self.time_window
+            window_end = window_start + time_window
 
-            latest = window_start + (self.time_window / 2)
+            latest = window_start + (time_window / 2)
             delta = max((latest - now).total_seconds(), 0)
             next_time = now + \
                 datetime.timedelta(seconds=random.uniform(0, delta))
-            delay = random.uniform(0, self.time_window.total_seconds() / 2)
+            delay = random.uniform(0, time_window.total_seconds() / 2)
             post_time = next_time + datetime.timedelta(seconds=delay)
 
             logger.info(
