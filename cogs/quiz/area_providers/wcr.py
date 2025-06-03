@@ -156,6 +156,16 @@ class WCRQuestionProvider:
             "category": "Mechanik"
         }
 
+    def generate_questions(self, max_questions=5):
+        questions = []
+        for _ in range(max_questions * 3):  # mehrere Versuche wegen möglicher Nullen
+            q = self.generate()
+            if q and q not in questions:
+                questions.append(q)
+            if len(questions) >= max_questions:
+                break
+        return questions
+
 
 def get_provider(bot, language):
     return WCRQuestionProvider(bot, language=language)
