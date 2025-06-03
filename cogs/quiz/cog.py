@@ -1,5 +1,3 @@
-# cogs/quiz/cog.py
-
 import logging
 from collections import defaultdict
 from discord.ext import commands
@@ -25,6 +23,10 @@ class QuizCog(commands.Cog):
         self.current_questions: dict[str, dict] = {}
         self.answered_users: dict[str, set[int]] = defaultdict(set)
         self.awaiting_activity: dict[int, tuple[str, float]] = {}
+
+        # Für dynamische WCR-Fragen
+        self.wcr_question_count = 0
+        self.max_wcr_dynamic_questions = 5
 
         # State wird aus beliebiger Area entnommen
         self.state: QuestionStateManager = next(
