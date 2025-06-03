@@ -2,25 +2,26 @@
 
 # Lotus Gaming Discord Bot
 
-Willkommen beim **Lotus Gaming Discord Bot**!  
-Dieser modulare Discord-Bot wurde für die **Lotus Gaming Community** entwickelt. Er bietet dynamische Quiz-Events, ein Champion-Punktesystem zur Anerkennung aktiver Mitglieder und umfassende Datenabfragen zu Warcraft Rumble.
+Willkommen beim **Lotus Gaming Discord Bot**!
+Dieser modulare Discord-Bot wurde speziell für die **Lotus Gaming Community** entwickelt. Er bietet interaktive Quiz-Events, ein Champion-Punktesystem zur Anerkennung aktiver Mitglieder und umfangreiche Abfragen zu Warcraft Rumble.
 
 ## Zielgruppe
 
 Diese Dokumentation richtet sich an:
-- **Mods/Admins**, die Slash-Commands im Discord verstehen und verwenden wollen.
-- **Entwickler**, die zur Weiterentwicklung beitragen möchten.
+
+* **Mods/Admins**, die Slash-Commands im Discord verstehen und verwenden wollen.
+* **Entwickler**, die zur Weiterentwicklung beitragen möchten.
 
 ---
 
 ## Inhaltsverzeichnis
 
-- [Übersicht & Module](#übersicht--module)
-- [Projektstruktur](#projektstruktur)
-- [Slash-Commands](#slash-commands)
-- [Technische Konzepte](#technische-konzepte)
-- [Änderungsprotokoll](#änderungsprotokoll)
-- [Kontakt](#kontakt)
+* [Übersicht & Module](#übersicht--module)
+* [Projektstruktur](#projektstruktur)
+* [Slash-Commands](#slash-commands)
+* [Technische Konzepte](#technische-konzepte)
+* [Änderungsprotokoll](#änderungsprotokoll)
+* [Kontakt](#kontakt)
 
 ---
 
@@ -28,11 +29,11 @@ Diese Dokumentation richtet sich an:
 
 Der Bot ist in folgende Module unterteilt:
 
-| Modul     | Zweck                                               |
-|-----------|-----------------------------------------------------|
-| `quiz`    | Automatisierte Quizfragen je Spielbereich (z. B. D4, WCR) |
-| `champion`| Vergabe & Tracking von Community-Punkten            |
-| `wcr`     | WCR-spezifische Filter- & Infoabfragen              |
+| Modul      | Zweck                                                     |
+| ---------- | --------------------------------------------------------- |
+| `quiz`     | Automatisierte Quizfragen je Spielbereich (z. B. D4, WCR) |
+| `champion` | Vergabe & Tracking von Community-Punkten                  |
+| `wcr`      | WCR-spezifische Filter- & Infoabfragen                    |
 
 Jede Funktion ist vollständig über **Slash-Commands** steuerbar.
 
@@ -48,8 +49,10 @@ LotusGamingDE/
 ├─ cogs/
 │  ├─ champion/
 │  │  ├─ __init__.py
-│  │  └─ ...
+│  │  ├─ cog.py
+│  │  └─ slash_commands.py
 │  ├─ quiz/
+│  │  ├─ __init__.py
 │  │  ├─ cog.py
 │  │  ├─ scheduler.py
 │  │  ├─ question_generator.py
@@ -63,15 +66,28 @@ LotusGamingDE/
 │  │  └─ slash_commands.py
 │  └─ wcr/
 │     ├─ __init__.py
-│     └─ ...
+│     ├─ cog.py
+│     ├─ data_loader.py
+│     ├─ slash_commands.py
+│     └─ helpers.py
 ├─ data/
 │  ├─ champion/
+│  │  └─ roles.json
 │  ├─ quiz/
+│  │  └─ questions_de.json
 │  ├─ wcr/
+│  │  ├─ units.json
+│  │  ├─ pictures.json
+│  │  └─ locals/
+│  │     ├─ de.json
+│  │     └─ en.json
 │  ├─ media/
+│  │  └─ LotusGaming.png
 │  └─ pers/
 │     ├─ champion/
+│     │  └─ points.db
 │     └─ quiz/
+│        └─ question_state.json
 ```
 
 ---
@@ -79,6 +95,7 @@ LotusGamingDE/
 ## Slash-Commands
 
 ### Champion Modul
+
 ```bash
 /champion give         # Punkte vergeben
 /champion remove       # Punkte abziehen
@@ -90,6 +107,7 @@ LotusGamingDE/
 ```
 
 ### Quiz Modul
+
 ```bash
 /quiz ask              # Stelle sofort eine neue Frage
 /quiz answer           # Beende aktive Frage und zeige Lösung
@@ -102,6 +120,7 @@ LotusGamingDE/
 ```
 
 ### WCR Modul
+
 ```bash
 /wcr name              # Detailabfrage zu einer Mini
 /wcr filter            # Finde passende Einheiten nach Filter
@@ -113,41 +132,53 @@ Autocomplete & Permutationssuche sind integriert.
 
 ## Technische Konzepte
 
-- Modularer Aufbau mit sauber gekapselten Cogs
-- Slash-Command-Gruppierung (`/quiz`, `/wcr`, `/champion`)
-- Detailliertes, zustandsorientiertes Logging jeder Veränderung
-- Nachrichtenzähler pro Channel für Aktivitätsprüfung
-- Dynamische und statische Fragen (z. B. bei WCR)
-- Automatische Frageplanung basierend auf Intervall & Aktivität
-- Antwortabgabe via Discord-Modal
-- Berechtigungsprüfungen für Mod-Only-Befehle
-- Persistente Daten (aktive Fragen, Punktestände) liegen in `data/pers/`, getrennt von statischen Inhalten in `data/`.
+* Modularer Aufbau mit gekapselten Cogs
+* Slash-Command-Gruppierung (`/quiz`, `/wcr`, `/champion`)
+* Persistente Daten in `data/pers/` (Fragenstatus, Punkte, etc.)
+* Trennung von statischen (z. B. Sprachdateien) und dynamischen Daten
+* Dynamische & statische Quizfragen in einem System kombinierbar
+* Wiederherstellung & Auto-Close aktiver Fragen bei Neustart
+* Detailliertes Logging aller Zustandsänderungen
+* Emoji-Export für Role Icons & Leaderboards
+* Rollenzuweisung automatisiert auf Basis von Punkteschwellen
 
 ---
 
-## Änderungsprotokoll (Stand 2025-06-02)
+## Änderungsprotokoll (Stand 2025-06-03)
 
-- ✅ **Quiz-Modul vollständig modularisiert**
-  - Aufteilung in Scheduler, Closer, Manager, State, Tracker, Generator, Restorer
-- ✅ **Slash-Command-Handling in allen Cogs vereinheitlicht**
-- ✅ **Logging überarbeitet**
-  - Jede Zustandsänderung wird geloggt
-  - Automatische Fragenankündigung und Begründung bei Nicht-Stellen
-- ✅ **Antwortvalidierung verbessert** (inkl. Fuzzy Matching & Unicode-Normalisierung)
-- ✅ **Einführung von `data/pers/`** als persistenter Speicher für aktive Fragen und Punktezähler
-- ✅ **Neues Berechtigungssystem für Slash-Commands** (Mod-Only Absicherung)
-- ✅ **Alle bestehenden Befehle lauffähig und vollständig implementiert**
-- 🔜 **Geplant: Modularisierung und Optimierung des `wcr`-Moduls**
+* ✅ **WCR-Quiz: Dynamische & statische Fragen kombiniert**
+
+  * Über `max_wcr_dynamic_questions` steuerbar
+  * Verbesserte Fehlerbehandlung und Logging
+
+* ✅ **Fragen-Wiederherstellung verbessert**
+
+  * Kategorie wird korrekt angezeigt
+  * Auto-Close-Methode aus Cog entfernt und zentralisiert
+
+* ✅ **Nachrichtenzählung korrigiert**
+
+  * Doppelte Erhöhung pro Nachricht unterbunden
+
+* ✅ **Champion-Modul aktualisiert**
+
+  * Datenbankpfad zu `data/pers/` verschoben
+  * Kein Rollen-Fallback mehr: `roles.json` wird vorausgesetzt
+
+* ✅ **Struktur- und Architekturverbesserungen**
+
+  * Weitere Entkopplung der Cog-Logik
+  * `QuestionManager` & `QuestionGenerator` arbeiten isoliert
 
 ---
 
 ## Kontakt
 
-- **Projektleitung & Hauptentwickler**: `gs3rr4`
-- **Discord**: [discord.gg/LotusGaming](https://discord.gg/LotusGaming)
-- **E-Mail**: [lotusgamingde@gmail.com](mailto:lotusgamingde@gmail.com)
+* **Projektleitung & Hauptentwickler**: `gs3rr4`
+* **Discord**: [discord.gg/LotusGaming](https://discord.gg/LotusGaming)
+* **E-Mail**: [lotusgamingde@gmail.com](mailto:lotusgamingde@gmail.com)
 
 ---
 
-Letzter Stand: 2025-06-02  
+Letzter Stand: 2025-06-03
 Verantwortlich für diesen Stand: `gs3rr4`
