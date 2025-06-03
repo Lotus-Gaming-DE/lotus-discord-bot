@@ -1,5 +1,3 @@
-# cogs/quiz/question_manager.py
-
 import logging
 import datetime
 import discord
@@ -16,6 +14,12 @@ class QuestionManager:
 
     async def prepare_question(self, area: str, end_time: datetime.datetime):
         cfg = self.bot.quiz_data[area]
+
+        if not cfg.get("active"):
+            logger.info(
+                f"[QuestionManager] Area '{area}' ist inaktiv – keine Frage stellen.")
+            return
+
         channel = self.bot.get_channel(cfg["channel_id"])
         if not channel:
             logger.warning(

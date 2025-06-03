@@ -22,29 +22,27 @@ class QuizScheduler:
             return
 
         while True:
-            # Zeitfenster aus quiz_data lesen
-            area_cfg = self.bot.quiz_data[self.area]
-            time_window = area_cfg.get(
+            cfg = self.bot.quiz_data[self.area]
+            time_window = cfg.get(
                 "time_window", datetime.timedelta(minutes=15))
 
             now = datetime.datetime.utcnow()
             window_start = now.replace(second=0, microsecond=0)
             window_end = window_start + time_window
 
-            latest = window_start + (time_window / 2)
-            delta = max((latest - now).total_seconds(), 0)
-            next_time = now + \
-                datetime.timedelta(seconds=random.uniform(0, delta))
-            delay = random.uniform(0, time_window.total_seconds() / 2)
-            post_time = next_time + datetime.timedelta(seconds=delay)
+            next_time = window_start + \
+                datetime.timedelta(seconds=random.uniform(
+                    0, time_window.total_seconds() / 2))
+            post_time = next_time + \
+                datetime.timedelta(seconds=random.uniform(0, 10))
 
             logger.info(
-                f"[Scheduler] Neues Zeitfenster für '{self.area}': "
-                f"{window_start:%H:%M:%S} bis {window_end:%H:%M:%S} – Frage geplant für ca. {post_time:%H:%M:%S}"
+                f"[Scheduler] Neues Zeitfenster für '{self.area}' bis {window_end:%H:%M}. "
+                f"Frage geplant für ca. {post_time:%H:%M:%S}"
             )
 
             await asyncio.sleep((next_time - now).total_seconds())
-            await asyncio.sleep(delay)
+            await asyncio.sleep((post_time - next_time).total_seconds())
 
             if self.area not in self.bot.quiz_data:
                 logger.warning(

@@ -1,6 +1,6 @@
 import random
 import logging
-from .utils import create_permutations_list
+from ..utils import create_permutations_list
 
 logger = logging.getLogger(__name__)
 
