@@ -19,14 +19,14 @@ MAIN_SERVER_ID = int(SERVER_ID)
 
 async def setup(bot: discord.ext.commands.Bot):
     try:
-        # ─── DataLoader ───────────────────────────────────────────────────
+        # DataLoader
         loader = bot.data["quiz"]["data_loader"]
         questions_by_area = loader.questions_by_area
 
-        # ─── Persistent Question-State ────────────────────────────────────
+        # Persistent Question-State
         state = QuestionStateManager("data/pers/quiz/question_state.json")
 
-        # ─── WCR‐Provider ─────────────────────────────────────────────────
+        # WCR-Provider
         wcr_units = bot.data["wcr"]["units"]
         wcr_languages = bot.data["wcr"]["languages"]
         wcr_provider = WCRQuestionProvider(
@@ -35,14 +35,14 @@ async def setup(bot: discord.ext.commands.Bot):
             language="de"
         )
 
-        # ─── QuestionGenerator ────────────────────────────────────────────
+        # QuestionGenerator
         generator = QuestionGenerator(
             questions_by_area=questions_by_area,
             state_manager=state,
             dynamic_providers={"wcr": wcr_provider}
         )
 
-        # ─── bot.quiz_data ───────────────────────────────────────────────
+        # bot.quiz_data
         quiz_data = {}
         env_areas = {
             "wcr": "quiz_c_wcr",
@@ -73,17 +73,14 @@ async def setup(bot: discord.ext.commands.Bot):
 
         bot.quiz_data = quiz_data
 
-        # ─── Cog registrieren ────────────────────────────────────────────
+        # Cog registrieren
         await bot.add_cog(QuizCog(bot))
 
-        # ─── Tracker initialisieren ───────────────────────────────────────
-        await bot.quiz_cog.tracker.initialize()
-
-        # ─── Slash-Command-Group registrieren ─────────────────────────────
+        # Slash-Command-Group registrieren
         bot.tree.add_command(
             quiz_group, guild=discord.Object(id=MAIN_SERVER_ID))
 
         logger.info(
-            "[QuizCog] Cog und Slash‐Command‐Gruppe erfolgreich registriert.")
+            "[QuizCog] Cog und Slash-Command-Gruppe erfolgreich registriert.")
     except Exception as e:
         logger.error(f"[QuizCog] Fehler beim Setup: {e}", exc_info=True)
