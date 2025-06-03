@@ -120,10 +120,6 @@ class MyBot(commands.Bot):
     async def on_message(self, message):
         if message.author.bot:
             return
-
-        if hasattr(self, "quiz_cog"):
-            await self.quiz_cog.on_message(message)
-
         await self.process_commands(message)
 
 
