@@ -1,3 +1,5 @@
+# cogs/quiz/question_state.py
+
 import json
 import os
 import logging
@@ -7,22 +9,18 @@ logger = logging.getLogger(__name__)
 
 
 class QuestionStateManager:
-    """
-    Verwaltet persistente Speicherung von aktiven Fragen und Frage-Historie.
-    """
-
     def __init__(self, filepath: str):
         self.filepath = filepath
         self.state = self._load_state()
 
     def _load_state(self) -> dict:
-        logger.info(f"[QuestionState] Lade Datei: {self.filepath}")
         if not os.path.exists(self.filepath):
             logger.info(
                 f"[QuestionState] Datei nicht gefunden: {self.filepath}")
             return {"active": {}, "history": {}}
         try:
             with open(self.filepath, "r", encoding="utf-8") as f:
+                logger.info(f"[QuestionState] Lade Datei: {self.filepath}")
                 return json.load(f)
         except Exception as e:
             logger.error(
@@ -43,6 +41,8 @@ class QuestionStateManager:
 
     def set_active_question(self, area: str, question: dict):
         self.state["active"][area] = question
+        logger.info(
+            f"[QuestionState] Neue aktive Frage in '{area}' gespeichert.")
         self._save_state()
 
     def get_active_question(self, area: str) -> Optional[dict]:
@@ -51,6 +51,8 @@ class QuestionStateManager:
     def clear_active_question(self, area: str):
         if area in self.state.get("active", {}):
             self.state["active"].pop(area, None)
+            logger.info(
+                f"[QuestionState] Aktive Frage in '{area}' wurde entfernt.")
             self._save_state()
 
     # ── Historie ───────────────────────────────────────────────────
@@ -59,6 +61,8 @@ class QuestionStateManager:
         self.state.setdefault("history", {}).setdefault(area, [])
         if question_id not in self.state["history"][area]:
             self.state["history"][area].append(question_id)
+            logger.info(
+                f"[QuestionState] Frage-ID {question_id} in '{area}' als gestellt markiert.")
             self._save_state()
 
     def get_asked_questions(self, area: str) -> list[int]:
@@ -66,4 +70,5 @@ class QuestionStateManager:
 
     def reset_asked_questions(self, area: str):
         self.state.setdefault("history", {})[area] = []
+        logger.info(f"[QuestionState] Historie in '{area}' zurückgesetzt.")
         self._save_state()

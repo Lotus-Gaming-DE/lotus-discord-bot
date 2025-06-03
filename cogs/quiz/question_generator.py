@@ -10,12 +10,13 @@ class QuestionGenerator:
         self.questions_by_area = questions_by_area
         self.state = state_manager
         self.dynamic_providers = dynamic_providers or {}
-        logger.info("[QuestionGenerator] initialized.")
+        logger.info("QuestionGenerator initialized.")
 
     def generate_question_from_json(self, area):
         area_questions = self.questions_by_area.get(area)
         if not area_questions:
-            logger.error(f"[QuestionGenerator] Area '{area}' nicht gefunden.")
+            logger.error(
+                f"[QuestionGenerator] Area '{area}' not found in loaded questions.")
             return None
 
         category = random.choice(list(area_questions.keys()))
@@ -27,13 +28,13 @@ class QuestionGenerator:
             self.state.reset_asked_questions(area)
             remaining = category_questions.copy()
             logger.info(
-                f"[QuestionGenerator] Alle Fragen gestellt für '{area}' – Reset.")
+                f"[QuestionGenerator] Alle Fragen für Bereich '{area}' wurden gestellt. Setze Historie zurück.")
 
         question_data = random.choice(remaining)
         self.state.mark_question_as_asked(area, question_data["id"])
 
         logger.info(
-            f"[QuestionGenerator] Frage generiert für '{area}', Kategorie '{category}': {question_data['frage']}"
+            f"[QuestionGenerator] Generated question for area '{area}', category '{category}': {question_data['frage']}"
         )
         return {
             "frage": question_data["frage"],
@@ -46,6 +47,6 @@ class QuestionGenerator:
         provider = self.dynamic_providers.get(area)
         if not provider:
             logger.warning(
-                f"[QuestionGenerator] Kein dynamischer Provider für '{area}'.")
+                f"[QuestionGenerator] No dynamic provider registered for area '{area}'.")
             return None
         return provider.generate()

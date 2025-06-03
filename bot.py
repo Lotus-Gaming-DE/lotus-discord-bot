@@ -6,7 +6,7 @@ from pathlib import Path
 import discord
 from discord.ext import commands
 
-from cogs.quiz.data_loader import DataLoader
+from cogs.quiz.data_loader import DataLoader  # Für Quiz-spezifische Daten
 from cogs.wcr.data_loader import (
     load_units as load_wcr_units,
     load_languages as load_wcr_languages,
@@ -34,7 +34,7 @@ class MyBot(commands.Bot):
         super().__init__(
             command_prefix="§",
             intents=intents,
-            sync_commands=False
+            sync_commands=False  # Wir synchronisieren manuell in setup_hook
         )
 
         guild_id = os.getenv("server_id")
@@ -43,19 +43,20 @@ class MyBot(commands.Bot):
             exit(1)
         self.main_guild = discord.Object(id=int(guild_id))
 
-        # Gemeinsame Datenstruktur (gefüllt in setup_hook)
+        # Gemeinsame Datenstruktur, wird in setup_hook befüllt
         self.data = {}
 
-        # Quiz-spezifischer DataLoader
+        # Quiz-Daten (z. B. Fragen)
         self.shared_data_loader = DataLoader()
 
     async def setup_hook(self):
+        # ──────────────────────────────────────────────────────────────────────
         self.tree.clear_commands(guild=self.main_guild)
 
+        # Emojis exportieren
         await self._export_emojis()
 
-        self.shared_data_loader.set_language("de")
-
+        # Gemeinsame Daten laden
         self.data = {
             "emojis": self._load_emojis_from_file(),
             "wcr": {
@@ -64,13 +65,14 @@ class MyBot(commands.Bot):
                 "pictures": load_wcr_pictures()
             },
             "quiz": {
-                "data_loader": self.shared_data_loader
+                "data_loader": self.shared_data_loader,
+                "questions_by_area": self.shared_data_loader.questions_by_area
             }
         }
-
         logger.info(
             f"[bot] Gemeinsame Daten geladen: {list(self.data.keys())}")
 
+        # Alle Cogs laden
         for path in Path("./cogs").rglob("__init__.py"):
             module = ".".join(path.with_suffix("").parts)
             try:
@@ -80,6 +82,7 @@ class MyBot(commands.Bot):
                 logger.error(
                     f"[bot] Failed to load extension {module}: {e}", exc_info=True)
 
+        # Slash-Commands synchronisieren
         try:
             await self.tree.sync(guild=self.main_guild)
             logger.info(
@@ -126,6 +129,10 @@ class MyBot(commands.Bot):
     async def on_message(self, message):
         if message.author.bot:
             return
+
+        if hasattr(self, "quiz_cog"):
+            await self.quiz_cog.on_message(message)
+
         await self.process_commands(message)
 
 

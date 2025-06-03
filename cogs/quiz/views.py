@@ -1,3 +1,5 @@
+# cogs/quiz/views.py
+
 import logging
 import discord
 from discord.ui import View, Modal, TextInput, button, Button
