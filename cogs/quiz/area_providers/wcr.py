@@ -154,3 +154,10 @@ class WCRQuestionProvider:
             "antwort": create_permutations_list(winners),
             "category": "Mechanik"
         }
+
+
+# ✨ WICHTIG: Diese Funktion wird vom Bot automatisch aufgerufen
+def get_provider():
+    from ..data_loader import load_wcr_data
+    units, locals_data = load_wcr_data()
+    return WCRQuestionProvider(units, locals_data)
