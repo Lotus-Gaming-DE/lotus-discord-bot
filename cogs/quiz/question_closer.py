@@ -1,5 +1,6 @@
 import logging
 import discord
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -38,3 +39,9 @@ class QuestionCloser:
         self.bot.quiz_cog.current_questions.pop(area, None)
         self.state.clear_active_question(area)
         self.bot.quiz_cog.tracker.set_initialized(cfg["channel_id"])
+
+    async def auto_close(self, area: str, delay: float):
+        await asyncio.sleep(delay)
+        qinfo = self.bot.quiz_cog.current_questions.get(area)
+        if qinfo:
+            await self.close_question(area=area, qinfo=qinfo, timed_out=True)

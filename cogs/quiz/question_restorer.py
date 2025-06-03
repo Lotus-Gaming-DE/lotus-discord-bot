@@ -1,5 +1,3 @@
-# cogs/quiz/question_restorer.py
-
 import logging
 import datetime
 import discord
@@ -45,7 +43,6 @@ class QuestionRestorer:
         try:
             try:
                 msg = await channel.fetch_message(qinfo["message_id"])
-
             except discord.NotFound:
                 logger.warning(
                     f"[Restorer] Ursprüngliche Nachricht für '{area}' nicht mehr vorhanden – lösche Zustand.")
@@ -59,8 +56,6 @@ class QuestionRestorer:
             ):
                 logger.info(
                     f"[Restorer] Frage in '{area}' war bereits rot markiert oder hatte Footer – wird nicht wiederhergestellt.")
-                logger.warning(
-                    f"[Restorer] Nachricht in '{area}' wurde bereits geschlossen – überspringe.")
                 self.state.clear_active_question(area)
                 return
 
@@ -90,7 +85,8 @@ class QuestionRestorer:
             delay = max(
                 (end_time - datetime.datetime.utcnow()).total_seconds(), 0)
             self.bot.loop.create_task(
-                self.bot.quiz_cog._auto_close(area, delay))
+                self.bot.quiz_cog.closer.auto_close(area, delay)
+            )
 
             logger.info(
                 f"[Restorer] Frage in '{area}' wurde erfolgreich wiederhergestellt.")
