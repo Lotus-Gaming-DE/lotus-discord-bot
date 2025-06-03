@@ -1,5 +1,3 @@
-# cogs/quiz/area_providers/wcr.py
-
 import random
 import logging
 from ..utils import create_permutations_list
@@ -9,8 +7,8 @@ logger = logging.getLogger(__name__)
 
 class WCRQuestionProvider:
     def __init__(self, bot, language="de"):
-        self.units = bot.data["wcr"]["units"]
-        self.locals = bot.data["wcr"]["languages"]
+        self.units = bot.quiz_data["wcr"]["units"]
+        self.locals = bot.quiz_data["wcr"]["languages"]
         self.language = language
 
     def get_unit_name(self, unit_id: int, lang: str) -> str:
@@ -155,16 +153,6 @@ class WCRQuestionProvider:
             "antwort": create_permutations_list(winners),
             "category": "Mechanik"
         }
-
-    def generate_questions(self, max_questions=5):
-        questions = []
-        for _ in range(max_questions * 3):  # mehrere Versuche wegen möglicher Nullen
-            q = self.generate()
-            if q and q not in questions:
-                questions.append(q)
-            if len(questions) >= max_questions:
-                break
-        return questions
 
 
 def get_provider(bot, language):

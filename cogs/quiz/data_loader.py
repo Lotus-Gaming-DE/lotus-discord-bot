@@ -1,50 +1,34 @@
-# cogs/quiz/data_loader.py
-
-import os
 import json
+import os
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 class DataLoader:
-    QUIZ_DIR = './data/quiz/'
-    QUESTIONS_FILE_TEMPLATE = 'questions_{}.json'
+    def __init__(self, base_path="./data/quiz"):
+        self.base_path = base_path
 
-    DEFAULT_LANGUAGE = 'de'
-
-    def __init__(self):
-        self.language = self.DEFAULT_LANGUAGE
-        self.questions_by_area = {}
-        self.load_questions()
-
-    def set_language(self, language_code: str):
-        """Sprache wechseln und passende Fragen laden."""
-        self.language = language_code
-        self.load_questions()
-        logger.info(f"[DataLoader] Language set to '{self.language}'.")
-
-    def load_questions(self) -> dict:
-        """Lade Fragen für die aktuelle Sprache."""
-        questions_file = os.path.join(
-            self.QUIZ_DIR,
-            self.QUESTIONS_FILE_TEMPLATE.format(self.language)
-        )
+    def load_questions(self, language):
+        file_path = os.path.join(self.base_path, f"questions_{language}.json")
         try:
-            if os.path.exists(questions_file):
-                with open(questions_file, 'r', encoding='utf-8') as f:
-                    questions = json.load(f)
-                    logger.info(
-                        f"[DataLoader] Fragen geladen: {len(questions)} Fragen in {len(questions.keys())} Bereichen.")
-
-                self.questions_by_area = questions
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
                 logger.info(
-                    f"[DataLoader] Questions loaded from '{questions_file}'.")
-            else:
-                self.questions_by_area = {}
-                logger.warning(
-                    f"[DataLoader] Questions file '{questions_file}' not found.")
-        except Exception as e:
-            self.questions_by_area = {}
-            logger.error(
-                f"[DataLoader] Error loading questions: {e}", exc_info=True)
+                    f"[DataLoader] Questions loaded from '{file_path}'.")
+                return data
+        except FileNotFoundError:
+            logger.warning(f"[DataLoader] File not found: {file_path}")
+            return {}
+
+    def load_all_languages(self):
+        questions = {}
+        languages = {}
+        for lang in ["de", "en"]:
+            q = self.load_questions(lang)
+            if q:
+                logger.info(
+                    f"[DataLoader] Fragen geladen: {len(q)} Fragen in {len(q.keys())} Bereichen.")
+                questions[lang] = q
+                languages[lang] = q
+        return questions, languages
