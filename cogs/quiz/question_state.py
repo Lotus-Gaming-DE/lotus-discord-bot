@@ -72,3 +72,12 @@ class QuestionStateManager:
         self.state.setdefault("history", {})[area] = []
         logger.info(f"[QuestionState] Historie in '{area}' zurückgesetzt.")
         self._save_state()
+
+    # ── Fragefilterung ────────────────────────────────────────────
+
+    def filter_unasked_questions(self, area: str, questions: list[dict]) -> list[dict]:
+        """
+        Gibt nur Fragen zurück, die noch nicht gestellt wurden (basierend auf ID).
+        """
+        asked_ids = set(self.get_asked_questions(area))
+        return [q for q in questions if q.get("id") not in asked_ids]
