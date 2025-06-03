@@ -4,6 +4,7 @@ import logging
 from collections import defaultdict
 from discord.ext import commands
 import discord
+import asyncio
 
 from .question_state import QuestionStateManager
 from .scheduler import QuizScheduler
@@ -25,7 +26,7 @@ class QuizCog(commands.Cog):
         self.answered_users: dict[str, set[int]] = defaultdict(set)
         self.awaiting_activity: dict[int, tuple[str, float]] = {}
 
-        # State wird aus beliebiger Area entnommen (alle zeigen auf dasselbe Objekt)
+        # State wird aus beliebiger Area entnommen
         self.state: QuestionStateManager = next(
             cfg["question_state"] for cfg in self.bot.quiz_data.values()
         )
@@ -35,12 +36,15 @@ class QuizCog(commands.Cog):
         self.manager = QuestionManager(self)
         self.closer = QuestionCloser(bot=self.bot, state=self.state)
 
+        # Tracker initialisieren!
+        self.bot.loop.create_task(self.tracker.initialize())
+
         # Wiederherstellen
         self.restorer = QuestionRestorer(
             bot=self.bot, state_manager=self.state)
         self.restorer.restore_all()
 
-        # Pro Area: Scheduler starten
+        # Scheduler starten pro Area
         for area in self.bot.quiz_data:
             QuizScheduler(
                 bot=self.bot,
