@@ -1,5 +1,3 @@
-# cogs/quiz/slash_commands.py
-
 import os
 import logging
 import datetime
@@ -28,7 +26,7 @@ quiz_group = app_commands.Group(
 
 
 def get_area_by_channel(bot: commands.Bot, channel_id: int) -> Optional[str]:
-    quiz_cog: QuizCog = bot.get_cog("QuizCog")
+    quiz_cog: QuizCog = bot.quiz_cog
     for area, cfg in quiz_cog.bot.quiz_data.items():
         if cfg["channel_id"] == channel_id:
             return area
@@ -39,12 +37,7 @@ def get_area_by_channel(bot: commands.Bot, channel_id: int) -> Optional[str]:
 @app_commands.describe(minutes="Zeitfenster in Minuten (1–120)")
 @app_commands.default_permissions(manage_guild=True)
 async def time(interaction: discord.Interaction, minutes: app_commands.Range[int, 1, 120]):
-    area = get_area_by_channel(interaction.client, interaction.channel.id)
-    if not area:
-        await interaction.response.send_message("❌ In diesem Channel ist kein Quiz konfiguriert.", ephemeral=True)
-        return
-
-    quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
+    quiz_cog: QuizCog = interaction.client.quiz_cog
     quiz_cog.time_window = datetime.timedelta(minutes=minutes)
     await interaction.response.send_message(f"⏱️ Zeitfenster auf **{minutes} Minuten** gesetzt.", ephemeral=True)
 
@@ -58,17 +51,20 @@ async def language(interaction: discord.Interaction, lang: Literal["de", "en"]):
         await interaction.response.send_message("❌ In diesem Channel ist kein Quiz konfiguriert.", ephemeral=True)
         return
 
-    quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
+    quiz_cog: QuizCog = interaction.client.quiz_cog
     data_loader = quiz_cog.bot.data["quiz"]["data_loader"]
     data_loader.set_language(lang)
     questions_by_area = data_loader.questions_by_area
     this_area_dict = questions_by_area.get(area, {})
 
     state = quiz_cog.bot.quiz_data[area]["question_state"]
+    dynamic_providers = quiz_cog.bot.quiz_data[area].get(
+        "question_generator").dynamic_providers
+
     new_generator = QuestionGenerator(
         questions_by_area={area: this_area_dict},
         state_manager=state,
-        dynamic_providers=quiz_cog.bot.quiz_data[area]["question_generator"].dynamic_providers
+        dynamic_providers=dynamic_providers
     )
 
     quiz_cog.bot.quiz_data[area]["question_generator"] = new_generator
@@ -85,10 +81,9 @@ async def ask(interaction: discord.Interaction):
         await interaction.response.send_message("❌ In diesem Channel ist kein Quiz konfiguriert.", ephemeral=True)
         return
 
-    quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
+    quiz_cog: QuizCog = interaction.client.quiz_cog
     end_time = datetime.datetime.utcnow() + quiz_cog.time_window
-    interaction.client.loop.create_task(
-        quiz_cog.manager.ask_question(area, end_time))
+    await quiz_cog.manager.ask_question(area, end_time)
     await interaction.response.send_message("✅ Die Frage wurde erstellt.", ephemeral=False)
 
 
@@ -100,7 +95,7 @@ async def answer(interaction: discord.Interaction):
         await interaction.response.send_message("❌ In diesem Channel ist kein Quiz konfiguriert.", ephemeral=True)
         return
 
-    quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
+    quiz_cog: QuizCog = interaction.client.quiz_cog
     question_data = quiz_cog.current_questions.get(area)
     if not question_data:
         await interaction.response.send_message("📭 Aktuell ist keine Frage aktiv.", ephemeral=True)
@@ -135,7 +130,7 @@ async def status(interaction: discord.Interaction):
         await interaction.response.send_message("❌ In diesem Channel ist kein Quiz konfiguriert.", ephemeral=True)
         return
 
-    quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
+    quiz_cog: QuizCog = interaction.client.quiz_cog
     question_data = quiz_cog.current_questions.get(area)
     count = quiz_cog.tracker.get(interaction.channel.id)
     if question_data:
@@ -156,7 +151,7 @@ async def disable(interaction: discord.Interaction):
         await interaction.response.send_message("❌ In diesem Channel ist kein Quiz konfiguriert.", ephemeral=True)
         return
 
-    quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
+    quiz_cog: QuizCog = interaction.client.quiz_cog
     quiz_cog.bot.quiz_data.pop(area, None)
     await interaction.response.send_message(f"🚫 Quiz für **{area}** deaktiviert.", ephemeral=False)
 
@@ -166,7 +161,7 @@ async def disable(interaction: discord.Interaction):
 @app_commands.default_permissions(manage_guild=True)
 async def enable(interaction: discord.Interaction, area_name: str, lang: Literal["de", "en"] = "de"):
     area = area_name.lower()
-    quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
+    quiz_cog: QuizCog = interaction.client.quiz_cog
 
     q_loader = quiz_cog.bot.data["quiz"]["data_loader"]
     q_loader.set_language(lang)
@@ -176,7 +171,7 @@ async def enable(interaction: discord.Interaction, area_name: str, lang: Literal
     generator = QuestionGenerator(
         questions_by_area={area: questions},
         state_manager=state,
-        dynamic_providers={}  # optional: anpassen bei Bedarf
+        dynamic_providers={}
     )
 
     quiz_cog.bot.quiz_data[area] = {

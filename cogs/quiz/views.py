@@ -1,5 +1,3 @@
-# cogs/quiz/views.py
-
 import logging
 import discord
 from discord.ui import View, Modal, TextInput, button, Button
@@ -35,26 +33,36 @@ class AnswerModal(Modal, title="Antwort eingeben"):
             # Punkt im Champion-System vergeben
             champion_cog = self.cog.bot.get_cog("ChampionCog")
             if champion_cog:
-                await champion_cog.update_user_score(user_id, 1, f"Quiz: {self.area}")
+                await champion_cog.update_user_score(
+                    user_id, 1, f"Quiz: {self.area}"
+                )
+                logger.info(
+                    f"[Champion] {user.display_name} erhält 1 Punkt für '{self.area}'."
+                )
 
             await interaction.response.send_message(
                 "🏆 Richtig! Du erhältst einen Punkt.", ephemeral=True
             )
-            await self.cog.close_question(
-                area=self.area,
-                timed_out=False,
-                winner=user,
-                correct_answer=eingabe
-            )
+
+            qinfo = self.cog.current_questions.get(self.area)
+            if qinfo:
+                await self.cog.closer.close_question(
+                    area=self.area,
+                    qinfo=qinfo,
+                    timed_out=False,
+                    winner=user,
+                    correct_answer=eingabe
+                )
+
             logger.info(
-                f"[Quiz] {user.name} hat richtig geantwortet in '{self.area}': {eingabe}"
+                f"[Quiz] {user.display_name} hat richtig geantwortet in '{self.area}': {eingabe}"
             )
         else:
             await interaction.response.send_message(
                 "❌ Das ist leider falsch.", ephemeral=True
             )
             logger.info(
-                f"[Quiz] {user.name} hat falsch geantwortet in '{self.area}': {eingabe}"
+                f"[Quiz] {user.display_name} hat falsch geantwortet in '{self.area}': {eingabe}"
             )
 
 
