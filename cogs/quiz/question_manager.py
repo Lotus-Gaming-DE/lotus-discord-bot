@@ -84,7 +84,8 @@ class QuestionManager:
             "message_id": sent_msg.id,
             "end_time": end_time.isoformat(),
             "answers": correct_answers,
-            "frage": frage_text
+            "frage": frage_text,
+            "category": qd.get("category", "–")
         }
         self.cog.current_questions[area] = {
             "message_id": sent_msg.id,

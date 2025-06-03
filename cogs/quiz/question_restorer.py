@@ -63,11 +63,14 @@ class QuestionRestorer:
                 qinfo["answers"], list) else [qinfo["answers"]]
             frage_text = qinfo.get("frage", "Frage nicht gespeichert")
 
+            category = qinfo.get("category", "–")
+
             embed = discord.Embed(
                 title=f"Quiz für {area.upper()} (wiederhergestellt)",
                 description=frage_text,
                 color=discord.Color.blue(),
             )
+            embed.add_field(name="Kategorie", value=category, inline=False)
             embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
 
             view = AnswerButtonView(
