@@ -7,9 +7,13 @@ from pathlib import Path
 
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
 
 from cogs.quiz.data_loader import DataLoader
 from cogs.wcr.utils import load_wcr_data
+
+# Lade Umgebungsvariablen
+load_dotenv()
 
 # Logging-Konfiguration
 logging.basicConfig(
@@ -28,7 +32,7 @@ intents.guilds = True
 class MyBot(commands.Bot):
     def __init__(self):
         super().__init__(
-            command_prefix="§",
+            command_prefix="§",  # Wird nicht genutzt, aber Pflichtfeld
             intents=intents,
             sync_commands=False
         )
@@ -39,6 +43,7 @@ class MyBot(commands.Bot):
             exit(1)
         self.main_guild = discord.Object(id=int(guild_id))
 
+        # Gemeinsamer Datenspeicher
         self.data = {}
         self.shared_data_loader = DataLoader()
 
@@ -47,16 +52,22 @@ class MyBot(commands.Bot):
 
         await self._export_emojis()
 
+        # Gemeinsame Datenstruktur befüllen
+        quiz_questions, quiz_languages = self.shared_data_loader.load_all_languages()
         self.data = {
             "emojis": self._load_emojis_from_file(),
-            "wcr": load_wcr_data(),  # <--- zentrale WCR-Daten
             "quiz": {
+                "questions": quiz_questions,
+                "languages": quiz_languages,
                 "data_loader": self.shared_data_loader
-            }
+            },
+            "wcr": load_wcr_data()
         }
+
         logger.info(
             f"[bot] Gemeinsame Daten geladen: {list(self.data.keys())}")
 
+        # Cogs laden
         for path in Path("./cogs").rglob("__init__.py"):
             module = ".".join(path.with_suffix("").parts)
             try:
@@ -66,6 +77,7 @@ class MyBot(commands.Bot):
                 logger.error(
                     f"[bot] Failed to load extension {module}: {e}", exc_info=True)
 
+        # Slash-Befehle synchronisieren
         try:
             await self.tree.sync(guild=self.main_guild)
             logger.info(
