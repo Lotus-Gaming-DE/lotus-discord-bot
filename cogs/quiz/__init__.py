@@ -21,37 +21,6 @@ MAIN_SERVER_ID = int(SERVER_ID)
 
 AREA_CONFIG_PATH = Path("data/pers/quiz/areas.json")
 
-DEFAULT_AREAS = {
-    "wcr": {
-        "channel_id": 1170101064427647016,
-        "window_timer": 30,
-        "language": "de",
-        "active": True,
-        "max_dynamic_questions": 20
-    },
-    "d4": {
-        "channel_id": 1082293549644656660,
-        "window_timer": 7,
-        "language": "en",
-        "active": True,
-        "max_dynamic_questions": 3
-    },
-    "ptcgp": {
-        "channel_id": 1303135431348453517,
-        "window_timer": 60,
-        "language": "de",
-        "active": False,
-        "max_dynamic_questions": 5
-    }
-}
-
-# Initialer Datei-Write falls nicht vorhanden
-if not AREA_CONFIG_PATH.exists():
-    AREA_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with AREA_CONFIG_PATH.open("w", encoding="utf-8") as f:
-        json.dump(DEFAULT_AREAS, f, indent=2, ensure_ascii=False)
-    logger.info("[QuizInit] areas.json wurde initial erstellt.")
-
 
 def load_area_config() -> dict:
     if not AREA_CONFIG_PATH.exists():
