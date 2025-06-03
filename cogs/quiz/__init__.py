@@ -6,7 +6,7 @@ from .question_manager import QuestionManager
 from .question_state import QuestionStateManager
 from .question_closer import QuestionCloser
 from .message_tracker import MessageTracker
-from .slash_commands import QuizSlashCommands
+from .slash_commands import quiz_group
 from .utils import get_available_areas
 
 logger = logging.getLogger(__name__)
@@ -37,11 +37,10 @@ async def setup(bot: commands.Bot):
 
     manager = QuestionManager(bot, generator, state_manager, tracker)
     closer = QuestionCloser(bot, state_manager)
-    slash = QuizSlashCommands(bot, manager, state_manager, tracker)
 
     bot.add_cog(manager)
     bot.add_cog(closer)
-    bot.add_cog(slash)
+    bot.tree.add_command(quiz_group, guild=bot.main_guild)
 
     logger.info(
         "[QuizInit] Cog und Slash-Command-Gruppe erfolgreich registriert.")
