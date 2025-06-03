@@ -156,8 +156,8 @@ class WCRQuestionProvider:
         }
 
 
-# ✨ WICHTIG: Diese Funktion wird vom Bot automatisch aufgerufen
 def get_provider():
-    from ..data_loader import load_wcr_data
-    units, locals_data = load_wcr_data()
+    from cogs.wcr.data_loader import load_unit_data, load_local_data
+    units = load_unit_data()
+    locals_data = load_local_data()
     return WCRQuestionProvider(units, locals_data)
