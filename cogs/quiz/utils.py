@@ -1,5 +1,7 @@
 # cogs/quiz/utils.py
 
+import os
+import json
 import logging
 import re
 import difflib
@@ -69,3 +71,14 @@ def normalize_text(text: str) -> str:
     txt = re.sub(r'\s+', ' ', txt)
     txt = re.sub(r'[^\w\s]', '', txt)
     return txt
+
+
+def get_available_areas():
+    """
+    Liest die verfügbaren Quiz-Areas aus der Konfigurationsdatei.
+    """
+    area_path = "data/pers/quiz/areas.json"
+    if not os.path.exists(area_path):
+        return []
+    with open(area_path, "r", encoding="utf-8") as f:
+        return list(json.load(f).keys())
