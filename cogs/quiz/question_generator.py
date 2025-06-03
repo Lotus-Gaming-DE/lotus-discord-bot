@@ -32,13 +32,12 @@ class QuestionGenerator:
             return None
 
         try:
-            questions = provider.get_dynamic_questions()
-            if not questions:
+            frage = provider.generate()
+            if not frage:
                 logger.warning(
-                    f"[QuestionGenerator] Keine dynamischen Fragen für '{area}' erhalten.")
+                    f"[QuestionGenerator] Keine dynamische Frage generiert für '{area}'.")
                 return None
 
-            frage = random.choice(questions)
             logger.info(
                 f"[QuestionGenerator] Dynamische Frage gewählt für '{area}': {frage.get('frage', '-')}")
             return frage

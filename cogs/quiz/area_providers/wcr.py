@@ -1,3 +1,5 @@
+# cogs/quiz/area_providers/wcr.py
+
 import random
 import logging
 from ..utils import create_permutations_list
@@ -6,9 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class WCRQuestionProvider:
-    def __init__(self, units, locals_data, language="de"):
-        self.units = units
-        self.locals = locals_data
+    def __init__(self, bot, language="de"):
+        self.units = bot.data["wcr"]["units"]
+        self.locals = bot.data["wcr"]["languages"]
         self.language = language
 
     def get_unit_name(self, unit_id: int, lang: str) -> str:
@@ -70,7 +72,7 @@ class WCRQuestionProvider:
                 for talent in unit.get("talents", []):
                     talents.append({
                         "talent_name": talent["name"],
-                        "talent_description": talent["description"],
+                        "talent_description": talent["description"]
                     })
         if not talents:
             return None
@@ -142,8 +144,7 @@ class WCRQuestionProvider:
             return None
         winners = [self.get_unit_name(u1["id"], self.language)] if v1 > v2 else [
             self.get_unit_name(u2["id"], self.language)] if v2 > v1 else [
-            self.get_unit_name(u1["id"], self.language),
-            self.get_unit_name(u2["id"], self.language)]
+            self.get_unit_name(u1["id"], self.language), self.get_unit_name(u2["id"], self.language)]
         question_text = template.format(
             stat_label=stat,
             unit1=self.get_unit_name(u1["id"], self.language),
@@ -156,8 +157,5 @@ class WCRQuestionProvider:
         }
 
 
-def get_provider():
-    from cogs.wcr.data_loader import load_unit_data, load_local_data
-    units = load_unit_data()
-    locals_data = load_local_data()
-    return WCRQuestionProvider(units, locals_data)
+def get_provider(bot, language):
+    return WCRQuestionProvider(bot, language=language)

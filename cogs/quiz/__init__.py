@@ -30,11 +30,11 @@ def load_area_config() -> dict:
         return json.load(f)
 
 
-def load_dynamic_provider(area_name: str):
+def load_dynamic_provider(area_name: str, bot, language: str):
     try:
         module_path = f"cogs.quiz.area_providers.{area_name}"
         module = importlib.import_module(module_path)
-        return module.get_provider()
+        return module.get_provider(bot, language)
     except Exception as e:
         logger.warning(
             f"[QuizInit] Kein dynamischer Provider für '{area_name}': {e}")
@@ -44,7 +44,6 @@ def load_dynamic_provider(area_name: str):
 async def setup(bot: discord.ext.commands.Bot):
     try:
         loader = DataLoader()
-        questions_by_area = loader.questions_by_area
         area_config = load_area_config()
 
         bot.quiz_data = {}
@@ -58,13 +57,14 @@ async def setup(bot: discord.ext.commands.Bot):
                 active = cfg.get("active", False)
 
                 loader.set_language(lang)
-                area_questions = {area: questions_by_area.get(area, {})}
+                questions_by_area = {
+                    area: loader.questions_by_area.get(area, {})}
                 state = QuestionStateManager(
                     f"data/pers/quiz/state_{area}.json")
-                provider = load_dynamic_provider(area)
+                provider = load_dynamic_provider(area, bot, lang)
 
                 generator = QuestionGenerator(
-                    questions_by_area=area_questions,
+                    questions_by_area=questions_by_area,
                     state_manager=state,
                     dynamic_providers={area: provider} if provider else {}
                 )
