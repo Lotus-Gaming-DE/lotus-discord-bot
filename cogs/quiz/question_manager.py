@@ -1,3 +1,5 @@
+# cogs/quiz/question_manager.py
+
 import logging
 import datetime
 import discord
@@ -36,11 +38,9 @@ class QuestionManager:
             self.cog.tracker.set_initialized(cid)
             logger.info(
                 f"[QuestionManager] Channel '{channel.name}' ({area}) initialisiert – überspringe Aktivitätsprüfung.")
-
         elif self.cog.tracker.get(cid) < 10:
             logger.info(
                 f"[QuestionManager] Nachrichtenzähler für '{area}': {self.cog.tracker.get(cid)}/10 – warte auf Aktivität.")
-
             self.cog.awaiting_activity[cid] = (area, end_time)
             return
 
@@ -53,29 +53,22 @@ class QuestionManager:
         channel = self.bot.get_channel(cfg["channel_id"])
         qg = cfg["question_generator"]
 
-        if area == "wcr" and self.cog.wcr_question_count < self.cog.max_wcr_dynamic_questions:
-            qd = qg.generate_dynamic_question("wcr")
-            self.cog.wcr_question_count += 1
-        else:
-            qd = qg.generate_question_from_json(area)
-            if area == "wcr":
-                self.cog.wcr_question_count = 0
-
-        if not qd:
+        question = qg.generate()
+        if not question:
             logger.warning(
                 f"[QuestionManager] Keine Frage generiert für '{area}'.")
             return
 
-        frage_text = qd["frage"]
-        correct_answers = qd["antwort"] if isinstance(
-            qd["antwort"], list) else [qd["antwort"]]
+        frage_text = question["frage"]
+        correct_answers = question["antwort"] if isinstance(
+            question["antwort"], list) else [question["antwort"]]
 
         embed = discord.Embed(
             title=f"Quiz für {area.upper()}",
             description=frage_text,
             color=discord.Color.blue()
         )
-        embed.add_field(name="Kategorie", value=qd.get(
+        embed.add_field(name="Kategorie", value=question.get(
             "category", "–"), inline=False)
         embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
 
@@ -89,7 +82,7 @@ class QuestionManager:
             "end_time": end_time.isoformat(),
             "answers": correct_answers,
             "frage": frage_text,
-            "category": qd.get("category", "–")
+            "category": question.get("category", "–")
         }
         self.cog.current_questions[area] = {
             "message_id": sent_msg.id,
