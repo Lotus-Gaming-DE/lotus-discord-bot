@@ -1,17 +1,10 @@
 import discord
 from discord import app_commands
 from .cog import WCRCog
-import os
-
-SERVER_ID = os.getenv('server_id')
-if SERVER_ID is None:
-    raise ValueError("Environment variable 'server_id' is not set.")
-MAIN_SERVER_ID = int(SERVER_ID)
 
 wcr_group = app_commands.Group(
     name="wcr",
     description="Befehle für Warcraft Rumble",
-    guild_ids=[MAIN_SERVER_ID]  # Nur auf deinem Server
 )
 
 # Autocomplete-Wrapper
@@ -42,21 +35,19 @@ async def _trait_ac(interaction, current):
     return await cog.trait_autocomplete(interaction, current)
 
 
-@wcr_group.command(name="filter", description="Filtert Minis basierend auf verschiedenen Kriterien.")
+@wcr_group.command(
+    name="filter", description="Filtert Minis basierend auf verschiedenen Kriterien."
+)
 @app_commands.describe(
     cost="Kosten des Minis",
     speed="Geschwindigkeit des Minis",
     faction="Fraktion des Minis",
     type="Typ des Minis",
     trait="Merkmal des Minis",
-    lang="Sprache"
+    lang="Sprache",
 )
 @app_commands.autocomplete(
-    cost=_cost_ac,
-    speed=_speed_ac,
-    faction=_faction_ac,
-    type=_type_ac,
-    trait=_trait_ac
+    cost=_cost_ac, speed=_speed_ac, faction=_faction_ac, type=_type_ac, trait=_trait_ac
 )
 async def filter(
     interaction: discord.Interaction,
@@ -65,18 +56,16 @@ async def filter(
     faction: str = None,
     type: str = None,
     trait: str = None,
-    lang: str = "de"
+    lang: str = "de",
 ):
     cog: WCRCog = interaction.client.get_cog("WCRCog")
     await cog.cmd_filter(interaction, cost, speed, faction, type, trait, lang)
 
 
-@wcr_group.command(name="name", description="Zeigt Details zu einem Mini basierend auf dem Namen an.")
+@wcr_group.command(
+    name="name", description="Zeigt Details zu einem Mini basierend auf dem Namen an."
+)
 @app_commands.describe(name="Name des Minis", lang="Sprache")
-async def name(
-    interaction: discord.Interaction,
-    name: str,
-    lang: str = "de"
-):
+async def name(interaction: discord.Interaction, name: str, lang: str = "de"):
     cog: WCRCog = interaction.client.get_cog("WCRCog")
     await cog.cmd_name(interaction, name, lang)
