@@ -1,11 +1,9 @@
 import discord
 from discord.ext import commands
-import aiosqlite
-from datetime import datetime
 from typing import Optional
-import os  # Wird nur für os.makedirs in ChampionData gebraucht
 
 from log_setup import get_logger, create_logged_task
+from .data import ChampionData
 
 logger = get_logger(__name__)
 
@@ -200,8 +198,8 @@ class ChampionCog(commands.Cog):
     async def _apply_champion_role(self, user_id_str: str, score: int) -> None:
         """Assign the correct champion role based on the score."""
         # Zugriff auf Guild NUR noch über self.bot.main_guild (Zentral, wie in bot.py gesetzt)
-        guild = discord.utils.get(self.bot.guilds, id=self.bot.main_guild.id)
-        if not guild:
+        guild = self.bot.main_guild
+        if not isinstance(guild, discord.Guild):
             logger.warning("[ChampionCog] Guild nicht gefunden.")
             return
 

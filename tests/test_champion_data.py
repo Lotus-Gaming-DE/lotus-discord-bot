@@ -5,7 +5,7 @@ import pytest
 # Add the project root to sys.path so that `cogs` can be imported
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from cogs.champion.cog import ChampionData
+from cogs.champion.data import ChampionData
 
 @pytest.mark.asyncio
 async def test_add_and_get_total(tmp_path):
