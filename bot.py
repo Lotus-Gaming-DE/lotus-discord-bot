@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from log_setup import setup_logging, get_logger
 from cogs.quiz.question_state import QuestionStateManager
 from cogs.quiz.question_generator import QuestionGenerator
+from cogs.wcr.utils import load_wcr_data
 
 # Lade Umgebungsvariablen
 load_dotenv()
@@ -118,14 +119,7 @@ class MyBot(commands.Bot):
             quiz_languages.append(lang)
 
         # WCR-Daten zentral laden
-        wcr_data = {
-            "units": load_json("data/wcr/units.json"),
-            "pictures": load_json("data/wcr/pictures.json"),
-            "locals": {
-                "de": load_json("data/wcr/locals/de.json"),
-                "en": load_json("data/wcr/locals/en.json"),
-            },
-        }
+        wcr_data = load_wcr_data()
 
         # Champion-Rollen laden
         champion_roles = load_json("data/champion/roles.json")
