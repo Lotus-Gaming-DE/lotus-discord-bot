@@ -3,8 +3,6 @@ import asyncio
 
 from log_setup import get_logger
 
-logger = get_logger(__name__)
-
 
 class QuestionCloser:
     def __init__(self, bot, state):
@@ -12,6 +10,7 @@ class QuestionCloser:
         self.state = state
 
     async def close_question(self, area: str, qinfo: dict, timed_out=False, winner: discord.User = None, correct_answer: str = None):
+        logger = get_logger(__name__, area=area)
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
 

@@ -7,7 +7,6 @@ from log_setup import get_logger
 
 from .views import AnswerButtonView
 
-logger = get_logger(__name__)
 
 
 class QuestionManager:
@@ -16,6 +15,7 @@ class QuestionManager:
         self.bot = cog.bot
 
     async def prepare_question(self, area: str, end_time: datetime.datetime):
+        logger = get_logger(__name__, area=area)
         cfg = self.bot.quiz_data[area]
 
         if not cfg.get("active"):
@@ -53,6 +53,7 @@ class QuestionManager:
         await self.ask_question(area, end_time)
 
     async def ask_question(self, area: str, end_time: datetime.datetime):
+        logger = get_logger(__name__, area=area)
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg["channel_id"])
         qg = cfg["question_generator"]
