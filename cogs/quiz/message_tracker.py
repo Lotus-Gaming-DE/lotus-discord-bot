@@ -9,14 +9,10 @@ logger = get_logger(__name__)
 
 
 class MessageTracker:
-    def __init__(self, bot, on_threshold):
-        self.bot = bot
-        self.on_threshold = on_threshold
-        self.message_counter = {}
-        self.channel_initialized = {}
-    def __init__(self, bot) -> None:
+    def __init__(self, bot, on_threshold) -> None:
         """Track message activity in quiz channels."""
         self.bot = bot
+        self.on_threshold = on_threshold
         self.message_counter: dict[int, int] = {}
         self.channel_initialized: dict[int, bool] = {}
 

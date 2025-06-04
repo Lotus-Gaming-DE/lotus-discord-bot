@@ -10,8 +10,6 @@ class QuestionCloser:
         self.bot = bot
         self.state = state
 
-    async def close_question(self, area: str, qinfo: dict, timed_out=False, winner: discord.User = None, correct_answer: str = None):
-        logger = get_logger(__name__, area=area)
     async def close_question(
         self,
         area: str,
@@ -20,6 +18,7 @@ class QuestionCloser:
         winner: discord.User | None = None,
         correct_answer: str | None = None,
     ) -> None:
+        logger = get_logger(__name__, area=area)
         """Mark a question as closed and update the original message."""
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg.channel_id)

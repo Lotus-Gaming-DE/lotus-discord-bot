@@ -161,13 +161,12 @@ class MyBot(commands.Bot):
 
         await self.tree.sync(guild=self.main_guild)
 
-    async def on_ready(self):
+    async def on_ready(self) -> None:
+        """Log when the bot is fully ready."""
         if not isinstance(self.main_guild, discord.Guild):
             guild = self.get_guild(self.main_guild_id)
             if guild:
                 self.main_guild = guild
-    async def on_ready(self) -> None:
-        """Log when the bot is fully ready."""
         logger.info(
             f"Bot ist bereit! Eingeloggt als {self.user} (ID: {self.user.id})")
 

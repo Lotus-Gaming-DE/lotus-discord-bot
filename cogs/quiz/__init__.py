@@ -5,10 +5,8 @@ from log_setup import get_logger
 
 from .cog import QuizCog
 from .slash_commands import quiz_group
-        await bot.add_cog(QuizCog(bot))
-from .question_manager import QuestionManager
 from .question_state import QuestionStateManager
-from .question_closer import QuestionCloser
+from .question_generator import QuestionGenerator
 from .utils import get_available_areas
 
 
@@ -19,16 +17,7 @@ async def setup(bot: commands.Bot):
     """Set up the quiz cog and slash commands."""
     logger.info("[QuizInit] Initialisierung startet...")
 
-    try:
-        await bot.add_cog(QuizCog(bot))
-        bot.tree.add_command(quiz_group, guild=bot.main_guild)
-        logger.info(
-            "[QuizInit] Cog und Slash-Command-Gruppe erfolgreich registriert.")
-    except Exception as e:
-        logger.error(f"[QuizInit] Fehler beim Setup: {e}", exc_info=True)
     from bot import QUESTION_STATE_PATH
-
-    from .slash_commands import quiz_group
 
     areas = get_available_areas()
     state_manager = QuestionStateManager(QUESTION_STATE_PATH)

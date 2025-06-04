@@ -47,6 +47,10 @@ class ChampionData:
 
         logger.info("[ChampionData] SQLite‐Datenbank initialisiert.")
 
+    async def close(self) -> None:
+        """Compatibility method for API parity."""
+        return None
+
     async def get_total(self, user_id: str) -> int:
         await self.init_db()
         async with aiosqlite.connect(self.db_path) as db:
