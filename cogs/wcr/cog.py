@@ -242,37 +242,48 @@ class WCRCog(commands.Cog):
                 await interaction.followup.send(embed=embed, ephemeral=True)
 
     def create_mini_embed(self, name_or_id, lang):
+        result = self.resolve_unit(name_or_id, lang)
+        if not result:
         """Return an embed describing the mini or ``(None, None)`` if unknown."""
         if lang not in self.languages:
             return None, None
 
+        unit_id, unit_data, lang, texts = result
+
+        return self.build_mini_embed(unit_id, unit_data, lang, texts)
+
+    def resolve_unit(self, name_or_id, lang):
+        if lang not in self.languages:
+            return None
+
         texts = self.languages[lang]
 
-        # Versuche, name_or_id als ID zu behandeln
         try:
             unit_id = int(name_or_id)
-            matching_unit = next(
+            unit_data = next(
                 (unit for unit in self.units if unit["id"] == unit_id), None)
-            if not matching_unit:
-                return None, None
+            if not unit_data:
+                return None
             matching_unit_text = next(
-                (unit for unit in texts["units"] if unit["id"] == unit_id), None)
+                (u for u in texts["units"] if u["id"] == unit_id), None)
             if not matching_unit_text:
-                return None, None
+                return None
         except ValueError:
-            # Ist keine ID, behandle es als Namen
             input_words = helpers.normalize_name(name_or_id)
-            permutations = [' '.join(p) for i in range(1, len(input_words) + 1)
-                            for p in itertools.permutations(input_words, i)]
+            permutations = [
+                " ".join(p)
+                for i in range(1, len(input_words) + 1)
+                for p in itertools.permutations(input_words, i)
+            ]
 
             unit_found = False
             matching_unit_text = None
 
-            # Suche in der gewählten Sprache
             for permuted_name in permutations:
                 for unit in texts["units"]:
-                    unit_name_normalized = ' '.join(
-                        helpers.normalize_name(unit["name"]))
+                    unit_name_normalized = " ".join(
+                        helpers.normalize_name(unit["name"])
+                    )
                     if permuted_name in unit_name_normalized:
                         matching_unit_text = unit
                         unit_found = True
@@ -280,18 +291,18 @@ class WCRCog(commands.Cog):
                 if unit_found:
                     break
 
-            # Wenn nicht gefunden, suche in anderen Sprachen
             if not unit_found:
                 for other_lang, other_texts in self.languages.items():
                     if other_lang == lang:
                         continue
                     for permuted_name in permutations:
                         for unit in other_texts["units"]:
-                            unit_name_normalized = ' '.join(
-                                helpers.normalize_name(unit["name"]))
+                            unit_name_normalized = " ".join(
+                                helpers.normalize_name(unit["name"])
+                            )
                             if permuted_name in unit_name_normalized:
                                 matching_unit_text = unit
-                                lang = other_lang  # Sprache wechseln
+                                lang = other_lang
                                 texts = other_texts
                                 unit_found = True
                                 break
@@ -301,23 +312,27 @@ class WCRCog(commands.Cog):
                         break
 
             if not unit_found:
-                return None, None
+                return None
 
             unit_id = matching_unit_text["id"]
-            matching_unit = next(
+            unit_data = next(
                 (unit for unit in self.units if unit["id"] == unit_id), None)
-            if not matching_unit:
-                return None, None
+            if not unit_data:
+                return None
 
+        return unit_id, unit_data, lang, texts
+
+    def build_mini_embed(self, unit_id, unit_data, lang, texts):
         unit_name, unit_description, talents = helpers.get_text_data(
-            unit_id, lang, self.languages)
-        stats = matching_unit.get("stats", {})
+            unit_id, lang, self.languages
+        )
+        stats = unit_data.get("stats", {})
 
         # Stat Labels laden
         stat_labels = texts.get('stat_labels', {})
 
         # Fraktionsdaten ermitteln
-        faction_id = matching_unit.get("faction_id")
+        faction_id = unit_data.get("faction_id")
         faction_data = helpers.get_faction_data(faction_id, self.pictures)
         embed_color_hex = faction_data.get("color", "#3498db")
         embed_color = int(embed_color_hex.strip("#"), 16)
@@ -326,12 +341,12 @@ class WCRCog(commands.Cog):
             faction_emoji_name, {}).get("syntax", "")
 
         # Typ-Namen erhalten
-        type_id = matching_unit.get("type_id")
+        type_id = unit_data.get("type_id")
         type_name = helpers.get_category_name(
             "types", type_id, lang, self.languages)
 
         # Geschwindigkeit ermitteln
-        speed_id = matching_unit.get("speed_id")
+        speed_id = unit_data.get("speed_id")
         speed_name = helpers.get_category_name(
             "speeds", speed_id, lang, self.languages)
 
@@ -342,7 +357,7 @@ class WCRCog(commands.Cog):
         extra_stats = []
 
         # Erste Reihe: Kosten und Typ
-        cost = matching_unit.get("cost", "N/A")
+        cost = unit_data.get("cost", "N/A")
         row1_stats.append({
             "name": f"{self.emojis.get('wcr_cost', {}).get('syntax', '')} {stat_labels.get('cost', 'Kosten')}",
             "value": str(cost),
@@ -372,7 +387,7 @@ class WCRCog(commands.Cog):
             })
 
         # Dritte Reihe: Schaden, Angriffsgeschwindigkeit, DPS
-        is_elemental = 8 in matching_unit.get("traits_ids", [])
+        is_elemental = 8 in unit_data.get("traits_ids", [])
 
         if "damage" in stats or "area_damage" in stats:
             if "damage" in stats:
@@ -513,7 +528,7 @@ class WCRCog(commands.Cog):
                     embed.add_field(name="\u200b", value="\u200b", inline=True)
 
         # Traits hinzufügen
-        traits_ids = matching_unit.get("traits_ids", [])
+        traits_ids = unit_data.get("traits_ids", [])
         traits = []
         all_traits = texts.get("categories", {}).get("traits", [])
         for trait_id in traits_ids:
