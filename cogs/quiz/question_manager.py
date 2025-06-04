@@ -7,7 +7,6 @@ from log_setup import get_logger
 
 from .views import AnswerButtonView
 
-logger = get_logger(__name__)
 
 
 class QuestionManager:
@@ -16,6 +15,8 @@ class QuestionManager:
         self.cog = cog
         self.bot = cog.bot
 
+    async def prepare_question(self, area: str, end_time: datetime.datetime):
+        logger = get_logger(__name__, area=area)
     async def prepare_question(self, area: str, end_time: datetime.datetime) -> None:
         """Check conditions and schedule a question for ``area``."""
         cfg = self.bot.quiz_data[area]
@@ -54,6 +55,8 @@ class QuestionManager:
             f"[QuestionManager] Bedingungen erfüllt – sende Frage für '{area}'.")
         await self.ask_question(area, end_time)
 
+    async def ask_question(self, area: str, end_time: datetime.datetime):
+        logger = get_logger(__name__, area=area)
     async def ask_question(self, area: str, end_time: datetime.datetime) -> None:
         """Post a question immediately and store its state."""
         cfg = self.bot.quiz_data[area]

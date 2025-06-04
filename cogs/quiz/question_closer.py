@@ -3,8 +3,6 @@ import asyncio
 
 from log_setup import get_logger
 
-logger = get_logger(__name__)
-
 
 class QuestionCloser:
     def __init__(self, bot, state) -> None:
@@ -12,6 +10,8 @@ class QuestionCloser:
         self.bot = bot
         self.state = state
 
+    async def close_question(self, area: str, qinfo: dict, timed_out=False, winner: discord.User = None, correct_answer: str = None):
+        logger = get_logger(__name__, area=area)
     async def close_question(
         self,
         area: str,

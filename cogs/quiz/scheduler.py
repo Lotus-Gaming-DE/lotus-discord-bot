@@ -4,8 +4,6 @@ import datetime
 
 from log_setup import get_logger, create_logged_task
 
-logger = get_logger(__name__)
-
 
 class QuizScheduler:
     def __init__(self, bot, area: str, prepare_question_callback, close_question_callback) -> None:
@@ -14,13 +12,14 @@ class QuizScheduler:
         self.area = area
         self.prepare_question = prepare_question_callback
         self.close_question = close_question_callback
-        self.task = create_logged_task(self.run(), logger)
+        self.logger = get_logger(__name__, area=area)
+        self.task = create_logged_task(self.run(), self.logger)
 
     async def run(self) -> None:
         """Background task loop scheduling questions in random intervals."""
         await self.bot.wait_until_ready()
         if self.area not in self.bot.quiz_data:
-            logger.warning(
+            self.logger.warning(
                 f"[Scheduler] '{self.area}' nicht in quiz_data vorhanden.")
             return
 
@@ -39,7 +38,7 @@ class QuizScheduler:
             post_time = next_time + \
                 datetime.timedelta(seconds=random.uniform(0, 10))
 
-            logger.info(
+            self.logger.info(
                 f"[Scheduler] Neues Zeitfenster für '{self.area}' bis {window_end:%H:%M}. "
                 f"Frage geplant für ca. {post_time:%H:%M:%S}"
             )
@@ -48,11 +47,11 @@ class QuizScheduler:
             await asyncio.sleep((post_time - next_time).total_seconds())
 
             if self.area not in self.bot.quiz_data:
-                logger.warning(
+                self.logger.warning(
                     f"[Scheduler] '{self.area}' nicht mehr in quiz_data.")
                 return
 
-            logger.debug(
+            self.logger.debug(
                 f"[Scheduler] Wache auf – prüfe Bedingungen für '{self.area}'...")
             await self.prepare_question(self.area, window_end)
 
