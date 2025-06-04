@@ -23,8 +23,13 @@ class QuizCog(commands.Cog):
         self.answered_users: dict[str, set[int]] = defaultdict(set)
         self.awaiting_activity: dict[int, tuple[str, float]] = {}
 
+        # ``quiz_data`` might be empty if no areas are configured. In that case
+        # fall back to a fresh ``QuestionStateManager`` so the cog can start
+        # without raising an exception during initialization.
         self.state: QuestionStateManager = next(
-            cfg["question_state"] for cfg in self.bot.quiz_data.values()
+            (cfg.get("question_state") for cfg in self.bot.quiz_data.values()
+             if "question_state" in cfg),
+            QuestionStateManager("data/pers/quiz/question_state.json")
         )
 
         self.tracker = MessageTracker(bot=self.bot)
