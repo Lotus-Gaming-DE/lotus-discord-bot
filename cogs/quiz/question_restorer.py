@@ -1,10 +1,11 @@
-import logging
 import datetime
 import discord
 
+from log_setup import get_logger, create_logged_task
+
 from .views import AnswerButtonView
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class QuestionRestorer:
@@ -23,8 +24,8 @@ class QuestionRestorer:
                     logger.info(
                         f"[Restorer] Wiederhergestellte Frage in '{area}' läuft bis {end_time}."
                     )
-                    self.bot.loop.create_task(
-                        self.repost_question(area, active))
+                    create_logged_task(
+                        self.repost_question(area, active), logger)
                 else:
                     self.state.clear_active_question(area)
             except Exception as e:
@@ -87,8 +88,8 @@ class QuestionRestorer:
 
             delay = max(
                 (end_time - datetime.datetime.utcnow()).total_seconds(), 0)
-            self.bot.loop.create_task(
-                self.bot.quiz_cog.closer.auto_close(area, delay)
+            create_logged_task(
+                self.bot.quiz_cog.closer.auto_close(area, delay), logger
             )
 
             logger.info(

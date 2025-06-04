@@ -1,8 +1,9 @@
-import logging
 import discord
 import asyncio
 
-logger = logging.getLogger(__name__)
+from log_setup import get_logger
+
+logger = get_logger(__name__)
 
 
 class QuestionCloser:

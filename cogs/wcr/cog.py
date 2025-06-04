@@ -3,12 +3,13 @@
 import discord
 from discord.ext import commands
 import os
-import logging
-from . import helpers
-from .views import MiniSelectView
 import itertools
 
-logger = logging.getLogger(__name__)
+from log_setup import get_logger
+from . import helpers
+from .views import MiniSelectView
+
+logger = get_logger(__name__)
 
 # Hauptserver-ID aus der Umgebungsvariablen lesen
 SERVER_ID = os.getenv('server_id')

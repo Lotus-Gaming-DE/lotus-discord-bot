@@ -54,6 +54,8 @@ Jede Funktion ist vollständig über **Slash-Commands** steuerbar.
    ```env
    bot_key=DEIN_DISCORD_TOKEN
    server_id=DEINE_SERVER_ID
+   # Optional: DEBUG, INFO, WARNING, ERROR, CRITICAL
+   LOG_LEVEL=INFO
    ```
 
 3. Den Bot anschließend mit

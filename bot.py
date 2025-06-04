@@ -1,22 +1,19 @@
 import os
 import json
-import logging
 from pathlib import Path
 
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from log_setup import setup_logging, get_logger
+
 # Lade Umgebungsvariablen
 load_dotenv()
 
 # Logging-Konfiguration
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s:%(name)s: %(message)s"
-)
-logging.getLogger("discord").setLevel(logging.WARNING)
-logger = logging.getLogger("bot")
+setup_logging()
+logger = get_logger("bot")
 
 # Discord-Intents
 intents = discord.Intents.default()

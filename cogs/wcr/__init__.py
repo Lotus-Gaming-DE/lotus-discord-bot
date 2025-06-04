@@ -2,12 +2,13 @@
 
 import os
 import discord
-import logging
+
+from log_setup import get_logger
 
 from .cog import WCRCog
 from .slash_commands import wcr_group
 
-logger = logging.getLogger(__name__)  # z.B. "cogs.wcr.__init__"
+logger = get_logger(__name__)  # z.B. "cogs.wcr.__init__"
 
 SERVER_ID = os.getenv("server_id")
 if SERVER_ID is None:

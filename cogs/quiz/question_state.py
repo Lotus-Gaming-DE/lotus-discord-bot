@@ -2,10 +2,10 @@
 
 import json
 import os
-import logging
+from log_setup import get_logger
 from typing import Optional
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class QuestionStateManager:
