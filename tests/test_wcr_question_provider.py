@@ -1,0 +1,66 @@
+import os
+import sys
+import json
+import random
+
+# Add project root to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from cogs.quiz.area_providers.wcr import WCRQuestionProvider
+
+class DummyBot:
+    pass
+
+def create_provider():
+    bot = DummyBot()
+    bot.data = {
+        "wcr": {
+            "units": json.load(open("data/wcr/units.json", "r", encoding="utf-8")),
+            "locals": {
+                "de": json.load(open("data/wcr/locals/de.json", "r", encoding="utf-8")),
+                "en": json.load(open("data/wcr/locals/en.json", "r", encoding="utf-8")),
+            },
+            "pictures": json.load(open("data/wcr/pictures.json", "r", encoding="utf-8")),
+        }
+    }
+    return WCRQuestionProvider(bot, language="de")
+
+
+def test_generate_type_1():
+    provider = create_provider()
+    q = provider.generate_type_1()
+    assert q is not None
+    assert "frage" in q and "antwort" in q and "id" in q
+
+
+def test_generate_type_2():
+    provider = create_provider()
+    q = provider.generate_type_2()
+    assert q is not None
+    assert "frage" in q and "antwort" in q and "id" in q
+
+
+def test_generate_type_3():
+    provider = create_provider()
+    q = provider.generate_type_3()
+    assert q is not None
+    assert "frage" in q and "antwort" in q and "id" in q
+
+
+def test_generate_type_4(monkeypatch):
+    provider = create_provider()
+    # make selection deterministic
+    monkeypatch.setattr(random, "choice", lambda seq: seq[0])
+    q = provider.generate_type_4()
+    assert q is not None
+    assert "frage" in q and "antwort" in q and "id" in q
+
+
+def test_generate_type_5(monkeypatch):
+    provider = create_provider()
+    units = provider.units
+    monkeypatch.setattr(random, "sample", lambda seq, k: [units[0], units[1]])
+    monkeypatch.setattr(random, "choice", lambda seq: seq[0])
+    q = provider.generate_type_5()
+    assert q is not None
+    assert "frage" in q and "antwort" in q and "id" in q
