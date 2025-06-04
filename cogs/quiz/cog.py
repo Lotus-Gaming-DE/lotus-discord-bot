@@ -20,6 +20,9 @@ class QuizCog(commands.Cog):
         self.bot = bot
         self.bot.quiz_cog = self
 
+        if not self.bot.quiz_data:
+            logger.warning("[QuizCog] Keine Quiz-Konfiguration geladen.")
+
         self.current_questions: dict[str, dict] = {}
         self.answered_users: dict[str, set[int]] = defaultdict(set)
         self.awaiting_activity: dict[int, tuple[str, float]] = {}
