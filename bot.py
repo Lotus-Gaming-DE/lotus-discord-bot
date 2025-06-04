@@ -1,12 +1,15 @@
 import os
 import json
 from pathlib import Path
+import datetime
 
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
 from log_setup import setup_logging, get_logger
+from cogs.quiz.question_state import QuestionStateManager
+from cogs.quiz.question_generator import QuestionGenerator
 
 # Lade Umgebungsvariablen
 load_dotenv()
@@ -20,10 +23,63 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
 
+QUIZ_CONFIG_PATH = "data/pers/quiz/areas.json"
+QUESTION_STATE_PATH = "data/pers/quiz/question_state.json"
+
 
 def load_json(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def load_quiz_config(bot: commands.Bot):
+    """Lädt Quiz-Areas aus ``QUIZ_CONFIG_PATH`` und bereitet sie vor."""
+    bot.quiz_data = {}
+
+    cfg_file = Path(QUIZ_CONFIG_PATH)
+    if not cfg_file.exists():
+        logger.warning(f"[bot] Quiz-Konfigurationsdatei nicht gefunden: {cfg_file}")
+        return
+
+    try:
+        with open(cfg_file, "r", encoding="utf-8") as f:
+            areas = json.load(f)
+    except Exception as e:
+        logger.error(f"[bot] Fehler beim Laden der Quiz-Konfiguration: {e}")
+        return
+
+    state = QuestionStateManager(QUESTION_STATE_PATH)
+
+    for area, cfg in areas.items():
+        time_window = datetime.timedelta(minutes=cfg.get("window_timer", 15))
+        language = cfg.get("language", "de")
+
+        dynamic_providers = {}
+        try:
+            module = __import__(
+                f"cogs.quiz.area_providers.{area}", fromlist=["get_provider"]
+            )
+            dynamic_providers[area] = module.get_provider(bot, language=language)
+        except Exception as e:
+            logger.info(f"[bot] Kein dynamischer Provider für '{area}': {e}")
+
+        generator = QuestionGenerator(
+            bot.data.get("quiz", {}).get("questions", {}),
+            state_manager=state,
+            dynamic_providers=dynamic_providers,
+        )
+
+        bot.quiz_data[area] = {
+            "channel_id": cfg.get("channel_id"),
+            "time_window": time_window,
+            "language": language,
+            "active": cfg.get("active", False),
+            "activity_threshold": cfg.get("activity_threshold", 10),
+            "question_state": state,
+            "question_generator": generator,
+        }
+
+    logger.info(f"[bot] Quiz-Konfiguration geladen: {list(bot.quiz_data.keys())}")
 
 
 class MyBot(commands.Bot):
@@ -87,6 +143,9 @@ class MyBot(commands.Bot):
         }
 
         logger.info(f"[bot] Zentrale Daten geladen: {list(self.data.keys())}")
+
+        # Quiz-Konfiguration laden
+        load_quiz_config(self)
 
         # Cogs importieren & registrieren
         from cogs.quiz.cog import QuizCog
