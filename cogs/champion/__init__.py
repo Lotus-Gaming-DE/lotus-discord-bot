@@ -1,16 +1,10 @@
-import os
 import discord
 import logging
 
 from .cog import ChampionCog
 from .slash_commands import champion_group
 
-logger = logging.getLogger(__name__)  # z. B. "cogs.champion.__init__"
-
-SERVER_ID = os.getenv("server_id")
-if SERVER_ID is None:
-    raise ValueError("Environment variable 'server_id' is not set.")
-MAIN_SERVER_ID = int(SERVER_ID)
+logger = logging.getLogger(__name__)
 
 
 async def setup(bot: discord.ext.commands.Bot):
@@ -21,7 +15,7 @@ async def setup(bot: discord.ext.commands.Bot):
         # 2) Slash-Gruppe /champion in den Command-Tree einfügen
         bot.tree.add_command(
             champion_group,
-            guild=discord.Object(id=MAIN_SERVER_ID)
+            guild=bot.main_guild
         )
 
         logger.info(

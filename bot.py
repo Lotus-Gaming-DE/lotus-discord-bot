@@ -1,5 +1,3 @@
-# bot.py
-
 import os
 import json
 import logging
@@ -7,10 +5,10 @@ from pathlib import Path
 
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
 
-# <- Wird verwendet für Fragen, Sprachen
-from cogs.quiz.data_loader import DataLoader
-from cogs.wcr.utils import load_wcr_data     # <- Lädt WCR-Daten zentral
+# Lade Umgebungsvariablen
+load_dotenv()
 
 # Logging-Konfiguration
 logging.basicConfig(
@@ -26,104 +24,99 @@ intents.message_content = True
 intents.guilds = True
 
 
+def load_json(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
 class MyBot(commands.Bot):
     def __init__(self):
         super().__init__(
-            command_prefix="§",
+            command_prefix="§",  # Wird nicht genutzt, Pflichtfeld
             intents=intents,
             sync_commands=False
         )
-
         guild_id = os.getenv("server_id")
         if not guild_id:
             logger.error("Environment variable 'server_id' is not set.")
             exit(1)
-        self.main_guild = discord.Object(id=int(guild_id))
-
+        self.main_guild_id = int(guild_id)
+        self.main_guild = discord.Object(id=self.main_guild_id)
         self.data = {}
-        self.shared_data_loader = DataLoader()
 
     async def setup_hook(self):
+        # Optional: Commands leeren für Guild (verhindert Ghost-Kommandos bei Updates)
         self.tree.clear_commands(guild=self.main_guild)
 
+        # Emoji-Export (wird nach jedem Start durchgeführt)
         await self._export_emojis()
 
-        # Zentrale Datenspeicherung
+        # Quiz-Fragen in allen Sprachen laden
+        quiz_questions = {}
+        quiz_languages = []
+        quiz_dir = Path("data/quiz")
+        for f in quiz_dir.glob("questions_*.json"):
+            lang = f.stem.split("_")[1]
+            quiz_questions[lang] = load_json(f)
+            quiz_languages.append(lang)
+
+        # WCR-Daten zentral laden
+        wcr_data = {
+            "units": load_json("data/wcr/units.json"),
+            "pictures": load_json("data/wcr/pictures.json"),
+            "locals": {
+                "de": load_json("data/wcr/locals/de.json"),
+                "en": load_json("data/wcr/locals/en.json"),
+            },
+        }
+
+        # Champion-Rollen laden
+        champion_roles = load_json("data/champion/roles.json")
+
+        # Alle zentralen Daten bündeln, inkl. Emojis!
         self.data = {
             "emojis": self._load_emojis_from_file(),
-            "wcr": load_wcr_data(),  # <--- zentrale WCR-Daten
             "quiz": {
-                "data_loader": self.shared_data_loader
-            }
+                "questions": quiz_questions,
+                "languages": quiz_languages,
+            },
+            "wcr": wcr_data,
+            "champion": {
+                "roles": champion_roles,
+            },
         }
-        logger.info(
-            "[bot] Gemeinsame Daten geladen: ['emojis', 'wcr', 'quiz.data_loader']")
 
-        # Alle Cogs mit __init__.py dynamisch laden
-        for path in Path("./cogs").rglob("__init__.py"):
-            module = ".".join(path.with_suffix("").parts)
-            try:
-                await self.load_extension(module)
-                logger.info(f"[bot] Extension loaded: {module}")
-            except Exception as e:
-                logger.error(
-                    f"[bot] Failed to load extension {module}: {e}", exc_info=True)
+        logger.info(f"[bot] Zentrale Daten geladen: {list(self.data.keys())}")
 
-        # Slash-Commands synchronisieren
-        try:
-            await self.tree.sync(guild=self.main_guild)
-            logger.info(
-                f"[bot] Slash commands synced for guild {self.main_guild.id}")
-        except Exception as e:
-            logger.error(
-                f"[bot] Failed to sync slash commands: {e}", exc_info=True)
+        # Cogs importieren & registrieren
+        from cogs.quiz.cog import QuizCog
+        from cogs.wcr.cog import WCRCog
+        from cogs.champion.cog import ChampionCog
 
-    async def _export_emojis(self):
-        guild_id = self.main_guild.id
-        try:
-            guild = self.get_guild(guild_id) or await self.fetch_guild(guild_id)
-            if guild:
-                data = {
-                    emoji.name: {
-                        "id": emoji.id,
-                        "animated": emoji.animated,
-                        "syntax": f"{'<a:' if emoji.animated else '<:'}{emoji.name}:{emoji.id}>"
-                    }
-                    for emoji in guild.emojis
-                }
-                Path("data").mkdir(exist_ok=True)
-                with open("data/emojis.json", "w", encoding="utf-8") as f:
-                    json.dump(data, f, indent=4, ensure_ascii=False)
-                logger.info("[bot] Emojis saved to 'data/emojis.json'")
-            else:
-                logger.warning(
-                    f"[bot] Main guild with ID {guild_id} not found.")
-        except Exception as e:
-            logger.error(f"[bot] Error exporting emojis: {e}", exc_info=True)
-
-    def _load_emojis_from_file(self) -> dict:
-        try:
-            with open("data/emojis.json", "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            logger.error(
-                f"[bot] Error loading emojis from file: {e}", exc_info=True)
-            return {}
+        await self.add_cog(QuizCog(self))
+        await self.add_cog(WCRCog(self))
+        await self.add_cog(ChampionCog(self))
 
     async def on_ready(self):
-        logger.info(f"[bot] Bot is online as {self.user} (ID: {self.user.id})")
+        logger.info(
+            f"Bot ist bereit! Eingeloggt als {self.user} (ID: {self.user.id})")
 
-    async def on_message(self, message):
-        if message.author.bot:
-            return
-        await self.process_commands(message)
+    async def _export_emojis(self):
+        """Exportiert alle Server-Emojis in eine JSON-Datei."""
+        emojis = {e.name: str(e) for e in self.emojis}
+        with open("data/emojis.json", "w", encoding="utf-8") as f:
+            json.dump(emojis, f, ensure_ascii=False, indent=2)
+        logger.info(f"{len(emojis)} Emojis exportiert.")
+
+    def _load_emojis_from_file(self):
+        """Lädt Emojis aus JSON-Datei."""
+        emoji_file = Path("data/emojis.json")
+        if not emoji_file.exists():
+            return {}
+        with open(emoji_file, "r", encoding="utf-8") as f:
+            return json.load(f)
 
 
 if __name__ == "__main__":
-    token = os.getenv("bot_key")
-    if not token:
-        logger.error("Environment variable 'bot_key' is not set.")
-        exit(1)
-
     bot = MyBot()
-    bot.run(token)
+    bot.run(os.getenv("discord_token"))

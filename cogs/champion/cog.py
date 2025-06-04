@@ -1,15 +1,12 @@
-# cogs/champion/cog.py
-
 import discord
 from discord.ext import commands
-import os
-import json
-import aiosqlite  # Muss in requirements.txt stehen: aiosqlite>=0.18.0
+import aiosqlite
 from datetime import datetime
 from typing import Optional
+import os  # Wird nur für os.makedirs in ChampionData gebraucht
 
 import logging
-logger = logging.getLogger(__name__)  # z. B. "cogs.champion.cog"
+logger = logging.getLogger(__name__)
 
 
 class ChampionData:
@@ -140,12 +137,9 @@ class ChampionCog(commands.Cog):
         self.roles = self._load_roles_config()
 
     def _load_roles_config(self) -> list[tuple[str, int]]:
-        config_path = "data/champion/roles.json"
-        with open(config_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
+        role_entries = self.bot.data.get("champion", {}).get("roles", [])
         sorted_roles = sorted(
-            [(entry["name"], entry["threshold"]) for entry in data],
+            [(entry["name"], entry["threshold"]) for entry in role_entries],
             key=lambda x: -x[1]
         )
         return sorted_roles
@@ -167,8 +161,8 @@ class ChampionCog(commands.Cog):
         return new_total
 
     async def _apply_champion_role(self, user_id_str: str, score: int):
-        guild_id = int(os.getenv("server_id"))
-        guild = discord.utils.get(self.bot.guilds, id=guild_id)
+        # Zugriff auf Guild NUR noch über self.bot.main_guild (Zentral, wie in bot.py gesetzt)
+        guild = discord.utils.get(self.bot.guilds, id=self.bot.main_guild.id)
         if not guild:
             logger.warning("[ChampionCog] Guild nicht gefunden.")
             return

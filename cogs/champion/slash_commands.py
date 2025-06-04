@@ -1,18 +1,11 @@
-import os
 import discord
 from discord import app_commands
 
 from .cog import ChampionCog
 
-SERVER_ID = os.getenv("server_id")
-if SERVER_ID is None:
-    raise ValueError("Environment variable 'server_id' is not set.")
-MAIN_SERVER_ID = int(SERVER_ID)
-
 champion_group = app_commands.Group(
     name="champion",
-    description="Verwalte Champion-Punkte",
-    guild_ids=[MAIN_SERVER_ID]
+    description="Verwalte Champion-Punkte"
 )
 
 
@@ -115,7 +108,7 @@ async def leaderboard(interaction: discord.Interaction):
         await interaction.followup.send("🤷 Keine Einträge im Leaderboard.")
         return
 
-    # Emojis laden
+    # Emojis laden (wie bisher – Dict mit "syntax")
     emoji_data = interaction.client.data.get("emojis", {})
     icon_map = {
         "Ultimate Champion": emoji_data.get("challenger_5", {}).get("syntax", ""),
