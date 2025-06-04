@@ -1,6 +1,8 @@
 import random
 
 from log_setup import get_logger
+import logging
+import hashlib
 from ..utils import create_permutations_list
 
 logger = get_logger(__name__)
@@ -8,7 +10,11 @@ logger = get_logger(__name__)
 
 class WCRQuestionProvider:
     def __init__(self, bot, language="de"):
-        self.units = bot.data["wcr"]["units"]
+        units_data = bot.data["wcr"].get("units", [])
+        # ``units.json`` may wrap the list of units in a top level key
+        if isinstance(units_data, dict) and "units" in units_data:
+            units_data = units_data["units"]
+        self.units = units_data
         self.locals = bot.data["wcr"]["locals"]
         self.language = language
 
@@ -19,6 +25,11 @@ class WCRQuestionProvider:
         except Exception:
             return f"[Unbekannt {unit_id}]"
 
+    def _make_id(self, text: str) -> int:
+        """Return a stable integer ID based on a text key."""
+        digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+        return int(digest, 16)
+
     def generate(self):
         types = [
             self.generate_type_1,
@@ -27,15 +38,20 @@ class WCRQuestionProvider:
             self.generate_type_4,
             self.generate_type_5,
         ]
-        for _ in range(10):
-            func = random.choice(types)
+
+        questions = []
+        for func in types:
             q = func()
             if q:
-                logger.info(f"[WCRQuestionProvider] Generated: {q['frage']}")
-                return q
-        logger.warning(
-            "[WCRQuestionProvider] Failed to generate question after 10 attempts.")
-        return None
+                questions.append(q)
+
+        if not questions:
+            logger.warning("[WCRQuestionProvider] Keine gültige Frage generiert.")
+            return None
+
+        question = random.choice(questions)
+        logger.info(f"[WCRQuestionProvider] Generated: {question['frage']}")
+        return question
 
     def generate_type_1(self):
         talents = []
@@ -61,7 +77,8 @@ class WCRQuestionProvider:
         return {
             "frage": question_text,
             "antwort": create_permutations_list(correct),
-            "category": "Mechanik"
+            "category": "Mechanik",
+            "id": self._make_id(f"type1:{self.language}:{pick['talent_name']}")
         }
 
     def generate_type_2(self):
@@ -87,7 +104,8 @@ class WCRQuestionProvider:
         return {
             "frage": question_text,
             "antwort": create_permutations_list(correct),
-            "category": "Mechanik"
+            "category": "Mechanik",
+            "id": self._make_id(f"type2:{self.language}:{pick['talent_description']}")
         }
 
     def generate_type_3(self):
@@ -100,13 +118,17 @@ class WCRQuestionProvider:
             return None
         question_text = template.format(
             unit_name=self.get_unit_name(unit["id"], self.language))
-        faction = unit.get("faction")
+        faction_id = unit.get("faction_id")
+        factions = self.locals.get(self.language, {}).get(
+            "categories", {}).get("factions", [])
+        faction = next((f["name"] for f in factions if f["id"] == faction_id), None)
         if not faction:
             return None
         return {
             "frage": question_text,
             "antwort": create_permutations_list([faction]),
-            "category": "Franchise"
+            "category": "Franchise",
+            "id": self._make_id(f"type3:{self.language}:{unit['id']}")
         }
 
     def generate_type_4(self):
@@ -125,7 +147,8 @@ class WCRQuestionProvider:
         return {
             "frage": question_text,
             "antwort": create_permutations_list([str(cost)]),
-            "category": "Mechanik"
+            "category": "Mechanik",
+            "id": self._make_id(f"type4:{self.language}:{unit['id']}")
         }
 
     def generate_type_5(self):
@@ -138,7 +161,8 @@ class WCRQuestionProvider:
             "question_templates", {}).get("type_5")
         if not template:
             return None
-        v1, v2 = u1.get(stat), u2.get(stat)
+        v1 = u1.get("stats", {}).get(stat)
+        v2 = u2.get("stats", {}).get(stat)
         if v1 is None or v2 is None:
             return None
         winners = [self.get_unit_name(u1["id"], self.language)] if v1 > v2 else [
@@ -152,7 +176,10 @@ class WCRQuestionProvider:
         return {
             "frage": question_text,
             "antwort": create_permutations_list(winners),
-            "category": "Mechanik"
+            "category": "Mechanik",
+            "id": self._make_id(
+                f"type5:{self.language}:{min(u1['id'], u2['id'])}:{max(u1['id'], u2['id'])}:{stat}"
+            )
         }
 
 
