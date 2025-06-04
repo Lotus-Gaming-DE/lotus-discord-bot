@@ -89,13 +89,13 @@ class MyBot(commands.Bot):
         logger.info(f"[bot] Zentrale Daten geladen: {list(self.data.keys())}")
 
         # Cogs importieren & registrieren
-        from cogs.quiz.cog import QuizCog
-        from cogs.wcr.cog import WCRCog
-        from cogs.champion.cog import ChampionCog
+        from cogs import quiz, wcr, champion
 
-        await self.add_cog(QuizCog(self))
-        await self.add_cog(WCRCog(self))
-        await self.add_cog(ChampionCog(self))
+        await quiz.setup(self)
+        await wcr.setup(self)
+        await champion.setup(self)
+
+        await self.tree.sync(guild=self.main_guild)
 
     async def on_ready(self):
         logger.info(
