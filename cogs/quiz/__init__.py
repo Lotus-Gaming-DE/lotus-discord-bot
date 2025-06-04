@@ -16,13 +16,6 @@ from bot import QUESTION_STATE_PATH
 logger = get_logger(__name__)
 
 
-async def setup(bot: discord.ext.commands.Bot):
-    try:
-        await bot.add_cog(QuizCog(bot))
-        bot.tree.add_command(quiz_group, guild=bot.main_guild)
-        logger.info("[QuizCog] Cog und Slash-Command-Gruppe erfolgreich registriert.")
-    except Exception as e:
-        logger.error(f"[QuizCog] Fehler beim Setup: {e}", exc_info=True)
 async def setup(bot: commands.Bot):
     logger.info("[QuizInit] Initialisierung startet...")
 

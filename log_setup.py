@@ -1,12 +1,17 @@
-import os
 import logging
 from logging.handlers import RotatingFileHandler
 import asyncio
 
 
-def setup_logging():
-    """Configure logging for console and file output."""
-    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+def setup_logging(log_level: str = "INFO"):
+    """Configure logging for console and file output.
+
+    Parameters
+    ----------
+    log_level: str
+        The desired log level (e.g. "INFO" or "DEBUG").
+    """
+    log_level = log_level.upper()
     level = getattr(logging, log_level, logging.INFO)
 
     formatter = logging.Formatter(

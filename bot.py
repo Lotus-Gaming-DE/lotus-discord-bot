@@ -15,7 +15,8 @@ from cogs.quiz.question_generator import QuestionGenerator
 load_dotenv()
 
 # Logging-Konfiguration
-setup_logging()
+log_level = os.getenv("LOG_LEVEL", "INFO")
+setup_logging(log_level)
 logger = get_logger("bot")
 
 # Discord-Intents
