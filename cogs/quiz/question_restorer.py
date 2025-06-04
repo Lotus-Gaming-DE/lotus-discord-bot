@@ -9,11 +9,13 @@ logger = get_logger(__name__)
 
 
 class QuestionRestorer:
-    def __init__(self, bot, state_manager):
+    def __init__(self, bot, state_manager) -> None:
+        """Restore running questions after a bot restart."""
         self.bot = bot
         self.state = state_manager
 
-    def restore_all(self):
+    def restore_all(self) -> None:
+        """Recreate all still active questions from persisted state."""
         for area, cfg in self.bot.quiz_data.items():
             active = self.state.get_active_question(area)
             if not active:
@@ -33,9 +35,10 @@ class QuestionRestorer:
                     f"[Restorer] Fehler beim Wiederherstellen von '{area}': {e}", exc_info=True
                 )
 
-    async def repost_question(self, area: str, qinfo: dict):
+    async def repost_question(self, area: str, qinfo: dict) -> None:
+        """Repost a single question message and restart timers."""
         cfg = self.bot.quiz_data[area]
-        channel = await self.bot.fetch_channel(cfg["channel_id"])
+        channel = await self.bot.fetch_channel(cfg.channel_id)
 
         if not channel:
             logger.error(f"[Restorer] Channel für '{area}' nicht verfügbar.")

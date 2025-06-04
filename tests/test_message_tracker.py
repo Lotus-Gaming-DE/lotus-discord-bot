@@ -4,6 +4,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from cogs.quiz.message_tracker import MessageTracker
+from cogs.quiz.quiz_config import QuizAreaConfig
 
 
 class DummyAuthor:
@@ -39,12 +40,12 @@ class DummyCog:
 class DummyBot:
     def __init__(self):
         self.quiz_cog = DummyCog()
-        self.quiz_data = {"area1": {"channel_id": 123, "activity_threshold": 3}}
+        self.quiz_data = {"area1": QuizAreaConfig(channel_id=123, activity_threshold=3)}
 
 
 def test_register_message_increments_and_triggers(monkeypatch):
     bot = DummyBot()
-    tracker = MessageTracker(bot)
+    tracker = MessageTracker(bot, bot.quiz_cog.manager.ask_question)
     bot.quiz_cog.awaiting_activity = {123: ("area1", "end")}
 
     triggered = []

@@ -18,7 +18,8 @@ class DuelConfig:
 
 
 class DuelQuestionView(View):
-    def __init__(self, challenger: discord.Member, opponent: discord.Member, correct_answers: list[str]):
+    def __init__(self, challenger: discord.Member, opponent: discord.Member, correct_answers: list[str]) -> None:
+        """View handling question answers of a duel round."""
         super().__init__(timeout=20)
         self.challenger = challenger
         self.opponent = opponent
@@ -29,7 +30,8 @@ class DuelQuestionView(View):
         self.message: discord.Message | None = None
 
     @button(label="Antworten", style=discord.ButtonStyle.primary)
-    async def answer(self, interaction: discord.Interaction, _: Button):
+    async def answer(self, interaction: discord.Interaction, _: Button) -> None:
+        """Collect an answer from one of the duel participants."""
         if interaction.user.id not in self.players:
             await interaction.response.send_message("Du bist nicht Teil dieses Duells.", ephemeral=True)
             return
@@ -42,11 +44,13 @@ class DuelQuestionView(View):
         modal = _DuelAnswerModal(self)
         await interaction.response.send_modal(modal)
 
-    async def on_timeout(self):
+    async def on_timeout(self) -> None:
+        """Finish the duel round when the timeout is reached."""
         logger.info("DuelQuestionView timed out")
         await self._finish()
 
-    async def _finish(self):
+    async def _finish(self) -> None:
+        """Disable buttons, determine winner and stop the view."""
         for child in self.children:
             child.disabled = True
         if self.message:
@@ -55,7 +59,8 @@ class DuelQuestionView(View):
         logger.debug(f"DuelQuestionView finished, winner={self.winner_id}")
         self.stop()
 
-    def _determine_winner(self):
+    def _determine_winner(self) -> None:
+        """Evaluate all answers and store the winner ID."""
         results: list[tuple[datetime.datetime, int]] = []
         for uid, (answer, ts) in self.responses.items():
             if check_answer(answer, self.correct_answers):
@@ -67,11 +72,13 @@ class DuelQuestionView(View):
 class _DuelAnswerModal(Modal, title="Antwort eingeben"):
     answer = TextInput(label="Deine Antwort")
 
-    def __init__(self, view: DuelQuestionView):
+    def __init__(self, view: DuelQuestionView) -> None:
+        """Simple modal used to collect a duel answer."""
         super().__init__()
         self.view = view
 
-    async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        """Store the answer and finish if all players responded."""
         self.view.responses[interaction.user.id] = (self.answer.value, interaction.created_at or datetime.datetime.utcnow())
         await interaction.response.send_message("Antwort erhalten.", ephemeral=True)
         if len(self.view.responses) >= len(self.view.players):
@@ -79,7 +86,8 @@ class _DuelAnswerModal(Modal, title="Antwort eingeben"):
 
 
 class DuelInviteView(View):
-    def __init__(self, challenger: discord.Member, cfg: DuelConfig, cog):
+    def __init__(self, challenger: discord.Member, cfg: DuelConfig, cog) -> None:
+        """View representing a duel invitation with accept button."""
         super().__init__(timeout=60)
         self.challenger = challenger
         self.cfg = cfg
@@ -87,12 +95,14 @@ class DuelInviteView(View):
         self.message: discord.Message | None = None
         self.accepted = False
 
-    async def on_timeout(self):
+    async def on_timeout(self) -> None:
+        """Remove the view if the invitation timed out."""
         if not self.accepted and self.message:
             await self.message.edit(view=None)
 
     @button(label="Annehmen", style=discord.ButtonStyle.success)
-    async def accept(self, interaction: discord.Interaction, _: Button):
+    async def accept(self, interaction: discord.Interaction, _: Button) -> None:
+        """Start the duel if the invitee accepts."""
         if interaction.user.id == self.challenger.id:
             await interaction.response.send_message("Du kannst dein eigenes Duell nicht annehmen.", ephemeral=True)
             return
@@ -106,7 +116,8 @@ class DuelInviteView(View):
         await interaction.response.defer()
         await self.start_duel(interaction)
 
-    async def start_duel(self, interaction: discord.Interaction):
+    async def start_duel(self, interaction: discord.Interaction) -> None:
+        """Create the duel thread and run the game."""
         logger.info(
             f"Starting duel {self.challenger.display_name} vs {interaction.user.display_name} in {self.cfg.area} for {self.cfg.points} points"
         )
@@ -127,7 +138,8 @@ class DuelInviteView(View):
 
 
 class QuizDuelGame:
-    def __init__(self, cog, thread: discord.Thread, area: str, challenger: discord.Member, opponent: discord.Member, points: int, mode: str):
+    def __init__(self, cog, thread: discord.Thread, area: str, challenger: discord.Member, opponent: discord.Member, points: int, mode: str) -> None:
+        """Hold state for an ongoing duel game."""
         self.cog = cog
         self.thread = thread
         self.area = area
@@ -138,6 +150,9 @@ class QuizDuelGame:
         self.scores = {challenger.id: 0, opponent.id: 0}
 
     async def run(self):
+        qg: QuestionGenerator = self.cog.bot.quiz_data[self.area].question_generator
+    async def run(self) -> None:
+        """Run the duel until one player has enough wins."""
         qg: QuestionGenerator = self.cog.bot.quiz_data[self.area]["question_generator"]
         total_rounds = {"bo3": 3, "bo5": 5}.get(self.mode, 5)
         needed = total_rounds // 2 + 1
@@ -168,7 +183,8 @@ class QuizDuelGame:
                 break
         await self._finish()
 
-    async def _finish(self):
+    async def _finish(self) -> None:
+        """Award points to the winner and archive the thread."""
         champion_cog = self.cog.bot.get_cog("ChampionCog")
         if self.scores[self.challenger.id] > self.scores[self.opponent.id]:
             winner = self.challenger

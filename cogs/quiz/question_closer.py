@@ -3,17 +3,26 @@ import asyncio
 
 from log_setup import get_logger
 
-logger = get_logger(__name__)
-
 
 class QuestionCloser:
-    def __init__(self, bot, state):
+    def __init__(self, bot, state) -> None:
+        """Handle closing of quiz questions and cleaning up state."""
         self.bot = bot
         self.state = state
 
     async def close_question(self, area: str, qinfo: dict, timed_out=False, winner: discord.User = None, correct_answer: str = None):
+        logger = get_logger(__name__, area=area)
+    async def close_question(
+        self,
+        area: str,
+        qinfo: dict,
+        timed_out: bool = False,
+        winner: discord.User | None = None,
+        correct_answer: str | None = None,
+    ) -> None:
+        """Mark a question as closed and update the original message."""
         cfg = self.bot.quiz_data[area]
-        channel = self.bot.get_channel(cfg["channel_id"])
+        channel = self.bot.get_channel(cfg.channel_id)
 
         try:
             msg = await channel.fetch_message(qinfo["message_id"])
@@ -39,9 +48,10 @@ class QuestionCloser:
 
         self.bot.quiz_cog.current_questions.pop(area, None)
         self.state.clear_active_question(area)
-        self.bot.quiz_cog.tracker.set_initialized(cfg["channel_id"])
+        self.bot.quiz_cog.tracker.set_initialized(cfg.channel_id)
 
-    async def auto_close(self, area: str, delay: float):
+    async def auto_close(self, area: str, delay: float) -> None:
+        """Automatically close ``area`` after ``delay`` seconds."""
         await asyncio.sleep(delay)
         qinfo = self.bot.quiz_cog.current_questions.get(area)
         if qinfo:

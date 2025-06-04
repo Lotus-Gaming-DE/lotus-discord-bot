@@ -27,21 +27,23 @@ AREA_CONFIG_PATH = "data/pers/quiz/areas.json"
 
 
 def get_area_by_channel(bot: commands.Bot, channel_id: int) -> Optional[str]:
+    """Return the quiz area configured for the given channel."""
     for area, cfg in bot.quiz_data.items():
-        if cfg["channel_id"] == channel_id:
+        if cfg.channel_id == channel_id:
             return area
     return None
 
 
 def save_area_config(bot: commands.Bot):
+    """Persist ``bot.quiz_data`` to ``AREA_CONFIG_PATH``."""
     out = {}
     for area, cfg in bot.quiz_data.items():
         out[area] = {
-            "channel_id": cfg["channel_id"],
-            "window_timer": int(cfg["time_window"].total_seconds() / 60),
-            "language": cfg["language"],
-            "active": cfg.get("active", False),
-            "activity_threshold": cfg.get("activity_threshold", 10)
+            "channel_id": cfg.channel_id,
+            "window_timer": int(cfg.time_window.total_seconds() / 60),
+            "language": cfg.language,
+            "active": cfg.active,
+            "activity_threshold": cfg.activity_threshold,
         }
     with open(AREA_CONFIG_PATH, "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2, ensure_ascii=False)
@@ -56,7 +58,7 @@ async def time(interaction: discord.Interaction, minutes: app_commands.Range[int
         await interaction.response.send_message("❌ In diesem Channel ist kein Quiz konfiguriert.", ephemeral=True)
         return
 
-    interaction.client.quiz_data[area]["time_window"] = datetime.timedelta(
+    interaction.client.quiz_data[area].time_window = datetime.timedelta(
         minutes=minutes)
     save_area_config(interaction.client)
 
@@ -72,7 +74,7 @@ async def language(interaction: discord.Interaction, lang: Literal["de", "en"]):
         await interaction.response.send_message("❌ In diesem Channel ist kein Quiz konfiguriert.", ephemeral=True)
         return
 
-    interaction.client.quiz_data[area]["language"] = lang
+    interaction.client.quiz_data[area].language = lang
     save_area_config(interaction.client)
 
     await interaction.response.send_message(f"🌐 Sprache für **{area}** auf **{lang}** gesetzt.", ephemeral=True)
@@ -87,7 +89,7 @@ async def threshold(interaction: discord.Interaction, value: app_commands.Range[
         await interaction.response.send_message("❌ In diesem Channel ist kein Quiz konfiguriert.", ephemeral=True)
         return
 
-    interaction.client.quiz_data[area]["activity_threshold"] = value
+    interaction.client.quiz_data[area].activity_threshold = value
     save_area_config(interaction.client)
 
     await interaction.response.send_message(f"📈 Aktivitätsschwelle auf **{value}** gesetzt.", ephemeral=True)
@@ -105,9 +107,9 @@ async def enable(interaction: discord.Interaction, area_name: str, lang: Literal
         return
 
     cfg = interaction.client.quiz_data[area]
-    cfg["channel_id"] = interaction.channel.id
-    cfg["language"] = lang
-    cfg["active"] = True
+    cfg.channel_id = interaction.channel.id
+    cfg.language = lang
+    cfg.active = True
 
     save_area_config(interaction.client)
 
@@ -123,7 +125,7 @@ async def disable(interaction: discord.Interaction):
         return
 
     cfg = interaction.client.quiz_data[area]
-    cfg["active"] = False
+    cfg.active = False
     save_area_config(interaction.client)
 
     await interaction.response.send_message(f"🚫 Quiz für **{area}** deaktiviert.", ephemeral=False)
@@ -138,8 +140,7 @@ async def ask(interaction: discord.Interaction):
         return
 
     quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
-    time_window = interaction.client.quiz_data[area].get(
-        "time_window", datetime.timedelta(minutes=15))
+    time_window = interaction.client.quiz_data[area].time_window
     end_time = datetime.datetime.utcnow() + time_window
     await quiz_cog.manager.ask_question(area, end_time)
 
@@ -154,7 +155,7 @@ async def duel(interaction: discord.Interaction, punkte: app_commands.Range[int,
         await interaction.response.send_message("❌ In diesem Channel ist kein Quiz konfiguriert.", ephemeral=True)
         return
 
-    qg: QuestionGenerator = interaction.client.quiz_data[area]["question_generator"]
+    qg: QuestionGenerator = interaction.client.quiz_data[area].question_generator
     if modus == "dynamic" and area not in qg.dynamic_providers:
         await interaction.response.send_message("❌ Dieser Modus ist hier nicht verfügbar.", ephemeral=True)
         return
@@ -194,7 +195,7 @@ async def answer(interaction: discord.Interaction):
 
     try:
         channel = interaction.client.get_channel(
-            quiz_cog.bot.quiz_data[area]["channel_id"])
+            quiz_cog.bot.quiz_data[area].channel_id)
         msg = await channel.fetch_message(question_data["message_id"])
         embed = msg.embeds[0]
         embed.color = discord.Color.red()
@@ -242,7 +243,7 @@ async def reset(interaction: discord.Interaction):
         await interaction.response.send_message("❌ Kein Quiz in diesem Channel.", ephemeral=True)
         return
 
-    state = interaction.client.quiz_data[area]["question_state"]
+    state = interaction.client.quiz_data[area].question_state
     state.reset_asked_questions(area)
     await interaction.response.send_message(f"♻️ Frageverlauf für **{area}** wurde zurückgesetzt.", ephemeral=True)
 

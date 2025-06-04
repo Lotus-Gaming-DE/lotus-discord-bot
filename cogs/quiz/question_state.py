@@ -9,11 +9,13 @@ logger = get_logger(__name__)
 
 
 class QuestionStateManager:
-    def __init__(self, filepath: str):
+    def __init__(self, filepath: str) -> None:
+        """Create a manager for persisting question state at ``filepath``."""
         self.filepath = filepath
         self.state = self._load_state()
 
     def _load_state(self) -> dict:
+        """Load the state file if it exists, otherwise return defaults."""
         if not os.path.exists(self.filepath):
             logger.info(
                 f"[QuestionState] Datei nicht gefunden: {self.filepath}")
@@ -27,7 +29,8 @@ class QuestionStateManager:
                 f"[QuestionState] Fehler beim Laden: {e}", exc_info=True)
             return {"active": {}, "history": {}}
 
-    def _save_state(self):
+    def _save_state(self) -> None:
+        """Persist the current state to disk."""
         try:
             os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
             with open(self.filepath, "w", encoding="utf-8") as f:
@@ -39,16 +42,19 @@ class QuestionStateManager:
 
     # ── Aktive Fragen ─────────────────────────────────────────────
 
-    def set_active_question(self, area: str, question: dict):
+    def set_active_question(self, area: str, question: dict) -> None:
+        """Remember the currently active question for an area."""
         self.state["active"][area] = question
         logger.info(
             f"[QuestionState] Neue aktive Frage in '{area}' gespeichert.")
         self._save_state()
 
     def get_active_question(self, area: str) -> Optional[dict]:
+        """Return the active question for ``area`` if one exists."""
         return self.state.get("active", {}).get(area)
 
-    def clear_active_question(self, area: str):
+    def clear_active_question(self, area: str) -> None:
+        """Remove the active question for ``area`` from the state."""
         if area in self.state.get("active", {}):
             self.state["active"].pop(area, None)
             logger.info(
@@ -57,7 +63,8 @@ class QuestionStateManager:
 
     # ── Historie ───────────────────────────────────────────────────
 
-    def mark_question_as_asked(self, area: str, question_id: int):
+    def mark_question_as_asked(self, area: str, question_id: int) -> None:
+        """Add ``question_id`` to the history of ``area``."""
         self.state.setdefault("history", {}).setdefault(area, [])
         if question_id not in self.state["history"][area]:
             self.state["history"][area].append(question_id)
@@ -66,9 +73,11 @@ class QuestionStateManager:
             self._save_state()
 
     def get_asked_questions(self, area: str) -> list[int]:
+        """Return a list of question IDs already asked in ``area``."""
         return self.state.get("history", {}).get(area, [])
 
-    def reset_asked_questions(self, area: str):
+    def reset_asked_questions(self, area: str) -> None:
+        """Clear the question history for ``area``."""
         self.state.setdefault("history", {})[area] = []
         logger.info(f"[QuestionState] Historie in '{area}' zurückgesetzt.")
         self._save_state()
