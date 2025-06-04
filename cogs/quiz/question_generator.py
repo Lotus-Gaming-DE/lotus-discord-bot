@@ -17,7 +17,7 @@ class QuestionGenerator:
         self.dynamic_providers = dynamic_providers
         logger.info("[QuestionGenerator] QuestionGenerator initialized.")
 
-    def generate(self, area: str = None) -> Dict[str, Any] | None:
+    def generate(self, area: str = None, language: str = "de") -> Dict[str, Any] | None:
         if not area:
             logger.warning("[QuestionGenerator] Keine Area angegeben.")
             return None
@@ -29,7 +29,7 @@ class QuestionGenerator:
             logger.debug(
                 f"[QuestionGenerator] Dynamische Frage für '{area}': {len(questions)}")
         else:
-            questions = self.questions_by_area.get("de", {}).get(area, [])
+            questions = self.questions_by_area.get(language, {}).get(area, [])
             logger.debug(
                 f"[QuestionGenerator] Statische Fragen für '{area}': {len(questions)}")
 
