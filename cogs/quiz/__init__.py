@@ -5,7 +5,7 @@ from log_setup import get_logger
 
 from .cog import QuizCog
 from .slash_commands import quiz_group
-        await bot.add_cog(QuizCog(bot), override=True)
+        await bot.add_cog(QuizCog(bot))
 from .question_manager import QuestionManager
 from .question_state import QuestionStateManager
 from .question_closer import QuestionCloser
