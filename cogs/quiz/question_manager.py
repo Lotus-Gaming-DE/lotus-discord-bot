@@ -57,7 +57,8 @@ class QuestionManager:
         channel = self.bot.get_channel(cfg["channel_id"])
         qg = cfg["question_generator"]
 
-        question = qg.generate(area)
+        language = cfg.get("language", "de")
+        question = qg.generate(area, language=language)
         if not question:
             logger.warning(
                 f"[QuestionManager] Keine Frage generiert für '{area}'.")
