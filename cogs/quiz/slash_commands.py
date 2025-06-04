@@ -14,6 +14,7 @@ from .cog import QuizCog
 from .question_generator import QuestionGenerator
 from .question_state import QuestionStateManager
 from .views import AnswerButtonView
+from .duel import DuelInviteView, DuelConfig
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +150,38 @@ async def ask(interaction: discord.Interaction):
     await quiz_cog.manager.ask_question(area, end_time)
 
     await interaction.response.send_message("✅ Die Frage wurde erstellt.", ephemeral=False)
+
+
+@quiz_group.command(name="duel", description="Starte ein Quiz-Duell")
+@app_commands.describe(punkte="Gesetzte Punkte", modus="Modus des Duells")
+async def duel(interaction: discord.Interaction, punkte: app_commands.Range[int, 1, 10000], modus: Literal["bo3", "bo5", "dynamic"] = "bo3"):
+    area = get_area_by_channel(interaction.client, interaction.channel.id)
+    if not area:
+        await interaction.response.send_message("❌ In diesem Channel ist kein Quiz konfiguriert.", ephemeral=True)
+        return
+
+    qg: QuestionGenerator = interaction.client.quiz_data[area]["question_generator"]
+    if modus == "dynamic" and area not in qg.dynamic_providers:
+        await interaction.response.send_message("❌ Dieser Modus ist hier nicht verfügbar.", ephemeral=True)
+        return
+
+    champion_cog = interaction.client.get_cog("ChampionCog")
+    if champion_cog is None:
+        await interaction.response.send_message("❌ Champion-System nicht verfügbar.", ephemeral=True)
+        return
+    total = await champion_cog.data.get_total(str(interaction.user.id))
+    if total < punkte:
+        await interaction.response.send_message("❌ Du hast nicht genügend Punkte.", ephemeral=True)
+        return
+
+    cfg = DuelConfig(area=area, points=punkte, mode=modus)
+    view = DuelInviteView(interaction.user, cfg, interaction.client.get_cog("QuizCog"))
+    embed = discord.Embed(title="Quiz-Duell", description=f"{interaction.user.mention} fordert einen Gegner heraus!", color=discord.Color.orange())
+    embed.add_field(name="Einsatz", value=f"{punkte} Punkte")
+    embed.add_field(name="Modus", value=modus)
+    msg = await interaction.channel.send(embed=embed, view=view)
+    view.message = msg
+    await interaction.response.send_message("Duelleinladung erstellt.", ephemeral=True)
 
 
 @quiz_group.command(name="answer", description="Zeige die richtige Antwort und schließe die Frage")
