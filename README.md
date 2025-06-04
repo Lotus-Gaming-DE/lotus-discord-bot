@@ -17,6 +17,7 @@ Diese Dokumentation richtet sich an:
 ## Inhaltsverzeichnis
 
 * [Übersicht & Module](#übersicht--module)
+* [Setup](#setup)
 * [Projektstruktur](#projektstruktur)
 * [Slash-Commands](#slash-commands)
 * [Technische Konzepte](#technische-konzepte)
@@ -36,6 +37,32 @@ Der Bot ist in folgende Module unterteilt:
 | `wcr`      | WCR-spezifische Filter- & Infoabfragen                    |
 
 Jede Funktion ist vollständig über **Slash-Commands** steuerbar.
+
+---
+
+## Setup
+
+1. Alle Abhängigkeiten installieren:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Eine `.env`-Datei im Projektverzeichnis anlegen und dort die folgenden
+   Umgebungsvariablen definieren:
+
+   ```env
+   discord_token=DEIN_DISCORD_TOKEN
+   server_id=DEINE_SERVER_ID
+   ```
+
+3. Den Bot anschließend mit
+
+   ```bash
+   python bot.py
+   ```
+
+   starten.
 
 ---
 
