@@ -1,6 +1,5 @@
 # cogs/wcr/helpers.py
-import os
-import itertools
+
 
 from log_setup import get_logger
 
