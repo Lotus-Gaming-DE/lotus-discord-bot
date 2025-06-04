@@ -21,7 +21,7 @@ async def test_quiz_setup_registers_cog_and_commands(monkeypatch):
 
     bot = MyBot()
     bot.data = {"quiz": {"questions": {"de": {}}, "languages": ["de"]}}
-    bot.quiz_data = {"questions": {}}
+    bot.quiz_data = {}
 
     await quiz.setup(bot)
 

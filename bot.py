@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from log_setup import setup_logging, get_logger
 from cogs.quiz.question_state import QuestionStateManager
 from cogs.quiz.question_generator import QuestionGenerator
+from cogs.quiz.quiz_config import QuizAreaConfig
 from cogs.wcr.utils import load_wcr_data
 
 # Lade Umgebungsvariablen
@@ -78,15 +79,15 @@ def load_quiz_config(bot: commands.Bot):
             dynamic_providers=dynamic_providers,
         )
 
-        bot.quiz_data[area] = {
-            "channel_id": cfg.get("channel_id"),
-            "time_window": time_window,
-            "language": language,
-            "active": cfg.get("active", False),
-            "activity_threshold": cfg.get("activity_threshold", 10),
-            "question_state": state,
-            "question_generator": generator,
-        }
+        bot.quiz_data[area] = QuizAreaConfig(
+            channel_id=cfg.get("channel_id"),
+            time_window=time_window,
+            language=language,
+            active=cfg.get("active", False),
+            activity_threshold=cfg.get("activity_threshold", 10),
+            question_state=state,
+            question_generator=generator,
+        )
 
     logger.info(f"[bot] Quiz-Konfiguration geladen: {list(bot.quiz_data.keys())}")
 
