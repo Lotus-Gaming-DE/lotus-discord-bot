@@ -3,13 +3,13 @@ import discord
 from log_setup import get_logger
 
 from .cog import ChampionCog
-from .slash_commands import champion_group
 
 logger = get_logger(__name__)
 
 
 async def setup(bot: discord.ext.commands.Bot):
     try:
+        from .slash_commands import champion_group
         # 1) Haupt-Cog: Champion-Daten und Rolle-Logik
         await bot.add_cog(ChampionCog(bot))
 
