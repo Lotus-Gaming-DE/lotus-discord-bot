@@ -52,7 +52,7 @@ Jede Funktion ist vollständig über **Slash-Commands** steuerbar.
    Umgebungsvariablen definieren:
 
    ```env
-   discord_token=DEIN_DISCORD_TOKEN
+   bot_key=DEIN_DISCORD_TOKEN
    server_id=DEINE_SERVER_ID
    ```
 
