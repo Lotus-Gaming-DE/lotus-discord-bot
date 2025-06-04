@@ -45,7 +45,7 @@ async def setup(bot: commands.Bot):
     bot.quiz_generator = generator  # expose for potential use
 
     quiz_cog = QuizCog(bot)
-    await bot.add_cog(quiz_cog)
+    await bot.add_cog(quiz_cog, override=True)
     bot.tree.add_command(quiz_group, guild=bot.main_guild)
 
     logger.info(
