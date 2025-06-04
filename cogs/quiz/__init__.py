@@ -15,6 +15,7 @@ logger = get_logger(__name__)
 
 
 async def setup(bot: commands.Bot):
+    """Set up the quiz cog and slash commands."""
     logger.info("[QuizInit] Initialisierung startet...")
 
     from bot import QUESTION_STATE_PATH
