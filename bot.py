@@ -118,9 +118,9 @@ class MyBot(commands.Bot):
 
 
 if __name__ == "__main__":
-    token = os.getenv("discord_token")
+    token = os.getenv("bot_key")
     if not token:
-        logger.error("Environment variable 'discord_token' is not set.")
+        logger.error("Environment variable 'bot_key' is not set.")
         exit(1)
 
     bot = MyBot()
