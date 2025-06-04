@@ -3,6 +3,10 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict
 
+from log_setup import get_logger
+
+logger = get_logger(__name__)
+
 
 class DynamicQuestionProvider(ABC):
     @abstractmethod

@@ -5,6 +5,9 @@ import datetime
 
 from .utils import check_answer
 from .question_generator import QuestionGenerator
+from log_setup import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -33,10 +36,14 @@ class DuelQuestionView(View):
         if interaction.user.id in self.responses:
             await interaction.response.send_message("Du hast bereits geantwortet.", ephemeral=True)
             return
+        logger.debug(
+            f"Duel answer modal opened by {interaction.user}"
+        )
         modal = _DuelAnswerModal(self)
         await interaction.response.send_modal(modal)
 
     async def on_timeout(self):
+        logger.info("DuelQuestionView timed out")
         await self._finish()
 
     async def _finish(self):
@@ -45,6 +52,7 @@ class DuelQuestionView(View):
         if self.message:
             await self.message.edit(view=self)
         self._determine_winner()
+        logger.debug(f"DuelQuestionView finished, winner={self.winner_id}")
         self.stop()
 
     def _determine_winner(self):
@@ -92,10 +100,16 @@ class DuelInviteView(View):
             await interaction.response.send_message("Das Duell wurde bereits angenommen.", ephemeral=True)
             return
         self.accepted = True
+        logger.info(
+            f"Duel accepted by {interaction.user} against {self.challenger}"
+        )
         await interaction.response.defer()
         await self.start_duel(interaction)
 
     async def start_duel(self, interaction: discord.Interaction):
+        logger.info(
+            f"Starting duel {self.challenger.display_name} vs {interaction.user.display_name} in {self.cfg.area} for {self.cfg.points} points"
+        )
         champion_cog = self.cog.bot.get_cog("ChampionCog")
         if champion_cog is None:
             await interaction.followup.send("Champion-System nicht verfügbar.")
@@ -127,6 +141,9 @@ class QuizDuelGame:
         qg: QuestionGenerator = self.cog.bot.quiz_data[self.area]["question_generator"]
         total_rounds = {"bo3": 3, "bo5": 5}.get(self.mode, 5)
         needed = total_rounds // 2 + 1
+        logger.info(
+            f"QuizDuelGame started between {self.challenger} and {self.opponent} mode={self.mode} rounds={total_rounds}"
+        )
         for rnd in range(1, total_rounds + 1):
             question = qg.generate(self.area)
             if not question:
@@ -142,8 +159,10 @@ class QuizDuelGame:
             if winner_id:
                 self.scores[winner_id] += 1
                 name = self.cog.bot.get_user(winner_id).display_name
+                logger.debug(f"Round {rnd} won by {name}")
                 await self.thread.send(f"✅ {name} gewinnt diese Runde. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})")
             else:
+                logger.debug(f"Round {rnd} no correct answer")
                 await self.thread.send(f"❌ Keine richtige Antwort. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})")
             if self.scores[self.challenger.id] >= needed or self.scores[self.opponent.id] >= needed:
                 break
@@ -157,6 +176,9 @@ class QuizDuelGame:
             winner = self.opponent
         else:
             winner = None
+        logger.info(
+            f"QuizDuelGame finished winner={winner.display_name if winner else 'None'} score={self.scores}"
+        )
         if winner:
             await champion_cog.update_user_score(winner.id, self.points, "Quiz-Duell Gewinn")
             await self.thread.send(f"🏆 {winner.display_name} gewinnt das Duell und erhält {self.points} Punkte!")
