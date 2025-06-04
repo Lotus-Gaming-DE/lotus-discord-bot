@@ -145,6 +145,8 @@ LotusGamingDE/
 /quiz enable           # Quiz aktivieren (mit Area und Sprache)
 /quiz language         # Sprache für diesen Channel wechseln
 /quiz time             # Zeitfenster (z. B. alle 15 Minuten)
+/quiz dynamic          # Anzahl dynamischer Fragen anpassen
+/quiz threshold        # Nachrichten-Schwelle vor automatischen Fragen
 /quiz reset            # Fragehistorie zurücksetzen
 ```
 

@@ -38,11 +38,14 @@ class QuestionManager:
             self.cog.tracker.set_initialized(cid)
             logger.info(
                 f"[QuestionManager] Channel '{channel.name}' ({area}) initialisiert – überspringe Aktivitätsprüfung.")
-        elif self.cog.tracker.get(cid) < 10:
-            logger.info(
-                f"[QuestionManager] Nachrichtenzähler für '{area}': {self.cog.tracker.get(cid)}/10 – warte auf Aktivität.")
-            self.cog.awaiting_activity[cid] = (area, end_time)
-            return
+        else:
+            threshold = cfg.get("activity_threshold", 10)
+            if self.cog.tracker.get(cid) < threshold:
+                logger.info(
+                    f"[QuestionManager] Nachrichtenzähler für '{area}': {self.cog.tracker.get(cid)}/{threshold} – warte auf Aktivität."
+                )
+                self.cog.awaiting_activity[cid] = (area, end_time)
+                return
 
         logger.info(
             f"[QuestionManager] Bedingungen erfüllt – sende Frage für '{area}'.")
@@ -53,7 +56,8 @@ class QuestionManager:
         channel = self.bot.get_channel(cfg["channel_id"])
         qg = cfg["question_generator"]
 
-        question = qg.generate(area)
+        max_dyn = cfg.get("max_dynamic_questions", 5)
+        question = qg.generate(area, max_dynamic=max_dyn)
         if not question:
             logger.warning(
                 f"[QuestionManager] Keine Frage generiert für '{area}'.")

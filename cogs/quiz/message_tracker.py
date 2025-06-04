@@ -32,12 +32,14 @@ class MessageTracker:
                                    if msg.author.id == self.bot.user.id and msg.embeds and
                                    msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")), None)
 
+                threshold = cfg.get("activity_threshold", 10)
                 if quiz_index is not None:
-                    count = len(
-                        [m for m in messages[:quiz_index] if not m.author.bot])
+                    count = len([
+                        m for m in messages[:quiz_index] if not m.author.bot
+                    ])
                     self.message_counter[channel.id] = count
                 else:
-                    self.message_counter[channel.id] = 10
+                    self.message_counter[channel.id] = threshold
 
                 self.channel_initialized[channel.id] = True
                 logger.info(
@@ -61,17 +63,19 @@ class MessageTracker:
                 f"[Tracker] Nachrichtenzähler für '{area}' (Channel {cid}): {before} → {after}"
             )
 
-        if cid in self.bot.quiz_cog.awaiting_activity and after >= 10:
-            if area is None:
-                area, _ = self.bot.quiz_cog.awaiting_activity[cid]
-            logger.info(
-                f"[Tracker] Aktivität erreicht in '{area}' ({after}/10) – Frage wird gestellt."
-            )
-            self.bot.loop.create_task(
-                self.bot.quiz_cog.manager.ask_question(
-                    area, self.bot.quiz_cog.awaiting_activity[cid][1]
+        if cid in self.bot.quiz_cog.awaiting_activity:
+            threshold = self.bot.quiz_data.get(area, {}).get("activity_threshold", 10) if area else 10
+            if after >= threshold:
+                if area is None:
+                    area, _ = self.bot.quiz_cog.awaiting_activity[cid]
+                logger.info(
+                    f"[Tracker] Aktivität erreicht in '{area}' ({after}/{threshold}) – Frage wird gestellt."
                 )
-            )
+                self.bot.loop.create_task(
+                    self.bot.quiz_cog.manager.ask_question(
+                        area, self.bot.quiz_cog.awaiting_activity[cid][1]
+                    )
+                )
 
         return area
 
