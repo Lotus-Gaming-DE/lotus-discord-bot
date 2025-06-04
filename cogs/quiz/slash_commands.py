@@ -46,7 +46,8 @@ def save_area_config(bot: commands.Bot):
             "window_timer": int(cfg["time_window"].total_seconds() / 60),
             "language": cfg["language"],
             "active": cfg.get("active", False),
-            "max_dynamic_questions": cfg.get("max_dynamic_questions", 5)
+            "max_dynamic_questions": cfg.get("max_dynamic_questions", 5),
+            "activity_threshold": cfg.get("activity_threshold", 10)
         }
     with open(AREA_CONFIG_PATH, "w", encoding="utf-8") as f:
         json.dump(out, f, indent=2, ensure_ascii=False)
@@ -81,6 +82,36 @@ async def language(interaction: discord.Interaction, lang: Literal["de", "en"]):
     save_area_config(interaction.client)
 
     await interaction.response.send_message(f"🌐 Sprache für **{area}** auf **{lang}** gesetzt.", ephemeral=True)
+
+
+@quiz_group.command(name="dynamic", description="Maximale Anzahl dynamischer Fragen einstellen")
+@app_commands.describe(count="Anzahl generierter Fragen (1–20)")
+@app_commands.default_permissions(manage_guild=True)
+async def dynamic(interaction: discord.Interaction, count: app_commands.Range[int, 1, 20]):
+    area = get_area_by_channel(interaction.client, interaction.channel.id)
+    if not area:
+        await interaction.response.send_message("❌ In diesem Channel ist kein Quiz konfiguriert.", ephemeral=True)
+        return
+
+    interaction.client.quiz_data[area]["max_dynamic_questions"] = count
+    save_area_config(interaction.client)
+
+    await interaction.response.send_message(f"🔢 Dynamische Fragen: **{count}**", ephemeral=True)
+
+
+@quiz_group.command(name="threshold", description="Aktivitätsschwelle für automatische Fragen setzen")
+@app_commands.describe(value="Nachrichten bis zur nächsten Frage (1–50)")
+@app_commands.default_permissions(manage_guild=True)
+async def threshold(interaction: discord.Interaction, value: app_commands.Range[int, 1, 50]):
+    area = get_area_by_channel(interaction.client, interaction.channel.id)
+    if not area:
+        await interaction.response.send_message("❌ In diesem Channel ist kein Quiz konfiguriert.", ephemeral=True)
+        return
+
+    interaction.client.quiz_data[area]["activity_threshold"] = value
+    save_area_config(interaction.client)
+
+    await interaction.response.send_message(f"📈 Aktivitätsschwelle auf **{value}** gesetzt.", ephemeral=True)
 
 
 @quiz_group.command(name="enable", description="Quiz in diesem Channel aktivieren")

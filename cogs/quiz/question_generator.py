@@ -16,14 +16,14 @@ class QuestionGenerator:
         self.dynamic_providers = dynamic_providers
         logger.info("[QuestionGenerator] QuestionGenerator initialized.")
 
-    def generate(self, area: str = None) -> Dict[str, Any] | None:
+    def generate(self, area: str = None, max_dynamic: int = 5) -> Dict[str, Any] | None:
         if not area:
             logger.warning("[QuestionGenerator] Keine Area angegeben.")
             return None
 
         if area in self.dynamic_providers:
             provider = self.dynamic_providers[area]
-            questions = [provider.generate() for _ in range(5)]
+            questions = [provider.generate() for _ in range(max_dynamic)]
             questions = [q for q in questions if q]
             logger.debug(
                 f"[QuestionGenerator] Dynamisch generierte Fragen für '{area}': {len(questions)}")
