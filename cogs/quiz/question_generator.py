@@ -1,11 +1,12 @@
-import logging
 import random
 from typing import Dict, Any
+
+from log_setup import get_logger
 
 from .question_state import QuestionStateManager
 from .area_providers.base import DynamicQuestionProvider
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class QuestionGenerator:

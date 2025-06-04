@@ -1,9 +1,10 @@
-import logging
 import random
 import asyncio
 import datetime
 
-logger = logging.getLogger(__name__)
+from log_setup import get_logger, create_logged_task
+
+logger = get_logger(__name__)
 
 
 class QuizScheduler:
@@ -12,7 +13,7 @@ class QuizScheduler:
         self.area = area
         self.prepare_question = prepare_question_callback
         self.close_question = close_question_callback
-        self.task = self.bot.loop.create_task(self.run())
+        self.task = create_logged_task(self.run(), logger)
 
     async def run(self):
         await self.bot.wait_until_ready()

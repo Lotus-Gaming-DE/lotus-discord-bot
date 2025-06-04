@@ -2,9 +2,10 @@
 
 import json
 from pathlib import Path
-import logging
 
-logger = logging.getLogger(__name__)
+from log_setup import get_logger
+
+logger = get_logger(__name__)
 
 BASE_PATH = Path("data/wcr")
 

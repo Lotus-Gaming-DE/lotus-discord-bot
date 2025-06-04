@@ -1,10 +1,11 @@
 import discord
-import logging
+
+from log_setup import get_logger
 
 from .cog import ChampionCog
 from .slash_commands import champion_group
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def setup(bot: discord.ext.commands.Bot):

@@ -2,12 +2,13 @@
 
 import os
 import json
-import logging
 import re
 import difflib
+
+from log_setup import get_logger
 from unidecode import unidecode
 
-logger = logging.getLogger(__name__)  # z. B. 'cogs.quiz.utils'
+logger = get_logger(__name__)  # z. B. 'cogs.quiz.utils'
 
 
 def check_answer(user_answer: str, correct_answers: list[str], threshold: float = 0.6) -> bool:

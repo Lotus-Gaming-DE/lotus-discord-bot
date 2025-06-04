@@ -1,10 +1,11 @@
 # cogs/quiz/message_tracker.py
 
-import logging
 import discord
 import time
 
-logger = logging.getLogger(__name__)
+from log_setup import get_logger, create_logged_task
+
+logger = get_logger(__name__)
 
 
 class MessageTracker:
@@ -71,10 +72,11 @@ class MessageTracker:
                 logger.info(
                     f"[Tracker] Aktivität erreicht in '{area}' ({after}/{threshold}) – Frage wird gestellt."
                 )
-                self.bot.loop.create_task(
+                create_logged_task(
                     self.bot.quiz_cog.manager.ask_question(
                         area, self.bot.quiz_cog.awaiting_activity[cid][1]
-                    )
+                    ),
+                    logger
                 )
 
         return area

@@ -1,5 +1,6 @@
-import logging
 from discord.ext import commands
+
+from log_setup import get_logger
 
 from .question_generator import QuestionGenerator
 from .question_manager import QuestionManager
@@ -9,7 +10,7 @@ from .message_tracker import MessageTracker
 from .slash_commands import quiz_group
 from .utils import get_available_areas
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def setup(bot: commands.Bot):

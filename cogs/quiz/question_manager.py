@@ -1,12 +1,13 @@
 # cogs/quiz/question_manager.py
 
-import logging
 import datetime
 import discord
 
+from log_setup import get_logger
+
 from .views import AnswerButtonView
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class QuestionManager:

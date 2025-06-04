@@ -5,8 +5,9 @@ from datetime import datetime
 from typing import Optional
 import os  # Wird nur für os.makedirs in ChampionData gebraucht
 
-import logging
-logger = logging.getLogger(__name__)
+from log_setup import get_logger, create_logged_task
+
+logger = get_logger(__name__)
 
 
 class ChampionData:
@@ -175,8 +176,8 @@ class ChampionCog(commands.Cog):
         user_id_str = str(user_id)
         new_total = await self.data.add_delta(user_id_str, delta, reason)
 
-        self.bot.loop.create_task(
-            self._apply_champion_role(user_id_str, new_total)
+        create_logged_task(
+            self._apply_champion_role(user_id_str, new_total), logger
         )
 
         return new_total

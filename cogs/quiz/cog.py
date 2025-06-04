@@ -1,8 +1,9 @@
-import logging
 from collections import defaultdict
 from discord.ext import commands
 import discord
 import asyncio
+
+from log_setup import get_logger, create_logged_task
 
 from .question_state import QuestionStateManager
 from .scheduler import QuizScheduler
@@ -11,7 +12,7 @@ from .question_manager import QuestionManager
 from .message_tracker import MessageTracker
 from .question_closer import QuestionCloser
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class QuizCog(commands.Cog):
@@ -36,7 +37,7 @@ class QuizCog(commands.Cog):
         self.manager = QuestionManager(self)
         self.closer = QuestionCloser(bot=self.bot, state=self.state)
 
-        self.bot.loop.create_task(self.tracker.initialize())
+        create_logged_task(self.tracker.initialize(), logger)
 
         self.restorer = QuestionRestorer(
             bot=self.bot, state_manager=self.state)

@@ -2,8 +2,9 @@
 
 import os
 import json
-import logging
 import datetime
+
+from log_setup import get_logger
 from typing import Literal, Optional
 
 import discord
@@ -15,7 +16,7 @@ from .question_generator import QuestionGenerator
 from .question_state import QuestionStateManager
 from .views import AnswerButtonView
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 SERVER_ID = os.getenv("server_id")
 if not SERVER_ID:

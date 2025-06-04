@@ -1,10 +1,11 @@
-import logging
 import discord
 from discord.ui import View, Modal, TextInput, button, Button
 
 from .utils import check_answer
 
-logger = logging.getLogger(__name__)
+from log_setup import get_logger
+
+logger = get_logger(__name__)
 
 
 class AnswerModal(Modal, title="Antwort eingeben"):

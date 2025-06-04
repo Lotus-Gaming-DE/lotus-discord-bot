@@ -1,9 +1,11 @@
 import random
+
+from log_setup import get_logger
 import logging
 import hashlib
 from ..utils import create_permutations_list
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class WCRQuestionProvider:
