@@ -1,6 +1,5 @@
 # cogs/quiz/slash_commands.py
 
-import os
 import json
 import datetime
 
@@ -19,16 +18,9 @@ from .duel import DuelInviteView, DuelConfig
 
 logger = get_logger(__name__)
 
-SERVER_ID = os.getenv("server_id")
-GUILD_ID = int(SERVER_ID) if SERVER_ID else None
-
-group_kwargs = {}
-if GUILD_ID is not None:
-    group_kwargs["guild_ids"] = [GUILD_ID]
 quiz_group = app_commands.Group(
     name="quiz",
     description="Quiz‐Befehle",
-    **group_kwargs
 )
 
 AREA_CONFIG_PATH = "data/pers/quiz/areas.json"

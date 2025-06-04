@@ -1,4 +1,5 @@
 import discord
+from discord.ext import commands
 
 from log_setup import get_logger
 
