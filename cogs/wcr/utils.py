@@ -15,7 +15,9 @@ def load_units():
     path = BASE_PATH / "units.json"
     try:
         with open(path, "r", encoding="utf-8") as f:
-            units = json.load(f)
+            data = json.load(f)
+        # ``units.json`` wraps the actual list in a top-level "units" key
+        units = data.get("units", data)
         logger.info("[WCRUtils] Einheiten erfolgreich geladen.")
         return units
     except Exception as e:
@@ -35,7 +37,8 @@ def load_languages():
         except Exception as e:
             logger.error(f"[WCRUtils] Fehler beim Laden von {file}: {e}")
     logger.info(
-        f"[WCRUtils] Sprachdateien erfolgreich geladen: {list(result.keys())}")
+        f"[WCRUtils] Sprachdateien erfolgreich geladen: {list(result.keys())}"
+    )
     return result
 
 
