@@ -11,13 +11,6 @@ from .views import MiniSelectView
 
 logger = get_logger(__name__)
 
-# Hauptserver-ID aus der Umgebungsvariablen lesen
-SERVER_ID = os.getenv('server_id')
-if SERVER_ID is None:
-    raise ValueError("Environment variable 'server_id' is not set.")
-MAIN_SERVER_ID = int(SERVER_ID)
-
-
 class WCRCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

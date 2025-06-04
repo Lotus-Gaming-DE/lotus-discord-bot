@@ -20,14 +20,16 @@ from .duel import DuelInviteView, DuelConfig
 logger = get_logger(__name__)
 
 SERVER_ID = os.getenv("server_id")
-if not SERVER_ID:
-    raise ValueError("Environment variable 'server_id' is not set.")
-GUILD_ID = int(SERVER_ID)
-
+if SERVER_ID:
+    GUILD_ID = int(SERVER_ID)
+    guild_ids = [GUILD_ID]
+else:
+    logger.warning("Environment variable 'server_id' is not set.")
+    guild_ids = None
 quiz_group = app_commands.Group(
     name="quiz",
     description="Quiz‐Befehle",
-    guild_ids=[GUILD_ID]
+    guild_ids=guild_ids,
 )
 
 AREA_CONFIG_PATH = "data/pers/quiz/areas.json"

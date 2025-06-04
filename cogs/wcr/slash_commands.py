@@ -2,16 +2,21 @@ import discord
 from discord import app_commands
 from .cog import WCRCog
 import os
+from log_setup import get_logger
 
+logger = get_logger(__name__)
 SERVER_ID = os.getenv('server_id')
-if SERVER_ID is None:
-    raise ValueError("Environment variable 'server_id' is not set.")
-MAIN_SERVER_ID = int(SERVER_ID)
+if SERVER_ID:
+    MAIN_SERVER_ID = int(SERVER_ID)
+    guild_ids = [MAIN_SERVER_ID]
+else:
+    logger.warning("Environment variable 'server_id' is not set.")
+    guild_ids = None
 
 wcr_group = app_commands.Group(
     name="wcr",
     description="Befehle für Warcraft Rumble",
-    guild_ids=[MAIN_SERVER_ID]  # Nur auf deinem Server
+    guild_ids=guild_ids  # Nur auf deinem Server
 )
 
 # Autocomplete-Wrapper
