@@ -11,13 +11,15 @@ logger = get_logger(__name__)
 class AnswerModal(Modal, title="Antwort eingeben"):
     answer = TextInput(label="Deine Antwort")
 
-    def __init__(self, area: str, correct_answers: list[str], cog):
+    def __init__(self, area: str, correct_answers: list[str], cog) -> None:
+        """Modal asking a user for the answer to a quiz question."""
         super().__init__()
         self.area = area
         self.correct_answers = correct_answers
         self.cog = cog
 
-    async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        """Handle the submitted answer and award points if correct."""
         user = interaction.user
         user_id = user.id
 
@@ -68,14 +70,16 @@ class AnswerModal(Modal, title="Antwort eingeben"):
 
 
 class AnswerButtonView(View):
-    def __init__(self, area: str, correct_answers: list[str], cog):
+    def __init__(self, area: str, correct_answers: list[str], cog) -> None:
+        """Button view opening the ``AnswerModal``."""
         super().__init__(timeout=None)
         self.area = area
         self.correct_answers = correct_answers
         self.cog = cog
 
     @button(label="Antworten", style=discord.ButtonStyle.primary)
-    async def antworten(self, interaction: discord.Interaction, button: Button):
+    async def antworten(self, interaction: discord.Interaction, button: Button) -> None:
+        """Show the modal unless the user already answered."""
         user_id = interaction.user.id
         if user_id in self.cog.answered_users[self.area]:
             await interaction.response.send_message(

@@ -10,14 +10,20 @@ logger = get_logger(__name__)
 
 
 class QuestionGenerator:
-    def __init__(self, questions_by_area: Dict[str, dict], state_manager: QuestionStateManager,
-                 dynamic_providers: Dict[str, DynamicQuestionProvider]):
+    def __init__(
+        self,
+        questions_by_area: Dict[str, dict],
+        state_manager: QuestionStateManager,
+        dynamic_providers: Dict[str, DynamicQuestionProvider],
+    ) -> None:
+        """Initialize a generator with static and dynamic question sources."""
         self.questions_by_area = questions_by_area
         self.state_manager = state_manager
         self.dynamic_providers = dynamic_providers
         logger.info("[QuestionGenerator] QuestionGenerator initialized.")
 
-    def generate(self, area: str = None, language: str = "de") -> Dict[str, Any] | None:
+    def generate(self, area: str | None = None, language: str = "de") -> Dict[str, Any] | None:
+        """Generate a new question for ``area`` in the given ``language``."""
         if not area:
             logger.warning("[QuestionGenerator] Keine Area angegeben.")
             return None

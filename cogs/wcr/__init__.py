@@ -10,6 +10,7 @@ logger = get_logger(__name__)  # z.B. "cogs.wcr.__init__"
 
 
 async def setup(bot: discord.ext.commands.Bot):
+    """Register the WCR cog and its slash commands."""
     try:
         from .slash_commands import wcr_group
         await bot.add_cog(WCRCog(bot))

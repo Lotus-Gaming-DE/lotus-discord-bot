@@ -15,79 +15,90 @@ class ChampionData:
     Verwaltet die SQLite-Datenbank für Champion-Punkte und Historie.
     """
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str) -> None:
+        """Create a new database helper for the given path."""
         self.db_path = db_path
+        self.db: aiosqlite.Connection | None = None
         self._init_done = False
 
     async def init_db(self):
-        """
-        Legt Tabellen an, falls sie noch nicht existieren.
-        Wird nur einmal pro Lauf ausgeführt.
-        """
+        """Stellt die Datenbankverbindung her und legt Tabellen an."""
+        if self.db is None:
+            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+            self.db = await aiosqlite.connect(self.db_path)
+
         if self._init_done:
             return
         self._init_done = True
 
-        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
-
-        async with aiosqlite.connect(self.db_path) as db:
-            await db.execute("""
-                CREATE TABLE IF NOT EXISTS points (
-                    user_id TEXT PRIMARY KEY,
-                    total INTEGER NOT NULL
-                );
-            """)
-            await db.execute("""
-                CREATE TABLE IF NOT EXISTS history (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id TEXT NOT NULL,
-                    delta INTEGER NOT NULL,
-                    reason TEXT NOT NULL,
-                    date TEXT NOT NULL
-                );
-            """)
-            await db.commit()
+        await self.db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS points (
+                user_id TEXT PRIMARY KEY,
+                total INTEGER NOT NULL
+            );
+            """
+        )
+        await self.db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                delta INTEGER NOT NULL,
+                reason TEXT NOT NULL,
+                date TEXT NOT NULL
+            );
+            """
+        )
+        await self.db.commit()
 
         logger.info("[ChampionData] SQLite‐Datenbank initialisiert.")
 
+    async def close(self):
+        """Schließt die gehaltene Datenbankverbindung."""
+        if self.db is not None:
+            await self.db.close()
+            self.db = None
+            self._init_done = False
+
     async def get_total(self, user_id: str) -> int:
+        """Return the current score for a user."""
         await self.init_db()
-        async with aiosqlite.connect(self.db_path) as db:
-            cur = await db.execute(
-                "SELECT total FROM points WHERE user_id = ?", (user_id,)
-            )
-            row = await cur.fetchone()
-            return row[0] if row else 0
+        cur = await self.db.execute(
+            "SELECT total FROM points WHERE user_id = ?", (user_id,)
+        )
+        row = await cur.fetchone()
+        return row[0] if row else 0
 
     async def add_delta(self, user_id: str, delta: int, reason: str) -> int:
+        """Change a user's score by ``delta`` and store a history entry."""
         await self.init_db()
         now = datetime.utcnow().isoformat()
 
-        async with aiosqlite.connect(self.db_path) as db:
-            cur = await db.execute(
-                "SELECT total FROM points WHERE user_id = ?", (user_id,)
+        cur = await self.db.execute(
+            "SELECT total FROM points WHERE user_id = ?", (user_id,)
+        )
+        row = await cur.fetchone()
+        current_total = row[0] if row else 0
+
+        new_total = current_total + delta
+        if row:
+            await self.db.execute(
+                "UPDATE points SET total = ? WHERE user_id = ?",
+                (new_total, user_id)
             )
-            row = await cur.fetchone()
-            current_total = row[0] if row else 0
-
-            new_total = current_total + delta
-            if row:
-                await db.execute(
-                    "UPDATE points SET total = ? WHERE user_id = ?",
-                    (new_total, user_id)
-                )
-            else:
-                await db.execute(
-                    "INSERT INTO points(user_id, total) VALUES (?, ?)",
-                    (user_id, new_total)
-                )
-
-            await db.execute(
-                "INSERT INTO history(user_id, delta, reason, date) VALUES (?, ?, ?, ?)",
-                (user_id, delta, reason, now)
+        else:
+            await self.db.execute(
+                "INSERT INTO points(user_id, total) VALUES (?, ?)",
+                (user_id, new_total)
             )
 
-            await db.commit()
+        await self.db.execute(
+            "INSERT INTO history(user_id, delta, reason, date) VALUES (?, ?, ?, ?)",
+            (user_id, delta, reason, now)
+        )
+
+        await self.db.commit()
 
         logger.info(
             f"[ChampionData] {user_id} Punkte geändert um {delta} ({reason}). Neuer Total: {new_total}."
@@ -95,62 +106,63 @@ class ChampionData:
         return new_total
 
     async def get_history(self, user_id: str, limit: int = 10) -> list[dict]:
+        """Return the most recent score changes for a user."""
         await self.init_db()
-        async with aiosqlite.connect(self.db_path) as db:
-            cur = await db.execute(
-                """
-                SELECT delta, reason, date
-                  FROM history
-                 WHERE user_id = ?
-                 ORDER BY date DESC
-                 LIMIT ?
-                """,
-                (user_id, limit)
-            )
-            rows = await cur.fetchall()
+        cur = await self.db.execute(
+            """
+            SELECT delta, reason, date
+              FROM history
+             WHERE user_id = ?
+             ORDER BY date DESC
+             LIMIT ?
+            """,
+            (user_id, limit)
+        )
+        rows = await cur.fetchall()
 
         return [{"delta": r[0], "reason": r[1], "date": r[2]} for r in rows]
 
     async def get_leaderboard(self, limit: int = 10, offset: int = 0) -> list[tuple[str, int]]:
+        """Return a list of users sorted by score."""
         await self.init_db()
-        async with aiosqlite.connect(self.db_path) as db:
-            cur = await db.execute(
-                """
-                SELECT user_id, total
-                  FROM points
-                 ORDER BY total DESC
-                 LIMIT ? OFFSET ?
-                """,
-                (limit, offset)
-            )
-            rows = await cur.fetchall()
+        cur = await self.db.execute(
+            """
+            SELECT user_id, total
+              FROM points
+             ORDER BY total DESC
+             LIMIT ? OFFSET ?
+            """,
+            (limit, offset)
+        )
+        rows = await cur.fetchall()
 
         return [(r[0], r[1]) for r in rows]
 
     async def get_rank(self, user_id: str) -> Optional[tuple[int, int]]:
+        """Return ``(rank, score)`` for the given user or ``None`` if unknown."""
         await self.init_db()
-        async with aiosqlite.connect(self.db_path) as db:
-            cur = await db.execute(
-                "SELECT total FROM points WHERE user_id = ?",
-                (user_id,),
-            )
-            row = await cur.fetchone()
-            if not row:
-                return None
-            total = row[0]
+        cur = await self.db.execute(
+            "SELECT total FROM points WHERE user_id = ?",
+            (user_id,),
+        )
+        row = await cur.fetchone()
+        if not row:
+            return None
+        total = row[0]
 
-            cur = await db.execute(
-                "SELECT COUNT(*) FROM points WHERE total > ?",
-                (total,),
-            )
-            count_row = await cur.fetchone()
-            rank = count_row[0] + 1
+        cur = await self.db.execute(
+            "SELECT COUNT(*) FROM points WHERE total > ?",
+            (total,),
+        )
+        count_row = await cur.fetchone()
+        rank = count_row[0] + 1
 
         return rank, total
 
 
 class ChampionCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot) -> None:
+        """Initialize the cog and load role configuration."""
         self.bot = bot
 
         db_path = "data/pers/champion/points.db"
@@ -159,6 +171,7 @@ class ChampionCog(commands.Cog):
         self.roles = self._load_roles_config()
 
     def _load_roles_config(self) -> list[tuple[str, int]]:
+        """Return the role thresholds sorted descending."""
         role_entries = self.bot.data.get("champion", {}).get("roles", [])
         sorted_roles = sorted(
             [(entry["name"], entry["threshold"]) for entry in role_entries],
@@ -167,12 +180,14 @@ class ChampionCog(commands.Cog):
         return sorted_roles
 
     def get_current_role(self, score: int) -> Optional[str]:
+        """Return the highest role name a user qualifies for."""
         for role_name, threshold in self.roles:
             if score >= threshold:
                 return role_name
         return None
 
     async def update_user_score(self, user_id: int, delta: int, reason: str) -> int:
+        """Apply a score change and update the member's role."""
         user_id_str = str(user_id)
         new_total = await self.data.add_delta(user_id_str, delta, reason)
 
@@ -182,7 +197,8 @@ class ChampionCog(commands.Cog):
 
         return new_total
 
-    async def _apply_champion_role(self, user_id_str: str, score: int):
+    async def _apply_champion_role(self, user_id_str: str, score: int) -> None:
+        """Assign the correct champion role based on the score."""
         # Zugriff auf Guild NUR noch über self.bot.main_guild (Zentral, wie in bot.py gesetzt)
         guild = discord.utils.get(self.bot.guilds, id=self.bot.main_guild.id)
         if not guild:
