@@ -5,7 +5,7 @@ import datetime
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from bot import load_quiz_config, QUIZ_CONFIG_PATH, QUESTION_STATE_PATH
+from bot import load_quiz_config
 from cogs.quiz.question_state import QuestionStateManager
 from cogs.quiz.question_generator import QuestionGenerator
 
