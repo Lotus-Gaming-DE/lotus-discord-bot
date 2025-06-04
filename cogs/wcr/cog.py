@@ -26,40 +26,58 @@ class WCRCog(commands.Cog):
         # Emojis liegen in bot.data["emojis"]
         self.emojis = bot.data["emojis"]
 
+        # Cached lists for the autocomplete callbacks -----------------------
+        # Unique elixir costs found in ``self.units``
+        self.costs = sorted({unit["cost"] for unit in self.units})
+
+        # Choices for localized categories (always from English names)
+        cats = self.languages["en"]["categories"]
+        self.speed_choices = [
+            discord.app_commands.Choice(name=s["name"], value=str(s["id"]))
+            for s in cats["speeds"]
+        ]
+        self.faction_choices = [
+            discord.app_commands.Choice(name=f["name"], value=str(f["id"]))
+            for f in cats["factions"]
+        ]
+        self.type_choices = [
+            discord.app_commands.Choice(name=t["name"], value=str(t["id"]))
+            for t in cats["types"]
+        ]
+        self.trait_choices = [
+            discord.app_commands.Choice(name=t["name"], value=str(t["id"]))
+            for t in cats["traits"]
+        ]
+
     # ─── Autocomplete-Callbacks ─────────────────────────────────────────
     async def cost_autocomplete(self, interaction: discord.Interaction, current: str):
-        costs = sorted(set(unit["cost"] for unit in self.units))
         return [
             discord.app_commands.Choice(name=str(c), value=str(c))
-            for c in costs if current.lower() in str(c).lower()
+            for c in self.costs if current.lower() in str(c).lower()
         ][:25]
 
     async def speed_autocomplete(self, interaction: discord.Interaction, current: str):
-        speeds = self.languages['en']['categories']['speeds']
         return [
-            discord.app_commands.Choice(name=s['name'], value=str(s['id']))
-            for s in speeds if current.lower() in s['name'].lower()
+            choice for choice in self.speed_choices
+            if current.lower() in choice.name.lower()
         ][:25]
 
     async def faction_autocomplete(self, interaction: discord.Interaction, current: str):
-        factions = self.languages['en']['categories']['factions']
         return [
-            discord.app_commands.Choice(name=f['name'], value=str(f['id']))
-            for f in factions if current.lower() in f['name'].lower()
+            choice for choice in self.faction_choices
+            if current.lower() in choice.name.lower()
         ][:25]
 
     async def type_autocomplete(self, interaction: discord.Interaction, current: str):
-        types = self.languages['en']['categories']['types']
         return [
-            discord.app_commands.Choice(name=t['name'], value=str(t['id']))
-            for t in types if current.lower() in t['name'].lower()
+            choice for choice in self.type_choices
+            if current.lower() in choice.name.lower()
         ][:25]
 
     async def trait_autocomplete(self, interaction: discord.Interaction, current: str):
-        traits = self.languages['en']['categories']['traits']
         return [
-            discord.app_commands.Choice(name=t['name'], value=str(t['id']))
-            for t in traits if current.lower() in t['name'].lower()
+            choice for choice in self.trait_choices
+            if current.lower() in choice.name.lower()
         ][:25]
 
     # ─── Ausgelagerte Slash-Logik ────────────────────────────────────────
