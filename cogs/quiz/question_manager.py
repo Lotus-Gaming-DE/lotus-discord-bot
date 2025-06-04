@@ -56,8 +56,7 @@ class QuestionManager:
         channel = self.bot.get_channel(cfg["channel_id"])
         qg = cfg["question_generator"]
 
-        max_dyn = cfg.get("max_dynamic_questions", 5)
-        question = qg.generate(area, max_dynamic=max_dyn)
+        question = qg.generate(area)
         if not question:
             logger.warning(
                 f"[QuestionManager] Keine Frage generiert für '{area}'.")
