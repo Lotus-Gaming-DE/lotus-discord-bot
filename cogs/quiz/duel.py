@@ -161,6 +161,12 @@ class QuizDuelGame:
             question = qg.generate(self.area)
             if not question:
                 await self.thread.send("Keine Frage generiert. Duell abgebrochen.")
+                champion_cog = self.cog.bot.get_cog("ChampionCog")
+                if champion_cog:
+                    await champion_cog.update_user_score(
+                        self.challenger.id, self.points, "Quiz-Duell Rückgabe"
+                    )
+                await self.thread.edit(archived=True)
                 return
             answers = question["antwort"] if isinstance(question["antwort"], list) else [question["antwort"]]
             embed = discord.Embed(title=f"Runde {rnd}", description=question["frage"], color=discord.Color.blue())
