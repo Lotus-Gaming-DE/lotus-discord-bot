@@ -39,10 +39,8 @@ class QuizCog(commands.Cog):
                 if hasattr(cfg, "question_state")
                 else cfg.get("question_state")
                 for cfg in self.bot.quiz_data.values()
-                if (
-                    hasattr(cfg, "question_state")
-                    or (isinstance(cfg, dict) and "question_state" in cfg)
-                )
+                if hasattr(cfg, "question_state")
+                or (isinstance(cfg, dict) and "question_state" in cfg)
             ),
             QuestionStateManager("data/pers/quiz/question_state.json"),
         )
@@ -58,7 +56,8 @@ class QuizCog(commands.Cog):
         self.restorer.restore_all()
 
         for area, cfg in self.bot.quiz_data.items():
-            if cfg.get("active"):
+            active = cfg.active if hasattr(cfg, "active") else cfg.get("active")
+            if active:
                 scheduler = QuizScheduler(
                     bot=self.bot,
                     area=area,
