@@ -8,14 +8,16 @@ logger = get_logger(__name__)
 
 
 class QuizScheduler:
-    def __init__(self, bot, area: str, prepare_question_callback, close_question_callback):
+    def __init__(self, bot, area: str, prepare_question_callback, close_question_callback) -> None:
+        """Schedule automatic quiz questions for one area."""
         self.bot = bot
         self.area = area
         self.prepare_question = prepare_question_callback
         self.close_question = close_question_callback
         self.task = create_logged_task(self.run(), logger)
 
-    async def run(self):
+    async def run(self) -> None:
+        """Background task loop scheduling questions in random intervals."""
         await self.bot.wait_until_ready()
         if self.area not in self.bot.quiz_data:
             logger.warning(

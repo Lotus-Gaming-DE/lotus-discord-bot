@@ -7,6 +7,7 @@ import random
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from cogs.quiz.area_providers.wcr import WCRQuestionProvider
+from cogs.quiz.area_providers.base import DynamicQuestionProvider
 
 class DummyBot:
     pass
@@ -24,6 +25,11 @@ def create_provider():
         }
     }
     return WCRQuestionProvider(bot, language="de")
+
+
+def test_provider_inherits_base():
+    provider = create_provider()
+    assert isinstance(provider, DynamicQuestionProvider)
 
 
 def test_generate_type_1():

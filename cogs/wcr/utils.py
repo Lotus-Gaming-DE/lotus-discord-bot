@@ -56,6 +56,6 @@ def load_wcr_data():
     """Fasst alle WCR-Daten zusammen, wie sie im Bot verwendet werden."""
     return {
         "units": load_units(),
-        "languages": load_languages(),
-        "pictures": load_pictures()
+        "locals": load_languages(),
+        "pictures": load_pictures(),
     }

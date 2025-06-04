@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from log_setup import setup_logging, get_logger
 from cogs.quiz.question_state import QuestionStateManager
 from cogs.quiz.question_generator import QuestionGenerator
+from cogs.wcr.utils import load_wcr_data
 
 # Lade Umgebungsvariablen
 load_dotenv()
@@ -28,7 +29,14 @@ QUIZ_CONFIG_PATH = "data/pers/quiz/areas.json"
 QUESTION_STATE_PATH = "data/pers/quiz/question_state.json"
 
 
-def load_json(path):
+def load_json(path: str | Path) -> dict:
+    """Read a JSON file and return its content as ``dict``.
+
+    Parameters
+    ----------
+    path:
+        Path to the JSON file.
+    """
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -84,7 +92,8 @@ def load_quiz_config(bot: commands.Bot):
 
 
 class MyBot(commands.Bot):
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize the bot with intents and default attributes."""
         super().__init__(
             command_prefix="§",  # Wird nicht genutzt, Pflichtfeld
             intents=intents,
@@ -101,7 +110,8 @@ class MyBot(commands.Bot):
         # if no configuration was loaded yet.
         self.quiz_data = {}
 
-    async def setup_hook(self):
+    async def setup_hook(self) -> None:
+        """Set up data and register all cogs and slash commands."""
         # Optional: Commands leeren für Guild (verhindert Ghost-Kommandos bei Updates)
         self.tree.clear_commands(guild=self.main_guild)
 
@@ -118,14 +128,7 @@ class MyBot(commands.Bot):
             quiz_languages.append(lang)
 
         # WCR-Daten zentral laden
-        wcr_data = {
-            "units": load_json("data/wcr/units.json"),
-            "pictures": load_json("data/wcr/pictures.json"),
-            "locals": {
-                "de": load_json("data/wcr/locals/de.json"),
-                "en": load_json("data/wcr/locals/en.json"),
-            },
-        }
+        wcr_data = load_wcr_data()
 
         # Champion-Rollen laden
         champion_roles = load_json("data/champion/roles.json")
@@ -157,7 +160,8 @@ class MyBot(commands.Bot):
 
         await self.tree.sync(guild=self.main_guild)
 
-    async def on_ready(self):
+    async def on_ready(self) -> None:
+        """Log when the bot is fully ready."""
         logger.info(
             f"Bot ist bereit! Eingeloggt als {self.user} (ID: {self.user.id})")
 

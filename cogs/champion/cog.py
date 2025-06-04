@@ -15,7 +15,8 @@ class ChampionData:
     Verwaltet die SQLite-Datenbank für Champion-Punkte und Historie.
     """
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str) -> None:
+        """Create a new database helper for the given path."""
         self.db_path = db_path
         self._init_done = False
 
@@ -51,6 +52,7 @@ class ChampionData:
         logger.info("[ChampionData] SQLite‐Datenbank initialisiert.")
 
     async def get_total(self, user_id: str) -> int:
+        """Return the current score for a user."""
         await self.init_db()
         async with aiosqlite.connect(self.db_path) as db:
             cur = await db.execute(
@@ -60,6 +62,7 @@ class ChampionData:
             return row[0] if row else 0
 
     async def add_delta(self, user_id: str, delta: int, reason: str) -> int:
+        """Change a user's score by ``delta`` and store a history entry."""
         await self.init_db()
         now = datetime.utcnow().isoformat()
 
@@ -95,6 +98,7 @@ class ChampionData:
         return new_total
 
     async def get_history(self, user_id: str, limit: int = 10) -> list[dict]:
+        """Return the most recent score changes for a user."""
         await self.init_db()
         async with aiosqlite.connect(self.db_path) as db:
             cur = await db.execute(
@@ -112,6 +116,7 @@ class ChampionData:
         return [{"delta": r[0], "reason": r[1], "date": r[2]} for r in rows]
 
     async def get_leaderboard(self, limit: int = 10, offset: int = 0) -> list[tuple[str, int]]:
+        """Return a list of users sorted by score."""
         await self.init_db()
         async with aiosqlite.connect(self.db_path) as db:
             cur = await db.execute(
@@ -128,6 +133,7 @@ class ChampionData:
         return [(r[0], r[1]) for r in rows]
 
     async def get_rank(self, user_id: str) -> Optional[tuple[int, int]]:
+        """Return ``(rank, score)`` for the given user or ``None`` if unknown."""
         await self.init_db()
         async with aiosqlite.connect(self.db_path) as db:
             cur = await db.execute(
@@ -150,7 +156,8 @@ class ChampionData:
 
 
 class ChampionCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot) -> None:
+        """Initialize the cog and load role configuration."""
         self.bot = bot
 
         db_path = "data/pers/champion/points.db"
@@ -159,6 +166,7 @@ class ChampionCog(commands.Cog):
         self.roles = self._load_roles_config()
 
     def _load_roles_config(self) -> list[tuple[str, int]]:
+        """Return the role thresholds sorted descending."""
         role_entries = self.bot.data.get("champion", {}).get("roles", [])
         sorted_roles = sorted(
             [(entry["name"], entry["threshold"]) for entry in role_entries],
@@ -167,12 +175,14 @@ class ChampionCog(commands.Cog):
         return sorted_roles
 
     def get_current_role(self, score: int) -> Optional[str]:
+        """Return the highest role name a user qualifies for."""
         for role_name, threshold in self.roles:
             if score >= threshold:
                 return role_name
         return None
 
     async def update_user_score(self, user_id: int, delta: int, reason: str) -> int:
+        """Apply a score change and update the member's role."""
         user_id_str = str(user_id)
         new_total = await self.data.add_delta(user_id_str, delta, reason)
 
@@ -182,7 +192,8 @@ class ChampionCog(commands.Cog):
 
         return new_total
 
-    async def _apply_champion_role(self, user_id_str: str, score: int):
+    async def _apply_champion_role(self, user_id_str: str, score: int) -> None:
+        """Assign the correct champion role based on the score."""
         # Zugriff auf Guild NUR noch über self.bot.main_guild (Zentral, wie in bot.py gesetzt)
         guild = discord.utils.get(self.bot.guilds, id=self.bot.main_guild.id)
         if not guild:
