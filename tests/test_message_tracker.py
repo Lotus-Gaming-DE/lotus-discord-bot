@@ -44,7 +44,7 @@ class DummyBot:
 
 def test_register_message_increments_and_triggers(monkeypatch):
     bot = DummyBot()
-    tracker = MessageTracker(bot)
+    tracker = MessageTracker(bot, bot.quiz_cog.manager.ask_question)
     bot.quiz_cog.awaiting_activity = {123: ("area1", "end")}
 
     triggered = []

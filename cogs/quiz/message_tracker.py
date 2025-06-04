@@ -9,8 +9,9 @@ logger = get_logger(__name__)
 
 
 class MessageTracker:
-    def __init__(self, bot):
+    def __init__(self, bot, on_threshold):
         self.bot = bot
+        self.on_threshold = on_threshold
         self.message_counter = {}
         self.channel_initialized = {}
 
@@ -73,7 +74,7 @@ class MessageTracker:
                     f"[Tracker] Aktivität erreicht in '{area}' ({after}/{threshold}) – Frage wird gestellt."
                 )
                 create_logged_task(
-                    self.bot.quiz_cog.manager.ask_question(
+                    self.on_threshold(
                         area, self.bot.quiz_cog.awaiting_activity[cid][1]
                     ),
                     logger

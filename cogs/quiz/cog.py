@@ -36,8 +36,8 @@ class QuizCog(commands.Cog):
             QuestionStateManager("data/pers/quiz/question_state.json")
         )
 
-        self.tracker = MessageTracker(bot=self.bot)
         self.manager = QuestionManager(self)
+        self.tracker = MessageTracker(bot=self.bot, on_threshold=self.manager.ask_question)
         self.closer = QuestionCloser(bot=self.bot, state=self.state)
 
         create_logged_task(self.tracker.initialize(), logger)
