@@ -31,8 +31,7 @@ class QuizCog(commands.Cog):
         # fall back to a fresh ``QuestionStateManager`` so the cog can start
         # without raising an exception during initialization.
         self.state: QuestionStateManager = next(
-            (cfg.get("question_state") for cfg in self.bot.quiz_data.values()
-             if "question_state" in cfg),
+            (cfg.question_state for cfg in self.bot.quiz_data.values() if cfg.question_state),
             QuestionStateManager("data/pers/quiz/question_state.json")
         )
 
@@ -47,7 +46,7 @@ class QuizCog(commands.Cog):
         self.restorer.restore_all()
 
         for area, cfg in self.bot.quiz_data.items():
-            if cfg.get("active"):
+            if cfg.active:
                 QuizScheduler(
                     bot=self.bot,
                     area=area,

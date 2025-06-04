@@ -138,7 +138,7 @@ class QuizDuelGame:
         self.scores = {challenger.id: 0, opponent.id: 0}
 
     async def run(self):
-        qg: QuestionGenerator = self.cog.bot.quiz_data[self.area]["question_generator"]
+        qg: QuestionGenerator = self.cog.bot.quiz_data[self.area].question_generator
         total_rounds = {"bo3": 3, "bo5": 5}.get(self.mode, 5)
         needed = total_rounds // 2 + 1
         logger.info(

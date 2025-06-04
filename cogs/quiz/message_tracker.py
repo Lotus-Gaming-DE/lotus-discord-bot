@@ -19,7 +19,7 @@ class MessageTracker:
         await self.bot.wait_until_ready()
 
         for area, cfg in self.bot.quiz_data.items():
-            channel_id = cfg["channel_id"]
+            channel_id = cfg.channel_id
             try:
                 start = time.time()
                 channel = await self.bot.fetch_channel(channel_id)
@@ -33,7 +33,7 @@ class MessageTracker:
                                    if msg.author.id == self.bot.user.id and msg.embeds and
                                    msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")), None)
 
-                threshold = cfg.get("activity_threshold", 10)
+                threshold = cfg.activity_threshold
                 if quiz_index is not None:
                     count = len([
                         m for m in messages[:quiz_index] if not m.author.bot
@@ -65,7 +65,8 @@ class MessageTracker:
             )
 
         if cid in self.bot.quiz_cog.awaiting_activity:
-            threshold = self.bot.quiz_data.get(area, {}).get("activity_threshold", 10) if area else 10
+            cfg_obj = self.bot.quiz_data.get(area) if area else None
+            threshold = cfg_obj.activity_threshold if cfg_obj else 10
             if after >= threshold:
                 if area is None:
                     area, _ = self.bot.quiz_cog.awaiting_activity[cid]
@@ -83,7 +84,7 @@ class MessageTracker:
 
     def _find_area_for_channel(self, channel_id: int) -> str | None:
         for area, cfg in self.bot.quiz_data.items():
-            if cfg["channel_id"] == channel_id:
+            if cfg.channel_id == channel_id:
                 return area
         return None
 

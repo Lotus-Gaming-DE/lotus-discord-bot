@@ -24,8 +24,7 @@ class QuizScheduler:
 
         while True:
             cfg = self.bot.quiz_data[self.area]
-            time_window = cfg.get(
-                "time_window", datetime.timedelta(minutes=15))
+            time_window = cfg.time_window
 
             now = datetime.datetime.utcnow()
             window_start = now.replace(second=0, microsecond=0)
@@ -56,7 +55,7 @@ class QuizScheduler:
 
             await asyncio.sleep(max((window_end - datetime.datetime.utcnow()).total_seconds(), 0))
 
-            cid = self.bot.quiz_data[self.area]["channel_id"]
+            cid = self.bot.quiz_data[self.area].channel_id
             self.bot.quiz_cog.awaiting_activity.pop(cid, None)
             if self.area in self.bot.quiz_cog.current_questions:
                 await self.close_question(self.area, timed_out=True)

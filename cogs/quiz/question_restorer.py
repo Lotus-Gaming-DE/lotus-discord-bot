@@ -35,7 +35,7 @@ class QuestionRestorer:
 
     async def repost_question(self, area: str, qinfo: dict):
         cfg = self.bot.quiz_data[area]
-        channel = await self.bot.fetch_channel(cfg["channel_id"])
+        channel = await self.bot.fetch_channel(cfg.channel_id)
 
         if not channel:
             logger.error(f"[Restorer] Channel für '{area}' nicht verfügbar.")

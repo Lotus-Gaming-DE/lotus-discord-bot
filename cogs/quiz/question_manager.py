@@ -18,12 +18,12 @@ class QuestionManager:
     async def prepare_question(self, area: str, end_time: datetime.datetime):
         cfg = self.bot.quiz_data[area]
 
-        if not cfg.get("active"):
+        if not cfg.active:
             logger.info(
                 f"[QuestionManager] Area '{area}' ist inaktiv – keine Frage stellen.")
             return
 
-        channel = self.bot.get_channel(cfg["channel_id"])
+        channel = self.bot.get_channel(cfg.channel_id)
         if not channel:
             logger.warning(
                 f"[QuestionManager] Channel für '{area}' nicht gefunden.")
@@ -40,7 +40,7 @@ class QuestionManager:
             logger.info(
                 f"[QuestionManager] Channel '{channel.name}' ({area}) initialisiert – überspringe Aktivitätsprüfung.")
         else:
-            threshold = cfg.get("activity_threshold", 10)
+            threshold = cfg.activity_threshold
             if self.cog.tracker.get(cid) < threshold:
                 logger.info(
                     f"[QuestionManager] Nachrichtenzähler für '{area}': {self.cog.tracker.get(cid)}/{threshold} – warte auf Aktivität."
@@ -54,10 +54,10 @@ class QuestionManager:
 
     async def ask_question(self, area: str, end_time: datetime.datetime):
         cfg = self.bot.quiz_data[area]
-        channel = self.bot.get_channel(cfg["channel_id"])
-        qg = cfg["question_generator"]
+        channel = self.bot.get_channel(cfg.channel_id)
+        qg = cfg.question_generator
 
-        language = cfg.get("language", "de")
+        language = cfg.language
         question = qg.generate(area, language=language)
         if not question:
             logger.warning(

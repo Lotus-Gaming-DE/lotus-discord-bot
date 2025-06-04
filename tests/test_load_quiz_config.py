@@ -40,10 +40,10 @@ def test_load_quiz_config(tmp_path, monkeypatch):
     load_quiz_config(bot)
 
     assert set(bot.quiz_data.keys()) == {"wcr", "d4"}
-    assert bot.quiz_data["wcr"]["channel_id"] == 1
-    assert bot.quiz_data["d4"]["time_window"] == datetime.timedelta(minutes=10)
-    assert isinstance(bot.quiz_data["wcr"]["question_state"], QuestionStateManager)
-    assert isinstance(bot.quiz_data["wcr"]["question_generator"], QuestionGenerator)
+    assert bot.quiz_data["wcr"].channel_id == 1
+    assert bot.quiz_data["d4"].time_window == datetime.timedelta(minutes=10)
+    assert isinstance(bot.quiz_data["wcr"].question_state, QuestionStateManager)
+    assert isinstance(bot.quiz_data["wcr"].question_generator, QuestionGenerator)
 
 
 def test_single_state_manager(tmp_path, monkeypatch):
@@ -63,6 +63,6 @@ def test_single_state_manager(tmp_path, monkeypatch):
     bot = DummyBot()
     load_quiz_config(bot)
 
-    state1 = bot.quiz_data["wcr"]["question_state"]
-    state2 = bot.quiz_data["d4"]["question_state"]
+    state1 = bot.quiz_data["wcr"].question_state
+    state2 = bot.quiz_data["d4"].question_state
     assert state1 is state2
