@@ -7,8 +7,8 @@ logger = logging.getLogger(__name__)
 
 class WCRQuestionProvider:
     def __init__(self, bot, language="de"):
-        self.units = bot.quiz_data["wcr"]["units"]
-        self.locals = bot.quiz_data["wcr"]["languages"]
+        self.units = bot.data["wcr"]["units"]
+        self.locals = bot.data["wcr"]["locals"]
         self.language = language
 
     def get_unit_name(self, unit_id: int, lang: str) -> str:
