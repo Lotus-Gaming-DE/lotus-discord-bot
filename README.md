@@ -136,24 +136,3 @@ pytest -q
 ```
 aufgerufen werden.
 
----
-
-## Änderungsprotokoll (Stand 2025-06-03)
-
-* ✅ **WCR-Quiz:** Dynamische und statische Fragen kombinierbar
-* ✅ **Fragen-Wiederherstellung** verbessert
-* ✅ **Champion-Modul:** Rollenzuweisungen anhand Punkteschwellen
-* ✅ **Architekturverbesserungen** bei Cogs und Management-Klassen
-
----
-
-## Kontakt
-
-* Projektleitung: **gs3rr4**
-* Discord: [discord.gg/LotusGaming](https://discord.gg/LotusGaming)
-* E-Mail: [lotusgamingde@gmail.com](mailto:lotusgamingde@gmail.com)
-
----
-Letzter Stand: 2025-06-03
-Verantwortlich für diesen Stand: `gs3rr4`
-
