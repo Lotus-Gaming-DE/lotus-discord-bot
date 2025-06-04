@@ -18,9 +18,6 @@ champion_group = app_commands.Group(
 @app_commands.describe(user="Der Nutzer, dem Punkte gegeben werden", punkte="Anzahl der Punkte", grund="Begründung")
 async def give(interaction: discord.Interaction, user: discord.Member, punkte: int, grund: str):
     """Give a user points."""
-    if not interaction.user.guild_permissions.manage_guild:
-        await interaction.response.send_message("❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral=True)
-        return
 
     logger.info(
         f"/champion give by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
@@ -36,9 +33,6 @@ async def give(interaction: discord.Interaction, user: discord.Member, punkte: i
 @app_commands.describe(user="Der Nutzer, von dem Punkte abgezogen werden", punkte="Anzahl der Punkte", grund="Begründung")
 async def remove(interaction: discord.Interaction, user: discord.Member, punkte: int, grund: str):
     """Remove points from a user."""
-    if not interaction.user.guild_permissions.manage_guild:
-        await interaction.response.send_message("❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral=True)
-        return
 
     logger.info(
         f"/champion remove by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
@@ -54,9 +48,6 @@ async def remove(interaction: discord.Interaction, user: discord.Member, punkte:
 @app_commands.describe(user="Der Nutzer, dessen Punktzahl gesetzt wird", punkte="Neue Gesamtpunktzahl", grund="Begründung")
 async def set_points(interaction: discord.Interaction, user: discord.Member, punkte: int, grund: str):
     """Set a user's score to an explicit value."""
-    if not interaction.user.guild_permissions.manage_guild:
-        await interaction.response.send_message("❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral=True)
-        return
 
     logger.info(
         f"/champion set by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
@@ -74,9 +65,6 @@ async def set_points(interaction: discord.Interaction, user: discord.Member, pun
 @app_commands.describe(user="Der Nutzer, dessen Punkte zurückgesetzt werden")
 async def reset(interaction: discord.Interaction, user: discord.Member):
     """Reset a user's score to zero."""
-    if not interaction.user.guild_permissions.manage_guild:
-        await interaction.response.send_message("❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral=True)
-        return
 
     logger.info(f"/champion reset by {interaction.user} for {user}")
 
@@ -85,7 +73,7 @@ async def reset(interaction: discord.Interaction, user: discord.Member):
     if old_total <= 0:
         await interaction.response.send_message(f"ℹ️ {user.mention} hat aktuell keine Punkte zum Zurücksetzen.")
         return
-    new_total = await cog.update_user_score(user.id, -old_total, "Reset durch Mod")
+    await cog.update_user_score(user.id, -old_total, "Reset durch Mod")
     await interaction.response.send_message(f"🔄 {user.mention} wurde auf 0 Punkte zurückgesetzt.")
 
 

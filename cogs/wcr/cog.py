@@ -55,7 +55,6 @@ class WCRCog(commands.Cog):
     # ─── Autocomplete-Callbacks ─────────────────────────────────────────
     async def cost_autocomplete(self, interaction: discord.Interaction, current: str):
         """Provide autocomplete suggestions for unit costs."""
-        costs = sorted(set(unit["cost"] for unit in self.units))
         return [
             discord.app_commands.Choice(name=str(c), value=str(c))
             for c in self.costs if current.lower() in str(c).lower()
@@ -63,7 +62,6 @@ class WCRCog(commands.Cog):
 
     async def speed_autocomplete(self, interaction: discord.Interaction, current: str):
         """Autocomplete unit speeds."""
-        speeds = self.languages['en']['categories']['speeds']
         return [
             choice for choice in self.speed_choices
             if current.lower() in choice.name.lower()
@@ -71,7 +69,6 @@ class WCRCog(commands.Cog):
 
     async def faction_autocomplete(self, interaction: discord.Interaction, current: str):
         """Autocomplete factions."""
-        factions = self.languages['en']['categories']['factions']
         return [
             choice for choice in self.faction_choices
             if current.lower() in choice.name.lower()
@@ -79,7 +76,6 @@ class WCRCog(commands.Cog):
 
     async def type_autocomplete(self, interaction: discord.Interaction, current: str):
         """Autocomplete unit types."""
-        types = self.languages['en']['categories']['types']
         return [
             choice for choice in self.type_choices
             if current.lower() in choice.name.lower()
@@ -87,7 +83,6 @@ class WCRCog(commands.Cog):
 
     async def trait_autocomplete(self, interaction: discord.Interaction, current: str):
         """Autocomplete unit traits."""
-        traits = self.languages['en']['categories']['traits']
         return [
             choice for choice in self.trait_choices
             if current.lower() in choice.name.lower()

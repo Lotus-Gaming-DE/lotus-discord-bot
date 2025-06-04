@@ -12,8 +12,6 @@ from discord.ext import commands
 
 from .cog import QuizCog
 from .question_generator import QuestionGenerator
-from .question_state import QuestionStateManager
-from .views import AnswerButtonView
 from .duel import DuelInviteView, DuelConfig
 
 logger = get_logger(__name__)
@@ -100,7 +98,6 @@ async def threshold(interaction: discord.Interaction, value: app_commands.Range[
 @app_commands.default_permissions(manage_guild=True)
 async def enable(interaction: discord.Interaction, area_name: str, lang: Literal["de", "en"] = "de"):
     area = area_name.lower()
-    quiz_cog: QuizCog = interaction.client.get_cog("QuizCog")
 
     if area not in interaction.client.quiz_data:
         await interaction.response.send_message("❌ Diese Area ist nicht bekannt oder nicht geladen.", ephemeral=True)

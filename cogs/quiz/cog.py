@@ -1,7 +1,6 @@
 from collections import defaultdict
 from discord.ext import commands
 import discord
-import asyncio
 
 from log_setup import get_logger, create_logged_task
 
