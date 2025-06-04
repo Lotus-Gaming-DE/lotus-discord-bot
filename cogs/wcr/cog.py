@@ -13,7 +13,8 @@ logger = get_logger(__name__)
 
 
 class WCRCog(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
+        """Cog providing Warcraft Rumble helper commands."""
         self.bot = bot
 
         # === WICHTIG ===
@@ -28,6 +29,7 @@ class WCRCog(commands.Cog):
 
     # ─── Autocomplete-Callbacks ─────────────────────────────────────────
     async def cost_autocomplete(self, interaction: discord.Interaction, current: str):
+        """Provide autocomplete suggestions for unit costs."""
         costs = sorted(set(unit["cost"] for unit in self.units))
         return [
             discord.app_commands.Choice(name=str(c), value=str(c))
@@ -35,6 +37,7 @@ class WCRCog(commands.Cog):
         ][:25]
 
     async def speed_autocomplete(self, interaction: discord.Interaction, current: str):
+        """Autocomplete unit speeds."""
         speeds = self.languages['en']['categories']['speeds']
         return [
             discord.app_commands.Choice(name=s['name'], value=str(s['id']))
@@ -42,6 +45,7 @@ class WCRCog(commands.Cog):
         ][:25]
 
     async def faction_autocomplete(self, interaction: discord.Interaction, current: str):
+        """Autocomplete factions."""
         factions = self.languages['en']['categories']['factions']
         return [
             discord.app_commands.Choice(name=f['name'], value=str(f['id']))
@@ -49,6 +53,7 @@ class WCRCog(commands.Cog):
         ][:25]
 
     async def type_autocomplete(self, interaction: discord.Interaction, current: str):
+        """Autocomplete unit types."""
         types = self.languages['en']['categories']['types']
         return [
             discord.app_commands.Choice(name=t['name'], value=str(t['id']))
@@ -56,6 +61,7 @@ class WCRCog(commands.Cog):
         ][:25]
 
     async def trait_autocomplete(self, interaction: discord.Interaction, current: str):
+        """Autocomplete unit traits."""
         traits = self.languages['en']['categories']['traits']
         return [
             discord.app_commands.Choice(name=t['name'], value=str(t['id']))
@@ -73,7 +79,7 @@ class WCRCog(commands.Cog):
         trait: str = None,
         lang: str = "de"
     ):
-        """Logik für /wcr filter"""
+        """Implementation for the ``/wcr filter`` command."""
         logger.info(f"[WCR] /wcr filter von {interaction.user} - "
                     f"cost={cost}, speed={speed}, faction={faction}, type={type}, trait={trait}, lang={lang}")
 
@@ -189,7 +195,7 @@ class WCRCog(commands.Cog):
         name: str,
         lang: str = "de"
     ):
-        """Logik für /wcr name"""
+        """Implementation for the ``/wcr name`` command."""
         logger.info(
             f"[WCR] /wcr name von {interaction.user} - name={name}, lang={lang}")
         await interaction.response.defer(ephemeral=True)
@@ -213,6 +219,7 @@ class WCRCog(commands.Cog):
                 await interaction.followup.send(embed=embed, ephemeral=True)
 
     def create_mini_embed(self, name_or_id, lang):
+        """Return an embed describing the mini or ``(None, None)`` if unknown."""
         if lang not in self.languages:
             return None, None
 
@@ -513,7 +520,8 @@ class WCRCog(commands.Cog):
 
         return embed, logo_file
 
-    async def send_mini_embed(self, interaction, unit_id, lang):
+    async def send_mini_embed(self, interaction, unit_id, lang) -> None:
+        """Send an embed with mini details as an ephemeral followup."""
         try:
             embed, logo_file = self.create_mini_embed(unit_id, lang)
             if embed is None:

@@ -15,30 +15,35 @@ wcr_group = app_commands.Group(
 
 
 async def _cost_ac(interaction, current):
+    """Delegate cost autocomplete to the cog."""
     logger.debug(f"_cost_ac invoked by {interaction.user} current={current}")
     cog: WCRCog = interaction.client.get_cog("WCRCog")
     return await cog.cost_autocomplete(interaction, current)
 
 
 async def _speed_ac(interaction, current):
+    """Delegate speed autocomplete to the cog."""
     logger.debug(f"_speed_ac invoked by {interaction.user} current={current}")
     cog: WCRCog = interaction.client.get_cog("WCRCog")
     return await cog.speed_autocomplete(interaction, current)
 
 
 async def _faction_ac(interaction, current):
+    """Delegate faction autocomplete to the cog."""
     logger.debug(f"_faction_ac invoked by {interaction.user} current={current}")
     cog: WCRCog = interaction.client.get_cog("WCRCog")
     return await cog.faction_autocomplete(interaction, current)
 
 
 async def _type_ac(interaction, current):
+    """Delegate type autocomplete to the cog."""
     logger.debug(f"_type_ac invoked by {interaction.user} current={current}")
     cog: WCRCog = interaction.client.get_cog("WCRCog")
     return await cog.type_autocomplete(interaction, current)
 
 
 async def _trait_ac(interaction, current):
+    """Delegate trait autocomplete to the cog."""
     logger.debug(f"_trait_ac invoked by {interaction.user} current={current}")
     cog: WCRCog = interaction.client.get_cog("WCRCog")
     return await cog.trait_autocomplete(interaction, current)
