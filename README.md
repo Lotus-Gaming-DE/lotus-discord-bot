@@ -127,9 +127,12 @@ LotusGamingDE/
 /champion remove       # Punkte abziehen
 /champion set          # Punkte direkt setzen
 /champion reset        # Punkte zurücksetzen
-/champion info         # Eigene Punkte anzeigen
+/champion score        # Punkte von dir oder anderen anzeigen
+/champion myhistory    # Eigenen Verlauf einsehen
 /champion history      # Verlauf einzelner User
 /champion leaderboard  # Rangliste anzeigen
+/champion roles        # Schwellen der Champion-Rollen
+/champion rank         # Rang eines Users
 ```
 
 ### Quiz Modul
