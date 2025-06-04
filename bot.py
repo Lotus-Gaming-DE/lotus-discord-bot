@@ -43,6 +43,9 @@ class MyBot(commands.Bot):
         self.main_guild_id = int(guild_id)
         self.main_guild = discord.Object(id=self.main_guild_id)
         self.data = {}
+        # Provide a default attribute so cogs relying on ``quiz_data`` don't fail
+        # if no configuration was loaded yet.
+        self.quiz_data = {}
 
     async def setup_hook(self):
         # Optional: Commands leeren für Guild (verhindert Ghost-Kommandos bei Updates)
