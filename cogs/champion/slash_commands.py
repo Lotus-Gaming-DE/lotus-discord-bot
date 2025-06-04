@@ -1,7 +1,10 @@
 import discord
 from discord import app_commands
 
+from log_setup import get_logger
 from .cog import ChampionCog
+
+logger = get_logger(__name__)
 
 champion_group = app_commands.Group(
     name="champion",
@@ -16,6 +19,10 @@ async def give(interaction: discord.Interaction, user: discord.Member, punkte: i
         await interaction.response.send_message("❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral=True)
         return
 
+    logger.info(
+        f"/champion give by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
+    )
+
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     new_total = await cog.update_user_score(user.id, punkte, grund)
     await interaction.response.send_message(f"✅ {user.mention} hat nun insgesamt {new_total} Punkte.")
@@ -28,6 +35,10 @@ async def remove(interaction: discord.Interaction, user: discord.Member, punkte:
         await interaction.response.send_message("❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral=True)
         return
 
+    logger.info(
+        f"/champion remove by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
+    )
+
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     new_total = await cog.update_user_score(user.id, -punkte, grund)
     await interaction.response.send_message(f"⚠️ {user.mention} hat nun insgesamt {new_total} Punkte.")
@@ -39,6 +50,10 @@ async def set_points(interaction: discord.Interaction, user: discord.Member, pun
     if not interaction.user.guild_permissions.manage_guild:
         await interaction.response.send_message("❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral=True)
         return
+
+    logger.info(
+        f"/champion set by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
+    )
 
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     old_total = await cog.data.get_total(str(user.id))
@@ -54,6 +69,8 @@ async def reset(interaction: discord.Interaction, user: discord.Member):
         await interaction.response.send_message("❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral=True)
         return
 
+    logger.info(f"/champion reset by {interaction.user} for {user}")
+
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     old_total = await cog.data.get_total(str(user.id))
     if old_total <= 0:
@@ -66,6 +83,7 @@ async def reset(interaction: discord.Interaction, user: discord.Member):
 @champion_group.command(name="score", description="Zeigt die Punktzahl eines Nutzers")
 @app_commands.describe(user="Der Nutzer, dessen Punkte angezeigt werden")
 async def score(interaction: discord.Interaction, user: discord.Member | None = None):
+    logger.info(f"/champion score by {interaction.user} target={user or interaction.user}")
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     target = user or interaction.user
     total = await cog.data.get_total(str(target.id))
@@ -77,6 +95,7 @@ async def score(interaction: discord.Interaction, user: discord.Member | None = 
 
 @champion_group.command(name="myhistory", description="Zeigt Deinen eigenen Punkteverlauf")
 async def myhistory(interaction: discord.Interaction):
+    logger.info(f"/champion myhistory by {interaction.user}")
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     user_id_str = str(interaction.user.id)
     history_list = await cog.data.get_history(user_id_str, limit=10)
@@ -101,6 +120,7 @@ async def myhistory(interaction: discord.Interaction):
 @champion_group.command(name="history", description="Zeigt die Punkte-Historie eines Spielers")
 @app_commands.describe(user="Der Spieler, dessen Historie angezeigt wird")
 async def history(interaction: discord.Interaction, user: discord.Member):
+    logger.info(f"/champion history by {interaction.user} target={user}")
     if not interaction.user.guild_permissions.manage_guild:
         await interaction.response.send_message("❌ Du hast keine Berechtigung für diesen Befehl.", ephemeral=True)
         return
@@ -126,6 +146,7 @@ async def history(interaction: discord.Interaction, user: discord.Member):
 
 @champion_group.command(name="leaderboard", description="Zeigt die Top 30 gruppiert nach Champion-Rolle als Tabelle")
 async def leaderboard(interaction: discord.Interaction):
+    logger.info(f"/champion leaderboard requested by {interaction.user}")
     await interaction.response.defer(thinking=True)
 
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
@@ -179,6 +200,7 @@ async def leaderboard(interaction: discord.Interaction):
 
 @champion_group.command(name="roles", description="Listet alle Champion-Rollen und ihre Schwellen")
 async def roles(interaction: discord.Interaction):
+    logger.info(f"/champion roles requested by {interaction.user}")
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     lines = []
     for name, threshold in cog.roles:
@@ -190,6 +212,7 @@ async def roles(interaction: discord.Interaction):
 @champion_group.command(name="rank", description="Zeigt den Rang eines Nutzers im Leaderboard")
 @app_commands.describe(user="Der Nutzer, dessen Rang angezeigt wird")
 async def rank(interaction: discord.Interaction, user: discord.Member | None = None):
+    logger.info(f"/champion rank by {interaction.user} target={user or interaction.user}")
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     target = user or interaction.user
     result = await cog.data.get_rank(str(target.id))
