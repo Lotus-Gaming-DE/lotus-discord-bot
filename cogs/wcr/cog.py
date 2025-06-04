@@ -21,6 +21,8 @@ class WCRCog(commands.Cog):
         # Statt bot.quiz_data[...] nutzen wir jetzt bot.data["wcr"][...],
         # das bereits in bot.py im setup_hook gefüllt wird.
         self.units = bot.data["wcr"]["units"]
+        if isinstance(self.units, dict) and "units" in self.units:
+            self.units = self.units["units"]
         self.languages = bot.data["wcr"]["locals"]
         self.pictures = bot.data["wcr"]["pictures"]
 
