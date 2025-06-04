@@ -94,7 +94,6 @@ LotusGamingDE/
 │  └─ wcr/
 │     ├─ __init__.py
 │     ├─ cog.py
-│     ├─ data_loader.py
 │     ├─ slash_commands.py
 │     └─ helpers.py
 ├─ data/

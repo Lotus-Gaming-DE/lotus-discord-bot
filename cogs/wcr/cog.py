@@ -4,7 +4,6 @@ import discord
 from discord.ext import commands
 import os
 import logging
-from . import data_loader
 from . import helpers
 from .views import MiniSelectView
 import itertools
