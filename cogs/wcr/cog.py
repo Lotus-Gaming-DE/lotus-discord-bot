@@ -244,7 +244,7 @@ class WCRCog(commands.Cog):
     def create_mini_embed(self, name_or_id, lang):
         result = self.resolve_unit(name_or_id, lang)
         if not result:
-        """Return an embed describing the mini or ``(None, None)`` if unknown."""
+            return None, None
         if lang not in self.languages:
             return None, None
 
