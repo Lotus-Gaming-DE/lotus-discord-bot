@@ -63,12 +63,39 @@ async def reset(interaction: discord.Interaction, user: discord.Member):
     await interaction.response.send_message(f"🔄 {user.mention} wurde auf 0 Punkte zurückgesetzt.")
 
 
-@champion_group.command(name="info", description="Zeigt Deine Punktzahl")
-async def info(interaction: discord.Interaction):
+@champion_group.command(name="score", description="Zeigt die Punktzahl eines Nutzers")
+@app_commands.describe(user="Der Nutzer, dessen Punkte angezeigt werden")
+async def score(interaction: discord.Interaction, user: discord.Member | None = None):
+    cog: ChampionCog = interaction.client.get_cog("ChampionCog")
+    target = user or interaction.user
+    total = await cog.data.get_total(str(target.id))
+    if user is None or target.id == interaction.user.id:
+        await interaction.response.send_message(f"🏅 Du hast aktuell {total} Punkte.")
+    else:
+        await interaction.response.send_message(f"🏅 {target.display_name} hat aktuell {total} Punkte.")
+
+
+@champion_group.command(name="myhistory", description="Zeigt Deinen eigenen Punkteverlauf")
+async def myhistory(interaction: discord.Interaction):
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     user_id_str = str(interaction.user.id)
-    total = await cog.data.get_total(user_id_str)
-    await interaction.response.send_message(f"🏅 Du hast aktuell {total} Punkte.")
+    history_list = await cog.data.get_history(user_id_str, limit=10)
+
+    if not history_list:
+        await interaction.response.send_message("📭 Du hast noch keine Historie.")
+        return
+
+    lines = []
+    for entry in history_list:
+        date_str = entry["date"][:10]
+        delta = entry["delta"]
+        sign = "+" if delta > 0 else ""
+        lines.append(f"📅 {date_str}: {sign}{delta} – {entry['reason']}")
+
+    text = "\n".join(lines)
+    await interaction.response.send_message(f"📜 Dein Punkteverlauf:\n{text}")
+
+
 
 
 @champion_group.command(name="history", description="Zeigt die Punkte-Historie eines Spielers")
@@ -148,3 +175,36 @@ async def leaderboard(interaction: discord.Interaction):
         output.append("\n".join(lines))
 
     await interaction.followup.send("\n".join(output))
+
+
+@champion_group.command(name="roles", description="Listet alle Champion-Rollen und ihre Schwellen")
+async def roles(interaction: discord.Interaction):
+    cog: ChampionCog = interaction.client.get_cog("ChampionCog")
+    lines = []
+    for name, threshold in cog.roles:
+        lines.append(f"{name}: ab {threshold} Punkte")
+    lines.append("Champion: unter {0} Punkte".format(cog.roles[-1][1] if cog.roles else 0))
+    await interaction.response.send_message("\n".join(lines))
+
+
+@champion_group.command(name="rank", description="Zeigt den Rang eines Nutzers im Leaderboard")
+@app_commands.describe(user="Der Nutzer, dessen Rang angezeigt wird")
+async def rank(interaction: discord.Interaction, user: discord.Member | None = None):
+    cog: ChampionCog = interaction.client.get_cog("ChampionCog")
+    target = user or interaction.user
+    result = await cog.data.get_rank(str(target.id))
+
+    if result is None:
+        if target.id == interaction.user.id:
+            await interaction.response.send_message("🤷 Du hast noch keine Punkte.")
+        else:
+            await interaction.response.send_message(f"🤷 {target.display_name} hat noch keine Punkte.")
+        return
+
+    rank_num, total = result
+    if target.id == interaction.user.id and user is None:
+        await interaction.response.send_message(
+            f"🏆 Du bist Rang {rank_num} mit {total} Punkten.")
+    else:
+        await interaction.response.send_message(
+            f"🏆 {target.display_name} ist Rang {rank_num} mit {total} Punkten.")

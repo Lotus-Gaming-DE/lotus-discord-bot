@@ -126,6 +126,27 @@ class ChampionData:
 
         return [(r[0], r[1]) for r in rows]
 
+    async def get_rank(self, user_id: str) -> Optional[tuple[int, int]]:
+        await self.init_db()
+        async with aiosqlite.connect(self.db_path) as db:
+            cur = await db.execute(
+                "SELECT total FROM points WHERE user_id = ?",
+                (user_id,),
+            )
+            row = await cur.fetchone()
+            if not row:
+                return None
+            total = row[0]
+
+            cur = await db.execute(
+                "SELECT COUNT(*) FROM points WHERE total > ?",
+                (total,),
+            )
+            count_row = await cur.fetchone()
+            rank = count_row[0] + 1
+
+        return rank, total
+
 
 class ChampionCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
