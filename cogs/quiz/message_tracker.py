@@ -9,12 +9,19 @@ logger = get_logger(__name__)
 
 
 class MessageTracker:
-    def __init__(self, bot):
+    def __init__(self, bot, on_threshold):
         self.bot = bot
+        self.on_threshold = on_threshold
         self.message_counter = {}
         self.channel_initialized = {}
+    def __init__(self, bot) -> None:
+        """Track message activity in quiz channels."""
+        self.bot = bot
+        self.message_counter: dict[int, int] = {}
+        self.channel_initialized: dict[int, bool] = {}
 
-    async def initialize(self):
+    async def initialize(self) -> None:
+        """Warm up counters based on recent channel history."""
         logger.info("[Tracker] Initialisierung gestartet.")
         await self.bot.wait_until_ready()
 
@@ -51,6 +58,7 @@ class MessageTracker:
                     f"[Tracker] Fehler bei Initialisierung von '{area}' (Channel-ID {channel_id}): {e}", exc_info=True)
 
     def register_message(self, message: discord.Message) -> str | None:
+        """Count a message and trigger a question if threshold is reached."""
         if message.author.bot:
             return None
 
@@ -74,7 +82,7 @@ class MessageTracker:
                     f"[Tracker] Aktivität erreicht in '{area}' ({after}/{threshold}) – Frage wird gestellt."
                 )
                 create_logged_task(
-                    self.bot.quiz_cog.manager.ask_question(
+                    self.on_threshold(
                         area, self.bot.quiz_cog.awaiting_activity[cid][1]
                     ),
                     logger
@@ -83,19 +91,24 @@ class MessageTracker:
         return area
 
     def _find_area_for_channel(self, channel_id: int) -> str | None:
+        """Return the quiz area configured for a Discord channel."""
         for area, cfg in self.bot.quiz_data.items():
             if cfg.channel_id == channel_id:
                 return area
         return None
 
-    def get(self, channel_id):
+    def get(self, channel_id: int) -> int:
+        """Return the current counter value for a channel."""
         return self.message_counter.get(channel_id, 0)
 
-    def is_initialized(self, channel_id):
+    def is_initialized(self, channel_id: int) -> bool:
+        """Check whether a channel has been initialized."""
         return self.channel_initialized.get(channel_id, False)
 
-    def set_initialized(self, channel_id):
+    def set_initialized(self, channel_id: int) -> None:
+        """Mark a channel as initialized."""
         self.channel_initialized[channel_id] = True
 
-    def reset(self, channel_id):
+    def reset(self, channel_id: int) -> None:
+        """Reset the counter for a channel."""
         self.message_counter[channel_id] = 0

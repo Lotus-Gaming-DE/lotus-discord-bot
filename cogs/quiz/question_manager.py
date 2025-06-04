@@ -7,15 +7,18 @@ from log_setup import get_logger
 
 from .views import AnswerButtonView
 
-logger = get_logger(__name__)
 
 
 class QuestionManager:
-    def __init__(self, cog):
+    def __init__(self, cog) -> None:
+        """Manage sending and tracking of quiz questions."""
         self.cog = cog
         self.bot = cog.bot
 
     async def prepare_question(self, area: str, end_time: datetime.datetime):
+        logger = get_logger(__name__, area=area)
+    async def prepare_question(self, area: str, end_time: datetime.datetime) -> None:
+        """Check conditions and schedule a question for ``area``."""
         cfg = self.bot.quiz_data[area]
 
         if not cfg.active:
@@ -53,6 +56,9 @@ class QuestionManager:
         await self.ask_question(area, end_time)
 
     async def ask_question(self, area: str, end_time: datetime.datetime):
+        logger = get_logger(__name__, area=area)
+    async def ask_question(self, area: str, end_time: datetime.datetime) -> None:
+        """Post a question immediately and store its state."""
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg.channel_id)
         qg = cfg.question_generator

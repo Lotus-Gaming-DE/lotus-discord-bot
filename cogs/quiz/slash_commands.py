@@ -27,6 +27,7 @@ AREA_CONFIG_PATH = "data/pers/quiz/areas.json"
 
 
 def get_area_by_channel(bot: commands.Bot, channel_id: int) -> Optional[str]:
+    """Return the quiz area configured for the given channel."""
     for area, cfg in bot.quiz_data.items():
         if cfg.channel_id == channel_id:
             return area
@@ -34,6 +35,7 @@ def get_area_by_channel(bot: commands.Bot, channel_id: int) -> Optional[str]:
 
 
 def save_area_config(bot: commands.Bot):
+    """Persist ``bot.quiz_data`` to ``AREA_CONFIG_PATH``."""
     out = {}
     for area, cfg in bot.quiz_data.items():
         out[area] = {
