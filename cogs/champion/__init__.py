@@ -8,6 +8,7 @@ logger = get_logger(__name__)
 
 
 async def setup(bot: discord.ext.commands.Bot):
+    """Register cog and slash command group for the champion system."""
     try:
         from .slash_commands import champion_group
         # 1) Haupt-Cog: Champion-Daten und Rolle-Logik
