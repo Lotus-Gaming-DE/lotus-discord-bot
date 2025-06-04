@@ -4,11 +4,12 @@ from log_setup import get_logger
 import logging
 import hashlib
 from ..utils import create_permutations_list
+from .base import DynamicQuestionProvider
 
 logger = get_logger(__name__)
 
 
-class WCRQuestionProvider:
+class WCRQuestionProvider(DynamicQuestionProvider):
     def __init__(self, bot, language="de"):
         units_data = bot.data["wcr"].get("units", [])
         # ``units.json`` may wrap the list of units in a top level key

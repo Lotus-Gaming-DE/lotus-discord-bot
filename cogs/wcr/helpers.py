@@ -6,28 +6,37 @@ from log_setup import get_logger
 logger = get_logger(__name__)
 
 
-def get_text_data(unit_id, lang, languages):
+def get_text_data(unit_id: int, lang: str, languages: dict) -> tuple[str, str, list]:
+    """Return name, description and talents for a unit in ``lang``."""
     texts = languages.get(lang, languages.get("de", {}))
     unit_text = next(
-        (unit for unit in texts.get("units", []) if unit["id"] == unit_id), {})
-    return unit_text.get("name", "Unbekannt"), unit_text.get("description", "Beschreibung fehlt"), unit_text.get("talents", [])
+        (unit for unit in texts.get("units", []) if unit["id"] == unit_id), {}
+    )
+    return (
+        unit_text.get("name", "Unbekannt"),
+        unit_text.get("description", "Beschreibung fehlt"),
+        unit_text.get("talents", []),
+    )
 
 
-def get_pose_url(unit_id, pictures):
+def get_pose_url(unit_id: int, pictures: dict) -> str:
+    """Return the pose image URL for a unit."""
     unit_pictures = pictures.get("units", [])
     unit_picture = next(
         (pic for pic in unit_pictures if pic["id"] == unit_id), {})
     return unit_picture.get("pose", "")
 
 
-def get_faction_data(faction_id, pictures):
+def get_faction_data(faction_id: int, pictures: dict) -> dict:
+    """Return faction meta information for ``faction_id``."""
     factions = pictures.get("categories", {}).get("factions", [])
     faction_data = next(
         (faction for faction in factions if faction["id"] == faction_id), {})
     return faction_data
 
 
-def get_category_name(category, category_id, lang, languages):
+def get_category_name(category: str, category_id: int, lang: str, languages: dict) -> str:
+    """Return the localized name of a category item."""
     categories = languages.get(
         lang, {}).get("categories", {}).get(category, [])
     category_item = next(
@@ -35,16 +44,19 @@ def get_category_name(category, category_id, lang, languages):
     return category_item.get("name", "Unbekannt")
 
 
-def get_faction_icon(faction_id, pictures):
+def get_faction_icon(faction_id: int, pictures: dict) -> str:
+    """Return the emoji/icon name for a faction."""
     faction_data = get_faction_data(faction_id, pictures)
     return faction_data.get("icon", "")
 
 
-def normalize_name(name):
+def normalize_name(name: str) -> list[str]:
+    """Normalize a name for comparison and return a list of tokens."""
     return ''.join(c for c in name if c.isalnum() or c.isspace()).lower().split()
 
 
-def find_category_id(category_name, category, lang, languages):
+def find_category_id(category_name: str, category: str, lang: str, languages: dict) -> int | None:
+    """Return the ID of ``category_name`` searching all languages."""
     # Zuerst in der aktuellen Sprache suchen
     category_list = languages[lang]['categories'][category]
     matching_item = next(

@@ -9,13 +9,13 @@ from .question_generator import QuestionGenerator
 from .question_manager import QuestionManager
 from .question_state import QuestionStateManager
 from .question_closer import QuestionCloser
-from .message_tracker import MessageTracker
 from .utils import get_available_areas
 
 logger = get_logger(__name__)
 
 
 async def setup(bot: commands.Bot):
+    """Set up the quiz cog and slash commands."""
     logger.info("[QuizInit] Initialisierung startet...")
 
     from bot import QUESTION_STATE_PATH
@@ -24,7 +24,6 @@ async def setup(bot: commands.Bot):
 
     areas = get_available_areas()
     state_manager = QuestionStateManager(QUESTION_STATE_PATH)
-    tracker = MessageTracker(bot)
     dynamic_providers = {}
 
     for area in areas:

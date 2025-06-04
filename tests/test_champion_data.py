@@ -21,6 +21,7 @@ async def test_add_and_get_total(tmp_path):
     assert final_total == 7
 
     assert db_path.exists()
+    await data.close()
     db_path.unlink()
     assert not db_path.exists()
 
@@ -37,6 +38,7 @@ async def test_get_history(tmp_path):
     assert [entry["delta"] for entry in history] == [3, 2, 1]
     assert [entry["reason"] for entry in history] == ["third", "second", "first"]
 
+    await data.close()
     db_path.unlink()
     assert not db_path.exists()
 
@@ -55,5 +57,6 @@ async def test_leaderboard_and_rank(tmp_path):
     rank = await data.get_rank("C")
     assert rank == (2, 7)
 
+    await data.close()
     db_path.unlink()
     assert not db_path.exists()
