@@ -155,15 +155,15 @@ async def leaderboard(interaction: discord.Interaction):
         await interaction.followup.send("🤷 Keine Einträge im Leaderboard.")
         return
 
-    # Emojis laden (wie bisher – Dict mit "syntax")
+    # Emojis laden. ``emoji_data`` ist ein Dict {name: syntax}
     emoji_data = interaction.client.data.get("emojis", {})
     icon_map = {
-        "Ultimate Champion": emoji_data.get("challenger_5", {}).get("syntax", ""),
-        "Epic Champion": emoji_data.get("challenger_4", {}).get("syntax", ""),
-        "Renowned Champion": emoji_data.get("challenger_3", {}).get("syntax", ""),
-        "Seasoned Champion": emoji_data.get("challenger_2", {}).get("syntax", ""),
-        "Emerging Champion": emoji_data.get("challenger_1", {}).get("syntax", ""),
-        "Champion": emoji_data.get("challenger_0", {}).get("syntax", "")
+        "Ultimate Champion": emoji_data.get("challenger_5", ""),
+        "Epic Champion": emoji_data.get("challenger_4", ""),
+        "Renowned Champion": emoji_data.get("challenger_3", ""),
+        "Seasoned Champion": emoji_data.get("challenger_2", ""),
+        "Emerging Champion": emoji_data.get("challenger_1", ""),
+        "Champion": emoji_data.get("challenger_0", "")
     }
 
     grouped: dict[str, list[tuple[int, str, int]]] = {}
@@ -243,3 +243,31 @@ async def rank(interaction: discord.Interaction, user: discord.Member | None = N
     else:
         await interaction.response.send_message(
             f"🏆 {target.display_name} ist Rang {rank_num} mit {total} Punkten.")
+
+
+@champion_group.command(name="clean", description="Entfernt Einträge ehemaliger Mitglieder (nur Mods)")
+@moderator_only()
+async def clean(interaction: discord.Interaction):
+    """Remove users from the database who left the server."""
+    logger.info(f"/champion clean requested by {interaction.user}")
+    await interaction.response.defer(thinking=True)
+
+    cog: ChampionCog = interaction.client.get_cog("ChampionCog")
+    all_ids = await cog.data.get_all_user_ids()
+
+    removed = 0
+    for user_id_str in all_ids:
+        member = interaction.guild.get_member(int(user_id_str))
+        if member is None:
+            try:
+                await interaction.guild.fetch_member(int(user_id_str))
+            except discord.NotFound:
+                await cog.data.delete_user(user_id_str)
+                removed += 1
+            except discord.HTTPException as e:
+                logger.warning(
+                    f"[ChampionCog] Fehler beim Prüfen von Member {user_id_str}: {e}",
+                    exc_info=True,
+                )
+
+    await interaction.followup.send(f"🧹 Entfernte {removed} Einträge aus der Datenbank.")

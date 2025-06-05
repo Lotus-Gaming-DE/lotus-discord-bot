@@ -60,3 +60,23 @@ async def test_leaderboard_and_rank(tmp_path):
     await data.close()
     db_path.unlink()
     assert not db_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_delete_user(tmp_path):
+    db_path = tmp_path / "cleanup" / "points.db"
+    data = ChampionData(str(db_path))
+
+    await data.add_delta("user1", 5, "test")
+    await data.add_delta("user2", 3, "test")
+
+    await data.delete_user("user1")
+
+    leaderboard = await data.get_leaderboard(limit=10)
+    ids = [uid for uid, _ in leaderboard]
+    assert "user1" not in ids
+    assert await data.get_total("user1") == 0
+
+    await data.close()
+    db_path.unlink()
+    assert not db_path.exists()

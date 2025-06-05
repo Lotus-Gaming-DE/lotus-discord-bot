@@ -161,3 +161,20 @@ class ChampionData:
         rank = count_row[0] + 1
 
         return rank, total
+
+    async def delete_user(self, user_id: str) -> None:
+        """Remove all data for ``user_id`` from the database."""
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute("DELETE FROM points WHERE user_id = ?", (user_id,))
+        await db.execute("DELETE FROM history WHERE user_id = ?", (user_id,))
+        await db.commit()
+        logger.info(f"[ChampionData] Eintrag {user_id} entfernt.")
+
+    async def get_all_user_ids(self) -> list[str]:
+        """Return a list of all user IDs stored in the points table."""
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute("SELECT user_id FROM points")
+        rows = await cur.fetchall()
+        return [r[0] for r in rows]
