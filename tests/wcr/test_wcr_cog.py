@@ -1,4 +1,5 @@
 import json
+import logging
 import pytest
 import discord
 
@@ -108,6 +109,15 @@ async def test_cmd_name_creates_embed():
     assert embed.fields[0].value == "6"
 
 
+def test_init_without_en_language(caplog):
+    bot = DummyBot()
+    del bot.data["wcr"]["locals"]["en"]
+
+    with caplog.at_level(logging.WARNING):
+        cog = WCRCog(bot)
+
+    assert cog.speed_choices
+    assert any("language not found" in r.message for r in caplog.records)
 @pytest.mark.asyncio
 async def test_cost_autocomplete_returns_all():
     bot = DummyBot()
