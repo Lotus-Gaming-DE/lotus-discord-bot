@@ -3,7 +3,6 @@ import sys
 import json
 import datetime
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from bot import load_quiz_config
 from cogs.quiz.question_state import QuestionStateManager
