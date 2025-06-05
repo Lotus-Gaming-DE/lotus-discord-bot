@@ -227,6 +227,16 @@ class QuizDuelGame:
         )
 
         if self.mode == "dynamic":
+            provider = qg.dynamic_providers.get(self.area)
+            questions = provider.generate_all_types() if provider else []
+            total_rounds = len(questions)
+            needed = total_rounds // 2 + 1 if total_rounds else needed
+            round_iter = enumerate(questions, start=1)
+        else:
+            round_iter = ((rnd, None) for rnd in range(1, total_rounds + 1))
+
+        for rnd, preset in round_iter:
+            question = preset if preset is not None else qg.generate(self.area)
             provider = qg.get_dynamic_provider(self.area)
             if not provider:
                 await self.thread.send("Keine Frage generiert. Duell abgebrochen.")
