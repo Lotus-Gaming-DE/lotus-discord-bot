@@ -116,8 +116,6 @@ class MyBot(commands.Bot):
         # Optional: Commands leeren für Guild (verhindert Ghost-Kommandos bei Updates)
         self.tree.clear_commands(guild=self.main_guild)
 
-        # Emoji-Export (wird nach jedem Start durchgeführt)
-        await self._export_emojis()
 
         # Quiz-Fragen in allen Sprachen laden
         quiz_questions = {}
@@ -167,15 +165,22 @@ class MyBot(commands.Bot):
             guild = self.get_guild(self.main_guild_id)
             if guild:
                 self.main_guild = guild
+        # Emojis erst exportieren, wenn die Guild-Daten vorhanden sind
+        await self._export_emojis()
+        # Gespeicherte Emojis in zentrale Daten übernehmen
+        if hasattr(self, "data"):
+            self.data["emojis"] = self._load_emojis_from_file()
         logger.info(
             f"Bot ist bereit! Eingeloggt als {self.user} (ID: {self.user.id})")
 
     async def _export_emojis(self):
-        """Exportiert alle Server-Emojis in eine JSON-Datei."""
+        """Exportiert alle Server-Emojis in eine JSON-Datei und aktualisiert die bot-Daten."""
         emojis = {e.name: str(e) for e in self.emojis}
         with open("data/emojis.json", "w", encoding="utf-8") as f:
             json.dump(emojis, f, ensure_ascii=False, indent=2)
         logger.info(f"{len(emojis)} Emojis exportiert.")
+        if hasattr(self, "data"):
+            self.data["emojis"] = emojis
 
     def _load_emojis_from_file(self):
         """Lädt Emojis aus JSON-Datei."""
