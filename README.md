@@ -91,6 +91,7 @@ Persistente Dateien wie Punktedatenbank oder Fragehistorie werden zur Laufzeit i
 /champion leaderboard  # Rangliste
 /champion roles        # Rollen-Schwellen
 /champion rank         # Rang eines Users
+/champion clean        # Entfernt Daten ehemaliger Mitglieder
 ```
 
 ### Quiz
