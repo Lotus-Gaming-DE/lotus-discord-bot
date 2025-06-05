@@ -1,13 +1,15 @@
-
-    def __init__(self):
-        self.data = {}
-        self.quiz_data = {}
-
-    bot = DummyBot()
+import cogs.quiz.cog as quiz_cog_mod
 import cogs.quiz.scheduler as scheduler_mod
 import cogs.quiz.message_tracker as msg_mod
 import pytest
 
+class DummyBot:
+    def __init__(self):
+        self.data = {}
+        self.quiz_data = {}
+
+
+bot = DummyBot()
 
 class DummyTask:
     def __init__(self):
