@@ -111,17 +111,6 @@ async def test_cmd_name_creates_embed():
 
 @pytest.mark.asyncio
 async def test_select_view_timeout_disables_select():
-def test_init_without_en_language(caplog):
-    bot = DummyBot()
-    del bot.data["wcr"]["locals"]["en"]
-
-    with caplog.at_level(logging.WARNING):
-        cog = WCRCog(bot)
-
-    assert cog.speed_choices
-    assert any("language not found" in r.message for r in caplog.records)
-@pytest.mark.asyncio
-async def test_cost_autocomplete_returns_all():
     bot = DummyBot()
     cog = WCRCog(bot)
     inter = DummyInteraction()
@@ -135,6 +124,25 @@ async def test_cost_autocomplete_returns_all():
     await view.on_timeout()
 
     assert select.disabled is True
+
+
+def test_init_without_en_language(caplog):
+    bot = DummyBot()
+    del bot.data["wcr"]["locals"]["en"]
+
+    with caplog.at_level(logging.WARNING):
+        cog = WCRCog(bot)
+
+    assert cog.speed_choices
+    assert any("language not found" in r.message for r in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_cost_autocomplete_returns_all():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
     choices = await cog.cost_autocomplete(inter, "")
 
     expected = [str(c) for c in sorted({1, 2, 3, 4, 5, 6})]
