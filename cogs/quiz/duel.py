@@ -123,23 +123,63 @@ class DuelInviteView(View):
         )
         champion_cog = self.cog.bot.get_cog("ChampionCog")
         if champion_cog is None:
-            await interaction.followup.send("Champion-System nicht verfügbar.")
+            await interaction.followup.send(
+                "Champion-System nicht verfügbar.", ephemeral=True
+            )
+            if self.message:
+                await self.message.edit(view=None)
+            self.stop()
+            self.accepted = False
             return
 
         current_challenger = await champion_cog.data.get_total(str(self.challenger.id))
         if current_challenger < self.cfg.points:
-            await interaction.followup.send("Der Herausforderer hat nicht genug Punkte.")
+            await interaction.followup.send(
+                "Der Herausforderer hat nicht genug Punkte.", ephemeral=True
+            )
+            if self.message:
+                await self.message.edit(view=None)
+            self.stop()
+            self.accepted = False
             return
 
-        current_opponent = await champion_cog.data.get_total(str(interaction.user.id))
+        current_opponent = await champion_cog.data.get_total(
+            str(interaction.user.id)
+        )
         if current_opponent < self.cfg.points:
-            await interaction.followup.send("Du hast nicht genug Punkte.")
+            await interaction.followup.send("Du hast nicht genug Punkte.", ephemeral=True)
+            self.accepted = False
             return
 
-        await champion_cog.update_user_score(self.challenger.id, -self.cfg.points, "Quiz-Duell Einsatz")
-        await champion_cog.update_user_score(interaction.user.id, -self.cfg.points, "Quiz-Duell Einsatz")
-        thread = await self.message.create_thread(name=f"Duel {self.challenger.display_name} vs {interaction.user.display_name}")
-        await interaction.followup.send(f"{interaction.user.mention} hat das Duell angenommen! Schau hier: {thread.mention}")
+        await champion_cog.update_user_score(
+            self.challenger.id, -self.cfg.points, "Quiz-Duell Einsatz"
+        )
+        await champion_cog.update_user_score(
+            interaction.user.id, -self.cfg.points, "Quiz-Duell Einsatz"
+        )
+        try:
+            thread = await self.message.create_thread(
+                name=f"Duel {self.challenger.display_name} vs {interaction.user.display_name}"
+            )
+        except Exception as e:
+            logger.error(f"Failed to create duel thread: {e}", exc_info=True)
+            await champion_cog.update_user_score(
+                self.challenger.id, self.cfg.points, "Quiz-Duell Rückgabe"
+            )
+            await champion_cog.update_user_score(
+                interaction.user.id, self.cfg.points, "Quiz-Duell Rückgabe"
+            )
+            await interaction.followup.send(
+                "Duell konnte nicht gestartet werden.", ephemeral=True
+            )
+            if self.message:
+                await self.message.edit(view=None)
+            self.stop()
+            self.accepted = False
+            return
+        await interaction.followup.send(
+            f"{interaction.user.mention} hat das Duell angenommen! Schau hier: {thread.mention}"
+        )
         game = QuizDuelGame(
             self.cog,
             thread,
@@ -224,6 +264,12 @@ class QuizDuelGame:
     async def _finish(self) -> None:
         """Award points to the winner and archive the thread."""
         champion_cog = self.cog.bot.get_cog("ChampionCog")
+        if champion_cog is None:
+            await self.thread.send(
+                "Champion-System nicht verfügbar. Punkte werden nicht verteilt."
+            )
+            await self.thread.edit(archived=True)
+            return
 
         challenger_score = self.scores[self.challenger.id]
         opponent_score = self.scores[self.opponent.id]
