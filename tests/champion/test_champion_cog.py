@@ -14,6 +14,34 @@ class DummyBot:
         self.guilds = []
 
 
+class DummyRole:
+    def __init__(self, name):
+        self.name = name
+
+
+class DummyMember:
+    def __init__(self, roles):
+        self.roles = roles
+        self.display_name = "Member"
+        self.removed = []
+        self.added = []
+
+    async def remove_roles(self, *roles):
+        self.removed.extend(roles)
+
+    async def add_roles(self, role):
+        self.added.append(role)
+
+
+class DummyGuild:
+    def __init__(self, member, roles):
+        self._member = member
+        self.roles = roles
+
+    async def fetch_member(self, uid):
+        return self._member
+
+
 @pytest.mark.asyncio
 async def test_update_user_score_saves_and_calls(monkeypatch, patch_logged_task, tmp_path):
     bot = DummyBot()
@@ -55,3 +83,28 @@ async def test_get_current_role():
     assert cog.get_current_role(10) is None
     cog.cog_unload()
     await asyncio.sleep(0)
+
+
+@pytest.mark.asyncio
+async def test_apply_role_removes_when_below_threshold(monkeypatch):
+    bot = DummyBot()
+    bot.data["champion"]["roles"] = [{"name": "Silver", "threshold": 5}]
+
+    silver = DummyRole("Silver")
+    member = DummyMember([silver])
+    guild = DummyGuild(member, [silver])
+    bot.main_guild = guild
+
+    monkeypatch.setattr(champion_cog_mod.discord, "Guild", DummyGuild)
+    monkeypatch.setattr(
+        champion_cog_mod.discord.utils,
+        "get",
+        lambda seq, *, name=None: next((r for r in seq if r.name == name), None),
+    )
+
+    cog = ChampionCog(bot)
+
+    await cog._apply_champion_role("123", 0)
+
+    assert member.removed == [silver]
+    assert member.added == []
