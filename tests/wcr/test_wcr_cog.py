@@ -106,3 +106,20 @@ async def test_cmd_name_creates_embed():
     assert embed.thumbnail.url.endswith("Statue_Abomination_Pose.webp")
     assert embed.fields[0].name.strip() == "Cost"
     assert embed.fields[0].value == "6"
+
+
+@pytest.mark.asyncio
+async def test_select_view_timeout_disables_select():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    await cog.cmd_filter(inter, cost="6", lang="de")
+
+    view = inter.response.messages[0]["view"]
+    select = view.children[0]
+    assert not select.disabled
+
+    await view.on_timeout()
+
+    assert select.disabled is True
