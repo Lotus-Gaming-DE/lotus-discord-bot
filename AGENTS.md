@@ -5,3 +5,5 @@
   `self.tree.clear_commands(guild=None)` if needed.
 - The bot is hosted on **Railway**. Environment variables like `bot_key` and `server_id` are provided there.
 - Unit tests run locally without these variables. Use `monkeypatch.setenv` to simulate them, as shown in `tests/conftest.py`.
+- A fixture `patch_logged_task` is provided for tests to replace `create_logged_task` with a dummy. Use it instead of duplicating patch code.
+- The CI workflow runs `flake8` for linting. Ensure your code passes the linter before committing.

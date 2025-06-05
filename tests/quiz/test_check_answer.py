@@ -1,5 +1,3 @@
-import os
-import sys
 
 
 from cogs.quiz.utils import check_answer
