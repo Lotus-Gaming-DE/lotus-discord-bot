@@ -199,4 +199,7 @@ class QuizDuelGame:
         else:
             await champion_cog.update_user_score(self.challenger.id, self.points, "Quiz-Duell Rückgabe")
             await self.thread.send("Unentschieden. Einsatz zurück an Herausforderer.")
+        await self.thread.send(
+            f"Endstand: {self.challenger.display_name} {self.scores[self.challenger.id]} - {self.scores[self.opponent.id]} {self.opponent.display_name}"
+        )
         await self.thread.edit(archived=True)
