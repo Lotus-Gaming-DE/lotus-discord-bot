@@ -3,7 +3,6 @@
 import discord
 from discord.ext import commands
 import os
-import itertools
 
 from log_setup import get_logger
 from . import helpers
@@ -26,6 +25,14 @@ class WCRCog(commands.Cog):
         self.languages = bot.data["wcr"]["locals"]
         self.pictures = bot.data["wcr"]["pictures"]
 
+        # Mapping for resolving unit names quickly: {lang: {normalized_name: id}}
+        self.unit_name_map: dict[str, dict[str, int]] = {}
+        for lang, texts in self.languages.items():
+            name_map: dict[str, int] = {}
+            for unit in texts.get("units", []):
+                normalized = " ".join(helpers.normalize_name(unit.get("name", "")))
+                name_map[normalized] = unit.get("id")
+            self.unit_name_map[lang] = name_map
         helpers.build_category_lookup(self.languages, self.pictures)
 
         # Emojis liegen in bot.data["emojis"]
@@ -283,52 +290,20 @@ class WCRCog(commands.Cog):
             if not matching_unit_text:
                 return None
         except ValueError:
-            input_words = helpers.normalize_name(name_or_id)
-            permutations = [
-                " ".join(p)
-                for i in range(1, len(input_words) + 1)
-                for p in itertools.permutations(input_words, i)
-            ]
-
-            unit_found = False
-            matching_unit_text = None
-
-            for permuted_name in permutations:
-                for unit in texts["units"]:
-                    unit_name_normalized = " ".join(
-                        helpers.normalize_name(unit["name"])
-                    )
-                    if permuted_name in unit_name_normalized:
-                        matching_unit_text = unit
-                        unit_found = True
-                        break
-                if unit_found:
-                    break
-
-            if not unit_found:
-                for other_lang, other_texts in self.languages.items():
+            normalized = " ".join(helpers.normalize_name(name_or_id))
+            unit_id = self.unit_name_map.get(lang, {}).get(normalized)
+            if unit_id is None:
+                for other_lang, mapping in self.unit_name_map.items():
                     if other_lang == lang:
                         continue
-                    for permuted_name in permutations:
-                        for unit in other_texts["units"]:
-                            unit_name_normalized = " ".join(
-                                helpers.normalize_name(unit["name"])
-                            )
-                            if permuted_name in unit_name_normalized:
-                                matching_unit_text = unit
-                                lang = other_lang
-                                texts = other_texts
-                                unit_found = True
-                                break
-                        if unit_found:
-                            break
-                    if unit_found:
+                    if normalized in mapping:
+                        unit_id = mapping[normalized]
+                        lang = other_lang
+                        texts = self.languages[other_lang]
                         break
-
-            if not unit_found:
+            if unit_id is None:
                 return None
 
-            unit_id = matching_unit_text["id"]
             unit_data = next(
                 (unit for unit in self.units if unit["id"] == unit_id), None)
             if not unit_data:
