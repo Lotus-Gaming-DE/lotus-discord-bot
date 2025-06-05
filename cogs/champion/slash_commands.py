@@ -277,3 +277,21 @@ async def clean(interaction: discord.Interaction):
                 )
 
     await interaction.followup.send(f"🧹 Entfernte {removed} Einträge aus der Datenbank.")
+
+@app_commands.command(name="syncroles", description="Synchronisiert Champion-Rollen für alle gespeicherten Nutzer (nur Mods)")
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+async def syncroles(interaction: discord.Interaction):
+    """Sync champion roles for all users stored in the database."""
+    logger.info(f"/syncroles requested by {interaction.user}")
+    await interaction.response.defer(thinking=True)
+
+    cog: ChampionCog = interaction.client.get_cog("ChampionCog")
+    user_ids = await cog.data.get_all_user_ids()
+    processed = 0
+    for user_id_str in user_ids:
+        total = await cog.data.get_total(user_id_str)
+        await cog._apply_champion_role(user_id_str, total)
+        processed += 1
+
+    await interaction.followup.send(f"🔄 Synchronisierte Rollen für {processed} Nutzer.")

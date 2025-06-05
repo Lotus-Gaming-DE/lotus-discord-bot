@@ -10,13 +10,17 @@ logger = get_logger(__name__)
 async def setup(bot: discord.ext.commands.Bot):
     """Register cog and slash command group for the champion system."""
     try:
-        from .slash_commands import champion_group
+        from .slash_commands import champion_group, syncroles
         # 1) Haupt-Cog: Champion-Daten und Rolle-Logik
         await bot.add_cog(ChampionCog(bot))
 
         # 2) Slash-Gruppe /champion in den Command-Tree einfügen
         bot.tree.add_command(
             champion_group,
+            guild=bot.main_guild
+        )
+        bot.tree.add_command(
+            syncroles,
             guild=bot.main_guild
         )
 

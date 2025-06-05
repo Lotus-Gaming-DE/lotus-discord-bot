@@ -4,7 +4,7 @@ import pytest
 
 from cogs import quiz, champion, wcr
 from cogs.quiz.slash_commands import quiz_group
-from cogs.champion.slash_commands import champion_group
+from cogs.champion.slash_commands import champion_group, syncroles
 from cogs.wcr.slash_commands import wcr_group
 import cogs.quiz.cog as quiz_cog_mod
 import cogs.quiz.message_tracker as msg_mod
@@ -42,7 +42,10 @@ async def test_champion_setup_uses_main_guild(monkeypatch, bot):
 
     await champion.setup(bot)
 
-    assert called == [(champion_group, bot.main_guild)]
+    assert called == [
+        (champion_group, bot.main_guild),
+        (syncroles, bot.main_guild),
+    ]
 
 
 @pytest.mark.asyncio
