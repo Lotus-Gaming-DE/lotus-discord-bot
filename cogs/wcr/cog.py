@@ -317,125 +317,108 @@ class WCRCog(commands.Cog):
             if not unit_data:
                 return None
 
+
         return unit_id, unit_data, lang, texts
 
-    def build_mini_embed(self, unit_id, unit_data, lang, texts):
-        unit_name, unit_description, talents = helpers.get_text_data(
-            unit_id, lang, self.languages
-        )
+    # Helper methods -----------------------------------------------------
+    def _prepare_stat_rows(self, unit_data, stat_labels, type_name, speed_name):
+        """Return stat rows and set of used stat keys."""
         stats = unit_data.get("stats", {})
 
-        # Stat Labels laden
-        stat_labels = texts.get('stat_labels', {})
+        row1_stats: list[dict] = []
+        row2_stats: list[dict] = []
+        row3_stats: list[dict] = []
 
-        # Fraktionsdaten ermitteln
-        faction_id = unit_data.get("faction_id")
-        faction_data = helpers.get_faction_data(faction_id, self.pictures)
-        embed_color_hex = faction_data.get("color", "#3498db")
-        embed_color = int(embed_color_hex.strip("#"), 16)
-        faction_emoji_name = faction_data.get("icon", "")
-        faction_emoji = self.emojis.get(
-            faction_emoji_name, {}).get("syntax", "")
-
-        # Typ-Namen erhalten
-        type_id = unit_data.get("type_id")
-        type_name = helpers.get_category_name(
-            "types", type_id, lang, self.languages)
-
-        # Geschwindigkeit ermitteln
-        speed_id = unit_data.get("speed_id")
-        speed_name = helpers.get_category_name(
-            "speeds", speed_id, lang, self.languages)
-
-        # Stats vorbereiten
-        row1_stats = []
-        row2_stats = []
-        row3_stats = []
-        extra_stats = []
-
-        # Erste Reihe: Kosten und Typ
         cost = unit_data.get("cost", "N/A")
         row1_stats.append({
-            "name": f"{self.emojis.get('wcr_cost', {}).get('syntax', '')} {stat_labels.get('cost', 'Kosten')}",
+            "name": f"{self.emojis.get('wcr_cost', {}).get('syntax', '')} "
+                    f"{stat_labels.get('cost', 'Kosten')}",
             "value": str(cost),
-            "inline": True
+            "inline": True,
         })
-
         row1_stats.append({
-            "name": f"{self.emojis.get('wcr_type', {}).get('syntax', '')} {stat_labels.get('type_id', 'Typ')}",
+            "name": f"{self.emojis.get('wcr_type', {}).get('syntax', '')} "
+                    f"{stat_labels.get('type_id', 'Typ')}",
             "value": type_name,
-            "inline": True
+            "inline": True,
         })
 
-        # Zweite Reihe: Gesundheit und Geschwindigkeit
         health = stats.get("health")
         if health is not None:
             row2_stats.append({
-                "name": f"{self.emojis.get('wcr_health', {}).get('syntax', '')} {stat_labels.get('health', 'Gesundheit')}",
+                "name": f"{self.emojis.get('wcr_health', {}).get('syntax', '')} "
+                        f"{stat_labels.get('health', 'Gesundheit')}",
                 "value": str(health),
-                "inline": True
+                "inline": True,
             })
-
         if speed_name:
             row2_stats.append({
-                "name": f"{self.emojis.get('wcr_speed', {}).get('syntax', '')} {stat_labels.get('speed_id', 'Geschwindigkeit')}",
+                "name": f"{self.emojis.get('wcr_speed', {}).get('syntax', '')} "
+                        f"{stat_labels.get('speed_id', 'Geschwindigkeit')}",
                 "value": speed_name,
-                "inline": True
+                "inline": True,
             })
 
-        # Dritte Reihe: Schaden, Angriffsgeschwindigkeit, DPS
         is_elemental = 8 in unit_data.get("traits_ids", [])
-
         if "damage" in stats or "area_damage" in stats:
             if "damage" in stats:
                 damage_value = stats["damage"]
                 if is_elemental:
-                    damage_label = stat_labels.get(
-                        'damage', 'Elementarschaden')
+                    damage_label = stat_labels.get("damage", "Elementarschaden")
                     damage_emoji = self.emojis.get(
-                        'wcr_damage_ele', {}).get('syntax', '')
+                        "wcr_damage_ele", {}
+                    ).get("syntax", "")
                 else:
-                    damage_label = stat_labels.get('damage', 'Schaden')
+                    damage_label = stat_labels.get("damage", "Schaden")
                     damage_emoji = self.emojis.get(
-                        'wcr_damage', {}).get('syntax', '')
-            elif "area_damage" in stats:
+                        "wcr_damage", {}
+                    ).get("syntax", "")
+            else:
                 damage_value = stats["area_damage"]
                 if is_elemental:
                     damage_label = stat_labels.get(
-                        'area_damage', 'Elementarflächenschaden')
+                        "area_damage", "Elementarflächenschaden"
+                    )
                     damage_emoji = self.emojis.get(
-                        'wcr_damage_ele', {}).get('syntax', '')
+                        "wcr_damage_ele", {}
+                    ).get("syntax", "")
                 else:
                     damage_label = stat_labels.get(
-                        'area_damage', 'Flächenschaden')
+                        "area_damage", "Flächenschaden"
+                    )
                     damage_emoji = self.emojis.get(
-                        'wcr_damage', {}).get('syntax', '')
+                        "wcr_damage", {}
+                    ).get("syntax", "")
             row3_stats.append({
                 "name": f"{damage_emoji} {damage_label}",
                 "value": str(damage_value),
-                "inline": True
+                "inline": True,
             })
 
         attack_speed = stats.get("attack_speed")
         if attack_speed is not None:
             row3_stats.append({
-                "name": f"{self.emojis.get('wcr_attack_speed', {}).get('syntax', '')} {stat_labels.get('attack_speed', 'Angriffsgeschwindigkeit')}",
+                "name": f"{self.emojis.get('wcr_attack_speed', {}).get('syntax', '')} "
+                        f"{stat_labels.get('attack_speed', 'Angriffsgeschwindigkeit')}",
                 "value": str(attack_speed),
-                "inline": True
+                "inline": True,
             })
 
         dps = stats.get("dps")
         if dps is not None:
             row3_stats.append({
-                "name": f"{self.emojis.get('wcr_dps', {}).get('syntax', '')} {stat_labels.get('dps', 'DPS')}",
+                "name": f"{self.emojis.get('wcr_dps', {}).get('syntax', '')} "
+                        f"{stat_labels.get('dps', 'DPS')}",
                 "value": str(dps),
-                "inline": True
+                "inline": True,
             })
 
-        # Übrige Stats sammeln
-        used_stats_keys = {'damage', 'area_damage',
-                           'attack_speed', 'dps', 'health'}
+        used_stats_keys = {"damage", "area_damage", "attack_speed", "dps", "health"}
+        return row1_stats, row2_stats, row3_stats, stats, used_stats_keys
 
+    def _prepare_extra_stats(self, stats, stat_labels, used_stats_keys):
+        """Return a list with remaining stats."""
+        extra_stats: list[dict] = []
         for stat_key, emoji_name in [
             ("range", "wcr_range"),
             ("duration", "wcr_duration"),
@@ -453,104 +436,129 @@ class WCRCog(commands.Cog):
             ("bear_dps", "wcr_dps"),
             ("dwarf_health", "wcr_health"),
             ("bear_health", "wcr_health"),
-            ("dwarf_range", "wcr_range")
+            ("dwarf_range", "wcr_range"),
         ]:
             if stat_key in stats and stat_key not in used_stats_keys:
                 label = stat_labels.get(stat_key, stat_key.capitalize())
                 extra_stats.append({
                     "name": f"{self.emojis.get(emoji_name, {}).get('syntax', '')} {label}",
                     "value": str(stats[stat_key]),
-                    "inline": True
+                    "inline": True,
                 })
                 used_stats_keys.add(stat_key)
+        return extra_stats
 
-        # Embed erstellen
-        embed = discord.Embed(
-            title=f"{faction_emoji} {unit_name}",
-            description=unit_description,
-            color=embed_color
+    def _prepare_talent_fields(self, talents):
+        """Return fields for talents."""
+        fields: list[dict] = []
+        if not talents:
+            return fields
+        fields.append({"name": "\u200b", "value": "**Talents**", "inline": False})
+        for talent in talents[:3]:
+            fields.append({
+                "name": talent.get("name", "Unbekanntes Talent"),
+                "value": talent.get("description", "Beschreibung fehlt"),
+                "inline": True,
+            })
+        remainder = len(talents[:3]) % 3
+        if remainder:
+            for _ in range(3 - remainder):
+                fields.append({"name": "\u200b", "value": "\u200b", "inline": True})
+        return fields
+
+    def _prepare_traits_field(self, unit_data, texts, stat_labels):
+        """Return a field for trait display if traits exist."""
+        traits_ids = unit_data.get("traits_ids", [])
+        all_traits = texts.get("categories", {}).get("traits", [])
+        names = [t["name"] for t in all_traits if t["id"] in traits_ids]
+        if not names:
+            return None
+        return {
+            "name": stat_labels.get("traits", "Traits"),
+            "value": ", ".join(names),
+            "inline": False,
+        }
+
+    def build_mini_embed(self, unit_id, unit_data, lang, texts):
+        unit_name, unit_description, talents = helpers.get_text_data(
+            unit_id, lang, self.languages
         )
 
-        # Kleiner Absatz nach der Beschreibung
-        embed.description += "\n\n**Stats**"
+        stat_labels = texts.get("stat_labels", {})
+        faction_data = helpers.get_faction_data(
+            unit_data.get("faction_id"), self.pictures
+        )
+        embed_color = int(faction_data.get("color", "#3498db").strip("#"), 16)
+        faction_emoji = self.emojis.get(
+            faction_data.get("icon", ""), {}
+        ).get("syntax", "")
 
-        # Stats hinzufügen
-        if row1_stats:
-            for stat in row1_stats:
+        type_name = helpers.get_category_name(
+            "types", unit_data.get("type_id"), lang, self.languages
+        )
+        speed_name = helpers.get_category_name(
+            "speeds", unit_data.get("speed_id"), lang, self.languages
+        )
+
+        row1, row2, row3, stats, used_keys = self._prepare_stat_rows(
+            unit_data, stat_labels, type_name, speed_name
+        )
+        extra_stats = self._prepare_extra_stats(stats, stat_labels, used_keys)
+        talent_fields = self._prepare_talent_fields(talents)
+        traits_field = self._prepare_traits_field(unit_data, texts, stat_labels)
+
+        embed = discord.Embed(
+            title=f"{faction_emoji} {unit_name}",
+            description=f"{unit_description}\n\n**Stats**",
+            color=embed_color,
+        )
+
+        def _add_group(fields: list[dict]):
+            for field in fields:
                 embed.add_field(
-                    name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
-            # Auffüllen, falls weniger als 3 Felder
-            while len(row1_stats) < 3:
+                    name=field["name"],
+                    value=field["value"],
+                    inline=field.get("inline", True),
+                )
+            while len(fields) < 3:
                 embed.add_field(name="\u200b", value="\u200b", inline=True)
-                row1_stats.append(None)
+                fields.append(None)
 
-        if row2_stats:
-            for stat in row2_stats:
-                embed.add_field(
-                    name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
-            while len(row2_stats) < 3:
-                embed.add_field(name="\u200b", value="\u200b", inline=True)
-                row2_stats.append(None)
+        for group in (row1, row2, row3):
+            if group:
+                _add_group(group)
 
-        if row3_stats:
-            for stat in row3_stats:
-                embed.add_field(
-                    name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
-            while len(row3_stats) < 3:
-                embed.add_field(name="\u200b", value="\u200b", inline=True)
-                row3_stats.append(None)
+        for i in range(0, len(extra_stats), 3):
+            _add_group(extra_stats[i:i + 3])
 
-        # Übrige Stats hinzufügen, jeweils bis zu drei pro Reihe
-        if extra_stats:
-            for i in range(0, len(extra_stats), 3):
-                group = extra_stats[i:i+3]
-                for stat in group:
-                    embed.add_field(
-                        name=stat["name"], value=stat["value"], inline=stat.get("inline", True))
-                while len(group) < 3:
-                    embed.add_field(name="\u200b", value="\u200b", inline=True)
-                    group.append(None)
+        for field in talent_fields:
+            embed.add_field(
+                name=field["name"],
+                value=field["value"],
+                inline=field.get("inline", True),
+            )
 
-        # Talente hinzufügen
-        if talents:
-            embed.add_field(name="\u200b", value="**Talents**", inline=False)
-            for talent in talents[:3]:
-                talent_name = talent.get("name", "Unbekanntes Talent")
-                talent_description = talent.get(
-                    "description", "Beschreibung fehlt")
-                embed.add_field(name=talent_name,
-                                value=talent_description, inline=True)
-            if len(talents[:3]) % 3 != 0:
-                for _ in range(3 - (len(talents[:3]) % 3)):
-                    embed.add_field(name="\u200b", value="\u200b", inline=True)
+        if traits_field:
+            embed.add_field(
+                name=traits_field["name"],
+                value=traits_field["value"],
+                inline=traits_field.get("inline", True),
+            )
 
-        # Traits hinzufügen
-        traits_ids = unit_data.get("traits_ids", [])
-        traits = []
-        all_traits = texts.get("categories", {}).get("traits", [])
-        for trait_id in traits_ids:
-            trait = next((t for t in all_traits if t["id"] == trait_id), None)
-            if trait:
-                traits.append(trait["name"])
-
-        if traits:
-            embed.add_field(name=stat_labels.get('traits', 'Traits'),
-                            value=', '.join(traits), inline=False)
-
-        # Setze das Thumbnail (Pose)
         pose_url = helpers.get_pose_url(unit_id, self.pictures)
         if pose_url:
             embed.set_thumbnail(url=pose_url)
 
-        # Logo hinzufügen
-        logo_filename = 'LotusGaming.png'
-        logo_path = os.path.join('data', 'media', logo_filename)
+        logo_filename = "LotusGaming.png"
+        logo_path = os.path.join("data", "media", logo_filename)
         if os.path.exists(logo_path):
             embed.set_footer(
-                text='a service brought to you by Lotus Gaming', icon_url=f'attachment://{logo_filename}')
+                text="a service brought to you by Lotus Gaming",
+                icon_url=f"attachment://{logo_filename}",
+            )
             logo_file = discord.File(logo_path, filename=logo_filename)
         else:
-            embed.set_footer(text='a service brought to you by Lotus Gaming')
+            embed.set_footer(text="a service brought to you by Lotus Gaming")
             logo_file = None
 
         return embed, logo_file
