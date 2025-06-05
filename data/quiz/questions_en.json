@@ -1,62 +1,54 @@
 {
-  "wcr": {
-    "Lore": [
-      {
-        "id": 1,
-        "frage": "Who is the main antagonist in Warcraft Rumble?",
-        "antwort": "Morton the Unyielding"
-      }
-    ],
-    "Mechanik": [
-      {
-        "id": 2,
-        "frage": "Which unit is often referred to as a 'Tank'?",
-        "antwort": "Golem"
-      }
-    ],
-    "Franchise": [
-      {
-        "id": 3,
-        "frage": "In which year was Warcraft Rumble released?",
-        "antwort": "2023"
-      }
-    ],
-    "Welt": [
-      {
-        "id": 4,
-        "frage": "In which area do you fight Hogger?",
-        "antwort": "Elwynn Forest"
-      }
-    ]
-  },
-  "d4": {
-    "Lore": [
-      {
-        "id": 1,
-        "frage": "Who is the main antagonist in Diablo IV?",
-        "antwort": "Lilith"
-      }
-    ],
-    "Mechanik": [
-      {
-        "id": 2,
-        "frage": "Which class can fight as a Werewolf?",
-        "antwort": "Druid"
-      }
-    ],
-    "Franchise": [
-      {
-        "id": 3,
-        "frage": "In which year was Diablo IV released?",
-        "antwort": "2023"
-      }
-    ],
-    "Welt": [
-      {
-        "id": 4,
-        "frage": "What is the name of the city that serves as the headquarters?",
-        "antwort": "Kyovashad"
-      }
-    ]
-  }
+  "wcr": [
+    {
+      "id": 1,
+      "frage": "Who is the main antagonist in Warcraft Rumble?",
+      "antwort": "Morton the Unyielding",
+      "category": "Lore"
+    },
+    {
+      "id": 2,
+      "frage": "Which unit is often referred to as a 'Tank'?",
+      "antwort": "Golem",
+      "category": "Mechanik"
+    },
+    {
+      "id": 3,
+      "frage": "In which year was Warcraft Rumble released?",
+      "antwort": "2023",
+      "category": "Franchise"
+    },
+    {
+      "id": 4,
+      "frage": "In which area do you fight Hogger?",
+      "antwort": "Elwynn Forest",
+      "category": "Welt"
+    }
+  ],
+  "d4": [
+    {
+      "id": 1,
+      "frage": "Who is the main antagonist in Diablo IV?",
+      "antwort": "Lilith",
+      "category": "Lore"
+    },
+    {
+      "id": 2,
+      "frage": "Which class can fight as a Werewolf?",
+      "antwort": "Druid",
+      "category": "Mechanik"
+    },
+    {
+      "id": 3,
+      "frage": "In which year was Diablo IV released?",
+      "antwort": "2023",
+      "category": "Franchise"
+    },
+    {
+      "id": 4,
+      "frage": "What is the name of the city that serves as the headquarters?",
+      "antwort": "Kyovashad",
+      "category": "Welt"
+    }
+  ]
 }

@@ -36,15 +36,6 @@ class QuestionGenerator:
                 f"[QuestionGenerator] Dynamische Frage für '{area}': {len(questions)}")
         else:
             questions = self.questions_by_area.get(language, {}).get(area, [])
-            if isinstance(questions, dict):
-                flat = []
-                for category, qs in questions.items():
-                    for q in qs:
-                        if isinstance(q, dict):
-                            q = q.copy()
-                            q.setdefault("category", category)
-                        flat.append(q)
-                questions = flat
             logger.debug(
                 f"[QuestionGenerator] Statische Fragen für '{area}': {len(questions)}")
 
