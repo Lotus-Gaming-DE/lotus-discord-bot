@@ -26,6 +26,8 @@ class WCRCog(commands.Cog):
         self.languages = bot.data["wcr"]["locals"]
         self.pictures = bot.data["wcr"]["pictures"]
 
+        helpers.build_category_lookup(self.languages, self.pictures)
+
         # Emojis liegen in bot.data["emojis"]
         self.emojis = bot.data["emojis"]
 

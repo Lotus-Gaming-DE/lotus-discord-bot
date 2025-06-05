@@ -118,3 +118,63 @@ def test_init_without_en_language(caplog):
 
     assert cog.speed_choices
     assert any("language not found" in r.message for r in caplog.records)
+@pytest.mark.asyncio
+async def test_cost_autocomplete_returns_all():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    choices = await cog.cost_autocomplete(inter, "")
+
+    expected = [str(c) for c in sorted({1, 2, 3, 4, 5, 6})]
+    assert [c.name for c in choices] == expected
+    assert [c.value for c in choices] == expected
+
+
+@pytest.mark.asyncio
+async def test_speed_autocomplete_matches_substring():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    choices = await cog.speed_autocomplete(inter, "fast")
+
+    assert [c.name for c in choices] == ["Med-Fast", "Fast"]
+    assert [c.value for c in choices] == ["2", "4"]
+
+
+@pytest.mark.asyncio
+async def test_faction_autocomplete_case_insensitive():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    choices = await cog.faction_autocomplete(inter, "und")
+
+    assert len(choices) == 1
+    assert choices[0].name == "Undead"
+    assert choices[0].value == "1"
+
+
+@pytest.mark.asyncio
+async def test_type_autocomplete_multiple_results():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    choices = await cog.type_autocomplete(inter, "e")
+
+    assert [c.name for c in choices] == ["Spell", "Leader"]
+    assert [c.value for c in choices] == ["2", "3"]
+
+
+@pytest.mark.asyncio
+async def test_trait_autocomplete_returns_sorted_matches():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    choices = await cog.trait_autocomplete(inter, "ele")
+
+    assert [c.name for c in choices] == ["Melee", "Elemental"]
+    assert [c.value for c in choices] == ["3", "8"]
