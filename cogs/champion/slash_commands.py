@@ -170,8 +170,19 @@ async def leaderboard(interaction: discord.Interaction):
     rank = 1
 
     for user_id_str, total in top:
-        member = interaction.guild.get_member(int(user_id_str)) or \
-            await interaction.guild.fetch_member(int(user_id_str))
+        member = interaction.guild.get_member(int(user_id_str))
+        if member is None:
+            try:
+                member = await interaction.guild.fetch_member(int(user_id_str))
+            except discord.NotFound:
+                member = None
+            except discord.HTTPException as e:
+                logger.warning(
+                    f"[ChampionCog] Fehler beim Laden von Member {user_id_str}: {e}",
+                    exc_info=True,
+                )
+                member = None
+
         name = member.display_name if member else f"Unbekannt ({user_id_str})"
         role = cog.get_current_role(total) or "Champion"
         grouped.setdefault(role, []).append((rank, name, total))
