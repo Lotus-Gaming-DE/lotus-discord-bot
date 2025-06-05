@@ -31,7 +31,12 @@ class MessageTracker:
                         f"[Tracker] Channel {channel_id} ist kein TextChannel.")
                     continue
 
-                messages = [msg async for msg in channel.history(limit=20)]
+                messages = [
+                    msg
+                    async for msg in channel.history(
+                        limit=max(20, cfg.activity_threshold)
+                    )
+                ]
                 quiz_index = next((i for i, msg in enumerate(messages)
                                    if msg.author.id == self.bot.user.id and msg.embeds and
                                    msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")), None)

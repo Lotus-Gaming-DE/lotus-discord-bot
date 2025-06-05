@@ -150,3 +150,45 @@ async def test_initialize_uses_threshold_when_no_quiz(monkeypatch):
 
     assert tracker.get(123) == 3
     assert tracker.is_initialized(123)
+
+
+@pytest.mark.asyncio
+async def test_initialize_uses_threshold_as_history_limit(monkeypatch):
+    used_limits: list[int] = []
+
+    class DummyChannel:
+        def __init__(self, cid, messages=None):
+            self.id = cid
+            self._msgs = messages or []
+
+        def history(self, limit=20):
+            used_limits.append(limit)
+
+            async def gen():
+                for m in self._msgs:
+                    yield m
+
+            return gen()
+
+    class DummyBot:
+        def __init__(self):
+            self.quiz_data = {
+                "area1": QuizAreaConfig(channel_id=123, activity_threshold=25)
+            }
+            self.user = type("User", (), {"id": 999})()
+
+        async def wait_until_ready(self):
+            pass
+
+        async def fetch_channel(self, cid):
+            return DummyChannel(cid)
+
+    monkeypatch.setattr(msg_mod.discord, "TextChannel", DummyChannel)
+
+    bot = DummyBot()
+    tracker = MessageTracker(bot, None)
+
+    await tracker.initialize()
+
+    assert used_limits == [25]
+    assert tracker.get(123) == 25
