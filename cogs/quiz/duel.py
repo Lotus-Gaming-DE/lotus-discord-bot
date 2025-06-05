@@ -215,6 +215,7 @@ class QuizDuelGame:
         self.pot = pot
         self.stake = pot // 2
         self.scores = {challenger.id: 0, opponent.id: 0}
+        self.winner_id: int | None = None
 
     async def run(self) -> None:
         """Run the duel until one player has enough wins."""
@@ -224,6 +225,73 @@ class QuizDuelGame:
         logger.info(
             f"QuizDuelGame started between {self.challenger} and {self.opponent} mode={self.mode} rounds={total_rounds}"
         )
+
+        if self.mode == "dynamic":
+            provider = qg.dynamic_providers.get(self.area)
+            questions = provider.generate_all_types() if provider else []
+            total_rounds = len(questions)
+            needed = total_rounds // 2 + 1 if total_rounds else needed
+            round_iter = enumerate(questions, start=1)
+        else:
+            round_iter = ((rnd, None) for rnd in range(1, total_rounds + 1))
+
+        for rnd, preset in round_iter:
+            question = preset if preset is not None else qg.generate(self.area)
+            provider = qg.get_dynamic_provider(self.area)
+            if not provider:
+                await self.thread.send("Keine Frage generiert. Duell abgebrochen.")
+                await self.thread.edit(archived=True)
+                return
+            questions = provider.generate_all_types()
+            if not questions:
+                await self.thread.send("Keine Frage generiert. Duell abgebrochen.")
+                champion_cog = self.cog.bot.get_cog("ChampionCog")
+                if champion_cog:
+                    await champion_cog.update_user_score(self.challenger.id, self.stake, "Quiz-Duell Rückgabe")
+                    await champion_cog.update_user_score(self.opponent.id, self.stake, "Quiz-Duell Rückgabe")
+                await self.thread.edit(archived=True)
+                return
+
+            views: list[DuelQuestionView] = []
+            for idx, question in enumerate(questions, start=1):
+                answers = question["antwort"] if isinstance(question["antwort"], list) else [question["antwort"]]
+                embed = discord.Embed(title=f"Frage {idx}", description=question["frage"], color=discord.Color.blue())
+                view = DuelQuestionView(self.challenger, self.opponent, answers)
+                msg = await self.thread.send(embed=embed, view=view)
+                view.message = msg
+                views.append(view)
+
+            for v in views:
+                await v.wait()
+
+            last_correct: dict[int, datetime.datetime | None] = {self.challenger.id: None, self.opponent.id: None}
+            for v in views:
+                for uid, (answer, ts) in v.responses.items():
+                    if check_answer(answer, v.correct_answers):
+                        self.scores[uid] += 1
+                        if last_correct[uid] is None or ts > last_correct[uid]:
+                            last_correct[uid] = ts
+
+            c_score = self.scores[self.challenger.id]
+            o_score = self.scores[self.opponent.id]
+
+            if c_score == o_score:
+                t1 = last_correct[self.challenger.id]
+                t2 = last_correct[self.opponent.id]
+                if t1 and t2:
+                    if t1 < t2:
+                        self.winner_id = self.challenger.id
+                    elif t2 < t1:
+                        self.winner_id = self.opponent.id
+            elif c_score > o_score:
+                self.winner_id = self.challenger.id
+            else:
+                self.winner_id = self.opponent.id
+
+            await self._finish()
+            return
+
+        # classic sequential modes
         for rnd in range(1, total_rounds + 1):
             question = qg.generate(self.area)
             if not question:
@@ -275,7 +343,9 @@ class QuizDuelGame:
         opponent_score = self.scores[self.opponent.id]
         winner: discord.Member | None = None
 
-        if challenger_score > opponent_score:
+        if self.winner_id:
+            winner = self.challenger if self.winner_id == self.challenger.id else self.opponent
+        elif challenger_score > opponent_score:
             winner = self.challenger
         elif opponent_score > challenger_score:
             winner = self.opponent

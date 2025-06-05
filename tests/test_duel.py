@@ -1,10 +1,12 @@
 import os
 import sys
+import datetime
+import discord
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from cogs.quiz.duel import QuizDuelGame, DuelInviteView, DuelConfig
+from cogs.quiz.duel import QuizDuelGame, DuelInviteView, DuelConfig, DuelQuestionView
 
 
 class DummyMember:
@@ -227,3 +229,65 @@ async def test_start_duel_insufficient_points_opponent():
     assert message.edited_view == "INIT"
     assert bot._champion.calls == []
     assert interaction.followup.sent[0][0].startswith("Du hast nicht genug")
+
+
+@pytest.mark.asyncio
+async def test_game_run_dynamic(monkeypatch):
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+
+    class DummyProvider:
+        def generate_all_types(self):
+            return [
+                {"frage": "f1", "antwort": "a1"},
+                {"frage": "f2", "antwort": "a2"},
+                {"frage": "f3", "antwort": "a3"},
+            ]
+
+    class DummyQG:
+        def __init__(self):
+            self.dynamic_providers = {"area": DummyProvider()}
+
+        def generate(self, area):
+            return None
+
+    bot = DummyBot()
+    bot.quiz_data = {"area": {"question_generator": DummyQG()}}
+    cog = DummyCog(bot)
+
+    responses = [
+        {
+            challenger.id: ("a1", datetime.datetime.utcnow() + datetime.timedelta(seconds=1)),
+            opponent.id: ("a1", datetime.datetime.utcnow()),
+        },
+        {challenger.id: ("a2", datetime.datetime.utcnow())},
+        {
+            challenger.id: ("a3", datetime.datetime.utcnow()),
+            opponent.id: ("a3", datetime.datetime.utcnow() + datetime.timedelta(seconds=1)),
+        },
+    ]
+    resp_iter = iter(responses)
+
+    class DummyRunThread(DummyThread):
+        async def send(self, msg=None, **kwargs):
+            self.sent.append(kwargs.get("embed", msg))
+            return DummyMessage()
+
+    class AutoView(DuelQuestionView):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._data = next(resp_iter)
+
+        async def wait(self):
+            self.responses = self._data
+            await self._finish()
+
+    monkeypatch.setattr("cogs.quiz.duel.DuelQuestionView", AutoView)
+
+    thread = DummyRunThread()
+    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "dynamic")
+    await game.run()
+
+    embeds = [m for m in thread.sent if isinstance(m, discord.Embed)]
+    assert len(embeds) == 3
+    assert game.scores == {1: 2, 2: 1}

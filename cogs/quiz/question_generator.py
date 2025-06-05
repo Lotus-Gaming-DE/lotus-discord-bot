@@ -22,6 +22,10 @@ class QuestionGenerator:
         self.dynamic_providers = dynamic_providers
         logger.info("[QuestionGenerator] QuestionGenerator initialized.")
 
+    def get_dynamic_provider(self, area: str) -> DynamicQuestionProvider | None:
+        """Return the dynamic provider for ``area`` if available."""
+        return self.dynamic_providers.get(area)
+
     def generate(self, area: str | None = None, language: str = "de") -> Dict[str, Any] | None:
         """Generate a new question for ``area`` in the given ``language``."""
         if not area:

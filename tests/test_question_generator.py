@@ -47,3 +47,11 @@ def test_generate_handles_missing_area(monkeypatch):
 
     assert gen.generate("missing") is None
     assert gen.generate(None) is None
+
+
+def test_get_dynamic_provider():
+    state = DummyStateManager()
+    provider = object()
+    gen = QuestionGenerator({"de": {}}, state, {"area": provider})
+    assert gen.get_dynamic_provider("area") is provider
+    assert gen.get_dynamic_provider("missing") is None
