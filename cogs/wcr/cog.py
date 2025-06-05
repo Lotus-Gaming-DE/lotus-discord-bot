@@ -581,3 +581,6 @@ class WCRCog(commands.Cog):
             logger.error(
                 f"Fehler beim Senden des Embeds für unit_id {unit_id}: {e}", exc_info=True)
             await interaction.followup.send("Ein Fehler ist aufgetreten.", ephemeral=True)
+
+    def cog_unload(self):
+        pass
