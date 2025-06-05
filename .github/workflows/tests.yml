@@ -3,13 +3,13 @@ name: Run tests
 on:
   push:
     paths:
-      - '**.py'
+      - '**/*.py'
       - 'tests/**'
       - 'requirements.txt'
       - '.github/workflows/**'
   pull_request:
     paths:
-      - '**.py'
+      - '**/*.py'
       - 'tests/**'
       - 'requirements.txt'
       - '.github/workflows/**'
