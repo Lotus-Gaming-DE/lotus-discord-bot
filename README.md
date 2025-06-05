@@ -135,9 +135,10 @@ Autocomplete und Fuzzy-Matching sind integriert.
 
 ## Tests
 
-Die Test-Suite basiert auf **pytest**. Nach Installation der Abhängigkeiten kann sie mit
+Die Test-Suite basiert auf **pytest**. Installiere vorher unbedingt `discord.py` und alle
+weiteren Pakete aus `requirements.txt`, sonst schlagen die Importe fehl.
 ```bash
+pip install -r requirements.txt
 pytest -q
 ```
-aufgerufen werden.
 
