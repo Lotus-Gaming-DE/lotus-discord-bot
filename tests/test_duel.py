@@ -251,6 +251,9 @@ async def test_game_run_dynamic(monkeypatch):
         def generate(self, area):
             return None
 
+        def get_dynamic_provider(self, area):
+            return self.dynamic_providers.get(area)
+
     bot = DummyBot()
     bot.quiz_data = {"area": {"question_generator": DummyQG()}}
     cog = DummyCog(bot)
@@ -290,4 +293,4 @@ async def test_game_run_dynamic(monkeypatch):
 
     embeds = [m for m in thread.sent if isinstance(m, discord.Embed)]
     assert len(embeds) == 3
-    assert game.scores == {1: 2, 2: 1}
+    assert game.scores == {1: 3, 2: 2}
