@@ -4,7 +4,7 @@ import json
 import random
 
 # Add project root to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from cogs.quiz.area_providers.wcr import WCRQuestionProvider
 from cogs.quiz.area_providers.base import DynamicQuestionProvider
