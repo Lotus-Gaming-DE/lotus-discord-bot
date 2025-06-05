@@ -3,7 +3,6 @@ import sys
 import asyncio
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from cogs.champion.cog import ChampionCog
 from cogs.champion.data import ChampionData
