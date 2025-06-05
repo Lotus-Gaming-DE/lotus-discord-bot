@@ -4,6 +4,7 @@
 import cogs.quiz.cog as quiz_cog_mod
 import cogs.quiz.scheduler as scheduler_mod
 import cogs.quiz.message_tracker as msg_mod
+import pytest
 
 
 class DummyTask:
@@ -30,9 +31,6 @@ fake_task_scheduler.tasks = []
 
 class DummyState:
     pass
-
-
-import pytest
 
 
 @pytest.mark.asyncio
