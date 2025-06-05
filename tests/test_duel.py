@@ -4,26 +4,36 @@ import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from cogs.quiz.duel import QuizDuelGame
+from cogs.quiz.duel import QuizDuelGame, DuelInviteView, DuelConfig
 
 
 class DummyMember:
     def __init__(self, uid):
         self.id = uid
         self.display_name = f"user{uid}"
+        self.mention = f"<@{uid}>"
 
 
 class DummyChampionCog:
     def __init__(self):
         self.calls = []
 
+        class DummyData:
+            def __init__(self, totals):
+                self.totals = totals
+
+            async def get_total(self, uid):
+                return self.totals.get(uid, 0)
+
+        self.data = DummyData({})
+
     async def update_user_score(self, uid, delta, reason):
         self.calls.append((uid, delta, reason))
 
 
 class DummyBot:
-    def __init__(self):
-        self._champion = DummyChampionCog()
+    def __init__(self, champion=True):
+        self._champion = DummyChampionCog() if champion else None
 
     def get_cog(self, name):
         if name == "ChampionCog":
@@ -43,12 +53,46 @@ class DummyThread:
     def __init__(self):
         self.sent = []
         self.archived = False
+        self.mention = "#thread"
 
     async def send(self, msg, **kwargs):
         self.sent.append(msg)
 
     async def edit(self, archived=True):
         self.archived = archived
+
+
+class DummyMessage:
+    def __init__(self, thread=None):
+        self.thread = thread or DummyThread()
+        self.edited_view = "INIT"
+
+    async def create_thread(self, name):
+        self.thread.name = name
+        return self.thread
+
+    async def edit(self, view=None):
+        self.edited_view = view
+
+
+class DummyFollowup:
+    def __init__(self):
+        self.sent = []
+
+    async def send(self, content, **kwargs):
+        self.sent.append((content, kwargs))
+
+
+class DummyResponse:
+    async def defer(self):
+        pass
+
+
+class DummyInteraction:
+    def __init__(self, user):
+        self.user = user
+        self.followup = DummyFollowup()
+        self.response = DummyResponse()
 
 
 @pytest.mark.asyncio
@@ -84,3 +128,102 @@ async def test_finish_refunds_on_tie():
         (2, 10, "Quiz-Duell Rückgabe"),
     }
     assert thread.archived is True
+
+
+@pytest.mark.asyncio
+async def test_finish_handles_missing_champion():
+    bot = DummyBot(champion=False)
+    cog = DummyCog(bot)
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    thread = DummyThread()
+    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3")
+    game.scores = {1: 2, 2: 1}
+
+    await game._finish()
+
+    assert thread.archived is True
+    assert "Champion-System" in thread.sent[0]
+
+
+@pytest.mark.asyncio
+async def test_start_duel_success(monkeypatch):
+    bot = DummyBot()
+    bot._champion.data.totals = {"1": 50, "2": 40}
+    cog = DummyCog(bot)
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    message = DummyMessage()
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "bo3"), cog)
+    view.message = message
+
+    run_called = []
+
+    async def fake_run(self):
+        run_called.append(True)
+
+    monkeypatch.setattr(QuizDuelGame, "run", fake_run)
+
+    interaction = DummyInteraction(opponent)
+    await view.start_duel(interaction)
+
+    assert bot._champion.calls[:2] == [
+        (1, -20, "Quiz-Duell Einsatz"),
+        (2, -20, "Quiz-Duell Einsatz"),
+    ]
+    assert message.edited_view == "INIT"
+    assert run_called
+
+
+@pytest.mark.asyncio
+async def test_start_duel_no_champion_system():
+    bot = DummyBot(champion=False)
+    cog = DummyCog(bot)
+    message = DummyMessage()
+    view = DuelInviteView(DummyMember(1), DuelConfig("area", 20, "bo3"), cog)
+    view.message = message
+    interaction = DummyInteraction(DummyMember(2))
+
+    await view.start_duel(interaction)
+
+    assert view.accepted is False
+    assert message.edited_view is None
+    assert interaction.followup.sent[0][0].startswith("Champion-System")
+
+
+@pytest.mark.asyncio
+async def test_start_duel_insufficient_points_challenger():
+    bot = DummyBot()
+    bot._champion.data.totals = {"1": 10, "2": 30}
+    cog = DummyCog(bot)
+    message = DummyMessage()
+    challenger = DummyMember(1)
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "bo3"), cog)
+    view.message = message
+    interaction = DummyInteraction(DummyMember(2))
+
+    await view.start_duel(interaction)
+
+    assert view.accepted is False
+    assert message.edited_view is None
+    assert bot._champion.calls == []
+    assert interaction.followup.sent[0][0].startswith("Der Herausforderer")
+
+
+@pytest.mark.asyncio
+async def test_start_duel_insufficient_points_opponent():
+    bot = DummyBot()
+    bot._champion.data.totals = {"1": 30, "2": 10}
+    cog = DummyCog(bot)
+    message = DummyMessage()
+    challenger = DummyMember(1)
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "bo3"), cog)
+    view.message = message
+    interaction = DummyInteraction(DummyMember(2))
+
+    await view.start_duel(interaction)
+
+    assert view.accepted is False
+    assert message.edited_view == "INIT"
+    assert bot._champion.calls == []
+    assert interaction.followup.sent[0][0].startswith("Du hast nicht genug")
