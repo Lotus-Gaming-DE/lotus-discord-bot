@@ -109,6 +109,8 @@ async def test_cmd_name_creates_embed():
     assert embed.fields[0].value == "6"
 
 
+@pytest.mark.asyncio
+async def test_select_view_timeout_disables_select():
 def test_init_without_en_language(caplog):
     bot = DummyBot()
     del bot.data["wcr"]["locals"]["en"]
@@ -124,6 +126,15 @@ async def test_cost_autocomplete_returns_all():
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
+    await cog.cmd_filter(inter, cost="6", lang="de")
+
+    view = inter.response.messages[0]["view"]
+    select = view.children[0]
+    assert not select.disabled
+
+    await view.on_timeout()
+
+    assert select.disabled is True
     choices = await cog.cost_autocomplete(inter, "")
 
     expected = [str(c) for c in sorted({1, 2, 3, 4, 5, 6})]
