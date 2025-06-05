@@ -11,6 +11,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from .cog import QuizCog
+from .scheduler import QuizScheduler
 from .question_generator import QuestionGenerator
 from .duel import DuelInviteView, DuelConfig
 
@@ -108,6 +109,16 @@ async def enable(interaction: discord.Interaction, area_name: str, lang: Literal
     cfg.language = lang
     cfg.active = True
 
+    quiz_cog: QuizCog | None = interaction.client.get_cog("QuizCog")
+    if quiz_cog and area not in quiz_cog.schedulers:
+        scheduler = QuizScheduler(
+            bot=interaction.client,
+            area=area,
+            prepare_question_callback=quiz_cog.manager.prepare_question,
+            close_question_callback=quiz_cog.closer.close_question,
+        )
+        quiz_cog.schedulers[area] = scheduler
+
     save_area_config(interaction.client)
 
     await interaction.response.send_message(f"✅ Quiz für **{area}** aktiviert.", ephemeral=False)
@@ -123,6 +134,13 @@ async def disable(interaction: discord.Interaction):
 
     cfg = interaction.client.quiz_data[area]
     cfg.active = False
+
+    quiz_cog: QuizCog | None = interaction.client.get_cog("QuizCog")
+    if quiz_cog:
+        scheduler = quiz_cog.schedulers.pop(area, None)
+        if scheduler:
+            scheduler.task.cancel()
+
     save_area_config(interaction.client)
 
     await interaction.response.send_message(f"🚫 Quiz für **{area}** deaktiviert.", ephemeral=False)

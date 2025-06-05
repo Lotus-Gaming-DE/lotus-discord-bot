@@ -27,7 +27,8 @@ class QuizCog(commands.Cog):
         self.awaiting_activity: dict[int, tuple[str, float]] = {}
 
         # Keep track of schedulers to properly clean them up on unload
-        self.schedulers: list[QuizScheduler] = []
+        # Mapping area -> QuizScheduler
+        self.schedulers: dict[str, QuizScheduler] = {}
 
         # ``quiz_data`` might be empty if no areas are configured. In that case
         # fall back to a fresh ``QuestionStateManager`` so the cog can start
@@ -63,7 +64,7 @@ class QuizCog(commands.Cog):
                     prepare_question_callback=self.manager.prepare_question,
                     close_question_callback=self.closer.close_question,
                 )
-                self.schedulers.append(scheduler)
+                self.schedulers[area] = scheduler
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -73,5 +74,5 @@ class QuizCog(commands.Cog):
 
     def cog_unload(self):
         """Cancel all running scheduler tasks when the cog is unloaded."""
-        for scheduler in self.schedulers:
+        for scheduler in self.schedulers.values():
             scheduler.task.cancel()
