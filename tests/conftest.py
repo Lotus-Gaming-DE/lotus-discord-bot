@@ -1,6 +1,7 @@
 import os
 import sys
 import pytest
+import pytest_asyncio
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
@@ -34,3 +35,15 @@ def patch_logged_task(monkeypatch):
         return fake_task
 
     return apply
+
+
+@pytest_asyncio.fixture
+async def bot():
+    """Yield a ``MyBot`` instance and ensure it is properly closed."""
+    from bot import MyBot
+
+    bot = MyBot()
+    try:
+        yield bot
+    finally:
+        await bot.close()

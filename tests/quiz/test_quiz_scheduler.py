@@ -1,6 +1,6 @@
 
 
-from bot import MyBot
+
 import cogs.quiz.cog as quiz_cog_mod
 import cogs.quiz.scheduler as scheduler_mod
 import cogs.quiz.message_tracker as msg_mod
@@ -32,12 +32,15 @@ class DummyState:
     pass
 
 
-def test_scheduler_start_and_stop(monkeypatch, patch_logged_task):
+import pytest
+
+
+@pytest.mark.asyncio
+async def test_scheduler_start_and_stop(monkeypatch, patch_logged_task, bot):
     patch_logged_task(quiz_cog_mod, msg_mod)
     monkeypatch.setattr(scheduler_mod, "create_logged_task", fake_task_scheduler)
     monkeypatch.setattr(quiz_cog_mod.QuestionRestorer, "restore_all", lambda self: None)
 
-    bot = MyBot()
     bot.data = {"quiz": {"questions": {"de": {}}, "languages": ["de"]}}
     bot.quiz_data = {
         "area1": {"channel_id": 1, "active": True, "question_state": DummyState()},
