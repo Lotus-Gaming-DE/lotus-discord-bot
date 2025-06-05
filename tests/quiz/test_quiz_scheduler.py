@@ -1,6 +1,12 @@
-from bot import MyBot
 
-import cogs.quiz.cog as quiz_cog_mod
+class DummyBot:
+    def __init__(self):
+        self.data = {}
+        self.quiz_data = {}
+
+
+
+    bot = DummyBot()
 import cogs.quiz.scheduler as scheduler_mod
 import cogs.quiz.message_tracker as msg_mod
 import pytest
