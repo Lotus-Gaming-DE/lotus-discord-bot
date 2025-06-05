@@ -53,6 +53,21 @@ class WCRQuestionProvider(DynamicQuestionProvider):
         logger.info(f"[WCRQuestionProvider] Generated: {question['frage']}")
         return question
 
+    def generate_all_types(self) -> list[dict]:
+        """Generate one question for every available type."""
+        questions = []
+        for func in [
+            self.generate_type_1,
+            self.generate_type_2,
+            self.generate_type_3,
+            self.generate_type_4,
+            self.generate_type_5,
+        ]:
+            q = func()
+            if q:
+                questions.append(q)
+        return questions
+
     def generate_type_1(self):
         talents = []
         for unit in self.units:

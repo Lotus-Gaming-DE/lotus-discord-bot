@@ -145,7 +145,7 @@ async def ask(interaction: discord.Interaction):
 
 
 @quiz_group.command(name="duel", description="Starte ein Quiz-Duell")
-@app_commands.describe(punkte="Gesetzte Punkte", modus="Modus des Duells")
+@app_commands.describe(punkte="Gesetzte Punkte", modus="Modus des Duells (bo3, bo5 oder dynamic)")
 async def duel(interaction: discord.Interaction, punkte: app_commands.Range[int, 1, 10000], modus: Literal["bo3", "bo5", "dynamic"] = "bo3"):
     area = get_area_by_channel(interaction.client, interaction.channel.id)
     if not area:
