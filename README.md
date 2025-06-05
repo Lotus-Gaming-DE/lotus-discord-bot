@@ -17,6 +17,7 @@ Willkommen beim **Lotus Gaming Discord Bot**! Dieser modulare Bot bietet interak
 - [Setup](#setup)
 - [Projektstruktur](#projektstruktur)
 - [Slash-Commands](#slash-commands)
+- [Berechtigungen](#berechtigungen)
 - [Technische Konzepte](#technische-konzepte)
 - [Tests](#tests)
 - [Änderungsprotokoll](#änderungsprotokoll)
@@ -119,6 +120,33 @@ Fragequellen verfügbar (derzeit nur `wcr`).
 ```
 
 Autocomplete und Fuzzy-Matching sind integriert.
+
+## Berechtigungen
+
+Einige Slash-Befehle sind nur für Moderatoren mit dem Recht **Manage Server**
+(``manage_guild``) nutzbar. Sie werden dank ``default_permissions`` nur diesen
+Nutzern angezeigt. Alle anderen Befehle stehen jedem Mitglied offen.
+
+**Moderatorenbefehle:**
+
+```
+/champion give
+/champion remove
+/champion set
+/champion reset
+/champion history
+/champion clean
+
+/quiz ask
+/quiz answer
+/quiz status
+/quiz disable
+/quiz enable
+/quiz language
+/quiz time
+/quiz threshold
+/quiz reset
+```
 
 ---
 

@@ -15,6 +15,7 @@ champion_group = app_commands.Group(
 
 @champion_group.command(name="give", description="Gibt einem User Punkte (nur Mods)")
 @moderator_only()
+@app_commands.default_permissions(manage_guild=True)
 @app_commands.describe(user="Der Nutzer, dem Punkte gegeben werden", punkte="Anzahl der Punkte", grund="Begründung")
 async def give(interaction: discord.Interaction, user: discord.Member, punkte: int, grund: str):
     """Give a user points."""
@@ -30,6 +31,7 @@ async def give(interaction: discord.Interaction, user: discord.Member, punkte: i
 
 @champion_group.command(name="remove", description="Entfernt Punkte (nur Mods)")
 @moderator_only()
+@app_commands.default_permissions(manage_guild=True)
 @app_commands.describe(user="Der Nutzer, von dem Punkte abgezogen werden", punkte="Anzahl der Punkte", grund="Begründung")
 async def remove(interaction: discord.Interaction, user: discord.Member, punkte: int, grund: str):
     """Remove points from a user."""
@@ -45,6 +47,7 @@ async def remove(interaction: discord.Interaction, user: discord.Member, punkte:
 
 @champion_group.command(name="set", description="Setzt die Punktzahl eines Users (nur Mods)")
 @moderator_only()
+@app_commands.default_permissions(manage_guild=True)
 @app_commands.describe(user="Der Nutzer, dessen Punktzahl gesetzt wird", punkte="Neue Gesamtpunktzahl", grund="Begründung")
 async def set_points(interaction: discord.Interaction, user: discord.Member, punkte: int, grund: str):
     """Set a user's score to an explicit value."""
@@ -62,6 +65,7 @@ async def set_points(interaction: discord.Interaction, user: discord.Member, pun
 
 @champion_group.command(name="reset", description="Setzt die Punkte eines Nutzers auf 0 (nur Mods)")
 @moderator_only()
+@app_commands.default_permissions(manage_guild=True)
 @app_commands.describe(user="Der Nutzer, dessen Punkte zurückgesetzt werden")
 async def reset(interaction: discord.Interaction, user: discord.Member):
     """Reset a user's score to zero."""
@@ -118,6 +122,7 @@ async def myhistory(interaction: discord.Interaction):
 
 @champion_group.command(name="history", description="Zeigt die Punkte-Historie eines Spielers")
 @moderator_only()
+@app_commands.default_permissions(manage_guild=True)
 @app_commands.describe(user="Der Spieler, dessen Historie angezeigt wird")
 async def history(interaction: discord.Interaction, user: discord.Member):
     """Display another user's score history."""
@@ -247,6 +252,7 @@ async def rank(interaction: discord.Interaction, user: discord.Member | None = N
 
 @champion_group.command(name="clean", description="Entfernt Einträge ehemaliger Mitglieder (nur Mods)")
 @moderator_only()
+@app_commands.default_permissions(manage_guild=True)
 async def clean(interaction: discord.Interaction):
     """Remove users from the database who left the server."""
     logger.info(f"/champion clean requested by {interaction.user}")
