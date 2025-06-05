@@ -1,11 +1,10 @@
-import os
-import sys
 import asyncio
 import pytest
 
 
 from cogs.champion.cog import ChampionCog
 from cogs.champion.data import ChampionData
+import cogs.champion.cog as champion_cog_mod
 
 
 class DummyBot:
@@ -16,7 +15,7 @@ class DummyBot:
 
 
 @pytest.mark.asyncio
-async def test_update_user_score_saves_and_calls(monkeypatch, tmp_path):
+async def test_update_user_score_saves_and_calls(monkeypatch, patch_logged_task, tmp_path):
     bot = DummyBot()
     cog = ChampionCog(bot)
     cog.data = ChampionData(str(tmp_path / "points.db"))
@@ -26,10 +25,12 @@ async def test_update_user_score_saves_and_calls(monkeypatch, tmp_path):
     async def fake_apply(user_id, score):
         called.append((user_id, score))
 
-    def fake_task(coro, logger):
+    patch_logged_task(champion_cog_mod)
+
+    def schedule_task(coro, logger=None):
         asyncio.create_task(coro)
 
-    monkeypatch.setattr("cogs.champion.cog.create_logged_task", fake_task)
+    monkeypatch.setattr(champion_cog_mod, "create_logged_task", schedule_task)
     monkeypatch.setattr(cog, "_apply_champion_role", fake_apply)
 
     total = await cog.update_user_score(123, 5, "test")

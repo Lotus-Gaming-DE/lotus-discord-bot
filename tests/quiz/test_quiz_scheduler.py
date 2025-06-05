@@ -1,5 +1,3 @@
-import os
-import sys
 
 
 from bot import MyBot
@@ -34,9 +32,8 @@ class DummyState:
     pass
 
 
-def test_scheduler_start_and_stop(monkeypatch):
-    monkeypatch.setattr(quiz_cog_mod, "create_logged_task", fake_task_general)
-    monkeypatch.setattr(msg_mod, "create_logged_task", fake_task_general)
+def test_scheduler_start_and_stop(monkeypatch, patch_logged_task):
+    patch_logged_task(quiz_cog_mod, msg_mod)
     monkeypatch.setattr(scheduler_mod, "create_logged_task", fake_task_scheduler)
     monkeypatch.setattr(quiz_cog_mod.QuestionRestorer, "restore_all", lambda self: None)
 

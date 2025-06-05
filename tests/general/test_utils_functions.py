@@ -1,5 +1,3 @@
-import os
-import sys
 
 
 from cogs.quiz.utils import create_permutations, create_permutations_list, normalize_text

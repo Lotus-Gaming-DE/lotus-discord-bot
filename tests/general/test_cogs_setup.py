@@ -1,5 +1,3 @@
-import os
-import sys
 import pytest
 
 
@@ -14,12 +12,8 @@ from cogs.wcr.utils import load_wcr_data
 
 
 @pytest.mark.asyncio
-async def test_quiz_setup_uses_main_guild(monkeypatch):
-    def fake_task(coro, logger):
-        coro.close()
-
-    monkeypatch.setattr(quiz_cog_mod, "create_logged_task", fake_task)
-    monkeypatch.setattr(msg_mod, "create_logged_task", fake_task)
+async def test_quiz_setup_uses_main_guild(monkeypatch, patch_logged_task):
+    patch_logged_task(quiz_cog_mod, msg_mod)
 
     bot = MyBot()
     bot.data = {"quiz": {"questions": {"de": {}}, "languages": ["de"]}}
