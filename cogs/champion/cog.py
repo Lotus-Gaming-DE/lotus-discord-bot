@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from typing import Optional
-import asyncio
 
 from log_setup import get_logger, create_logged_task
 from .data import ChampionData
@@ -110,4 +109,4 @@ class ChampionCog(commands.Cog):
             )
 
     def cog_unload(self):
-        asyncio.create_task(self.data.close())
+        create_logged_task(self.data.close(), logger)

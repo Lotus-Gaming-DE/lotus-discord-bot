@@ -55,22 +55,27 @@ async def test_update_user_score_saves_and_calls(monkeypatch, patch_logged_task,
 
     patch_logged_task(champion_cog_mod)
 
+    tasks = []
+
     def schedule_task(coro, logger=None):
-        asyncio.create_task(coro)
+        task = asyncio.create_task(coro)
+        tasks.append(task)
+        return task
 
     monkeypatch.setattr(champion_cog_mod, "create_logged_task", schedule_task)
     monkeypatch.setattr(cog, "_apply_champion_role", fake_apply)
 
     total = await cog.update_user_score(123, 5, "test")
-    await asyncio.sleep(0)
+    await asyncio.gather(*tasks)
     assert total == 5
     assert called == [("123", 5)]
     cog.cog_unload()
-    await asyncio.sleep(0)
+    await asyncio.gather(*tasks)
 
 
 @pytest.mark.asyncio
-async def test_get_current_role():
+async def test_get_current_role(patch_logged_task):
+    patch_logged_task(champion_cog_mod)
     bot = DummyBot()
     bot.data["champion"]["roles"] = [
         {"name": "Gold", "threshold": 50},
@@ -82,11 +87,11 @@ async def test_get_current_role():
     assert cog.get_current_role(25) == "Silver"
     assert cog.get_current_role(10) is None
     cog.cog_unload()
-    await asyncio.sleep(0)
 
 
 @pytest.mark.asyncio
-async def test_apply_role_removes_when_below_threshold(monkeypatch):
+async def test_apply_role_removes_when_below_threshold(monkeypatch, patch_logged_task):
+    patch_logged_task(champion_cog_mod)
     bot = DummyBot()
     bot.data["champion"]["roles"] = [{"name": "Silver", "threshold": 5}]
 
