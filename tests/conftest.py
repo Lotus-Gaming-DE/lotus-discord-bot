@@ -1,6 +1,28 @@
 import os
 import sys
 import pytest
+import warnings
+
+warnings.filterwarnings(
+    "ignore",
+    message=".*'audioop' is deprecated.*",
+    category=DeprecationWarning,
+    module=r"discord\.player",
+)
+
+
+def pytest_configure(config):
+    warnings.filterwarnings(
+        "ignore",
+        message=".*'audioop' is deprecated.*",
+        category=DeprecationWarning,
+        module=r"discord\.player",
+        append=True,
+    )
+    config.addinivalue_line(
+        "filterwarnings",
+        "ignore:.*'audioop' is deprecated.*:DeprecationWarning:discord\\.player",
+    )
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
