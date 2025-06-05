@@ -37,9 +37,12 @@ async def test_update_user_score_saves_and_calls(monkeypatch, patch_logged_task,
     await asyncio.sleep(0)
     assert total == 5
     assert called == [("123", 5)]
+    cog.cog_unload()
+    await asyncio.sleep(0)
 
 
-def test_get_current_role():
+@pytest.mark.asyncio
+async def test_get_current_role():
     bot = DummyBot()
     bot.data["champion"]["roles"] = [
         {"name": "Gold", "threshold": 50},
@@ -50,3 +53,5 @@ def test_get_current_role():
     assert cog.get_current_role(55) == "Gold"
     assert cog.get_current_role(25) == "Silver"
     assert cog.get_current_role(10) is None
+    cog.cog_unload()
+    await asyncio.sleep(0)

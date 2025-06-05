@@ -1,7 +1,7 @@
 import pytest
 
 
-from bot import MyBot
+
 from cogs import quiz, champion, wcr
 from cogs.quiz.slash_commands import quiz_group
 from cogs.champion.slash_commands import champion_group
@@ -12,10 +12,8 @@ from cogs.wcr.utils import load_wcr_data
 
 
 @pytest.mark.asyncio
-async def test_quiz_setup_uses_main_guild(monkeypatch, patch_logged_task):
+async def test_quiz_setup_uses_main_guild(monkeypatch, patch_logged_task, bot):
     patch_logged_task(quiz_cog_mod, msg_mod)
-
-    bot = MyBot()
     bot.data = {"quiz": {"questions": {"de": {}}, "languages": ["de"]}}
     bot.quiz_data = {}
 
@@ -32,8 +30,7 @@ async def test_quiz_setup_uses_main_guild(monkeypatch, patch_logged_task):
 
 
 @pytest.mark.asyncio
-async def test_champion_setup_uses_main_guild(monkeypatch):
-    bot = MyBot()
+async def test_champion_setup_uses_main_guild(monkeypatch, bot):
     bot.data = {"champion": {"roles": []}, "emojis": {}}
 
     called = []
@@ -49,8 +46,7 @@ async def test_champion_setup_uses_main_guild(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_wcr_setup_uses_main_guild(monkeypatch):
-    bot = MyBot()
+async def test_wcr_setup_uses_main_guild(monkeypatch, bot):
     bot.data = {"wcr": load_wcr_data(), "emojis": {}}
 
     called = []

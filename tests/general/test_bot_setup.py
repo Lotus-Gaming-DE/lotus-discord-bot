@@ -1,12 +1,8 @@
 import pytest
 
 
-from bot import MyBot
-
-
 @pytest.mark.asyncio
-async def test_setup_hook_clears_global_commands(monkeypatch):
-    bot = MyBot()
+async def test_setup_hook_clears_global_commands(monkeypatch, bot):
 
     clear_calls = []
 
