@@ -26,6 +26,8 @@ class WCRCog(commands.Cog):
         self.languages = bot.data["wcr"]["locals"]
         self.pictures = bot.data["wcr"]["pictures"]
 
+        helpers.build_category_lookup(self.languages, self.pictures)
+
         # Emojis liegen in bot.data["emojis"]
         self.emojis = bot.data["emojis"]
 
@@ -33,8 +35,17 @@ class WCRCog(commands.Cog):
         # Unique elixir costs found in ``self.units``
         self.costs = sorted({unit["cost"] for unit in self.units})
 
-        # Choices for localized categories (always from English names)
-        cats = self.languages["en"]["categories"]
+        # Choices for localized categories (always from English names if available)
+        if "en" in self.languages:
+            cats_lang = "en"
+        else:
+            cats_lang = next(iter(self.languages))
+            logger.warning(
+                "'en' language not found in WCR locals, using '%s' for choices",
+                cats_lang,
+            )
+
+        cats = self.languages[cats_lang]["categories"]
         self.speed_choices = [
             discord.app_commands.Choice(name=s["name"], value=str(s["id"]))
             for s in cats["speeds"]
