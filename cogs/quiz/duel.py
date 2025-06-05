@@ -132,21 +132,23 @@ class DuelInviteView(View):
         await champion_cog.update_user_score(self.challenger.id, -self.cfg.points, "Quiz-Duell Einsatz")
         thread = await self.message.create_thread(name=f"Duel {self.challenger.display_name} vs {interaction.user.display_name}")
         await interaction.followup.send(f"{interaction.user.mention} hat das Duell angenommen! Schau hier: {thread.mention}")
-        game = QuizDuelGame(self.cog, thread, self.cfg.area, self.challenger, interaction.user, self.cfg.points, self.cfg.mode)
+        game = QuizDuelGame(self.cog, thread, self.cfg, self.challenger, interaction.user)
         await game.run()
         self.stop()
 
 
 class QuizDuelGame:
-    def __init__(self, cog, thread: discord.Thread, area: str, challenger: discord.Member, opponent: discord.Member, points: int, mode: str) -> None:
+    def __init__(self, cog, thread: discord.Thread, cfg: DuelConfig, challenger: discord.Member, opponent: discord.Member) -> None:
         """Hold state for an ongoing duel game."""
         self.cog = cog
         self.thread = thread
-        self.area = area
+        self.cfg = cfg
+        self.area = cfg.area
         self.challenger = challenger
         self.opponent = opponent
-        self.points = points
-        self.mode = mode
+        self.mode = cfg.mode
+        self.points = cfg.points
+        self.pot = cfg.points
         self.scores = {challenger.id: 0, opponent.id: 0}
 
     async def run(self) -> None:
@@ -164,7 +166,7 @@ class QuizDuelGame:
                 champion_cog = self.cog.bot.get_cog("ChampionCog")
                 if champion_cog:
                     await champion_cog.update_user_score(
-                        self.challenger.id, self.points, "Quiz-Duell Rückgabe"
+                        self.challenger.id, self.cfg.points, "Quiz-Duell Rückgabe"
                     )
                 await self.thread.edit(archived=True)
                 return
@@ -200,11 +202,12 @@ class QuizDuelGame:
             f"QuizDuelGame finished winner={winner.display_name if winner else 'None'} score={self.scores}"
         )
         if winner:
-            await champion_cog.update_user_score(winner.id, self.points, "Quiz-Duell Gewinn")
-            await self.thread.send(f"🏆 {winner.display_name} gewinnt das Duell und erhält {self.points} Punkte!")
+            await champion_cog.update_user_score(winner.id, self.pot, "Quiz-Duell Gewinn")
+            await self.thread.send(f"🏆 {winner.display_name} gewinnt das Duell und erhält {self.pot} Punkte!")
         else:
-            await champion_cog.update_user_score(self.challenger.id, self.points, "Quiz-Duell Rückgabe")
-            await self.thread.send("Unentschieden. Einsatz zurück an Herausforderer.")
+            await champion_cog.update_user_score(self.challenger.id, self.cfg.points, "Quiz-Duell Rückgabe")
+            await champion_cog.update_user_score(self.opponent.id, self.cfg.points, "Quiz-Duell Rückgabe")
+            await self.thread.send("Unentschieden. Einsatz zurück an beide Spieler.")
         await self.thread.send(
             f"Endstand: {self.challenger.display_name} {self.scores[self.challenger.id]} - {self.scores[self.opponent.id]} {self.opponent.display_name}"
         )
