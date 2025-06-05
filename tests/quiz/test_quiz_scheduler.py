@@ -1,10 +1,7 @@
 
-class DummyBot:
     def __init__(self):
         self.data = {}
         self.quiz_data = {}
-
-
 
     bot = DummyBot()
 import cogs.quiz.scheduler as scheduler_mod
