@@ -7,3 +7,7 @@
 - Unit tests run locally without these variables. Use `monkeypatch.setenv` to simulate them, as shown in `tests/conftest.py`.
 - A fixture `patch_logged_task` is provided for tests to replace `create_logged_task` with a dummy. Use it instead of duplicating patch code.
 - The CI workflow runs `flake8` for linting. Ensure your code passes the linter before committing.
+- Run `flake8` and `pytest` locally before committing to catch issues early.
+- When features change or new ones are added, update tests as needed and keep the `README.md` in sync.
+- If new environment variables are introduced, update `.env.example` and document them.
+- Persisted data lives in `data/pers/` and should not be committed.
