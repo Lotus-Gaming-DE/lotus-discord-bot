@@ -106,3 +106,20 @@ async def test_cmd_name_creates_embed():
     assert embed.thumbnail.url.endswith("Statue_Abomination_Pose.webp")
     assert embed.fields[0].name.strip() == "Cost"
     assert embed.fields[0].value == "6"
+
+
+def test_name_map_contains_unit():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    assert cog.unit_name_map["de"]["abscheulichkeit"] == 1
+
+
+def test_resolve_unit_cross_language():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+
+    result = cog.resolve_unit("Abomination", "de")
+    assert result is not None
+    unit_id, _, lang, _ = result
+    assert unit_id == 1
+    assert lang == "en"
