@@ -125,14 +125,30 @@ class DuelInviteView(View):
         if champion_cog is None:
             await interaction.followup.send("Champion-System nicht verfügbar.")
             return
-        current = await champion_cog.data.get_total(str(self.challenger.id))
-        if current < self.cfg.points:
+
+        current_challenger = await champion_cog.data.get_total(str(self.challenger.id))
+        if current_challenger < self.cfg.points:
             await interaction.followup.send("Der Herausforderer hat nicht genug Punkte.")
             return
+
+        current_opponent = await champion_cog.data.get_total(str(interaction.user.id))
+        if current_opponent < self.cfg.points:
+            await interaction.followup.send("Du hast nicht genug Punkte.")
+            return
+
         await champion_cog.update_user_score(self.challenger.id, -self.cfg.points, "Quiz-Duell Einsatz")
+        await champion_cog.update_user_score(interaction.user.id, -self.cfg.points, "Quiz-Duell Einsatz")
         thread = await self.message.create_thread(name=f"Duel {self.challenger.display_name} vs {interaction.user.display_name}")
         await interaction.followup.send(f"{interaction.user.mention} hat das Duell angenommen! Schau hier: {thread.mention}")
-        game = QuizDuelGame(self.cog, thread, self.cfg.area, self.challenger, interaction.user, self.cfg.points, self.cfg.mode)
+        game = QuizDuelGame(
+            self.cog,
+            thread,
+            self.cfg.area,
+            self.challenger,
+            interaction.user,
+            self.cfg.points * 2,
+            self.cfg.mode,
+        )
         await game.run()
         self.stop()
 
@@ -201,10 +217,14 @@ class QuizDuelGame:
         )
         if winner:
             await champion_cog.update_user_score(winner.id, self.points, "Quiz-Duell Gewinn")
-            await self.thread.send(f"🏆 {winner.display_name} gewinnt das Duell und erhält {self.points} Punkte!")
+            await self.thread.send(
+                f"🏆 {winner.display_name} gewinnt das Duell und erhält {self.points} Punkte!"
+            )
         else:
-            await champion_cog.update_user_score(self.challenger.id, self.points, "Quiz-Duell Rückgabe")
-            await self.thread.send("Unentschieden. Einsatz zurück an Herausforderer.")
+            refund = self.points // 2
+            await champion_cog.update_user_score(self.challenger.id, refund, "Quiz-Duell Rückgabe")
+            await champion_cog.update_user_score(self.opponent.id, refund, "Quiz-Duell Rückgabe")
+            await self.thread.send("Unentschieden. Einsätze zurück an Spieler.")
         await self.thread.send(
             f"Endstand: {self.challenger.display_name} {self.scores[self.challenger.id]} - {self.scores[self.opponent.id]} {self.opponent.display_name}"
         )
