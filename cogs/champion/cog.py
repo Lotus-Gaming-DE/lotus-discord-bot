@@ -66,16 +66,12 @@ class ChampionCog(commands.Cog):
             return
 
         target_role_name = self.get_current_role(score)
-        if not target_role_name:
-            return
 
         current_role_names = [r.name for r in member.roles]
-        if target_role_name in current_role_names:
-            return
 
         roles_to_remove = []
         for role_name, _ in self.roles:
-            if role_name in current_role_names:
+            if role_name in current_role_names and role_name != target_role_name:
                 role_obj = discord.utils.get(guild.roles, name=role_name)
                 if role_obj:
                     roles_to_remove.append(role_obj)
@@ -90,6 +86,9 @@ class ChampionCog(commands.Cog):
             except Exception as e:
                 logger.error(
                     f"[ChampionCog] Fehler beim Entfernen von Rollen: {e}", exc_info=True)
+
+        if not target_role_name or target_role_name in current_role_names:
+            return
 
         target_role = discord.utils.get(guild.roles, name=target_role_name)
         if target_role:
