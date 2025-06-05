@@ -1,5 +1,3 @@
-
-
 from bot import MyBot
 import cogs.quiz.cog as quiz_cog_mod
 import cogs.quiz.scheduler as scheduler_mod
