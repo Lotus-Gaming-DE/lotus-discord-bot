@@ -54,8 +54,10 @@ class ChampionCog(commands.Cog):
             logger.warning("[ChampionCog] Guild nicht gefunden.")
             return
 
+        member = guild.get_member(int(user_id_str))
         try:
-            member = await guild.fetch_member(int(user_id_str))
+            if member is None:
+                member = await guild.fetch_member(int(user_id_str))
         except discord.NotFound:
             logger.info(
                 f"[ChampionCog] Member {user_id_str} nicht gefunden (vermutlich nicht mehr im Server).")

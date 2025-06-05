@@ -38,8 +38,26 @@ class DummyGuild:
         self._member = member
         self.roles = roles
 
+    def get_member(self, uid):
+        return None
+
     async def fetch_member(self, uid):
         return self._member
+
+
+class DummyGuildGet(DummyGuild):
+    def __init__(self, member, roles):
+        super().__init__(member, roles)
+        self.get_calls = 0
+        self.fetch_calls = 0
+
+    def get_member(self, uid):
+        self.get_calls += 1
+        return self._member
+
+    async def fetch_member(self, uid):
+        self.fetch_calls += 1
+        return await super().fetch_member(uid)
 
 
 @pytest.mark.asyncio
@@ -108,3 +126,25 @@ async def test_apply_role_removes_when_below_threshold(monkeypatch):
 
     assert member.removed == [silver]
     assert member.added == []
+
+
+@pytest.mark.asyncio
+async def test_apply_role_prefers_get_member(monkeypatch):
+    bot = DummyBot()
+    member = DummyMember([])
+    guild = DummyGuildGet(member, [])
+    bot.main_guild = guild
+
+    monkeypatch.setattr(champion_cog_mod.discord, "Guild", DummyGuildGet)
+    monkeypatch.setattr(
+        champion_cog_mod.discord.utils,
+        "get",
+        lambda seq, *, name=None: next((r for r in seq if r.name == name), None),
+    )
+
+    cog = ChampionCog(bot)
+
+    await cog._apply_champion_role("123", 0)
+
+    assert guild.get_calls == 1
+    assert guild.fetch_calls == 0
