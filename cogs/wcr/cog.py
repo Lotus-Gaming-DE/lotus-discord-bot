@@ -199,12 +199,18 @@ class WCRCog(commands.Cog):
             unit_text = next(
                 (u for u in texts["units"] if u["id"] == unit_id), {})
             unit_name = unit_text.get("name", "Unbekannt")
-            emoji = self.emojis.get(
+            emoji_syntax = self.emojis.get(
                 helpers.get_faction_icon(unit["faction_id"], self.pictures), {}
-            ).get("syntax", "")
-            options.append(discord.SelectOption(
-                label=unit_name, value=str(unit_id), emoji=emoji
-            ))
+            ).get("syntax")
+            if emoji_syntax:
+                option = discord.SelectOption(
+                    label=unit_name, value=str(unit_id), emoji=emoji_syntax
+                )
+            else:
+                option = discord.SelectOption(
+                    label=unit_name, value=str(unit_id)
+                )
+            options.append(option)
 
         view = MiniSelectView(options, self, lang)
         await interaction.response.send_message("Gefundene Minis:", view=view, ephemeral=True)
