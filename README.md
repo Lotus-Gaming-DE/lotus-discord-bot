@@ -102,10 +102,14 @@ Persistente Dateien wie Punktedatenbank oder Fragehistorie werden zur Laufzeit i
 /quiz enable           # Quiz aktivieren (Area, Sprache)
 /quiz language         # Sprache des Quiz ändern
 /quiz time             # Zeitfenster konfigurieren
+/quiz duel             # Quiz-Duell starten (bo3, bo5, dynamic)
 /quiz duel             # Quiz-Duell starten (bo3, bo5 oder dynamic)
 /quiz threshold        # Nachrichtenschwelle
 /quiz reset            # Fragehistorie zurücksetzen
 ```
+
+`dynamic` passt die Rundenanzahl flexibel an und ist nur in Areas mit generischen
+Fragequellen verfügbar (derzeit nur `wcr`).
 
 ### Warcraft Rumble
 ```bash

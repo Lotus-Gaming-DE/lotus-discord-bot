@@ -143,7 +143,8 @@ async def ask(interaction: discord.Interaction):
 
     await interaction.response.send_message("✅ Die Frage wurde erstellt.", ephemeral=False)
 
-
+@quiz_group.command(name="duel", description="Starte ein Quiz-Duell (bo3, bo5, dynamic)")
+@app_commands.describe(punkte="Gesetzte Punkte", modus="bo3, bo5 oder dynamic")
 @quiz_group.command(name="duel", description="Starte ein Quiz-Duell")
 @app_commands.describe(punkte="Gesetzte Punkte", modus="Modus des Duells (bo3, bo5 oder dynamic)")
 async def duel(interaction: discord.Interaction, punkte: app_commands.Range[int, 1, 10000], modus: Literal["bo3", "bo5", "dynamic"] = "bo3"):
