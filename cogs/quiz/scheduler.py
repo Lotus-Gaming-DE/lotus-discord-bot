@@ -58,5 +58,6 @@ class QuizScheduler:
 
             cid = self.bot.quiz_data[self.area].channel_id
             self.bot.quiz_cog.awaiting_activity.pop(cid, None)
-            if self.area in self.bot.quiz_cog.current_questions:
-                await self.close_question(self.area, timed_out=True)
+            qinfo = self.bot.quiz_cog.current_questions.get(self.area)
+            if qinfo:
+                await self.close_question(self.area, qinfo=qinfo, timed_out=True)

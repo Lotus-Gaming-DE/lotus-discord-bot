@@ -2,10 +2,43 @@
 
 import json
 import os
-from log_setup import get_logger
+import datetime
+from dataclasses import dataclass
 from typing import Optional
 
+from log_setup import get_logger
+
 logger = get_logger(__name__)
+
+
+@dataclass
+class QuestionInfo:
+    """Typed representation of a stored quiz question."""
+
+    message_id: int
+    end_time: datetime.datetime
+    answers: list[str]
+    frage: str
+    category: str = "–"
+
+    def to_dict(self) -> dict:
+        return {
+            "message_id": self.message_id,
+            "end_time": self.end_time.isoformat(),
+            "answers": self.answers,
+            "frage": self.frage,
+            "category": self.category,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "QuestionInfo":
+        return cls(
+            message_id=data["message_id"],
+            end_time=datetime.datetime.fromisoformat(data["end_time"]),
+            answers=list(data.get("answers", [])),
+            frage=data.get("frage", ""),
+            category=data.get("category", "–"),
+        )
 
 
 class QuestionStateManager:
@@ -42,16 +75,17 @@ class QuestionStateManager:
 
     # ── Aktive Fragen ─────────────────────────────────────────────
 
-    def set_active_question(self, area: str, question: dict) -> None:
+    def set_active_question(self, area: str, question: QuestionInfo) -> None:
         """Remember the currently active question for an area."""
-        self.state["active"][area] = question
+        self.state["active"][area] = question.to_dict()
         logger.info(
             f"[QuestionState] Neue aktive Frage in '{area}' gespeichert.")
         self._save_state()
 
-    def get_active_question(self, area: str) -> Optional[dict]:
+    def get_active_question(self, area: str) -> Optional[QuestionInfo]:
         """Return the active question for ``area`` if one exists."""
-        return self.state.get("active", {}).get(area)
+        data = self.state.get("active", {}).get(area)
+        return QuestionInfo.from_dict(data) if data else None
 
     def clear_active_question(self, area: str) -> None:
         """Remove the active question for ``area`` from the state."""

@@ -192,13 +192,12 @@ async def answer(interaction: discord.Interaction):
     try:
         channel = interaction.client.get_channel(
             quiz_cog.bot.quiz_data[area].channel_id)
-        msg = await channel.fetch_message(question_data["message_id"])
+        msg = await channel.fetch_message(question_data.message_id)
         embed = msg.embeds[0]
         embed.color = discord.Color.red()
 
-        answers = question_data["answers"]
-        answer_text = ", ".join(str(a) for a in answers) if isinstance(
-            answers, (list, set)) else str(answers)
+        answers = question_data.answers
+        answer_text = ", ".join(str(a) for a in answers)
         embed.add_field(name="Richtige Antwort",
                         value=answer_text, inline=False)
         embed.set_footer(text="✋ Frage durch Mod beendet.")
@@ -223,7 +222,7 @@ async def status(interaction: discord.Interaction):
     count = quiz_cog.tracker.get(interaction.channel.id)
     if question_data:
         remaining = int(
-            (question_data["end_time"] - datetime.datetime.utcnow()).total_seconds())
+            (question_data.end_time - datetime.datetime.utcnow()).total_seconds())
         await interaction.response.send_message(
             f"📊 Aktive Frage: noch **{remaining}s**. Nachrichten seit Start: **{count}**.", ephemeral=True
         )

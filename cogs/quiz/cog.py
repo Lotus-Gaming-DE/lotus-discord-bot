@@ -4,7 +4,7 @@ import discord
 
 from log_setup import get_logger, create_logged_task
 
-from .question_state import QuestionStateManager
+from .question_state import QuestionStateManager, QuestionInfo
 from .scheduler import QuizScheduler
 from .question_restorer import QuestionRestorer
 from .question_manager import QuestionManager
@@ -22,7 +22,7 @@ class QuizCog(commands.Cog):
         if not self.bot.quiz_data:
             logger.warning("[QuizCog] Keine Quiz-Konfiguration geladen.")
 
-        self.current_questions: dict[str, dict] = {}
+        self.current_questions: dict[str, QuestionInfo] = {}
         self.answered_users: dict[str, set[int]] = defaultdict(set)
         self.awaiting_activity: dict[int, tuple[str, float]] = {}
 

@@ -2,6 +2,7 @@ import discord
 import asyncio
 
 from log_setup import get_logger
+from .question_state import QuestionInfo
 
 
 class QuestionCloser:
@@ -13,7 +14,7 @@ class QuestionCloser:
     async def close_question(
         self,
         area: str,
-        qinfo: dict,
+        qinfo: QuestionInfo,
         timed_out: bool = False,
         winner: discord.User | None = None,
         correct_answer: str | None = None,
@@ -24,7 +25,7 @@ class QuestionCloser:
         channel = self.bot.get_channel(cfg.channel_id)
 
         try:
-            msg = await channel.fetch_message(qinfo["message_id"])
+            msg = await channel.fetch_message(qinfo.message_id)
             embed = msg.embeds[0]
             embed.color = discord.Color.red()
 
@@ -36,8 +37,7 @@ class QuestionCloser:
                 footer = "✋ Frage durch Mod beendet."
 
             embed.set_footer(text=footer)
-            embed.add_field(name="Richtige Antwort", value=", ".join(
-                qinfo["answers"]), inline=False)
+            embed.add_field(name="Richtige Antwort", value=", ".join(qinfo.answers), inline=False)
             await msg.edit(embed=embed, view=None)
 
             logger.info(f"[Closer] Frage in '{area}' geschlossen: {footer}")

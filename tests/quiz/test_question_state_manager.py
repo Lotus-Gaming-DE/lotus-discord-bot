@@ -1,20 +1,27 @@
 import json
+import datetime
 
 
-from cogs.quiz.question_state import QuestionStateManager
+from cogs.quiz.question_state import QuestionStateManager, QuestionInfo
 
 
 def test_set_active_question(tmp_path):
     state_file = tmp_path / "state.json"
     manager = QuestionStateManager(str(state_file))
-    question = {"id": 1, "text": "foo"}
+    question = QuestionInfo(
+        message_id=1,
+        end_time=datetime.datetime.utcnow(),
+        answers=["a"],
+        frage="foo",
+    )
     manager.set_active_question("area1", question)
 
-    assert manager.get_active_question("area1") == question
+    restored = manager.get_active_question("area1")
+    assert restored == question
 
     with open(state_file, "r", encoding="utf-8") as f:
         saved = json.load(f)
-    assert saved["active"]["area1"] == question
+    assert saved["active"]["area1"] == question.to_dict()
 
 
 def test_mark_question_as_asked(tmp_path):

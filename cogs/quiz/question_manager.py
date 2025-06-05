@@ -6,6 +6,7 @@ import discord
 from log_setup import get_logger
 
 from .views import AnswerButtonView
+from .question_state import QuestionInfo
 
 
 
@@ -86,18 +87,14 @@ class QuestionManager:
         logger.debug(
             f"[QuestionManager] Nachricht ID {sent_msg.id} an Channel {channel.id} gesendet.")
 
-        qinfo = {
-            "message_id": sent_msg.id,
-            "end_time": end_time.isoformat(),
-            "answers": correct_answers,
-            "frage": frage_text,
-            "category": question.get("category", "–")
-        }
-        self.cog.current_questions[area] = {
-            "message_id": sent_msg.id,
-            "end_time": end_time,
-            "answers": correct_answers
-        }
+        qinfo = QuestionInfo(
+            message_id=sent_msg.id,
+            end_time=end_time,
+            answers=correct_answers,
+            frage=frage_text,
+            category=question.get("category", "–"),
+        )
+        self.cog.current_questions[area] = qinfo
         self.cog.answered_users[area].clear()
         self.cog.tracker.reset(channel.id)
         self.cog.awaiting_activity.pop(channel.id, None)

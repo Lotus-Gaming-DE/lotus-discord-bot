@@ -9,6 +9,14 @@ logger = get_logger(__name__)
 
 
 class WCRQuestionProvider(DynamicQuestionProvider):
+    question_generators = [
+        "generate_type_1",
+        "generate_type_2",
+        "generate_type_3",
+        "generate_type_4",
+        "generate_type_5",
+    ]
+
     def __init__(self, bot, language="de"):
         units_data = bot.data["wcr"].get("units", [])
         # ``units.json`` may wrap the list of units in a top level key
@@ -31,16 +39,9 @@ class WCRQuestionProvider(DynamicQuestionProvider):
         return int(digest, 16)
 
     def generate(self):
-        types = [
-            self.generate_type_1,
-            self.generate_type_2,
-            self.generate_type_3,
-            self.generate_type_4,
-            self.generate_type_5,
-        ]
-
         questions = []
-        for func in types:
+        for name in self.question_generators:
+            func = getattr(self, name)
             q = func()
             if q:
                 questions.append(q)
@@ -55,18 +56,7 @@ class WCRQuestionProvider(DynamicQuestionProvider):
 
     def generate_all_types(self) -> list[dict]:
         """Generate one question for every available type."""
-        questions = []
-        for func in [
-            self.generate_type_1,
-            self.generate_type_2,
-            self.generate_type_3,
-            self.generate_type_4,
-            self.generate_type_5,
-        ]:
-            q = func()
-            if q:
-                questions.append(q)
-        return questions
+        return super().generate_all_types()
 
     def generate_type_1(self):
         talents = []
