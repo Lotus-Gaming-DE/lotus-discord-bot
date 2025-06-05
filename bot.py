@@ -113,7 +113,10 @@ class MyBot(commands.Bot):
 
     async def setup_hook(self) -> None:
         """Set up data and register all cogs and slash commands."""
-        # Optional: Commands leeren für Guild (verhindert Ghost-Kommandos bei Updates)
+        # Entferne eventuelle globale Kommandos und sync sie leer
+        self.tree.clear_commands()
+        await self.tree.sync()
+        # Commands für die Guild leeren, um Ghost-Einträge zu vermeiden
         self.tree.clear_commands(guild=self.main_guild)
 
 
