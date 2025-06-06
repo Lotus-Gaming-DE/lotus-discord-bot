@@ -41,6 +41,8 @@ Die wichtigsten Variablen aus `.env`:
 bot_key=DISCORD_BOT_TOKEN
 server_id=DEINE_GUILD_ID
 LOG_LEVEL=INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+# Bei Zertifikatsproblemen kann die Überprüfung für die PTCGP-API deaktiviert werden
+PTCGP_SKIP_SSL_VERIFY=0
 ```
 
 Beim ersten Start werden persistente Daten unter `data/pers/` angelegt (Punktedatenbank, Quiz-Historie etc.).
