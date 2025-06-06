@@ -131,6 +131,7 @@ async def test_apply_role_removes_when_below_threshold(monkeypatch, patch_logged
 
     assert member.removed == [silver]
     assert member.added == []
+    cog.cog_unload()
 
 
 @pytest.mark.asyncio
@@ -153,3 +154,4 @@ async def test_apply_role_prefers_get_member(monkeypatch):
 
     assert guild.get_calls == 1
     assert guild.fetch_calls == 0
+    cog.cog_unload()

@@ -49,7 +49,7 @@ class QuizCog(commands.Cog):
         self.tracker = MessageTracker(bot=self.bot, on_threshold=self.manager.ask_question)
         self.closer = QuestionCloser(bot=self.bot, state=self.state)
 
-        create_logged_task(self.tracker.initialize(), logger)
+        self.init_task = create_logged_task(self.tracker.initialize(), logger)
 
         self.restorer = QuestionRestorer(
             bot=self.bot, state_manager=self.state)
@@ -80,6 +80,10 @@ class QuizCog(commands.Cog):
         self.tracker.register_message(message)
 
     def cog_unload(self):
-        """Cancel all running scheduler tasks when the cog is unloaded."""
+        """Cancel all running tasks when the cog is unloaded."""
         for scheduler in self.schedulers.values():
             scheduler.task.cancel()
+        if hasattr(self, "init_task"):
+            self.init_task.cancel()
+        if hasattr(self.restorer, "cancel_all"):
+            self.restorer.cancel_all()

@@ -575,4 +575,5 @@ class WCRCog(commands.Cog):
             await interaction.followup.send("Ein Fehler ist aufgetreten.", ephemeral=True)
 
     def cog_unload(self):
-        pass
+        """Nothing to clean up when unloading the cog."""
+        return

@@ -1,4 +1,5 @@
 import datetime
+import asyncio
 import discord
 
 from log_setup import get_logger, create_logged_task
@@ -14,6 +15,7 @@ class QuestionRestorer:
         """Restore running questions after a bot restart."""
         self.bot = bot
         self.state = state_manager
+        self.tasks: list[asyncio.Task] = []
 
     def restore_all(self) -> None:
         """Recreate all still active questions from persisted state."""
@@ -27,8 +29,9 @@ class QuestionRestorer:
                     logger.info(
                         f"[Restorer] Wiederhergestellte Frage in '{area}' läuft bis {end_time}."
                     )
-                    create_logged_task(
+                    task = create_logged_task(
                         self.repost_question(area, active), logger)
+                    self.tasks.append(task)
                 else:
                     self.state.clear_active_question(area)
             except Exception as e:
@@ -92,12 +95,18 @@ class QuestionRestorer:
 
             delay = max(
                 (end_time - datetime.datetime.utcnow()).total_seconds(), 0)
-            create_logged_task(
+            task = create_logged_task(
                 self.bot.quiz_cog.closer.auto_close(area, delay), logger
             )
+            self.tasks.append(task)
 
             logger.info(
                 f"[Restorer] Frage in '{area}' wurde erfolgreich wiederhergestellt.")
         except Exception as e:
             logger.error(f"[Restorer] Fehler in '{area}': {e}", exc_info=True)
             self.state.clear_active_question(area)
+
+    def cancel_all(self) -> None:
+        """Cancel all running tasks created by the restorer."""
+        for t in self.tasks:
+            t.cancel()

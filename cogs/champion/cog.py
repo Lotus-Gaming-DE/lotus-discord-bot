@@ -1,4 +1,5 @@
 import discord
+import asyncio
 from discord.ext import commands
 from typing import Optional
 
@@ -17,6 +18,7 @@ class ChampionCog(commands.Cog):
         self.data = ChampionData(db_path)
 
         self.roles = self._load_roles_config()
+        self.tasks: list[asyncio.Task] = []
 
     def _load_roles_config(self) -> list[tuple[str, int]]:
         """Return the role thresholds sorted descending."""
@@ -39,9 +41,10 @@ class ChampionCog(commands.Cog):
         user_id_str = str(user_id)
         new_total = await self.data.add_delta(user_id_str, delta, reason)
 
-        create_logged_task(
+        task = create_logged_task(
             self._apply_champion_role(user_id_str, new_total), logger
         )
+        self.tasks.append(task)
 
         return new_total
 
@@ -111,4 +114,6 @@ class ChampionCog(commands.Cog):
             )
 
     def cog_unload(self):
+        for task in self.tasks:
+            task.cancel()
         create_logged_task(self.data.close(), logger)
