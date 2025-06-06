@@ -1,30 +1,31 @@
-# Developer Guidelines
+# Entwickler-Richtlinien
 
-- Use **guild-based** slash commands only. Register command groups with `bot.tree.add_command(..., guild=bot.main_guild)` and sync via `await bot.tree.sync(guild=bot.main_guild)`.
+- Verwende ausschließlich **guild-basierte Slash-Befehle**. Registriere Befehlsgruppen immer mit `bot.tree.add_command(..., guild=bot.main_guild)` und synchronisiere sie mit `await bot.tree.sync(guild=bot.main_guild)`.
+- Registriere keine globalen Slash-Befehle. Entferne alte globale Befehle mit `self.tree.clear_commands(guild=None)`.
+- Der Bot läuft ausschließlich auf einem **deutschsprachigen Discord-Server**. Alle für Nutzer sichtbaren Texte und Dokumentation sind grundsätzlich auf Deutsch zu verfassen. Unterstützung für weitere Sprachen ist optional und muss explizit genehmigt werden.
+- Der Bot wird auf **Railway** gehostet. Umgebungsvariablen wie `bot_key` und `server_id` werden dort bereitgestellt.
+- Persistente Daten liegen in `data/pers/` und dürfen nicht committet werden.
+- Wenn neue Umgebungsvariablen benötigt werden, passe `.env.example` entsprechend an und dokumentiere sie.
+- Bei Änderungen oder neuen Features aktualisiere die Tests und halte die `README.md` aktuell.
 
-## Codex Workflow for Python
+## Tests & CI
 
-- Always use **4 spaces** per indentation level – never tabs.
-- Save files with **LF line endings**.
-- Remove invisible characters like non-breaking spaces before committing.
-- Run `black .` after modifying Python files to autoformat the code.
-- Verify all Python files with `python -m py_compile <file>`.
-- Lint with `flake8 .` and run `pytest` before every commit.
-- If flake8 shows an `E999` error (e.g. `IndentationError`), check for mixed
-  tabs, invisible characters or CRLF line endings, run `black .` again and
-  repeat the linting until it passes.
-- The bot operates on a **German-only** Discord server. All user-facing strings
-  and documentation should default to **German**. Support for other languages is
-  optional and requires explicit maintainer approval.
-- Do not register global commands. Remove obsolete global commands with
-  `self.tree.clear_commands(guild=None)` if needed.
-- The bot is hosted on **Railway**. Environment variables like `bot_key` and `server_id` are provided there.
-- Unit tests run locally without these variables. Use `monkeypatch.setenv` to simulate them, as shown in `tests/conftest.py`.
-- A fixture `patch_logged_task` is provided for tests to replace `create_logged_task` with a dummy. Use it instead of duplicating patch code.
-- Implement `cog_unload()` in every cog that starts background tasks or loops. Track created tasks and cancel them in this method.
-- Tests must call `cog.cog_unload()` (or otherwise close the bot) to ensure no tasks keep the event loop alive.
-- The CI workflow runs `flake8` for linting. Ensure your code passes the linter before committing.
-- Run `flake8` and `pytest` locally before committing to catch issues early.
-- When features change or new ones are added, update tests as needed and keep the `README.md` in sync.
-- If new environment variables are introduced, update `.env.example` and document them.
-- Persisted data lives in `data/pers/` and should not be committed.
+- Im CI-Workflow (`.github/workflows/tests.yml`) werden automatisch `black .` (Formatierung), `flake8` (Linting) und `pytest` (Tests) bei jedem Push und Pull Request ausgeführt.
+- Unittests laufen lokal ohne Railway-Umgebungsvariablen. Simuliere diese mit `monkeypatch.setenv`, wie in `tests/conftest.py` gezeigt.
+- Nutze das Fixture `patch_logged_task`, um für Tests `create_logged_task` zu ersetzen, statt eigene Patch-Logik zu duplizieren.
+- Implementiere `cog_unload()` in jedem Cog, das Hintergrund-Tasks oder Loops startet. Alle gestarteten Tasks müssen dort erfasst und wieder gestoppt werden.
+- Tests müssen `cog.cog_unload()` (oder alternativ den Bot) aufrufen, um alle Tasks zu beenden und die Event-Loop sauber zu schließen.
+
+## Codex-Workflow für Python
+
+- **Einrückung:** Verwende ausschließlich **4 Leerzeichen** pro Einrückungsebene. Niemals Tabs oder gemischte Einrückung!
+- **Zeilenenden:** Speichere alle Dateien mit **LF (`\n`)**-Zeilenende, niemals CRLF.
+- **Unsichtbare Zeichen:** Entferne vor jedem Commit unsichtbare oder nicht-standardisierte Zeichen (z. B. Non-breaking Spaces).
+- **Formatierung:** Führe nach jeder Änderung `black .` aus, um alle Python-Dateien automatisch zu formatieren.
+- **Syntax & Linting:**
+  - Prüfe alle Python-Dateien mit `python -m py_compile <file>`.
+  - Lint den gesamten Code mit `flake8 .` und führe Tests mit `pytest` aus, bevor du committest oder einen PR erstellst.
+- **Fehlerbehandlung:**
+  - Wenn `flake8` einen Fehler wie `E999` (z. B. `IndentationError: unexpected indent`) meldet, prüfe die betroffene Datei auf gemischte Einrückung, unsichtbare Zeichen oder fehlerhafte Zeilenenden.
+  - Führe anschließend erneut `black .` und `flake8 .` aus, bis alle Fehler behoben und alle Prüfungen bestanden sind.
+- **CI-Priorität:** Alle Formatierungs- und Linting-Schritte werden zusätzlich automatisch im CI ausgeführt. Lokale Prüfung wird dringend empfohlen, ist aber nicht zwingend, solange der CI-Workflow durchläuft.
