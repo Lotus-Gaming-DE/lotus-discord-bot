@@ -44,6 +44,12 @@ class DummyBot:
         self.quiz_data = {"area1": QuizAreaConfig(channel_id=123, activity_threshold=3)}
 
 
+def test_channel_map_created():
+    bot = DummyBot()
+    tracker = MessageTracker(bot, None)
+    assert tracker.channel_to_area == {123: "area1"}
+
+
 def test_register_message_increments_and_triggers(monkeypatch, patch_logged_task):
     bot = DummyBot()
     tracker = MessageTracker(bot, bot.quiz_cog.manager.ask_question)

@@ -91,6 +91,9 @@ def load_quiz_config(bot: commands.Bot):
 
     logger.info(f"[bot] Quiz-Konfiguration geladen: {list(bot.quiz_data.keys())}")
 
+    if hasattr(bot, "quiz_cog") and hasattr(bot.quiz_cog, "tracker"):
+        bot.quiz_cog.tracker.update_mapping()
+
 
 class MyBot(commands.Bot):
     def __init__(self) -> None:
