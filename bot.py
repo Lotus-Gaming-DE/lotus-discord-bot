@@ -154,11 +154,12 @@ class MyBot(commands.Bot):
         load_quiz_config(self)
 
         # Cogs importieren & registrieren
-        from cogs import quiz, wcr, champion
+        from cogs import quiz, wcr, champion, ptcgp
 
         await quiz.setup(self)
         await wcr.setup(self)
         await champion.setup(self)
+        await ptcgp.setup(self)
 
         await self.tree.sync(guild=self.main_guild)
 

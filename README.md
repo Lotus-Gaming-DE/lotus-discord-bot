@@ -54,6 +54,7 @@ Beim ersten Start werden persistente Daten unter `data/pers/` angelegt (Punkteda
 | **Quiz**    | Automatische und manuelle Fragen für verschiedene Spielebereiche, inkl. Quiz-Duelle |
 | **Champion**| Punktesystem mit Ranglisten und automatischen Rollen                    |
 | **WCR**     | Warcraft Rumble: Detailabfragen und Filtersuche mit Autocomplete        |
+| **PTCGP**   | Verwaltung von Pokémon TCG Pocket Karten                               |
 
 ---
 
@@ -101,6 +102,12 @@ Der Modus `dynamic` passt die Rundenzahl automatisch an und steht nur in Areas m
 
 Autocomplete und Fuzzy-Matching erleichtern die Eingabe.
 
+### `/ptcgp`
+
+| Befehl          | Kurzbeschreibung                              |
+|-----------------|------------------------------------------------|
+| `/ptcgp update` | Lädt alle Karten neu *(Mod)*                  |
+| `/ptcgp stats`  | Zeigt die Anzahl gespeicherter Karten         |
 ---
 
 ## Moderatorenbereich

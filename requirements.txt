@@ -3,3 +3,4 @@ Unidecode>=1.4.0
 aiosqlite>=0.18.0
 python-dotenv>=1.0.1
 pytest-asyncio>=0.23.5
+aiohttp>=3.9.5
