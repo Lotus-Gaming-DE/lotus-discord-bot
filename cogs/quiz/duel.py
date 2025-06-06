@@ -209,6 +209,8 @@ class DuelInviteView(View):
             logger.debug(
                 f"[DuelInviteView] thread created: {thread.id if hasattr(thread, 'id') else 'N/A'}"
             )
+            if self.message:
+                await self.message.edit(view=None)
         except Exception as e:
             logger.error(f"Failed to create duel thread: {e}", exc_info=True)
             await champion_cog.update_user_score(

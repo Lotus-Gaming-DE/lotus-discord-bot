@@ -170,7 +170,7 @@ async def test_start_duel_success(monkeypatch):
         (1, -20, "Quiz-Duell Einsatz"),
         (2, -20, "Quiz-Duell Einsatz"),
     ]
-    assert message.edited_view == "INIT"
+    assert message.edited_view is None
     assert run_called
 
 
