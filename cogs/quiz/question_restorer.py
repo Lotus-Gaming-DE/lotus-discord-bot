@@ -11,10 +11,9 @@ logger = get_logger(__name__)
 
 
 class QuestionRestorer:
-    def __init__(self, bot, state_manager, create_task=create_logged_task) -> None:
-        """Restore running questions after a bot restart."""
-        self.bot = bot
-        self.state = state_manager
+                    logger.info(f"[Restorer] Wiederhergestellte Frage in '{area}' läuft bis {end_time}.")
+                        self.repost_question(area, active), logger
+                    )
         self.tasks: list[asyncio.Task] = []
         self.create_task = create_task
 
