@@ -38,7 +38,11 @@ def fake_task_scheduler_2(coro, logger):
 async def test_scheduler_resume(monkeypatch, patch_logged_task, tmp_path):
     patch_logged_task(quiz_cog_mod, msg_mod)
     monkeypatch.setattr(scheduler_mod, "create_logged_task", fake_task_scheduler)
-    monkeypatch.setattr(quiz_cog_mod.QuestionRestorer, "restore_all", lambda self: None)
+
+    async def dummy_restore(self):
+        return None
+
+    monkeypatch.setattr(quiz_cog_mod.QuestionRestorer, "restore_all", dummy_restore)
 
     async def dummy_prepare(self, area, end):
         raise asyncio.CancelledError()
@@ -89,7 +93,11 @@ async def test_scheduler_resume(monkeypatch, patch_logged_task, tmp_path):
     # simulate restart
     patch_logged_task(quiz_cog_mod, msg_mod)
     monkeypatch.setattr(scheduler_mod, "create_logged_task", fake_task_scheduler_2)
-    monkeypatch.setattr(quiz_cog_mod.QuestionRestorer, "restore_all", lambda self: None)
+
+    async def dummy_restore2(self):
+        return None
+
+    monkeypatch.setattr(quiz_cog_mod.QuestionRestorer, "restore_all", dummy_restore2)
 
     bot2 = DummyBot()
     bot2.data = bot.data

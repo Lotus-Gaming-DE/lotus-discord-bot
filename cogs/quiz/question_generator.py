@@ -26,7 +26,7 @@ class QuestionGenerator:
         """Return the dynamic provider for ``area`` if available."""
         return self.dynamic_providers.get(area)
 
-    def generate(
+    async def generate(
         self, area: str | None = None, language: str = "de"
     ) -> Dict[str, Any] | None:
         """Generate a new question for ``area`` in the given ``language``."""
@@ -70,7 +70,7 @@ class QuestionGenerator:
         # store only the question ID in history to avoid unhashable entries
         question_id = question.get("id")
         if question_id is not None:
-            self.state_manager.mark_question_as_asked(area, question_id)
+            await self.state_manager.mark_question_as_asked(area, question_id)
         else:
             logger.warning(
                 f"[QuestionGenerator] Frage ohne ID in '{area}' kann nicht in der Historie gespeichert werden."

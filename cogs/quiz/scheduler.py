@@ -59,7 +59,9 @@ class QuizScheduler:
                     seconds=random.uniform(0, 10)
                 )
 
-                self.bot.quiz_cog.state.set_schedule(self.area, post_time, window_end)
+                await self.bot.quiz_cog.state.set_schedule(
+                    self.area, post_time, window_end
+                )
 
                 self.logger.info(
                     f"[Scheduler] Neues Zeitfenster für '{self.area}' bis {window_end:%H:%M}. "
@@ -79,7 +81,7 @@ class QuizScheduler:
                 f"[Scheduler] Wache auf – prüfe Bedingungen für '{self.area}'..."
             )
             await self.prepare_question(self.area, window_end)
-            self.bot.quiz_cog.state.clear_schedule(self.area)
+            await self.bot.quiz_cog.state.clear_schedule(self.area)
 
             await asyncio.sleep(
                 max((window_end - datetime.datetime.utcnow()).total_seconds(), 0)

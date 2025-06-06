@@ -50,7 +50,7 @@ class QuestionCloser:
             )
 
         self.bot.quiz_cog.current_questions.pop(area, None)
-        self.state.clear_active_question(area)
+        await self.state.clear_active_question(area)
         self.bot.quiz_cog.tracker.set_initialized(cfg.channel_id)
 
     async def auto_close(self, area: str, delay: float) -> None:
