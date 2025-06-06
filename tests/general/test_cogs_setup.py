@@ -1,7 +1,6 @@
 import pytest
 
 
-
 from cogs import quiz, champion, wcr
 from cogs.quiz.slash_commands import quiz_group
 from cogs.champion.slash_commands import champion_group, syncroles

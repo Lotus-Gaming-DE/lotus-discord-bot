@@ -12,7 +12,9 @@ class DummyBot:
         self.quiz_data = {}
         self.data = {
             "quiz": {
-                "questions": {"de": {"wcr": [{"id": 1, "frage": "f", "antwort": "a"}], "d4": []}},
+                "questions": {
+                    "de": {"wcr": [{"id": 1, "frage": "f", "antwort": "a"}], "d4": []}
+                },
                 "languages": ["de"],
             },
             "wcr": {"units": [], "pictures": {}, "locals": {"de": {}, "en": {}}},
@@ -21,7 +23,13 @@ class DummyBot:
 
 def test_load_quiz_config(tmp_path, monkeypatch):
     cfg = {
-        "wcr": {"channel_id": 1, "window_timer": 5, "language": "de", "active": True, "activity_threshold": 3},
+        "wcr": {
+            "channel_id": 1,
+            "window_timer": 5,
+            "language": "de",
+            "active": True,
+            "activity_threshold": 3,
+        },
         "d4": {"channel_id": 2, "window_timer": 10, "language": "de", "active": False},
     }
     cfg_file = tmp_path / "areas.json"

@@ -1,6 +1,8 @@
-
-
-from cogs.quiz.utils import create_permutations, create_permutations_list, normalize_text
+from cogs.quiz.utils import (
+    create_permutations,
+    create_permutations_list,
+    normalize_text,
+)
 
 
 def test_create_permutations():

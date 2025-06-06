@@ -36,9 +36,7 @@ class AnswerModal(Modal, title="Antwort eingeben"):
             # Punkt im Champion-System vergeben
             champion_cog = self.cog.bot.get_cog("ChampionCog")
             if champion_cog:
-                await champion_cog.update_user_score(
-                    user_id, 1, f"Quiz: {self.area}"
-                )
+                await champion_cog.update_user_score(user_id, 1, f"Quiz: {self.area}")
                 logger.info(
                     f"[Champion] {user.display_name} erhält 1 Punkt für '{self.area}'."
                 )
@@ -54,7 +52,7 @@ class AnswerModal(Modal, title="Antwort eingeben"):
                     qinfo=qinfo,
                     timed_out=False,
                     winner=user,
-                    correct_answer=eingabe
+                    correct_answer=eingabe,
                 )
 
             logger.info(

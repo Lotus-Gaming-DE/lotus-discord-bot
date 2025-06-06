@@ -22,7 +22,9 @@ class MiniSelectView(discord.ui.View):
 class MiniSelect(discord.ui.Select):
     def __init__(self, options, cog, lang) -> None:
         """Dropdown to choose a mini."""
-        super().__init__(placeholder="Wähle ein Mini aus", options=options, max_values=1)
+        super().__init__(
+            placeholder="Wähle ein Mini aus", options=options, max_values=1
+        )
         self.cog = cog
         self.lang = lang
 

@@ -14,10 +14,16 @@ class DummyBot:
             "wcr": {
                 "units": json.load(open("data/wcr/units.json", "r", encoding="utf-8")),
                 "locals": {
-                    "de": json.load(open("data/wcr/locals/de.json", "r", encoding="utf-8")),
-                    "en": json.load(open("data/wcr/locals/en.json", "r", encoding="utf-8")),
+                    "de": json.load(
+                        open("data/wcr/locals/de.json", "r", encoding="utf-8")
+                    ),
+                    "en": json.load(
+                        open("data/wcr/locals/en.json", "r", encoding="utf-8")
+                    ),
                 },
-                "pictures": json.load(open("data/wcr/pictures.json", "r", encoding="utf-8")),
+                "pictures": json.load(
+                    open("data/wcr/pictures.json", "r", encoding="utf-8")
+                ),
             },
         }
 
@@ -129,6 +135,8 @@ def test_resolve_unit_cross_language():
     assert unit_id == 1
     assert lang == "en"
     cog.cog_unload()
+
+
 @pytest.mark.asyncio
 async def test_select_view_timeout_disables_select():
     bot = DummyBot()

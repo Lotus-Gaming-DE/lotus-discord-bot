@@ -26,7 +26,9 @@ class QuestionGenerator:
         """Return the dynamic provider for ``area`` if available."""
         return self.dynamic_providers.get(area)
 
-    def generate(self, area: str | None = None, language: str = "de") -> Dict[str, Any] | None:
+    def generate(
+        self, area: str | None = None, language: str = "de"
+    ) -> Dict[str, Any] | None:
         """Generate a new question for ``area`` in the given ``language``."""
         if not area:
             logger.warning("[QuestionGenerator] Keine Area angegeben.")
@@ -37,16 +39,19 @@ class QuestionGenerator:
             question = provider.generate()
             questions = [question] if question else []
             logger.debug(
-                f"[QuestionGenerator] Dynamische Frage für '{area}': {len(questions)}")
+                f"[QuestionGenerator] Dynamische Frage für '{area}': {len(questions)}"
+            )
         else:
             questions = self.questions_by_area.get(language, {}).get(area, [])
             logger.debug(
-                f"[QuestionGenerator] Statische Fragen für '{area}': {len(questions)}")
+                f"[QuestionGenerator] Statische Fragen für '{area}': {len(questions)}"
+            )
 
         unasked = self.state_manager.filter_unasked_questions(area, questions)
         if not unasked:
             logger.info(
-                f"[QuestionGenerator] Alle Fragen für '{area}' wurden bereits gestellt.")
+                f"[QuestionGenerator] Alle Fragen für '{area}' wurden bereits gestellt."
+            )
             return None
 
         question = random.choice(unasked)
@@ -59,5 +64,6 @@ class QuestionGenerator:
                 f"[QuestionGenerator] Frage ohne ID in '{area}' kann nicht in der Historie gespeichert werden."
             )
         logger.info(
-            f"[QuestionGenerator] Neue Frage für '{area}': {question.get('frage')}")
+            f"[QuestionGenerator] Neue Frage für '{area}': {question.get('frage')}"
+        )
         return question

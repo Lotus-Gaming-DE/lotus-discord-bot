@@ -60,7 +60,9 @@ async def test_scheduler_resume(monkeypatch, patch_logged_task, tmp_path):
     }
 
     cog = quiz_cog_mod.QuizCog(bot)
-    monkeypatch.setattr(bot, "get_cog", lambda name: cog if name == "QuizCog" else None, raising=False)
+    monkeypatch.setattr(
+        bot, "get_cog", lambda name: cog if name == "QuizCog" else None, raising=False
+    )
 
     async def instant_sleep(delay):
         return
@@ -70,6 +72,7 @@ async def test_scheduler_resume(monkeypatch, patch_logged_task, tmp_path):
 
     monkeypatch.setattr(scheduler_mod.asyncio, "sleep", instant_sleep)
     monkeypatch.setattr(scheduler_mod.random, "uniform", lambda a, b: 0)
+
     async def wait_ready():
         return
 

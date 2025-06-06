@@ -18,7 +18,12 @@ class DuelConfig:
 
 
 class DuelQuestionView(View):
-    def __init__(self, challenger: discord.Member, opponent: discord.Member, correct_answers: list[str]) -> None:
+    def __init__(
+        self,
+        challenger: discord.Member,
+        opponent: discord.Member,
+        correct_answers: list[str],
+    ) -> None:
         """View handling question answers of a duel round."""
         super().__init__(timeout=20)
         self.challenger = challenger
@@ -33,14 +38,16 @@ class DuelQuestionView(View):
     async def answer(self, interaction: discord.Interaction, _: Button) -> None:
         """Collect an answer from one of the duel participants."""
         if interaction.user.id not in self.players:
-            await interaction.response.send_message("Du bist nicht Teil dieses Duells.", ephemeral=True)
+            await interaction.response.send_message(
+                "Du bist nicht Teil dieses Duells.", ephemeral=True
+            )
             return
         if interaction.user.id in self.responses:
-            await interaction.response.send_message("Du hast bereits geantwortet.", ephemeral=True)
+            await interaction.response.send_message(
+                "Du hast bereits geantwortet.", ephemeral=True
+            )
             return
-        logger.debug(
-            f"Duel answer modal opened by {interaction.user}"
-        )
+        logger.debug(f"Duel answer modal opened by {interaction.user}")
         modal = _DuelAnswerModal(self)
         await interaction.response.send_modal(modal)
 
@@ -79,7 +86,10 @@ class _DuelAnswerModal(Modal, title="Antwort eingeben"):
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         """Store the answer and finish if all players responded."""
-        self.view.responses[interaction.user.id] = (self.answer.value, interaction.created_at or datetime.datetime.utcnow())
+        self.view.responses[interaction.user.id] = (
+            self.answer.value,
+            interaction.created_at or datetime.datetime.utcnow(),
+        )
         await interaction.response.send_message("Antwort erhalten.", ephemeral=True)
         if len(self.view.responses) >= len(self.view.players):
             await self.view._finish()
@@ -104,15 +114,17 @@ class DuelInviteView(View):
     async def accept(self, interaction: discord.Interaction, _: Button) -> None:
         """Start the duel if the invitee accepts."""
         if interaction.user.id == self.challenger.id:
-            await interaction.response.send_message("Du kannst dein eigenes Duell nicht annehmen.", ephemeral=True)
+            await interaction.response.send_message(
+                "Du kannst dein eigenes Duell nicht annehmen.", ephemeral=True
+            )
             return
         if self.accepted:
-            await interaction.response.send_message("Das Duell wurde bereits angenommen.", ephemeral=True)
+            await interaction.response.send_message(
+                "Das Duell wurde bereits angenommen.", ephemeral=True
+            )
             return
         self.accepted = True
-        logger.info(
-            f"Duel accepted by {interaction.user} against {self.challenger}"
-        )
+        logger.info(f"Duel accepted by {interaction.user} against {self.challenger}")
         await interaction.response.defer()
         await self.start_duel(interaction)
 
@@ -143,11 +155,11 @@ class DuelInviteView(View):
             self.accepted = False
             return
 
-        current_opponent = await champion_cog.data.get_total(
-            str(interaction.user.id)
-        )
+        current_opponent = await champion_cog.data.get_total(str(interaction.user.id))
         if current_opponent < self.cfg.points:
-            await interaction.followup.send("Du hast nicht genug Punkte.", ephemeral=True)
+            await interaction.followup.send(
+                "Du hast nicht genug Punkte.", ephemeral=True
+            )
             self.accepted = False
             return
 
@@ -238,15 +250,27 @@ class QuizDuelGame:
                 await self.thread.send("Keine Frage generiert. Duell abgebrochen.")
                 champion_cog = self.cog.bot.get_cog("ChampionCog")
                 if champion_cog:
-                    await champion_cog.update_user_score(self.challenger.id, self.stake, "Quiz-Duell Rückgabe")
-                    await champion_cog.update_user_score(self.opponent.id, self.stake, "Quiz-Duell Rückgabe")
+                    await champion_cog.update_user_score(
+                        self.challenger.id, self.stake, "Quiz-Duell Rückgabe"
+                    )
+                    await champion_cog.update_user_score(
+                        self.opponent.id, self.stake, "Quiz-Duell Rückgabe"
+                    )
                 await self.thread.edit(archived=True)
                 return
 
             views: list[DuelQuestionView] = []
             for idx, question in enumerate(questions, start=1):
-                answers = question["antwort"] if isinstance(question["antwort"], list) else [question["antwort"]]
-                embed = discord.Embed(title=f"Frage {idx}", description=question["frage"], color=discord.Color.blue())
+                answers = (
+                    question["antwort"]
+                    if isinstance(question["antwort"], list)
+                    else [question["antwort"]]
+                )
+                embed = discord.Embed(
+                    title=f"Frage {idx}",
+                    description=question["frage"],
+                    color=discord.Color.blue(),
+                )
                 view = DuelQuestionView(self.challenger, self.opponent, answers)
                 msg = await self.thread.send(embed=embed, view=view)
                 view.message = msg
@@ -255,7 +279,10 @@ class QuizDuelGame:
             for v in views:
                 await v.wait()
 
-            last_correct: dict[int, datetime.datetime | None] = {self.challenger.id: None, self.opponent.id: None}
+            last_correct: dict[int, datetime.datetime | None] = {
+                self.challenger.id: None,
+                self.opponent.id: None,
+            }
             for v in views:
                 for uid, (answer, ts) in v.responses.items():
                     if check_answer(answer, v.correct_answers):
@@ -301,8 +328,16 @@ class QuizDuelGame:
                     )
                 await self.thread.edit(archived=True)
                 return
-            answers = question["antwort"] if isinstance(question["antwort"], list) else [question["antwort"]]
-            embed = discord.Embed(title=f"Runde {rnd}", description=question["frage"], color=discord.Color.blue())
+            answers = (
+                question["antwort"]
+                if isinstance(question["antwort"], list)
+                else [question["antwort"]]
+            )
+            embed = discord.Embed(
+                title=f"Runde {rnd}",
+                description=question["frage"],
+                color=discord.Color.blue(),
+            )
             view = DuelQuestionView(self.challenger, self.opponent, answers)
             msg = await self.thread.send(embed=embed, view=view)
             view.message = msg
@@ -312,11 +347,18 @@ class QuizDuelGame:
                 self.scores[winner_id] += 1
                 name = self.cog.bot.get_user(winner_id).display_name
                 logger.debug(f"Round {rnd} won by {name}")
-                await self.thread.send(f"✅ {name} gewinnt diese Runde. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})")
+                await self.thread.send(
+                    f"✅ {name} gewinnt diese Runde. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})"
+                )
             else:
                 logger.debug(f"Round {rnd} no correct answer")
-                await self.thread.send(f"❌ Keine richtige Antwort. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})")
-            if self.scores[self.challenger.id] >= needed or self.scores[self.opponent.id] >= needed:
+                await self.thread.send(
+                    f"❌ Keine richtige Antwort. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})"
+                )
+            if (
+                self.scores[self.challenger.id] >= needed
+                or self.scores[self.opponent.id] >= needed
+            ):
                 break
         await self._finish()
 
@@ -335,7 +377,11 @@ class QuizDuelGame:
         winner: discord.Member | None = None
 
         if self.winner_id:
-            winner = self.challenger if self.winner_id == self.challenger.id else self.opponent
+            winner = (
+                self.challenger
+                if self.winner_id == self.challenger.id
+                else self.opponent
+            )
         elif challenger_score > opponent_score:
             winner = self.challenger
         elif opponent_score > challenger_score:
@@ -346,14 +392,20 @@ class QuizDuelGame:
         )
 
         if winner:
-            await champion_cog.update_user_score(winner.id, self.pot, "Quiz-Duell Gewinn")
+            await champion_cog.update_user_score(
+                winner.id, self.pot, "Quiz-Duell Gewinn"
+            )
             await self.thread.send(
                 f"🏆 {winner.display_name} gewinnt das Duell und erhält {self.pot} Punkte!"
             )
         else:
             refund = self.pot // 2
-            await champion_cog.update_user_score(self.challenger.id, refund, "Quiz-Duell Rückgabe")
-            await champion_cog.update_user_score(self.opponent.id, refund, "Quiz-Duell Rückgabe")
+            await champion_cog.update_user_score(
+                self.challenger.id, refund, "Quiz-Duell Rückgabe"
+            )
+            await champion_cog.update_user_score(
+                self.opponent.id, refund, "Quiz-Duell Rückgabe"
+            )
             await self.thread.send("Unentschieden. Einsätze zurück an Spieler.")
 
         await self.thread.send(

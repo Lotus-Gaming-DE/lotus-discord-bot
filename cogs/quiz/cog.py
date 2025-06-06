@@ -10,13 +10,16 @@ from .scheduler import QuizScheduler
 from .question_restorer import QuestionRestorer
 from .question_manager import QuestionManager
 from .message_tracker import MessageTracker
-from .question_closer import QuestionCloser
+                (
+                    cfg.question_state
+                    if hasattr(cfg, "question_state")
+                    else cfg.get("question_state")
+                )
 
-logger = get_logger(__name__)
-
-
-class QuizCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+        self.tracker = MessageTracker(
+            bot=self.bot, on_threshold=self.manager.ask_question
+        )
+        self.restorer = QuestionRestorer(bot=self.bot, state_manager=self.state)
         self.bot = bot
         self.bot.quiz_cog = self
 

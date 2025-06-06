@@ -14,19 +14,19 @@ def setup_logging(log_level: str = "INFO"):
     log_level = log_level.upper()
     level = getattr(logging, log_level, logging.INFO)
 
-    formatter = logging.Formatter(
-        "%(asctime)s %(levelname)s:%(name)s: %(message)s")
+    formatter = logging.Formatter("%(asctime)s %(levelname)s:%(name)s: %(message)s")
 
     handlers = [logging.StreamHandler()]
-    file_handler = RotatingFileHandler(
-        "bot.log", maxBytes=1_000_000, backupCount=3)
+    file_handler = RotatingFileHandler("bot.log", maxBytes=1_000_000, backupCount=3)
     file_handler.setFormatter(formatter)
     handlers.append(file_handler)
 
-    logging.basicConfig(level=level,
-                        format="%(asctime)s %(levelname)s:%(name)s: %(message)s",
-                        handlers=handlers,
-                        force=True)
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s %(levelname)s:%(name)s: %(message)s",
+        handlers=handlers,
+        force=True,
+    )
 
     logging.getLogger("discord").setLevel(logging.WARNING)
 

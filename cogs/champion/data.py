@@ -47,9 +47,7 @@ class ChampionData:
             );
             """
         )
-        await db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_points_total ON points(total)"
-        )
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_points_total ON points(total)")
         await db.commit()
         self._init_done = True
 
@@ -125,7 +123,9 @@ class ChampionData:
 
         return [{"delta": r[0], "reason": r[1], "date": r[2]} for r in rows]
 
-    async def get_leaderboard(self, limit: int = 10, offset: int = 0) -> list[tuple[str, int]]:
+    async def get_leaderboard(
+        self, limit: int = 10, offset: int = 0
+    ) -> list[tuple[str, int]]:
         await self.init_db()
         db = await self._get_db()
         cur = await db.execute(

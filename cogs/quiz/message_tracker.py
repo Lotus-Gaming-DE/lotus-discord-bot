@@ -28,7 +28,8 @@ class MessageTracker:
                 channel = await self.bot.fetch_channel(channel_id)
                 if not isinstance(channel, discord.TextChannel):
                     logger.warning(
-                        f"[Tracker] Channel {channel_id} ist kein TextChannel.")
+                        f"[Tracker] Channel {channel_id} ist kein TextChannel."
+                    )
                     continue
 
                 messages = [
@@ -37,26 +38,34 @@ class MessageTracker:
                         limit=max(20, cfg.activity_threshold)
                     )
                 ]
-                quiz_index = next((i for i, msg in enumerate(messages)
-                                   if msg.author.id == self.bot.user.id and msg.embeds and
-                                   msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")), None)
+                quiz_index = next(
+                    (
+                        i
+                        for i, msg in enumerate(messages)
+                        if msg.author.id == self.bot.user.id
+                        and msg.embeds
+                        and msg.embeds[0].title.startswith(f"Quiz für {area.upper()}")
+                    ),
+                    None,
+                )
 
                 threshold = cfg.activity_threshold
                 if quiz_index is not None:
-                    count = len([
-                        m for m in messages[:quiz_index] if not m.author.bot
-                    ])
+                    count = len([m for m in messages[:quiz_index] if not m.author.bot])
                     self.message_counter[channel.id] = count
                 else:
                     self.message_counter[channel.id] = threshold
 
                 self.channel_initialized[channel.id] = True
                 logger.info(
-                    f"[Tracker] Initialisiert: '{area}' (Channel {channel.id}) – Zähler: {self.message_counter[channel.id]} ({round(time.time()-start, 2)}s)")
+                    f"[Tracker] Initialisiert: '{area}' (Channel {channel.id}) – Zähler: {self.message_counter[channel.id]} ({round(time.time()-start, 2)}s)"
+                )
 
             except Exception as e:
                 logger.error(
-                    f"[Tracker] Fehler bei Initialisierung von '{area}' (Channel-ID {channel_id}): {e}", exc_info=True)
+                    f"[Tracker] Fehler bei Initialisierung von '{area}' (Channel-ID {channel_id}): {e}",
+                    exc_info=True,
+                )
 
     def register_message(self, message: discord.Message) -> str | None:
         """Count a message and trigger a question if threshold is reached."""
@@ -86,7 +95,7 @@ class MessageTracker:
                     self.on_threshold(
                         area, self.bot.quiz_cog.awaiting_activity[cid][1]
                     ),
-                    logger
+                    logger,
                 )
 
         return area

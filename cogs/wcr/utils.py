@@ -36,9 +36,7 @@ def load_languages():
                 result[lang] = json.load(f)
         except Exception as e:
             logger.error(f"[WCRUtils] Fehler beim Laden von {file}: {e}")
-    logger.info(
-        f"[WCRUtils] Sprachdateien erfolgreich geladen: {list(result.keys())}"
-    )
+    logger.info(f"[WCRUtils] Sprachdateien erfolgreich geladen: {list(result.keys())}")
     return result
 
 

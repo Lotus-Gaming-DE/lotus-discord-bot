@@ -37,13 +37,17 @@ class QuestionCloser:
                 footer = "✋ Frage durch Mod beendet."
 
             embed.set_footer(text=footer)
-            embed.add_field(name="Richtige Antwort", value=", ".join(qinfo.answers), inline=False)
+            embed.add_field(
+                name="Richtige Antwort", value=", ".join(qinfo.answers), inline=False
+            )
             await msg.edit(embed=embed, view=None)
 
             logger.info(f"[Closer] Frage in '{area}' geschlossen: {footer}")
         except Exception as e:
             logger.warning(
-                f"[Closer] Fehler beim Schließen der Frage in '{area}': {e}", exc_info=True)
+                f"[Closer] Fehler beim Schließen der Frage in '{area}': {e}",
+                exc_info=True,
+            )
 
         self.bot.quiz_cog.current_questions.pop(area, None)
         self.state.clear_active_question(area)

@@ -3,6 +3,7 @@ import pytest
 
 from cogs.champion.data import ChampionData
 
+
 @pytest.mark.asyncio
 async def test_add_and_get_total(tmp_path):
     db_path = tmp_path / "subdir" / "points.db"
@@ -21,6 +22,7 @@ async def test_add_and_get_total(tmp_path):
     db_path.unlink()
     assert not db_path.exists()
 
+
 @pytest.mark.asyncio
 async def test_get_history(tmp_path):
     db_path = tmp_path / "history" / "points.db"
@@ -37,6 +39,7 @@ async def test_get_history(tmp_path):
     await data.close()
     db_path.unlink()
     assert not db_path.exists()
+
 
 @pytest.mark.asyncio
 async def test_leaderboard_and_rank(tmp_path):

@@ -6,9 +6,15 @@ from log_setup import get_logger, create_logged_task
 
 
 class QuizScheduler:
-    def __init__(self, bot, area: str, prepare_question_callback, close_question_callback,
-                 post_time: datetime.datetime | None = None,
-                 window_end: datetime.datetime | None = None) -> None:
+    def __init__(
+        self,
+        bot,
+        area: str,
+        prepare_question_callback,
+        close_question_callback,
+        post_time: datetime.datetime | None = None,
+        window_end: datetime.datetime | None = None,
+    ) -> None:
         """Schedule automatic quiz questions for one area."""
         self.bot = bot
         self.area = area
@@ -24,7 +30,8 @@ class QuizScheduler:
         await self.bot.wait_until_ready()
         if self.area not in self.bot.quiz_data:
             self.logger.warning(
-                f"[Scheduler] '{self.area}' nicht in quiz_data vorhanden.")
+                f"[Scheduler] '{self.area}' nicht in quiz_data vorhanden."
+            )
             return
 
         while True:
@@ -48,7 +55,9 @@ class QuizScheduler:
                 next_time = window_start + datetime.timedelta(
                     seconds=random.uniform(0, time_window.total_seconds() / 2)
                 )
-                post_time = next_time + datetime.timedelta(seconds=random.uniform(0, 10))
+                post_time = next_time + datetime.timedelta(
+                    seconds=random.uniform(0, 10)
+                )
 
                 self.bot.quiz_cog.state.set_schedule(self.area, post_time, window_end)
 
@@ -62,15 +71,19 @@ class QuizScheduler:
 
             if self.area not in self.bot.quiz_data:
                 self.logger.warning(
-                    f"[Scheduler] '{self.area}' nicht mehr in quiz_data.")
+                    f"[Scheduler] '{self.area}' nicht mehr in quiz_data."
+                )
                 return
 
             self.logger.debug(
-                f"[Scheduler] Wache auf – prüfe Bedingungen für '{self.area}'...")
+                f"[Scheduler] Wache auf – prüfe Bedingungen für '{self.area}'..."
+            )
             await self.prepare_question(self.area, window_end)
             self.bot.quiz_cog.state.clear_schedule(self.area)
 
-            await asyncio.sleep(max((window_end - datetime.datetime.utcnow()).total_seconds(), 0))
+            await asyncio.sleep(
+                max((window_end - datetime.datetime.utcnow()).total_seconds(), 0)
+            )
 
             cid = self.bot.quiz_data[self.area].channel_id
             self.bot.quiz_cog.awaiting_activity.pop(cid, None)

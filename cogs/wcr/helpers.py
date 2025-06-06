@@ -38,9 +38,7 @@ def get_text_data(unit_id: int, lang: str, languages: dict) -> tuple[str, str, l
 def get_pose_url(unit_id: int, pictures: dict) -> str:
     """Return the pose image URL for a unit."""
     unit_pictures = pictures.get("units", [])
-    unit_picture = next(
-        (pic for pic in unit_pictures if pic["id"] == unit_id), {}
-    )
+    unit_picture = next((pic for pic in unit_pictures if pic["id"] == unit_id), {})
     return unit_picture.get("pose", "")
 
 
@@ -49,20 +47,20 @@ def get_faction_data(faction_id: int, pictures: dict) -> dict:
     factions = pictures.get("category_lookup", {}).get("factions")
     if factions is None:
         factions = {
-            f["id"]: f
-            for f in pictures.get("categories", {}).get("factions", [])
+            f["id"]: f for f in pictures.get("categories", {}).get("factions", [])
         }
     return factions.get(faction_id, {})
 
 
-def get_category_name(category: str, category_id: int, lang: str, languages: dict) -> str:
+def get_category_name(
+    category: str, category_id: int, lang: str, languages: dict
+) -> str:
     """Return the localized name of a category item."""
     cat_lookup = languages.get(lang, {}).get("category_lookup")
     if cat_lookup is None:
         categories = languages.get(lang, {}).get("categories", {})
         cat_lookup = {
-            k: {item["id"]: item for item in v}
-            for k, v in categories.items()
+            k: {item["id"]: item for item in v} for k, v in categories.items()
         }
     item = cat_lookup.get(category, {}).get(category_id)
     if item:
@@ -78,10 +76,12 @@ def get_faction_icon(faction_id: int, pictures: dict) -> str:
 
 def normalize_name(name: str) -> list[str]:
     """Normalize a name for comparison and return a list of tokens."""
-    return ''.join(c for c in name if c.isalnum() or c.isspace()).lower().split()
+    return "".join(c for c in name if c.isalnum() or c.isspace()).lower().split()
 
 
-def find_category_id(category_name: str, category: str, lang: str, languages: dict) -> int | None:
+def find_category_id(
+    category_name: str, category: str, lang: str, languages: dict
+) -> int | None:
     """Return the ID of ``category_name`` searching all languages."""
     # Zuerst in der aktuellen Sprache suchen
     lookup = languages[lang].get("category_lookup")
@@ -92,9 +92,15 @@ def find_category_id(category_name: str, category: str, lang: str, languages: di
         }
     category_dict = lookup.get(category, {})
     matching_item = next(
-        (item for item in category_dict.values() if item['name'].lower() == category_name.lower()), None)
+        (
+            item
+            for item in category_dict.values()
+            if item["name"].lower() == category_name.lower()
+        ),
+        None,
+    )
     if matching_item:
-        return matching_item['id']
+        return matching_item["id"]
 
     # In anderen Sprachen suchen
     for other_lang, other_texts in languages.items():
@@ -108,9 +114,15 @@ def find_category_id(category_name: str, category: str, lang: str, languages: di
             }
         category_dict = lookup.get(category, {})
         matching_item = next(
-            (item for item in category_dict.values() if item['name'].lower() == category_name.lower()), None)
+            (
+                item
+                for item in category_dict.values()
+                if item["name"].lower() == category_name.lower()
+            ),
+            None,
+        )
         if matching_item:
-            return matching_item['id']
+            return matching_item["id"]
 
     # Wenn nicht gefunden, None zurückgeben
     return None

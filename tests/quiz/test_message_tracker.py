@@ -1,5 +1,3 @@
-
-
 from cogs.quiz.message_tracker import MessageTracker
 import cogs.quiz.message_tracker as msg_mod
 import pytest
@@ -21,7 +19,9 @@ class DummyMessage:
     def __init__(self, cid, is_bot=False, embed_title=None, uid=0):
         self.author = DummyAuthor(is_bot, uid)
         self.channel = DummyChannel(cid)
-        self.embeds = [type("Embed", (), {"title": embed_title})()] if embed_title else []
+        self.embeds = (
+            [type("Embed", (), {"title": embed_title})()] if embed_title else []
+        )
 
 
 class DummyManager:
@@ -94,7 +94,9 @@ async def test_initialize_counts_history(monkeypatch):
 
     class DummyBot:
         def __init__(self):
-            self.quiz_data = {"area1": QuizAreaConfig(channel_id=123, activity_threshold=3)}
+            self.quiz_data = {
+                "area1": QuizAreaConfig(channel_id=123, activity_threshold=3)
+            }
             self.user = type("User", (), {"id": 999})()
 
         async def wait_until_ready(self):
@@ -132,7 +134,9 @@ async def test_initialize_uses_threshold_when_no_quiz(monkeypatch):
 
     class DummyBot:
         def __init__(self):
-            self.quiz_data = {"area1": QuizAreaConfig(channel_id=123, activity_threshold=3)}
+            self.quiz_data = {
+                "area1": QuizAreaConfig(channel_id=123, activity_threshold=3)
+            }
             self.user = type("User", (), {"id": 999})()
 
         async def wait_until_ready(self):

@@ -25,7 +25,7 @@ class ChampionCog(commands.Cog):
         role_entries = self.bot.data.get("champion", {}).get("roles", [])
         sorted_roles = sorted(
             [(entry["name"], entry["threshold"]) for entry in role_entries],
-            key=lambda x: -x[1]
+            key=lambda x: -x[1],
         )
         return sorted_roles
 
@@ -62,11 +62,14 @@ class ChampionCog(commands.Cog):
                 member = await guild.fetch_member(int(user_id_str))
         except discord.NotFound:
             logger.info(
-                f"[ChampionCog] Member {user_id_str} nicht gefunden (vermutlich nicht mehr im Server).")
+                f"[ChampionCog] Member {user_id_str} nicht gefunden (vermutlich nicht mehr im Server)."
+            )
             return
         except discord.HTTPException as e:
             logger.error(
-                f"[ChampionCog] Fehler beim Laden von Member {user_id_str}: {e}", exc_info=True)
+                f"[ChampionCog] Fehler beim Laden von Member {user_id_str}: {e}",
+                exc_info=True,
+            )
             return
 
         target_role_name = self.get_current_role(score)
@@ -89,7 +92,9 @@ class ChampionCog(commands.Cog):
                 )
             except Exception as e:
                 logger.error(
-                    f"[ChampionCog] Fehler beim Entfernen von Rollen: {e}", exc_info=True)
+                    f"[ChampionCog] Fehler beim Entfernen von Rollen: {e}",
+                    exc_info=True,
+                )
 
         if not target_role_name or target_role_name in current_role_names:
             return
@@ -107,7 +112,9 @@ class ChampionCog(commands.Cog):
                 )
             except Exception as e:
                 logger.error(
-                    f"[ChampionCog] Fehler beim Hinzufügen der Rolle: {e}", exc_info=True)
+                    f"[ChampionCog] Fehler beim Hinzufügen der Rolle: {e}",
+                    exc_info=True,
+                )
         else:
             logger.warning(
                 f"[ChampionCog] Rolle '{target_role_name}' existiert nicht in Discord."

@@ -9,7 +9,6 @@ from .views import AnswerButtonView
 from .question_state import QuestionInfo
 
 
-
 class QuestionManager:
     def __init__(self, cog) -> None:
         """Manage sending and tracking of quiz questions."""
@@ -23,13 +22,13 @@ class QuestionManager:
 
         if not cfg.active:
             logger.info(
-                f"[QuestionManager] Area '{area}' ist inaktiv – keine Frage stellen.")
+                f"[QuestionManager] Area '{area}' ist inaktiv – keine Frage stellen."
+            )
             return
 
         channel = self.bot.get_channel(cfg.channel_id)
         if not channel:
-            logger.warning(
-                f"[QuestionManager] Channel für '{area}' nicht gefunden.")
+            logger.warning(f"[QuestionManager] Channel für '{area}' nicht gefunden.")
             return
 
         if area in self.cog.current_questions:
@@ -41,7 +40,8 @@ class QuestionManager:
         if not self.cog.tracker.is_initialized(cid):
             self.cog.tracker.set_initialized(cid)
             logger.info(
-                f"[QuestionManager] Channel '{channel.name}' ({area}) initialisiert – überspringe Aktivitätsprüfung.")
+                f"[QuestionManager] Channel '{channel.name}' ({area}) initialisiert – überspringe Aktivitätsprüfung."
+            )
         else:
             threshold = cfg.activity_threshold
             if self.cog.tracker.get(cid) < threshold:
@@ -52,7 +52,8 @@ class QuestionManager:
                 return
 
         logger.info(
-            f"[QuestionManager] Bedingungen erfüllt – sende Frage für '{area}'.")
+            f"[QuestionManager] Bedingungen erfüllt – sende Frage für '{area}'."
+        )
         await self.ask_question(area, end_time)
 
     async def ask_question(self, area: str, end_time: datetime.datetime) -> None:
@@ -65,27 +66,31 @@ class QuestionManager:
         language = cfg.language
         question = qg.generate(area, language=language)
         if not question:
-            logger.warning(
-                f"[QuestionManager] Keine Frage generiert für '{area}'.")
+            logger.warning(f"[QuestionManager] Keine Frage generiert für '{area}'.")
             return
 
         frage_text = question["frage"]
-        correct_answers = question["antwort"] if isinstance(
-            question["antwort"], list) else [question["antwort"]]
+        correct_answers = (
+            question["antwort"]
+            if isinstance(question["antwort"], list)
+            else [question["antwort"]]
+        )
 
         embed = discord.Embed(
             title=f"Quiz für {area.upper()}",
             description=frage_text,
-            color=discord.Color.blue()
+            color=discord.Color.blue(),
         )
-        embed.add_field(name="Kategorie", value=question.get(
-            "category", "–"), inline=False)
+        embed.add_field(
+            name="Kategorie", value=question.get("category", "–"), inline=False
+        )
         embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
 
         view = AnswerButtonView(area, correct_answers, self.cog)
         sent_msg = await channel.send(embed=embed, view=view)
         logger.debug(
-            f"[QuestionManager] Nachricht ID {sent_msg.id} an Channel {channel.id} gesendet.")
+            f"[QuestionManager] Nachricht ID {sent_msg.id} an Channel {channel.id} gesendet."
+        )
 
         qinfo = QuestionInfo(
             message_id=sent_msg.id,
@@ -100,5 +105,4 @@ class QuestionManager:
         self.cog.awaiting_activity.pop(channel.id, None)
         self.cog.state.set_active_question(area, qinfo)
 
-        logger.info(
-            f"[QuestionManager] Frage gesendet in '{area}': {frage_text}")
+        logger.info(f"[QuestionManager] Frage gesendet in '{area}': {frage_text}")

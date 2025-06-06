@@ -98,7 +98,7 @@ class MyBot(commands.Bot):
         super().__init__(
             command_prefix="§",  # Wird nicht genutzt, Pflichtfeld
             intents=intents,
-            sync_commands=False
+            sync_commands=False,
         )
         guild_id = os.getenv("server_id")
         if not guild_id:
@@ -118,7 +118,6 @@ class MyBot(commands.Bot):
         await self.tree.sync()
         # Commands für die Guild leeren, um Ghost-Einträge zu vermeiden
         self.tree.clear_commands(guild=self.main_guild)
-
 
         # Quiz-Fragen in allen Sprachen laden
         quiz_questions = {}
@@ -173,8 +172,7 @@ class MyBot(commands.Bot):
         # Gespeicherte Emojis in zentrale Daten übernehmen
         if hasattr(self, "data"):
             self.data["emojis"] = self._load_emojis_from_file()
-        logger.info(
-            f"Bot ist bereit! Eingeloggt als {self.user} (ID: {self.user.id})")
+        logger.info(f"Bot ist bereit! Eingeloggt als {self.user} (ID: {self.user.id})")
 
     async def _export_emojis(self):
         """Exportiert alle Server-Emojis in eine JSON-Datei und aktualisiert die bot-Daten."""

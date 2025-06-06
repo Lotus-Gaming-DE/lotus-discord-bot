@@ -61,7 +61,9 @@ class DummyGuildGet(DummyGuild):
 
 
 @pytest.mark.asyncio
-async def test_update_user_score_saves_and_calls(monkeypatch, patch_logged_task, tmp_path):
+async def test_update_user_score_saves_and_calls(
+    monkeypatch, patch_logged_task, tmp_path
+):
     bot = DummyBot()
     cog = ChampionCog(bot)
     cog.data = ChampionData(str(tmp_path / "points.db"))

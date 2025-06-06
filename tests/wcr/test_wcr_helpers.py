@@ -4,6 +4,7 @@ import pytest
 
 from cogs.wcr import helpers
 
+
 @pytest.fixture(scope="module")
 def languages():
     return {
@@ -11,9 +12,11 @@ def languages():
         "en": json.load(open("data/wcr/locals/en.json", "r", encoding="utf-8")),
     }
 
+
 @pytest.fixture(scope="module")
 def pictures():
     return json.load(open("data/wcr/pictures.json", "r", encoding="utf-8"))
+
 
 def test_get_text_data_known(languages):
     name, desc, talents = helpers.get_text_data(1, "de", languages)
