@@ -137,6 +137,30 @@ def test_resolve_unit_cross_language():
     cog.cog_unload()
 
 
+def test_resolve_unit_fuzzy_partial():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+
+    result = cog.resolve_unit("sylvanas", "de")
+    assert result is not None
+    unit_id, _, lang, _ = result
+    assert unit_id == 62
+    assert lang == "de"
+    cog.cog_unload()
+
+
+def test_resolve_unit_cross_language_fuzzy():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+
+    result = cog.resolve_unit("windrunner", "de")
+    assert result is not None
+    unit_id, _, lang, _ = result
+    assert unit_id == 62
+    assert lang == "en"
+    cog.cog_unload()
+
+
 @pytest.mark.asyncio
 async def test_select_view_timeout_disables_select():
     bot = DummyBot()
