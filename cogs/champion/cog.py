@@ -46,6 +46,12 @@ class ChampionCog(commands.Cog):
         )
         self.tasks.append(task)
 
+        def _remove_finished(t: asyncio.Task) -> None:
+            if t in self.tasks:
+                self.tasks.remove(t)
+
+        task.add_done_callback(_remove_finished)
+
         return new_total
 
     async def _apply_champion_role(self, user_id_str: str, score: int) -> None:

@@ -94,6 +94,44 @@ async def test_update_user_score_saves_and_calls(
 
 
 @pytest.mark.asyncio
+async def test_update_user_score_cleans_task_list(
+    monkeypatch, patch_logged_task, tmp_path
+):
+    bot = DummyBot()
+    cog = ChampionCog(bot)
+    cog.data = ChampionData(str(tmp_path / "points.db"))
+
+    patch_logged_task(champion_cog_mod)
+
+    tasks = []
+
+    def schedule_task(coro, logger=None):
+        task = asyncio.create_task(coro)
+        tasks.append(task)
+        return task
+
+    wait_event = asyncio.Event()
+
+    async def fake_apply(user_id, score):
+        await wait_event.wait()
+
+    monkeypatch.setattr(champion_cog_mod, "create_logged_task", schedule_task)
+    monkeypatch.setattr(cog, "_apply_champion_role", fake_apply)
+
+    for i in range(3):
+        await cog.update_user_score(123 + i, 1, "test")
+
+    assert len(cog.tasks) == 3
+
+    wait_event.set()
+    await asyncio.gather(*tasks)
+
+    assert len(cog.tasks) == 0
+    cog.cog_unload()
+    await asyncio.gather(*tasks)
+
+
+@pytest.mark.asyncio
 async def test_get_current_role(patch_logged_task):
     patch_logged_task(champion_cog_mod)
     bot = DummyBot()
