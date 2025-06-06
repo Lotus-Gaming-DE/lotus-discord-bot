@@ -407,7 +407,23 @@ class QuizDuelGame:
             winner_id = view.winner_id
             if winner_id:
                 self.scores[winner_id] += 1
-                name = self.cog.bot.get_user(winner_id).display_name
+                member = self.cog.bot.get_user(winner_id)
+                if member is None:
+                    try:
+                        member = await self.cog.bot.fetch_user(winner_id)
+                    except Exception:
+                        member = None
+                if member is None:
+                    if winner_id == self.challenger.id:
+                        name = getattr(self.challenger, "display_name", str(winner_id))
+                    elif winner_id == self.opponent.id:
+                        name = getattr(self.opponent, "display_name", str(winner_id))
+                    else:
+                        name = str(winner_id)
+                else:
+                    name = getattr(
+                        member, "display_name", getattr(member, "name", str(winner_id))
+                    )
                 logger.debug(f"Round {rnd} won by {name}")
                 await self.thread.send(
                     f"✅ {name} gewinnt diese Runde. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})"
@@ -437,6 +453,7 @@ class QuizDuelGame:
         challenger_score = self.scores[self.challenger.id]
         opponent_score = self.scores[self.opponent.id]
         winner: discord.Member | None = None
+        winner_display = None
 
         if self.winner_id:
             winner = (
@@ -449,8 +466,23 @@ class QuizDuelGame:
         elif opponent_score > challenger_score:
             winner = self.opponent
 
+        if winner:
+            user_obj = self.cog.bot.get_user(winner.id)
+            if user_obj is None:
+                try:
+                    user_obj = await self.cog.bot.fetch_user(winner.id)
+                except Exception:
+                    user_obj = None
+            winner_display = (
+                getattr(user_obj, "display_name", getattr(user_obj, "name", None))
+                if user_obj
+                else getattr(
+                    winner, "display_name", getattr(winner, "name", str(winner.id))
+                )
+            )
+
         logger.info(
-            f"QuizDuelGame finished winner={winner.display_name if winner else 'None'} score={self.scores}"
+            f"QuizDuelGame finished winner={winner_display if winner else 'None'} score={self.scores}"
         )
         logger.debug(
             f"[QuizDuelGame] challenger_score={challenger_score} opponent_score={opponent_score}"
@@ -461,11 +493,9 @@ class QuizDuelGame:
                 winner.id, self.pot, "Quiz-Duell Gewinn"
             )
             await self.thread.send(
-                f"🏆 {winner.display_name} gewinnt das Duell und erhält {self.pot} Punkte!"
+                f"🏆 {winner_display} gewinnt das Duell und erhält {self.pot} Punkte!"
             )
-            logger.info(
-                f"[QuizDuelGame] awarded {self.pot} points to {winner.display_name}"
-            )
+            logger.info(f"[QuizDuelGame] awarded {self.pot} points to {winner_display}")
         else:
             refund = self.pot // 2
             await champion_cog.update_user_score(
@@ -490,7 +520,7 @@ class QuizDuelGame:
             )
             if winner:
                 result_text = (
-                    f"{winner.display_name} gewinnt {self.pot} Punkte"
+                    f"{winner_display} gewinnt {self.pot} Punkte"
                     f" ({challenger_score}:{opponent_score})"
                 )
             else:
