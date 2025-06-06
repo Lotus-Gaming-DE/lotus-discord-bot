@@ -64,3 +64,4 @@ async def test_syncroles_processes_all_users(monkeypatch, tmp_path):
 
     assert set(called) == {("1", 5), ("2", 3)}
     assert inter.followup.sent
+    await cog.data.close()

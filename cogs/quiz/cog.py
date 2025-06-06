@@ -3,6 +3,7 @@ from discord.ext import commands
 import discord
 
 from log_setup import get_logger, create_logged_task
+import asyncio
 
 from .question_state import QuestionStateManager, QuestionInfo
 from .scheduler import QuizScheduler
@@ -18,6 +19,16 @@ class QuizCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.bot.quiz_cog = self
+
+        # Track created background tasks to cancel them on unload
+        self.tasks: list[asyncio.Task] = []
+
+        def _track_task(coro, logger=logger):
+            task = create_logged_task(coro, logger)
+            self.tasks.append(task)
+            return task
+
+        self._track_task = _track_task
 
         if not self.bot.quiz_data:
             logger.warning("[QuizCog] Keine Quiz-Konfiguration geladen.")
@@ -50,9 +61,11 @@ class QuizCog(commands.Cog):
         self.closer = QuestionCloser(bot=self.bot, state=self.state)
 
         self.init_task = create_logged_task(self.tracker.initialize(), logger)
+        self.tasks.append(create_logged_task(self.tracker.initialize(), logger))
 
         self.restorer = QuestionRestorer(
-            bot=self.bot, state_manager=self.state)
+            bot=self.bot, state_manager=self.state, create_task=self._track_task
+        )
         self.restorer.restore_all()
 
         for area, cfg in self.bot.quiz_data.items():
@@ -72,6 +85,7 @@ class QuizCog(commands.Cog):
                     window_end=window_end,
                 )
                 self.schedulers[area] = scheduler
+                self.tasks.append(scheduler.task)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -87,3 +101,8 @@ class QuizCog(commands.Cog):
             self.init_task.cancel()
         if hasattr(self.restorer, "cancel_all"):
             self.restorer.cancel_all()
+        """Cancel all running background tasks when the cog is unloaded."""
+        for scheduler in self.schedulers.values():
+            scheduler.task.cancel()
+        for task in self.tasks:
+            task.cancel()
