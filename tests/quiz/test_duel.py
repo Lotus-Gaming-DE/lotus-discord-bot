@@ -62,16 +62,26 @@ class DummyThread:
         self.archived = archived
 
 
-class DummyMessage:
-    def __init__(self, thread=None):
-        self.thread = thread or DummyThread()
-        self.edited_view = "INIT"
+class DummyChannel:
+    def __init__(self):
+        self.sent = []
 
-    async def create_thread(self, name):
+    async def send(self, content):
+        self.sent.append(content)
+
+
+class DummyMessage:
+    def __init__(self, thread=None, channel=None):
+        self.thread = thread or DummyThread()
+        self.channel = channel or DummyChannel()
+        self.edited_view = "INIT"
+        self.embeds = []
+
+    async def create_thread(self, name, **kwargs):
         self.thread.name = name
         return self.thread
 
-    async def edit(self, view=None):
+    async def edit(self, view=None, **kwargs):
         self.edited_view = view
 
 
@@ -102,7 +112,7 @@ async def test_finish_awards_pot_to_winner():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     thread = DummyThread()
-    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3")
+    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
     game.scores = {1: 2, 2: 1}
 
     await game._finish()
@@ -118,7 +128,7 @@ async def test_finish_refunds_on_tie():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     thread = DummyThread()
-    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3")
+    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
     game.scores = {1: 1, 2: 1}
 
     await game._finish()
@@ -137,7 +147,7 @@ async def test_finish_handles_missing_champion():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     thread = DummyThread()
-    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3")
+    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
     game.scores = {1: 2, 2: 1}
 
     await game._finish()
@@ -231,6 +241,11 @@ async def test_start_duel_insufficient_points_opponent():
 
 @pytest.mark.asyncio
 async def test_invite_timeout_notifies():
+    bot = DummyBot()
+    cog = DummyCog(bot)
+    channel = DummyChannel()
+    message = DummyMessage(channel=channel)
+    view = DuelInviteView(DummyMember(1), DuelConfig("area", 5, "bo3"), cog)
     class DummyChannel:
         def __init__(self):
             self.sent = []
@@ -256,6 +271,8 @@ async def test_invite_timeout_notifies():
 
     await view.on_timeout()
 
+    assert message.edited_view is None
+    assert channel.sent == ["<@1>, deine Duellanfrage ist abgelaufen."]
     assert channel.sent == [f"{challenger.mention}, deine Duellanfrage ist abgelaufen."]
     assert message.edited_view is None
 
@@ -323,7 +340,7 @@ async def test_game_run_dynamic(monkeypatch):
     monkeypatch.setattr("cogs.quiz.duel.DuelQuestionView", AutoView)
 
     thread = DummyRunThread()
-    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "dynamic")
+    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "dynamic", None)
     await game.run()
 
     embeds = [m for m in thread.sent if isinstance(m, discord.Embed)]
@@ -356,7 +373,7 @@ async def test_game_run_sequential_sends_question():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     thread = DummyRunThread()
-    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3")
+    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
 
     await game.run()
 
