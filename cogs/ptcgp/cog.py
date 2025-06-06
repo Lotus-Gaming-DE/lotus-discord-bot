@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 class PTCGPCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        self.data = PTCGPData("data/ptcgp/cards.db")
+        self.data = PTCGPData("data/pers/ptcgp/cards.db")
         self._lock = asyncio.Lock()
 
     async def update_database(self) -> dict[str, int]:
