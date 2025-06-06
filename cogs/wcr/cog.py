@@ -3,6 +3,7 @@
 import discord
 from discord.ext import commands
 import os
+import difflib
 
 from log_setup import get_logger
 from . import helpers
@@ -289,6 +290,30 @@ class WCRCog(commands.Cog):
 
         return self.build_mini_embed(unit_id, unit_data, lang, texts)
 
+    def _find_unit_id_by_name(
+        self, normalized: str, lang: str
+    ) -> tuple[int | None, str]:
+        """Search a unit ID by normalized name with fuzzy matching."""
+        mapping = self.unit_name_map.get(lang, {})
+
+        if normalized in mapping:
+            return mapping[normalized], lang
+
+        for key, unit_id in mapping.items():
+            if normalized in key:
+                return unit_id, lang
+
+        best_id = None
+        best_ratio = 0.0
+        for key, unit_id in mapping.items():
+            ratio = difflib.SequenceMatcher(None, normalized, key).ratio()
+            if ratio > best_ratio:
+                best_ratio = ratio
+                best_id = unit_id
+        if best_ratio >= 0.6:
+            return best_id, lang
+        return None, lang
+
     def resolve_unit(self, name_or_id, lang):
         if lang not in self.languages:
             return None
@@ -309,16 +334,20 @@ class WCRCog(commands.Cog):
                 return None
         except ValueError:
             normalized = " ".join(helpers.normalize_name(name_or_id))
-            unit_id = self.unit_name_map.get(lang, {}).get(normalized)
+            unit_id, lang = self._find_unit_id_by_name(normalized, lang)
             if unit_id is None:
-                for other_lang, mapping in self.unit_name_map.items():
+                for other_lang in self.languages:
                     if other_lang == lang:
                         continue
-                    if normalized in mapping:
-                        unit_id = mapping[normalized]
-                        lang = other_lang
-                        texts = self.languages[other_lang]
+                    unit_id, found_lang = self._find_unit_id_by_name(
+                        normalized, other_lang
+                    )
+                    if unit_id is not None:
+                        lang = found_lang
+                        texts = self.languages[found_lang]
                         break
+            else:
+                texts = self.languages[lang]
             if unit_id is None:
                 return None
 
