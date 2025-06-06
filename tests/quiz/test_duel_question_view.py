@@ -20,7 +20,7 @@ class DummyResponse:
         self.sent.append((content, kwargs))
 
 
-class DummyInteraction:
+class DummyDuelInteraction:
     def __init__(self, user):
         self.user = user
         self.response = DummyResponse()
@@ -56,7 +56,7 @@ async def test_modal_ignores_after_finish():
     await view._finish()
     modal = _DuelAnswerModal(view)
     modal.answer._value = "foo"
-    inter = DummyInteraction(challenger)
+    inter = DummyDuelInteraction(challenger)
 
     await modal.on_submit(inter)
 
