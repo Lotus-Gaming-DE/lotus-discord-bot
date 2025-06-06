@@ -11,7 +11,9 @@ from unidecode import unidecode
 logger = get_logger(__name__)  # z. B. 'cogs.quiz.utils'
 
 
-def check_answer(user_answer: str, correct_answers: list[str], threshold: float = 0.6) -> bool:
+def check_answer(
+    user_answer: str, correct_answers: list[str], threshold: float = 0.6
+) -> bool:
     """
     Prüft, ob eine Nutzerantwort mit einer der richtigen Antworten übereinstimmt.
     Verwendet Normalisierung, Teilstringsuche und Levenshtein-Ähnlichkeit.
@@ -22,7 +24,10 @@ def check_answer(user_answer: str, correct_answers: list[str], threshold: float 
         normalized_correct = normalize_text(correct)
 
         # Teilstring oder vollständige Übereinstimmung
-        if normalized_user in normalized_correct or normalized_correct in normalized_user:
+        if (
+            normalized_user in normalized_correct
+            or normalized_correct in normalized_user
+        ):
             logger.debug(
                 f"[check_answer] partial match: '{normalized_user}' <-> '{normalized_correct}'"
             )
@@ -30,7 +35,8 @@ def check_answer(user_answer: str, correct_answers: list[str], threshold: float 
 
         # Levenshtein-basierte Ähnlichkeit
         similarity = difflib.SequenceMatcher(
-            None, normalized_user, normalized_correct).ratio()
+            None, normalized_user, normalized_correct
+        ).ratio()
         if similarity >= threshold:
             logger.debug(
                 f"[check_answer] fuzzy match: '{normalized_user}' <-> '{normalized_correct}' ({similarity:.2f})"
@@ -47,7 +53,7 @@ def create_permutations(answer: str) -> list[str]:
     Wird z. B. für Fuzzy Matching oder alternative Datenquellen verwendet.
     """
     perms = {answer.lower(), unidecode(answer.lower())}
-    cleaned = re.sub(r'[^\w\s]', '', answer.lower())
+    cleaned = re.sub(r"[^\w\s]", "", answer.lower())
     perms.add(cleaned)
     perms.add(unidecode(cleaned))
     return list(perms)
@@ -69,8 +75,8 @@ def normalize_text(text: str) -> str:
     entfernt Sonderzeichen.
     """
     txt = unidecode(text.strip().lower())
-    txt = re.sub(r'\s+', ' ', txt)
-    txt = re.sub(r'[^\w\s]', '', txt)
+    txt = re.sub(r"\s+", " ", txt)
+    txt = re.sub(r"[^\w\s]", "", txt)
     return txt
 
 

@@ -10,13 +10,16 @@ from .scheduler import QuizScheduler
 from .question_restorer import QuestionRestorer
 from .question_manager import QuestionManager
 from .message_tracker import MessageTracker
-from .question_closer import QuestionCloser
+                (
+                    cfg.question_state
+                    if hasattr(cfg, "question_state")
+                    else cfg.get("question_state")
+                )
 
-logger = get_logger(__name__)
-
-
-class QuizCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+        self.tracker = MessageTracker(
+            bot=self.bot, on_threshold=self.manager.ask_question
+        )
+        self.restorer = QuestionRestorer(bot=self.bot, state_manager=self.state)
         self.bot = bot
         self.bot.quiz_cog = self
 
@@ -60,6 +63,7 @@ class QuizCog(commands.Cog):
         self.tracker = MessageTracker(bot=self.bot, on_threshold=self.manager.ask_question)
         self.closer = QuestionCloser(bot=self.bot, state=self.state)
 
+        self.init_task = create_logged_task(self.tracker.initialize(), logger)
         self.tasks.append(create_logged_task(self.tracker.initialize(), logger))
 
         self.restorer = QuestionRestorer(
@@ -70,11 +74,18 @@ class QuizCog(commands.Cog):
         for area, cfg in self.bot.quiz_data.items():
             active = cfg.active if hasattr(cfg, "active") else cfg.get("active")
             if active:
+                sched_info = self.state.get_schedule(area)
+                if sched_info:
+                    post_time, window_end = sched_info
+                else:
+                    post_time = window_end = None
                 scheduler = QuizScheduler(
                     bot=self.bot,
                     area=area,
                     prepare_question_callback=self.manager.prepare_question,
                     close_question_callback=self.closer.close_question,
+                    post_time=post_time,
+                    window_end=window_end,
                 )
                 self.schedulers[area] = scheduler
                 self.tasks.append(scheduler.task)
@@ -86,6 +97,13 @@ class QuizCog(commands.Cog):
         self.tracker.register_message(message)
 
     def cog_unload(self):
+        """Cancel all running tasks when the cog is unloaded."""
+        for scheduler in self.schedulers.values():
+            scheduler.task.cancel()
+        if hasattr(self, "init_task"):
+            self.init_task.cancel()
+        if hasattr(self.restorer, "cancel_all"):
+            self.restorer.cancel_all()
         """Cancel all running background tasks when the cog is unloaded."""
         for scheduler in self.schedulers.values():
             scheduler.task.cancel()

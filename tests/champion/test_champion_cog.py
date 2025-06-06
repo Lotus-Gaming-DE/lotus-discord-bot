@@ -61,7 +61,9 @@ class DummyGuildGet(DummyGuild):
 
 
 @pytest.mark.asyncio
-async def test_update_user_score_saves_and_calls(monkeypatch, patch_logged_task, tmp_path):
+async def test_update_user_score_saves_and_calls(
+    monkeypatch, patch_logged_task, tmp_path
+):
     bot = DummyBot()
     cog = ChampionCog(bot)
     cog.data = ChampionData(str(tmp_path / "points.db"))
@@ -131,6 +133,7 @@ async def test_apply_role_removes_when_below_threshold(monkeypatch, patch_logged
 
     assert member.removed == [silver]
     assert member.added == []
+    cog.cog_unload()
     await cog.data.close()
 
 
@@ -154,4 +157,5 @@ async def test_apply_role_prefers_get_member(monkeypatch):
 
     assert guild.get_calls == 1
     assert guild.fetch_calls == 0
+    cog.cog_unload()
     await cog.data.close()

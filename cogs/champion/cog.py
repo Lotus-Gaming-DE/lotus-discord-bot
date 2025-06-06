@@ -1,4 +1,5 @@
 import discord
+import asyncio
 from discord.ext import commands
 from typing import Optional
 
@@ -17,13 +18,14 @@ class ChampionCog(commands.Cog):
         self.data = ChampionData(db_path)
 
         self.roles = self._load_roles_config()
+        self.tasks: list[asyncio.Task] = []
 
     def _load_roles_config(self) -> list[tuple[str, int]]:
         """Return the role thresholds sorted descending."""
         role_entries = self.bot.data.get("champion", {}).get("roles", [])
         sorted_roles = sorted(
             [(entry["name"], entry["threshold"]) for entry in role_entries],
-            key=lambda x: -x[1]
+            key=lambda x: -x[1],
         )
         return sorted_roles
 
@@ -39,9 +41,10 @@ class ChampionCog(commands.Cog):
         user_id_str = str(user_id)
         new_total = await self.data.add_delta(user_id_str, delta, reason)
 
-        create_logged_task(
+        task = create_logged_task(
             self._apply_champion_role(user_id_str, new_total), logger
         )
+        self.tasks.append(task)
 
         return new_total
 
@@ -59,11 +62,14 @@ class ChampionCog(commands.Cog):
                 member = await guild.fetch_member(int(user_id_str))
         except discord.NotFound:
             logger.info(
-                f"[ChampionCog] Member {user_id_str} nicht gefunden (vermutlich nicht mehr im Server).")
+                f"[ChampionCog] Member {user_id_str} nicht gefunden (vermutlich nicht mehr im Server)."
+            )
             return
         except discord.HTTPException as e:
             logger.error(
-                f"[ChampionCog] Fehler beim Laden von Member {user_id_str}: {e}", exc_info=True)
+                f"[ChampionCog] Fehler beim Laden von Member {user_id_str}: {e}",
+                exc_info=True,
+            )
             return
 
         target_role_name = self.get_current_role(score)
@@ -86,7 +92,9 @@ class ChampionCog(commands.Cog):
                 )
             except Exception as e:
                 logger.error(
-                    f"[ChampionCog] Fehler beim Entfernen von Rollen: {e}", exc_info=True)
+                    f"[ChampionCog] Fehler beim Entfernen von Rollen: {e}",
+                    exc_info=True,
+                )
 
         if not target_role_name or target_role_name in current_role_names:
             return
@@ -104,11 +112,15 @@ class ChampionCog(commands.Cog):
                 )
             except Exception as e:
                 logger.error(
-                    f"[ChampionCog] Fehler beim Hinzufügen der Rolle: {e}", exc_info=True)
+                    f"[ChampionCog] Fehler beim Hinzufügen der Rolle: {e}",
+                    exc_info=True,
+                )
         else:
             logger.warning(
                 f"[ChampionCog] Rolle '{target_role_name}' existiert nicht in Discord."
             )
 
     def cog_unload(self):
+        for task in self.tasks:
+            task.cancel()
         create_logged_task(self.data.close(), logger)

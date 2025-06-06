@@ -13,6 +13,7 @@ async def setup(bot: discord.ext.commands.Bot):
     """Register the WCR cog and its slash commands."""
     try:
         from .slash_commands import wcr_group
+
         await bot.add_cog(WCRCog(bot))
         bot.tree.add_command(wcr_group, guild=bot.main_guild)
         logger.info("[WCRCog] Cog und Slash-Command-Gruppe erfolgreich registriert.")

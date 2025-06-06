@@ -17,10 +17,14 @@ class DummyStateManager:
 
 
 def create_generator():
-    questions = {"de": {"area1": [
-        {"id": 1, "frage": "f1", "antwort": "a1"},
-        {"id": 2, "frage": "f2", "antwort": "a2"},
-    ]}}
+    questions = {
+        "de": {
+            "area1": [
+                {"id": 1, "frage": "f1", "antwort": "a1"},
+                {"id": 2, "frage": "f2", "antwort": "a2"},
+            ]
+        }
+    }
     return QuestionGenerator(questions, DummyStateManager(), {})
 
 

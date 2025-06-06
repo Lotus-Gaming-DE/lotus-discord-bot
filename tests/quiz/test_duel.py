@@ -257,13 +257,19 @@ async def test_game_run_dynamic(monkeypatch):
 
     responses = [
         {
-            challenger.id: ("a1", datetime.datetime.utcnow() + datetime.timedelta(seconds=1)),
+            challenger.id: (
+                "a1",
+                datetime.datetime.utcnow() + datetime.timedelta(seconds=1),
+            ),
             opponent.id: ("a1", datetime.datetime.utcnow()),
         },
         {challenger.id: ("a2", datetime.datetime.utcnow())},
         {
             challenger.id: ("a3", datetime.datetime.utcnow()),
-            opponent.id: ("a3", datetime.datetime.utcnow() + datetime.timedelta(seconds=1)),
+            opponent.id: (
+                "a3",
+                datetime.datetime.utcnow() + datetime.timedelta(seconds=1),
+            ),
         },
     ]
     resp_iter = iter(responses)

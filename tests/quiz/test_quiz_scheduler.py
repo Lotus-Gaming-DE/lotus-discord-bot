@@ -5,6 +5,7 @@ import cogs.quiz.slash_commands as slash_mod
 from cogs.quiz.quiz_config import QuizAreaConfig
 import pytest
 
+
 class DummyBot:
     def __init__(self):
         self.data = {}
@@ -12,6 +13,7 @@ class DummyBot:
 
 
 bot = DummyBot()
+
 
 class DummyTask:
     def __init__(self):
@@ -32,11 +34,13 @@ def fake_task_scheduler(coro, logger):
     fake_task_scheduler.tasks.append(task)
     return task
 
+
 fake_task_scheduler.tasks = []
 
 
 class DummyState:
-    pass
+    def get_schedule(self, area):
+        return None
 
 
 @pytest.mark.asyncio
@@ -48,7 +52,9 @@ async def test_scheduler_start_and_stop(monkeypatch, patch_logged_task, bot):
     bot.data = {"quiz": {"questions": {"de": {}}, "languages": ["de"]}}
     bot.quiz_data = {
         "area1": QuizAreaConfig(channel_id=1, active=True, question_state=DummyState()),
-        "area2": QuizAreaConfig(channel_id=2, active=False, question_state=DummyState()),
+        "area2": QuizAreaConfig(
+            channel_id=2, active=False, question_state=DummyState()
+        ),
     }
 
     cog = quiz_cog_mod.QuizCog(bot)
@@ -92,7 +98,9 @@ async def test_enable_starts_and_disable_stops(monkeypatch, patch_logged_task, b
 
     bot.data = {"quiz": {"questions": {"de": {}}, "languages": ["de"]}}
     bot.quiz_data = {
-        "area1": QuizAreaConfig(channel_id=1, active=False, question_state=DummyState()),
+        "area1": QuizAreaConfig(
+            channel_id=1, active=False, question_state=DummyState()
+        ),
     }
 
     cog = quiz_cog_mod.QuizCog(bot)

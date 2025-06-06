@@ -1,26 +1,36 @@
+import asyncio
 import datetime
+
 import discord
 
-from log_setup import get_logger, create_logged_task
+from log_setup import create_logged_task, get_logger
 
-from .views import AnswerButtonView
 from .question_state import QuestionInfo
+from .views import AnswerButtonView
 
 logger = get_logger(__name__)
 
 
 class QuestionRestorer:
-    def __init__(self, bot, state_manager, create_task=create_logged_task) -> None:
-        """Restore running questions after a bot restart."""
-        self.bot = bot
-        self.state = state_manager
-        self.create_task = create_task
+                    logger.info(
+                        "[Restorer] Wiederhergestellte Frage in '%s' läuft bis %s.",
+                        area,
+                        end_time,
+                    )
+                        self.repost_question(area, active), logger
+                    )
+                    f"[Restorer] Fehler beim Wiederherstellen von '{area}': {e}",
+                    exc_info=True,
+                    f"[Restorer] Ursprüngliche Nachricht für '{area}' nicht mehr vorhanden – lösche Zustand."
+                )
 
-    def restore_all(self) -> None:
-        """Recreate all still active questions from persisted state."""
-        for area, cfg in self.bot.quiz_data.items():
-            active = self.state.get_active_question(area)
-            if not active:
+                    f"[Restorer] Frage in '{area}' war bereits rot markiert oder hatte Footer – wird nicht wiederhergestellt."
+                )
+                area=area, correct_answers=correct_answers, cog=self.bot.quiz_cog
+            )
+            delay = max((end_time - datetime.datetime.utcnow()).total_seconds(), 0)
+                f"[Restorer] Frage in '{area}' wurde erfolgreich wiederhergestellt."
+            )
                 continue
             try:
                 end_time = active.end_time
@@ -28,8 +38,10 @@ class QuestionRestorer:
                     logger.info(
                         f"[Restorer] Wiederhergestellte Frage in '{area}' läuft bis {end_time}."
                     )
+                    task = create_logged_task(
                     self.create_task(
                         self.repost_question(area, active), logger)
+                    self.tasks.append(task)
                 else:
                     self.state.clear_active_question(area)
             except Exception as e:
@@ -93,12 +105,19 @@ class QuestionRestorer:
 
             delay = max(
                 (end_time - datetime.datetime.utcnow()).total_seconds(), 0)
+            task = create_logged_task(
             self.create_task(
                 self.bot.quiz_cog.closer.auto_close(area, delay), logger
             )
+            self.tasks.append(task)
 
             logger.info(
                 f"[Restorer] Frage in '{area}' wurde erfolgreich wiederhergestellt.")
         except Exception as e:
             logger.error(f"[Restorer] Fehler in '{area}': {e}", exc_info=True)
             self.state.clear_active_question(area)
+
+    def cancel_all(self) -> None:
+        """Cancel all running tasks created by the restorer."""
+        for t in self.tasks:
+            t.cancel()

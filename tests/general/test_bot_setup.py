@@ -18,8 +18,10 @@ async def test_setup_hook_clears_global_commands(monkeypatch, bot):
     monkeypatch.setattr("bot.load_json", lambda path: {})
     monkeypatch.setattr("bot.load_wcr_data", lambda: {})
     monkeypatch.setattr("bot.load_quiz_config", lambda b: None)
+
     async def nop(bot):
         return None
+
     monkeypatch.setattr("cogs.quiz.setup", nop)
     monkeypatch.setattr("cogs.wcr.setup", nop)
     monkeypatch.setattr("cogs.champion.setup", nop)
