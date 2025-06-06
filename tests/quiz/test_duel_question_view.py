@@ -18,6 +18,8 @@ async def test_finish_sets_winner_and_disables_buttons():
     opponent = DummyMember(2)
     view = DuelQuestionView(challenger, opponent, ["yes"])
 
+    assert view.timeout == 30
+
     base = datetime.datetime.utcnow()
     view.responses = {
         challenger.id: ("yes", base + datetime.timedelta(seconds=1)),
