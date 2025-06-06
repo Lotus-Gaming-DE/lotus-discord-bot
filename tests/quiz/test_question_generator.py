@@ -15,6 +15,9 @@ class DummyStateManager:
     def mark_question_as_asked(self, area, question_id):
         self.asked.setdefault(area, []).append(question_id)
 
+    def get_asked_questions(self, area):
+        return self.asked.get(area, [])
+
 
 def create_generator():
     questions = {
@@ -56,3 +59,23 @@ def test_get_dynamic_provider():
     gen = QuestionGenerator({"de": {}}, state, {"area": provider})
     assert gen.get_dynamic_provider("area") is provider
     assert gen.get_dynamic_provider("missing") is None
+
+
+def test_generate_dynamic_retries(monkeypatch):
+    class DummyProvider:
+        def __init__(self):
+            self.calls = 0
+
+        def generate(self):
+            self.calls += 1
+            if self.calls == 1:
+                return {"id": 1, "frage": "f1", "antwort": "a1"}
+            return {"id": 2, "frage": "f2", "antwort": "a2"}
+
+    state = DummyStateManager()
+    state.asked = {"area": [1]}
+
+    gen = QuestionGenerator({"de": {}}, state, {"area": DummyProvider()})
+    q = gen.generate("area")
+
+    assert q["id"] == 2
