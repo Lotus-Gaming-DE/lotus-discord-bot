@@ -23,6 +23,15 @@ class DummyResponse:
 class DummyInteraction:
     def __init__(self, uid):
         self.user = DummyMember(uid)
+        self.sent = []
+
+    async def send_message(self, content, **kwargs):
+        self.sent.append((content, kwargs))
+
+
+class DummyInteraction:
+    def __init__(self, user):
+        self.user = user
         self.response = DummyResponse()
         self.created_at = datetime.datetime.utcnow()
 
@@ -32,6 +41,8 @@ async def test_finish_sets_winner_and_disables_buttons():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     view = DuelQuestionView(challenger, opponent, ["yes"])
+
+    assert view.timeout == 30
 
     base = datetime.datetime.utcnow()
     view.responses = {
@@ -58,3 +69,15 @@ async def test_modal_ignores_after_finish():
 
     assert view.responses == {}
     assert "Die Runde ist bereits beendet." in inter.response.messages[0]
+
+    await view._finish()
+    modal = _DuelAnswerModal(view)
+    modal.answer._value = "foo"
+    inter = DummyInteraction(challenger)
+
+    await modal.on_submit(inter)
+
+    assert view.responses == {}
+    assert inter.response.sent == [
+        ("Die Runde ist bereits beendet.", {"ephemeral": True})
+    ]

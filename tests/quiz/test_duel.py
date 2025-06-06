@@ -246,12 +246,35 @@ async def test_invite_timeout_notifies():
     channel = DummyChannel()
     message = DummyMessage(channel=channel)
     view = DuelInviteView(DummyMember(1), DuelConfig("area", 5, "bo3"), cog)
+    class DummyChannel:
+        def __init__(self):
+            self.sent = []
+
+        async def send(self, msg, **kwargs):
+            self.sent.append(msg)
+
+    class DummyMessage:
+        def __init__(self, channel):
+            self.channel = channel
+            self.edited_view = "INIT"
+
+        async def edit(self, view=None):
+            self.edited_view = view
+
+    channel = DummyChannel()
+    message = DummyMessage(channel)
+    bot = DummyBot()
+    cog = DummyCog(bot)
+    challenger = DummyMember(1)
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "bo3"), cog)
     view.message = message
 
     await view.on_timeout()
 
     assert message.edited_view is None
     assert channel.sent == ["<@1>, deine Duellanfrage ist abgelaufen."]
+    assert channel.sent == [f"{challenger.mention}, deine Duellanfrage ist abgelaufen."]
+    assert message.edited_view is None
 
 
 @pytest.mark.asyncio
