@@ -9,6 +9,8 @@
 - The bot is hosted on **Railway**. Environment variables like `bot_key` and `server_id` are provided there.
 - Unit tests run locally without these variables. Use `monkeypatch.setenv` to simulate them, as shown in `tests/conftest.py`.
 - A fixture `patch_logged_task` is provided for tests to replace `create_logged_task` with a dummy. Use it instead of duplicating patch code.
+- Implement `cog_unload()` in every cog that starts background tasks or loops. Track created tasks and cancel them in this method.
+- Tests must call `cog.cog_unload()` (or otherwise close the bot) to ensure no tasks keep the event loop alive.
 - The CI workflow runs `flake8` for linting. Ensure your code passes the linter before committing.
 - Run `flake8` and `pytest` locally before committing to catch issues early.
 - When features change or new ones are added, update tests as needed and keep the `README.md` in sync.
