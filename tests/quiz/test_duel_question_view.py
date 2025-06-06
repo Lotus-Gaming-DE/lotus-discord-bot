@@ -52,6 +52,8 @@ async def test_modal_ignores_after_finish():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     view = DuelQuestionView(challenger, opponent, ["yes"])
+
+    await view._finish()
     await view._finish()
 
     modal = _DuelAnswerModal(view)
