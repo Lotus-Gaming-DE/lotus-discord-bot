@@ -15,6 +15,16 @@ class MessageTracker:
         self.on_threshold = on_threshold
         self.message_counter: dict[int, int] = {}
         self.channel_initialized: dict[int, bool] = {}
+        self.channel_to_area: dict[int, str] = {}
+        self.update_mapping()
+
+    def update_mapping(self) -> None:
+        """Rebuild the channel to area map from ``bot.quiz_data``."""
+        self.channel_to_area = {
+            cfg.channel_id: area
+            for area, cfg in self.bot.quiz_data.items()
+            if cfg.channel_id is not None
+        }
 
     async def initialize(self) -> None:
         """Warm up counters based on recent channel history."""
@@ -76,7 +86,7 @@ class MessageTracker:
         before = self.message_counter.get(cid, 0)
         self.message_counter[cid] = after = before + 1
 
-        area = self._find_area_for_channel(cid)
+        area = self.channel_to_area.get(cid)
         if area:
             logger.info(
                 f"[Tracker] Nachrichtenzähler für '{area}' (Channel {cid}): {before} → {after}"
@@ -99,13 +109,6 @@ class MessageTracker:
                 )
 
         return area
-
-    def _find_area_for_channel(self, channel_id: int) -> str | None:
-        """Return the quiz area configured for a Discord channel."""
-        for area, cfg in self.bot.quiz_data.items():
-            if cfg.channel_id == channel_id:
-                return area
-        return None
 
     def get(self, channel_id: int) -> int:
         """Return the current counter value for a channel."""
