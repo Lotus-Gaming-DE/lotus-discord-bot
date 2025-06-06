@@ -13,7 +13,9 @@ ptcgp_group = app_commands.Group(
 )
 
 
-@ptcgp_group.command(name="update", description="Aktualisiert die lokale Datenbank (nur Mods)")
+@ptcgp_group.command(
+    name="update", description="Aktualisiert die lokale Datenbank (nur Mods)"
+)
 @moderator_only()
 @app_commands.default_permissions(manage_guild=True)
 async def update(interaction: discord.Interaction):

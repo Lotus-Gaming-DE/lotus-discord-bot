@@ -10,16 +10,13 @@ from .scheduler import QuizScheduler
 from .question_restorer import QuestionRestorer
 from .question_manager import QuestionManager
 from .message_tracker import MessageTracker
-                (
-                    cfg.question_state
-                    if hasattr(cfg, "question_state")
-                    else cfg.get("question_state")
-                )
+from .question_closer import QuestionCloser
 
-        self.tracker = MessageTracker(
-            bot=self.bot, on_threshold=self.manager.ask_question
-        )
-        self.restorer = QuestionRestorer(bot=self.bot, state_manager=self.state)
+logger = get_logger(__name__)
+
+
+class QuizCog(commands.Cog):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.bot.quiz_cog = self
 
@@ -49,9 +46,11 @@ from .message_tracker import MessageTracker
         # without raising an exception during initialization.
         self.state: QuestionStateManager = next(
             (
-                cfg.question_state
-                if hasattr(cfg, "question_state")
-                else cfg.get("question_state")
+                (
+                    cfg.question_state
+                    if hasattr(cfg, "question_state")
+                    else cfg.get("question_state")
+                )
                 for cfg in self.bot.quiz_data.values()
                 if hasattr(cfg, "question_state")
                 or (isinstance(cfg, dict) and "question_state" in cfg)
@@ -60,7 +59,9 @@ from .message_tracker import MessageTracker
         )
 
         self.manager = QuestionManager(self)
-        self.tracker = MessageTracker(bot=self.bot, on_threshold=self.manager.ask_question)
+        self.tracker = MessageTracker(
+            bot=self.bot, on_threshold=self.manager.ask_question
+        )
         self.closer = QuestionCloser(bot=self.bot, state=self.state)
 
         self.init_task = create_logged_task(self.tracker.initialize(), logger)

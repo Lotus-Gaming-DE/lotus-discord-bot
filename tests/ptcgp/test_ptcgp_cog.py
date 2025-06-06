@@ -51,6 +51,7 @@ async def test_update_command(monkeypatch, tmp_path):
 
     monkeypatch.setattr(api_mod, "fetch_all_cards", fake_fetch)
     import cogs.ptcgp.cog as cog_mod
+
     monkeypatch.setattr(cog_mod, "fetch_all_cards", fake_fetch)
 
     from cogs.ptcgp.slash_commands import update
