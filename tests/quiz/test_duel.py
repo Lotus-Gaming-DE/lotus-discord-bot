@@ -240,12 +240,37 @@ async def test_start_duel_insufficient_points_opponent():
 
 
 @pytest.mark.asyncio
-async def test_invite_timeout_notifies():
+async def test_start_duel_thread_fail(monkeypatch):
     bot = DummyBot()
+    bot._champion.data.totals = {"1": 30, "2": 30}
     cog = DummyCog(bot)
-    channel = DummyChannel()
-    message = DummyMessage(channel=channel)
-    view = DuelInviteView(DummyMember(1), DuelConfig("area", 5, "bo3"), cog)
+    message = DummyMessage()
+
+    async def fail_thread(*args, **kwargs):
+        raise Exception("thread fail")
+
+    monkeypatch.setattr(DummyMessage, "create_thread", fail_thread)
+
+    challenger = DummyMember(1)
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "bo3"), cog)
+    view.message = message
+    view.accepted = True
+    interaction = DummyInteraction(DummyMember(2))
+
+    await view.start_duel(interaction)
+
+    assert view.accepted is False
+    assert message.edited_view is None
+    assert bot._champion.calls == [
+        (1, -20, "Quiz-Duell Einsatz"),
+        (2, -20, "Quiz-Duell Einsatz"),
+        (1, 20, "Quiz-Duell Rückgabe"),
+        (2, 20, "Quiz-Duell Rückgabe"),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_invite_timeout_notifies():
     class DummyChannel:
         def __init__(self):
             self.sent = []
@@ -271,8 +296,6 @@ async def test_invite_timeout_notifies():
 
     await view.on_timeout()
 
-    assert message.edited_view is None
-    assert channel.sent == ["<@1>, deine Duellanfrage ist abgelaufen."]
     assert channel.sent == [f"{challenger.mention}, deine Duellanfrage ist abgelaufen."]
     assert message.edited_view is None
 
