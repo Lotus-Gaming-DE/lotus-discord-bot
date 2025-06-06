@@ -25,7 +25,7 @@ class DuelQuestionView(View):
         correct_answers: list[str],
     ) -> None:
         """View handling question answers of a duel round."""
-        super().__init__(timeout=20)
+        super().__init__(timeout=30)
         self.challenger = challenger
         self.opponent = opponent
         self.players = {challenger.id, opponent.id}
