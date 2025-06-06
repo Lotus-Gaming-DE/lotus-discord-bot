@@ -58,11 +58,18 @@ class QuizCog(commands.Cog):
         for area, cfg in self.bot.quiz_data.items():
             active = cfg.active if hasattr(cfg, "active") else cfg.get("active")
             if active:
+                sched_info = self.state.get_schedule(area)
+                if sched_info:
+                    post_time, window_end = sched_info
+                else:
+                    post_time = window_end = None
                 scheduler = QuizScheduler(
                     bot=self.bot,
                     area=area,
                     prepare_question_callback=self.manager.prepare_question,
                     close_question_callback=self.closer.close_question,
+                    post_time=post_time,
+                    window_end=window_end,
                 )
                 self.schedulers[area] = scheduler
 

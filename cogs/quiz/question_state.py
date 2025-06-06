@@ -52,15 +52,18 @@ class QuestionStateManager:
         if not os.path.exists(self.filepath):
             logger.info(
                 f"[QuestionState] Datei nicht gefunden: {self.filepath}")
-            return {"active": {}, "history": {}}
+            return {"active": {}, "history": {}, "schedules": {}}
         try:
             with open(self.filepath, "r", encoding="utf-8") as f:
                 logger.info(f"[QuestionState] Lade Datei: {self.filepath}")
-                return json.load(f)
+                data = json.load(f)
+                # add missing keys for backward compatibility
+                data.setdefault("schedules", {})
+                return data
         except Exception as e:
             logger.error(
                 f"[QuestionState] Fehler beim Laden: {e}", exc_info=True)
-            return {"active": {}, "history": {}}
+            return {"active": {}, "history": {}, "schedules": {}}
 
     def _save_state(self) -> None:
         """Persist the current state to disk."""
@@ -124,3 +127,41 @@ class QuestionStateManager:
         """
         asked_ids = set(self.get_asked_questions(area))
         return [q for q in questions if q.get("id") not in asked_ids]
+
+    # ── Scheduler-Daten ──────────────────────────────────────────
+
+    def set_schedule(self, area: str, post_time: datetime.datetime, window_end: datetime.datetime) -> None:
+        """Persist the next ``post_time`` and ``window_end`` for ``area``."""
+        self.state.setdefault("schedules", {})[area] = {
+            "post_time": post_time.isoformat(),
+            "window_end": window_end.isoformat(),
+        }
+        logger.debug(
+            f"[QuestionState] Nächste Planung für '{area}' gespeichert: {post_time}"
+        )
+        self._save_state()
+
+    def get_schedule(self, area: str) -> Optional[tuple[datetime.datetime, datetime.datetime]]:
+        """Return saved ``post_time`` and ``window_end`` for ``area`` if present."""
+        data = self.state.get("schedules", {}).get(area)
+        if not data:
+            return None
+        try:
+            post_time = datetime.datetime.fromisoformat(data["post_time"])
+            window_end = datetime.datetime.fromisoformat(data["window_end"])
+            return post_time, window_end
+        except Exception as e:
+            logger.error(
+                f"[QuestionState] Fehler beim Lesen des Schedules f\u00fcr '{area}': {e}",
+                exc_info=True,
+            )
+            return None
+
+    def clear_schedule(self, area: str) -> None:
+        """Remove stored schedule info for ``area``."""
+        if area in self.state.get("schedules", {}):
+            self.state["schedules"].pop(area, None)
+            logger.debug(
+                f"[QuestionState] Schedule f\u00fcr '{area}' gel\u00f6scht."
+            )
+            self._save_state()

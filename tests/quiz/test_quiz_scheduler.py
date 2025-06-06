@@ -36,7 +36,8 @@ fake_task_scheduler.tasks = []
 
 
 class DummyState:
-    pass
+    def get_schedule(self, area):
+        return None
 
 
 @pytest.mark.asyncio
