@@ -2,7 +2,7 @@ import datetime
 import pytest
 
 
-from cogs.quiz.duel import DuelQuestionView
+from cogs.quiz.duel import DuelQuestionView, _DuelAnswerModal
 
 
 class DummyMember:
@@ -10,6 +10,21 @@ class DummyMember:
         self.id = uid
         self.display_name = f"user{uid}"
         self.mention = f"<@{uid}>"
+
+
+class DummyResponse:
+    def __init__(self):
+        self.messages = []
+
+    async def send_message(self, content, **kwargs):
+        self.messages.append(content)
+
+
+class DummyInteraction:
+    def __init__(self, uid):
+        self.user = DummyMember(uid)
+        self.response = DummyResponse()
+        self.created_at = datetime.datetime.utcnow()
 
 
 @pytest.mark.asyncio
@@ -28,3 +43,18 @@ async def test_finish_sets_winner_and_disables_buttons():
 
     assert view.winner_id == opponent.id
     assert all(child.disabled for child in view.children)
+
+
+@pytest.mark.asyncio
+async def test_modal_ignores_after_finish():
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    view = DuelQuestionView(challenger, opponent, ["yes"])
+    await view._finish()
+
+    modal = _DuelAnswerModal(view)
+    inter = DummyInteraction(challenger.id)
+    await modal.on_submit(inter)
+
+    assert view.responses == {}
+    assert "Die Runde ist bereits beendet." in inter.response.messages[0]

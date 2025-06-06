@@ -25,7 +25,7 @@ class DuelQuestionView(View):
         correct_answers: list[str],
     ) -> None:
         """View handling question answers of a duel round."""
-        super().__init__(timeout=20)
+        super().__init__(timeout=30)
         self.challenger = challenger
         self.opponent = opponent
         self.players = {challenger.id, opponent.id}
@@ -97,6 +97,11 @@ class _DuelAnswerModal(Modal, title="Antwort eingeben"):
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         """Store the answer and finish if all players responded."""
+        if self.view.is_finished():
+            await interaction.response.send_message(
+                "Die Runde ist bereits beendet.", ephemeral=True
+            )
+            return
         self.view.responses[interaction.user.id] = (
             self.answer.value,
             interaction.created_at or datetime.datetime.utcnow(),
@@ -127,6 +132,9 @@ class DuelInviteView(View):
         if not self.accepted and self.message:
             logger.info("[DuelInviteView] invitation timed out")
             await self.message.edit(view=None)
+            await self.message.channel.send(
+                f"{self.challenger.mention}, deine Duellanfrage ist abgelaufen."
+            )
 
     @button(label="Annehmen", style=discord.ButtonStyle.success)
     async def accept(self, interaction: discord.Interaction, _: Button) -> None:
@@ -204,13 +212,20 @@ class DuelInviteView(View):
         )
         try:
             thread = await self.message.create_thread(
-                name=f"Duel {self.challenger.display_name} vs {interaction.user.display_name}"
+                name=f"Duel {self.challenger.display_name} vs {interaction.user.display_name}",
+                auto_archive_duration=60,
             )
             logger.debug(
                 f"[DuelInviteView] thread created: {thread.id if hasattr(thread, 'id') else 'N/A'}"
             )
             if self.message:
-                await self.message.edit(view=None)
+                embed = (
+                    self.message.embeds[0]
+                    if self.message.embeds
+                    else discord.Embed(title="Quiz-Duell")
+                )
+                embed.add_field(name="Gegner", value=interaction.user.mention)
+                await self.message.edit(embed=embed, view=None)
         except Exception as e:
             logger.error(f"Failed to create duel thread: {e}", exc_info=True)
             await champion_cog.update_user_score(
@@ -227,9 +242,6 @@ class DuelInviteView(View):
             self.stop()
             self.accepted = False
             return
-        await interaction.followup.send(
-            f"{interaction.user.mention} hat das Duell angenommen! Schau hier: {thread.mention}"
-        )
         game = QuizDuelGame(
             self.cog,
             thread,
@@ -238,6 +250,7 @@ class DuelInviteView(View):
             interaction.user,
             self.cfg.points * 2,
             self.cfg.mode,
+            self.message,
         )
         await game.run()
         self.stop()
@@ -253,6 +266,7 @@ class QuizDuelGame:
         opponent: discord.Member,
         pot: int,
         mode: str,
+        invite_message: discord.Message | None = None,
     ) -> None:
         """Hold state for an ongoing duel game."""
 
@@ -263,6 +277,7 @@ class QuizDuelGame:
         self.opponent = opponent
         self.mode = mode
         self.pot = pot
+        self.invite_message = invite_message
         self.stake = pot // 2
         self.scores = {challenger.id: 0, opponent.id: 0}
         self.winner_id: int | None = None
@@ -466,3 +481,19 @@ class QuizDuelGame:
             f"Endstand: {self.challenger.display_name} {challenger_score} - {opponent_score} {self.opponent.display_name}"
         )
         await self.thread.edit(archived=True)
+
+        if self.invite_message:
+            embed = (
+                self.invite_message.embeds[0]
+                if self.invite_message.embeds
+                else discord.Embed(title="Quiz-Duell")
+            )
+            if winner:
+                result_text = (
+                    f"{winner.display_name} gewinnt {self.pot} Punkte"
+                    f" ({challenger_score}:{opponent_score})"
+                )
+            else:
+                result_text = f"Unentschieden ({challenger_score}:{opponent_score})"
+            embed.add_field(name="Ergebnis", value=result_text)
+            await self.invite_message.edit(embed=embed)
