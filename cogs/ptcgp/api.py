@@ -1,4 +1,5 @@
 import aiohttp
+import os
 
 from log_setup import get_logger
 
@@ -8,11 +9,12 @@ logger = get_logger(__name__)
 async def fetch_all_cards(language: str) -> list[dict]:
     """Lade alle Karten für die angegebene Sprache über die REST-API."""
     cards: list[dict] = []
+    ssl_disabled = os.getenv("PTCGP_SKIP_SSL_VERIFY") == "1"
     async with aiohttp.ClientSession() as session:
         page = 1
         while True:
             url = f"https://api.tcgdex.dev/v2/tcg-pocket/{language}/cards?page={page}"
-            async with session.get(url) as resp:
+            async with session.get(url, ssl=False if ssl_disabled else None) as resp:
                 if resp.status != 200:
                     raise RuntimeError(f"HTTP {resp.status} beim Laden von {url}")
                 data = await resp.json()
