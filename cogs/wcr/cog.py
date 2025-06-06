@@ -26,14 +26,29 @@ class WCRCog(commands.Cog):
         self.languages = bot.data["wcr"]["locals"]
         self.pictures = bot.data["wcr"]["pictures"]
 
-        # Mapping for resolving unit names quickly: {lang: {normalized_name: id}}
+        # Mapping for resolving unit names quickly
+        # {lang: {normalized_name: id}}
         self.unit_name_map: dict[str, dict[str, int]] = {}
+        # Reverse mapping and token index for fuzzy search
+        # {lang: {id: normalized_name}}
+        self.id_name_map: dict[str, dict[int, str]] = {}
+        # {lang: {token: set(ids)}}
+        self.name_token_index: dict[str, dict[str, set[int]]] = {}
+
         for lang, texts in self.languages.items():
             name_map: dict[str, int] = {}
+            id_map: dict[int, str] = {}
+            token_index: dict[str, set[int]] = {}
             for unit in texts.get("units", []):
                 normalized = " ".join(helpers.normalize_name(unit.get("name", "")))
-                name_map[normalized] = unit.get("id")
+                unit_id = unit.get("id")
+                name_map[normalized] = unit_id
+                id_map[unit_id] = normalized
+                for token in normalized.split():
+                    token_index.setdefault(token, set()).add(unit_id)
             self.unit_name_map[lang] = name_map
+            self.id_name_map[lang] = id_map
+            self.name_token_index[lang] = token_index
         helpers.build_category_lookup(self.languages, self.pictures)
 
         # Emojis liegen in bot.data["emojis"]
@@ -42,6 +57,9 @@ class WCRCog(commands.Cog):
         # Cached lists for the autocomplete callbacks -----------------------
         # Unique elixir costs found in ``self.units``
         self.costs = sorted({unit["cost"] for unit in self.units})
+        self.cost_choices = [
+            discord.app_commands.Choice(name=str(c), value=str(c)) for c in self.costs
+        ]
 
         # Choices for localized categories (always from English names if available)
         if "en" in self.languages:
@@ -71,48 +89,43 @@ class WCRCog(commands.Cog):
             for t in cats["traits"]
         ]
 
-    # ─── Autocomplete-Callbacks ─────────────────────────────────────────
-    async def cost_autocomplete(self, interaction: discord.Interaction, current: str):
-        """Provide autocomplete suggestions for unit costs."""
-        return [
-            discord.app_commands.Choice(name=str(c), value=str(c))
-            for c in self.costs
-            if current.lower() in str(c).lower()
-        ][:25]
+    def _autocomplete(
+        self, options: list[discord.app_commands.Choice], current: str
+    ) -> list[discord.app_commands.Choice]:
+        """Return up to 25 matching choices for ``current``."""
+        current_lower = current.lower()
+        return [opt for opt in options if current_lower in opt.name.lower()][:25]
 
-    async def speed_autocomplete(self, interaction: discord.Interaction, current: str):
+    # ─── Autocomplete-Callbacks ─────────────────────────────────────────
+    async def cost_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[discord.app_commands.Choice]:
+        """Provide autocomplete suggestions for unit costs."""
+        return self._autocomplete(self.cost_choices, current)
+
+    async def speed_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[discord.app_commands.Choice]:
         """Autocomplete unit speeds."""
-        return [
-            choice
-            for choice in self.speed_choices
-            if current.lower() in choice.name.lower()
-        ][:25]
+        return self._autocomplete(self.speed_choices, current)
 
     async def faction_autocomplete(
         self, interaction: discord.Interaction, current: str
-    ):
+    ) -> list[discord.app_commands.Choice]:
         """Autocomplete factions."""
-        return [
-            choice
-            for choice in self.faction_choices
-            if current.lower() in choice.name.lower()
-        ][:25]
+        return self._autocomplete(self.faction_choices, current)
 
-    async def type_autocomplete(self, interaction: discord.Interaction, current: str):
+    async def type_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[discord.app_commands.Choice]:
         """Autocomplete unit types."""
-        return [
-            choice
-            for choice in self.type_choices
-            if current.lower() in choice.name.lower()
-        ][:25]
+        return self._autocomplete(self.type_choices, current)
 
-    async def trait_autocomplete(self, interaction: discord.Interaction, current: str):
+    async def trait_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[discord.app_commands.Choice]:
         """Autocomplete unit traits."""
-        return [
-            choice
-            for choice in self.trait_choices
-            if current.lower() in choice.name.lower()
-        ][:25]
+        return self._autocomplete(self.trait_choices, current)
 
     # ─── Ausgelagerte Slash-Logik ────────────────────────────────────────
     async def cmd_filter(
@@ -295,17 +308,29 @@ class WCRCog(commands.Cog):
     ) -> tuple[int | None, str]:
         """Search a unit ID by normalized name with fuzzy matching."""
         mapping = self.unit_name_map.get(lang, {})
+        id_map = self.id_name_map.get(lang, {})
+        token_index = self.name_token_index.get(lang, {})
 
         if normalized in mapping:
             return mapping[normalized], lang
 
-        for key, unit_id in mapping.items():
+        tokens = normalized.split()
+        candidate_ids: set[int] = set()
+        for token in tokens:
+            candidate_ids.update(token_index.get(token, set()))
+
+        if not candidate_ids:
+            candidate_ids = set(mapping.values())
+
+        for unit_id in candidate_ids:
+            key = id_map.get(unit_id, "")
             if normalized in key:
                 return unit_id, lang
 
         best_id = None
         best_ratio = 0.0
-        for key, unit_id in mapping.items():
+        for unit_id in candidate_ids:
+            key = id_map.get(unit_id, "")
             ratio = difflib.SequenceMatcher(None, normalized, key).ratio()
             if ratio > best_ratio:
                 best_ratio = ratio

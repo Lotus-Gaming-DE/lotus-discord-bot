@@ -125,6 +125,14 @@ def test_name_map_contains_unit():
     cog.cog_unload()
 
 
+def test_token_index_contains_token():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+
+    assert 62 in cog.name_token_index["de"]["sylvanas"]
+    cog.cog_unload()
+
+
 def test_resolve_unit_cross_language():
     bot = DummyBot()
     cog = WCRCog(bot)
