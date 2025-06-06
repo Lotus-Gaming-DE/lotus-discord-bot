@@ -10,6 +10,9 @@
 - Run `black .` after modifying Python files to autoformat the code.
 - Verify all Python files with `python -m py_compile <file>`.
 - Lint with `flake8 .` and run `pytest` before every commit.
+- If flake8 shows an `E999` error (e.g. `IndentationError`), check for mixed
+  tabs, invisible characters or CRLF line endings, run `black .` again and
+  repeat the linting until it passes.
 - The bot operates on a **German-only** Discord server. All user-facing strings
   and documentation should default to **German**. Support for other languages is
   optional and requires explicit maintainer approval.
