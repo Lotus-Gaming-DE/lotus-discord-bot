@@ -92,6 +92,9 @@ class QuestionManager:
             f"[QuestionManager] Nachricht ID {sent_msg.id} an Channel {channel.id} gesendet."
         )
 
+        delay = max((end_time - datetime.datetime.utcnow()).total_seconds(), 0)
+        self.cog._track_task(self.cog.closer.auto_close(area, delay))
+
         qinfo = QuestionInfo(
             message_id=sent_msg.id,
             end_time=end_time,
