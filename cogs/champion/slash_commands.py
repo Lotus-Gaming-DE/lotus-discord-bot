@@ -32,7 +32,8 @@ async def give(
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     new_total = await cog.update_user_score(user.id, punkte, grund)
     await interaction.response.send_message(
-        f"✅ {user.mention} hat nun insgesamt {new_total} Punkte."
+        f"✅ {user.mention} hat nun insgesamt {new_total} Punkte.",
+        ephemeral=True,
     )
 
 
@@ -56,7 +57,8 @@ async def remove(
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     new_total = await cog.update_user_score(user.id, -punkte, grund)
     await interaction.response.send_message(
-        f"⚠️ {user.mention} hat nun insgesamt {new_total} Punkte."
+        f"⚠️ {user.mention} hat nun insgesamt {new_total} Punkte.",
+        ephemeral=True,
     )
 
 
@@ -84,7 +86,8 @@ async def set_points(
     delta = punkte - old_total
     new_total = await cog.update_user_score(user.id, delta, grund)
     await interaction.response.send_message(
-        f"🔧 {user.mention} wurde auf {new_total} Punkte gesetzt."
+        f"🔧 {user.mention} wurde auf {new_total} Punkte gesetzt.",
+        ephemeral=True,
     )
 
 
@@ -103,12 +106,14 @@ async def reset(interaction: discord.Interaction, user: discord.Member):
     old_total = await cog.data.get_total(str(user.id))
     if old_total <= 0:
         await interaction.response.send_message(
-            f"ℹ️ {user.mention} hat aktuell keine Punkte zum Zurücksetzen."
+            f"ℹ️ {user.mention} hat aktuell keine Punkte zum Zurücksetzen.",
+            ephemeral=True,
         )
         return
     await cog.update_user_score(user.id, -old_total, "Reset durch Mod")
     await interaction.response.send_message(
-        f"🔄 {user.mention} wurde auf 0 Punkte zurückgesetzt."
+        f"🔄 {user.mention} wurde auf 0 Punkte zurückgesetzt.",
+        ephemeral=True,
     )
 
 
@@ -152,7 +157,10 @@ async def myhistory(interaction: discord.Interaction):
         lines.append(f"📅 {date_str}: {sign}{delta} – {entry['reason']}")
 
     text = "\n".join(lines)
-    await interaction.response.send_message(f"📜 Dein Punkteverlauf:\n{text}")
+    await interaction.response.send_message(
+        f"📜 Dein Punkteverlauf:\n{text}",
+        ephemeral=True,
+    )
 
 
 @champion_group.command(
@@ -171,7 +179,8 @@ async def history(interaction: discord.Interaction, user: discord.Member):
 
     if not history_list:
         await interaction.response.send_message(
-            f"📭 {user.display_name} hat noch keine Historie."
+            f"📭 {user.display_name} hat noch keine Historie.",
+            ephemeral=True,
         )
         return
 
@@ -184,7 +193,8 @@ async def history(interaction: discord.Interaction, user: discord.Member):
 
     text = "\n".join(lines)
     await interaction.response.send_message(
-        f"📜 Punkteverlauf von {user.display_name}:\n{text}"
+        f"📜 Punkteverlauf von {user.display_name}:\n{text}",
+        ephemeral=True,
     )
 
 
@@ -338,7 +348,8 @@ async def clean(interaction: discord.Interaction):
                 )
 
     await interaction.followup.send(
-        f"🧹 Entfernte {removed} Einträge aus der Datenbank."
+        f"🧹 Entfernte {removed} Einträge aus der Datenbank.",
+        ephemeral=True,
     )
 
 
@@ -362,5 +373,6 @@ async def syncroles(interaction: discord.Interaction):
         processed += 1
 
     await interaction.followup.send(
-        f"🔄 Synchronisierte Rollen für {processed} Nutzer."
+        f"🔄 Synchronisierte Rollen für {processed} Nutzer.",
+        ephemeral=True,
     )
