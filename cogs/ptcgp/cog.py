@@ -21,12 +21,16 @@ class PTCGPCog(commands.Cog):
                 cards_en = await fetch_all_cards("en")
                 cards_de = await fetch_all_cards("de")
             except Exception as e:
-                logger.error(f"[PTCGP] Fehler beim Laden der API-Daten: {e}", exc_info=True)
+                logger.error(
+                    f"[PTCGP] Fehler beim Laden der API-Daten: {e}", exc_info=True
+                )
                 raise RuntimeError("Fehler beim Laden der Kartendaten.") from e
             try:
                 await self.data.replace_all(cards_en, cards_de)
             except Exception as e:
-                logger.error(f"[PTCGP] Fehler beim Speichern in die DB: {e}", exc_info=True)
+                logger.error(
+                    f"[PTCGP] Fehler beim Speichern in die DB: {e}", exc_info=True
+                )
                 raise RuntimeError("Fehler beim Speichern der Daten.") from e
             return {"en": len(cards_en), "de": len(cards_de)}
 

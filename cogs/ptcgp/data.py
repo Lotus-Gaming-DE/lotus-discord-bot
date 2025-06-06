@@ -78,7 +78,11 @@ class PTCGPData:
                 card.get("image", ""),
                 json.dumps(card.get("attacks", []), ensure_ascii=False),
                 card.get("rarity", ""),
-                card.get("set", {}).get("name") if isinstance(card.get("set"), dict) else card.get("set"),
+                (
+                    card.get("set", {}).get("name")
+                    if isinstance(card.get("set"), dict)
+                    else card.get("set")
+                ),
             ),
         )
 
