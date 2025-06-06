@@ -48,6 +48,9 @@ class ChampionData:
             """
         )
         await db.execute("CREATE INDEX IF NOT EXISTS idx_points_total ON points(total)")
+        await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_history_user ON history(user_id)"
+        )
         await db.commit()
         self._init_done = True
 

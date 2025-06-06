@@ -79,3 +79,35 @@ async def test_delete_user(tmp_path):
     await data.close()
     db_path.unlink()
     assert not db_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_get_history_large_dataset(tmp_path):
+    db_path = tmp_path / "large" / "points.db"
+    data = ChampionData(str(db_path))
+
+    await data.init_db()
+    db = await data._get_db()
+    await db.executemany(
+        "INSERT INTO history(user_id, delta, reason, date) VALUES (?, ?, ?, ?)",
+        [("user1", i, "bulk", "t") for i in range(5000)],
+    )
+    await db.commit()
+
+    import asyncio
+
+    history = await asyncio.wait_for(data.get_history("user1", limit=5), 0.5)
+    assert len(history) == 5
+
+    cur = await db.execute(
+        "EXPLAIN QUERY PLAN \n"
+        "SELECT delta, reason, date FROM history \n"
+        "WHERE user_id = ? ORDER BY date DESC LIMIT ?",
+        ("user1", 5),
+    )
+    plan = " ".join(row[3] for row in await cur.fetchall())
+    assert "USING INDEX idx_history_user" in plan
+
+    await data.close()
+    db_path.unlink()
+    assert not db_path.exists()
