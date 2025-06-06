@@ -48,7 +48,9 @@ async def test_moderator_only_blocks_non_mods():
     inter = DummyInteraction(False)
     assert await predicate(inter) is False
     assert inter.response.messages
-    assert "❌" in inter.response.messages[0][0]
+    msg, ephemeral = inter.response.messages[0]
+    assert "❌" in msg
+    assert ephemeral is True
 
 
 def test_mod_commands_have_default_permissions():

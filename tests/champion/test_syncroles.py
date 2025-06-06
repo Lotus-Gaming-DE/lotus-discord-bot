@@ -28,8 +28,8 @@ class DummyFollowup:
     def __init__(self):
         self.sent = []
 
-    async def send(self, message):
-        self.sent.append(message)
+    async def send(self, message, ephemeral=False):
+        self.sent.append((message, ephemeral))
 
 
 class DummyInteraction:
@@ -64,4 +64,6 @@ async def test_syncroles_processes_all_users(monkeypatch, tmp_path):
 
     assert set(called) == {("1", 5), ("2", 3)}
     assert inter.followup.sent
+    msg, ephemeral = inter.followup.sent[0]
+    assert ephemeral is True
     await cog.data.close()
