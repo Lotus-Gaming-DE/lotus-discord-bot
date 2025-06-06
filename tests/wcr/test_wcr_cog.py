@@ -61,6 +61,7 @@ async def test_cmd_filter_no_emojis():
     msg = inter.response.messages[0]
     assert isinstance(msg["view"], MiniSelectView)
     assert msg["ephemeral"] is True
+    cog.cog_unload()
 
 
 @pytest.mark.asyncio
@@ -87,6 +88,7 @@ async def test_cmd_filter_generates_options():
     expected = [names[u["id"]] for u in units if u["cost"] == 6]
 
     assert [o.label for o in options] == expected
+    cog.cog_unload()
 
 
 @pytest.mark.asyncio
@@ -107,6 +109,7 @@ async def test_cmd_name_creates_embed():
     assert embed.thumbnail.url.endswith("Statue_Abomination_Pose.webp")
     assert embed.fields[0].name.strip() == "Cost"
     assert embed.fields[0].value == "6"
+    cog.cog_unload()
 
 
 def test_name_map_contains_unit():
@@ -139,6 +142,7 @@ async def test_select_view_timeout_disables_select():
     await view.on_timeout()
 
     assert select.disabled is True
+    cog.cog_unload()
 
 
 def test_init_without_en_language(caplog):
@@ -150,6 +154,7 @@ def test_init_without_en_language(caplog):
 
     assert cog.speed_choices
     assert any("language not found" in r.message for r in caplog.records)
+    cog.cog_unload()
 
 
 @pytest.mark.asyncio
@@ -163,6 +168,7 @@ async def test_cost_autocomplete_returns_all():
     expected = [str(c) for c in sorted({1, 2, 3, 4, 5, 6})]
     assert [c.name for c in choices] == expected
     assert [c.value for c in choices] == expected
+    cog.cog_unload()
 
 
 @pytest.mark.asyncio
@@ -175,6 +181,7 @@ async def test_speed_autocomplete_matches_substring():
 
     assert [c.name for c in choices] == ["Med-Fast", "Fast"]
     assert [c.value for c in choices] == ["2", "4"]
+    cog.cog_unload()
 
 
 @pytest.mark.asyncio
@@ -188,6 +195,7 @@ async def test_faction_autocomplete_case_insensitive():
     assert len(choices) == 1
     assert choices[0].name == "Undead"
     assert choices[0].value == "1"
+    cog.cog_unload()
 
 
 @pytest.mark.asyncio
@@ -200,6 +208,7 @@ async def test_type_autocomplete_multiple_results():
 
     assert [c.name for c in choices] == ["Spell", "Leader"]
     assert [c.value for c in choices] == ["2", "3"]
+    cog.cog_unload()
 
 
 @pytest.mark.asyncio
@@ -212,3 +221,4 @@ async def test_trait_autocomplete_returns_sorted_matches():
 
     assert [c.name for c in choices] == ["Melee", "Elemental"]
     assert [c.value for c in choices] == ["3", "8"]
+    cog.cog_unload()

@@ -10,10 +10,11 @@ logger = get_logger(__name__)
 
 
 class QuestionRestorer:
-    def __init__(self, bot, state_manager) -> None:
+    def __init__(self, bot, state_manager, create_task=create_logged_task) -> None:
         """Restore running questions after a bot restart."""
         self.bot = bot
         self.state = state_manager
+        self.create_task = create_task
 
     def restore_all(self) -> None:
         """Recreate all still active questions from persisted state."""
@@ -27,7 +28,7 @@ class QuestionRestorer:
                     logger.info(
                         f"[Restorer] Wiederhergestellte Frage in '{area}' läuft bis {end_time}."
                     )
-                    create_logged_task(
+                    self.create_task(
                         self.repost_question(area, active), logger)
                 else:
                     self.state.clear_active_question(area)
@@ -92,7 +93,7 @@ class QuestionRestorer:
 
             delay = max(
                 (end_time - datetime.datetime.utcnow()).total_seconds(), 0)
-            create_logged_task(
+            self.create_task(
                 self.bot.quiz_cog.closer.auto_close(area, delay), logger
             )
 
