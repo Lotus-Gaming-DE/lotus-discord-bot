@@ -230,6 +230,12 @@ async def duel(
             "❌ Champion-System nicht verfügbar.", ephemeral=True
         )
         return
+    quiz_cog = interaction.client.get_cog("QuizCog")
+    if quiz_cog and interaction.user.id in quiz_cog.active_duels:
+        await interaction.response.send_message(
+            "❌ Du nimmst bereits an einem Duell teil.", ephemeral=True
+        )
+        return
     total = await champion_cog.data.get_total(str(interaction.user.id))
     if total < punkte:
         await interaction.response.send_message(

@@ -47,6 +47,7 @@ class DummyBot:
 class DummyCog:
     def __init__(self, bot):
         self.bot = bot
+        self.active_duels = {}
 
 
 class DummyThread:
@@ -464,3 +465,63 @@ async def test_game_run_sequential_sends_question():
 
     embeds = [m for m in thread.sent if isinstance(m, discord.Embed)]
     assert embeds
+
+
+@pytest.mark.asyncio
+async def test_start_duel_tracks_and_clears_active_duels(monkeypatch):
+    bot = DummyBot()
+    bot._champion.data.totals = {"1": 50, "2": 40}
+    cog = DummyCog(bot)
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    message = DummyMessage()
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "bo3"), cog)
+    view.message = message
+
+    games: list[QuizDuelGame] = []
+
+    async def fake_run(self):
+        games.append(self)
+
+    monkeypatch.setattr(QuizDuelGame, "run", fake_run)
+
+    interaction = DummyInteraction(opponent)
+    await view.start_duel(interaction)
+
+    assert cog.active_duels == {1: games[0], 2: games[0]}
+
+    games[0].scores = {1: 2, 2: 1}
+    await games[0]._finish()
+
+    assert cog.active_duels == {}
+
+
+class DummyAcceptResponse:
+    def __init__(self):
+        self.sent = []
+
+    async def send_message(self, content, **kwargs):
+        self.sent.append((content, kwargs))
+
+
+class DummyAcceptInteraction(DummyInteraction):
+    def __init__(self, user):
+        super().__init__(user)
+        self.response = DummyAcceptResponse()
+
+
+@pytest.mark.asyncio
+async def test_accept_rejects_if_player_active():
+    bot = DummyBot()
+    bot._champion.data.totals = {"1": 50, "2": 40}
+    cog = DummyCog(bot)
+    cog.active_duels = {1: object()}
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "bo3"), cog)
+
+    inter = DummyAcceptInteraction(opponent)
+    await view.accept.callback(inter)
+
+    assert view.accepted is False
+    assert inter.response.sent[0][0].startswith("Einer der Spieler")

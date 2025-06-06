@@ -7,6 +7,7 @@ import discord
 from discord.ext import commands
 
 from log_setup import create_logged_task, get_logger
+from .duel import QuizDuelGame
 
 from .message_tracker import MessageTracker
 from .question_closer import QuestionCloser
@@ -41,6 +42,7 @@ class QuizCog(commands.Cog):
         self.answered_users: dict[str, set[int]] = defaultdict(set)
         self.awaiting_activity: dict[int, tuple[str, float]] = {}
         self.schedulers: dict[str, QuizScheduler] = {}
+        self.active_duels: dict[int, QuizDuelGame] = {}
 
         # Find existing QuestionStateManager or create a default one
         state = None
@@ -98,3 +100,4 @@ class QuizCog(commands.Cog):
             self.restorer.cancel_all()
         for task in self.tasks:
             task.cancel()
+        self.active_duels.clear()

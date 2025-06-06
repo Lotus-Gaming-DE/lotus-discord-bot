@@ -155,6 +155,14 @@ class DuelInviteView(View):
                 "Das Duell wurde bereits angenommen.", ephemeral=True
             )
             return
+        if (
+            self.challenger.id in self.cog.active_duels
+            or interaction.user.id in self.cog.active_duels
+        ):
+            await interaction.response.send_message(
+                "Einer der Spieler ist bereits in einem Duell.", ephemeral=True
+            )
+            return
         self.accepted = True
         logger.info(f"Duel accepted by {interaction.user} against {self.challenger}")
         await interaction.response.defer()
@@ -252,6 +260,8 @@ class DuelInviteView(View):
             self.cfg.mode,
             self.message,
         )
+        self.cog.active_duels[self.challenger.id] = game
+        self.cog.active_duels[interaction.user.id] = game
         await game.run()
         self.stop()
 
@@ -497,3 +507,5 @@ class QuizDuelGame:
                 result_text = f"Unentschieden ({challenger_score}:{opponent_score})"
             embed.add_field(name="Ergebnis", value=result_text)
             await self.invite_message.edit(embed=embed)
+        self.cog.active_duels.pop(self.challenger.id, None)
+        self.cog.active_duels.pop(self.opponent.id, None)
