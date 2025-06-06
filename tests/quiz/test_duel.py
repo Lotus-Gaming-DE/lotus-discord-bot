@@ -4,6 +4,7 @@ import pytest
 
 
 from cogs.quiz.duel import QuizDuelGame, DuelInviteView, DuelConfig, DuelQuestionView
+from cogs.quiz.quiz_config import QuizAreaConfig
 
 
 class DummyMember:
@@ -252,7 +253,7 @@ async def test_game_run_dynamic(monkeypatch):
             return self.dynamic_providers.get(area)
 
     bot = DummyBot()
-    bot.quiz_data = {"area": {"question_generator": DummyQG()}}
+    bot.quiz_data = {"area": QuizAreaConfig(question_generator=DummyQG())}
     cog = DummyCog(bot)
 
     responses = [
@@ -297,3 +298,36 @@ async def test_game_run_dynamic(monkeypatch):
     embeds = [m for m in thread.sent if isinstance(m, discord.Embed)]
     assert len(embeds) == 3
     assert game.scores == {1: 3, 2: 2}
+
+
+@pytest.mark.asyncio
+async def test_game_run_sequential_sends_question():
+    class DummyQG:
+        def __init__(self):
+            self.calls = 0
+
+        def generate(self, area):
+            self.calls += 1
+            if self.calls == 1:
+                return {"frage": "f1", "antwort": "a1"}
+            return None
+
+    class DummyRunThread(DummyThread):
+        async def send(self, msg=None, **kwargs):
+            self.sent.append(kwargs.get("embed", msg))
+            if view := kwargs.get("view"):
+                await view._finish()
+            return DummyMessage()
+
+    bot = DummyBot()
+    bot.quiz_data = {"area": QuizAreaConfig(question_generator=DummyQG())}
+    cog = DummyCog(bot)
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    thread = DummyRunThread()
+    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3")
+
+    await game.run()
+
+    embeds = [m for m in thread.sent if isinstance(m, discord.Embed)]
+    assert embeds

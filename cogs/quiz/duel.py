@@ -269,7 +269,7 @@ class QuizDuelGame:
 
     async def run(self) -> None:
         """Run the duel until one player has enough wins."""
-        qg: QuestionGenerator = self.cog.bot.quiz_data[self.area]["question_generator"]
+        qg: QuestionGenerator = self.cog.bot.quiz_data[self.area].question_generator
         total_rounds = {"bo3": 3, "bo5": 5}.get(self.mode, 5)
         needed = total_rounds // 2 + 1
         logger.info(
