@@ -32,6 +32,8 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-asyncio
           pip install flake8
+      - name: Run formatter
+        run: black --check .
       - name: Run linter
         run: |
           flake8 .
