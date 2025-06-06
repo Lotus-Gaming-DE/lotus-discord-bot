@@ -246,35 +246,12 @@ async def test_invite_timeout_notifies():
     channel = DummyChannel()
     message = DummyMessage(channel=channel)
     view = DuelInviteView(DummyMember(1), DuelConfig("area", 5, "bo3"), cog)
-    class DummyChannel:
-        def __init__(self):
-            self.sent = []
-
-        async def send(self, msg, **kwargs):
-            self.sent.append(msg)
-
-    class DummyMessage:
-        def __init__(self, channel):
-            self.channel = channel
-            self.edited_view = "INIT"
-
-        async def edit(self, view=None):
-            self.edited_view = view
-
-    channel = DummyChannel()
-    message = DummyMessage(channel)
-    bot = DummyBot()
-    cog = DummyCog(bot)
-    challenger = DummyMember(1)
-    view = DuelInviteView(challenger, DuelConfig("area", 20, "bo3"), cog)
     view.message = message
 
     await view.on_timeout()
 
     assert message.edited_view is None
     assert channel.sent == ["<@1>, deine Duellanfrage ist abgelaufen."]
-    assert channel.sent == [f"{challenger.mention}, deine Duellanfrage ist abgelaufen."]
-    assert message.edited_view is None
 
 
 @pytest.mark.asyncio
@@ -346,6 +323,63 @@ async def test_game_run_dynamic(monkeypatch):
     embeds = [m for m in thread.sent if isinstance(m, discord.Embed)]
     assert len(embeds) == 3
     assert game.scores == {1: 3, 2: 2}
+
+
+@pytest.mark.asyncio
+async def test_game_run_dynamic_tiebreak(monkeypatch):
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+
+    class DummyProvider:
+        def generate_all_types(self):
+            return [
+                {"frage": "f1", "antwort": "a1"},
+                {"frage": "f2", "antwort": "a2"},
+            ]
+
+    class DummyQG:
+        def __init__(self):
+            self.dynamic_providers = {"area": DummyProvider()}
+
+        def generate(self, area):
+            return None
+
+        def get_dynamic_provider(self, area):
+            return self.dynamic_providers.get(area)
+
+    bot = DummyBot()
+    bot.quiz_data = {"area": QuizAreaConfig(question_generator=DummyQG())}
+    cog = DummyCog(bot)
+
+    base = datetime.datetime.utcnow()
+    responses = [
+        {challenger.id: ("a1", base)},
+        {opponent.id: ("a2", base + datetime.timedelta(seconds=5))},
+    ]
+    resp_iter = iter(responses)
+
+    class DummyRunThread(DummyThread):
+        async def send(self, msg=None, **kwargs):
+            self.sent.append(kwargs.get("embed", msg))
+            return DummyMessage()
+
+    class AutoView(DuelQuestionView):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._data = next(resp_iter)
+
+        async def wait(self):
+            self.responses = self._data
+            await self._finish()
+
+    monkeypatch.setattr("cogs.quiz.duel.DuelQuestionView", AutoView)
+
+    thread = DummyRunThread()
+    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "dynamic", None)
+    await game.run()
+
+    assert game.scores == {1: 1, 2: 1}
+    assert game.winner_id == opponent.id
 
 
 @pytest.mark.asyncio

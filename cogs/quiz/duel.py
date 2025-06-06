@@ -356,9 +356,9 @@ class QuizDuelGame:
                 t1 = last_correct[self.challenger.id]
                 t2 = last_correct[self.opponent.id]
                 if t1 and t2:
-                    if t1 < t2:
+                    if t1 > t2:
                         self.winner_id = self.challenger.id
-                    elif t2 < t1:
+                    elif t2 > t1:
                         self.winner_id = self.opponent.id
             elif c_score > o_score:
                 self.winner_id = self.challenger.id
