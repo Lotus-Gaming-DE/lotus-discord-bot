@@ -97,6 +97,11 @@ class _DuelAnswerModal(Modal, title="Antwort eingeben"):
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         """Store the answer and finish if all players responded."""
+        if self.view.is_finished():
+            await interaction.response.send_message(
+                "Die Runde ist bereits beendet.", ephemeral=True
+            )
+            return
         self.view.responses[interaction.user.id] = (
             self.answer.value,
             interaction.created_at or datetime.datetime.utcnow(),
