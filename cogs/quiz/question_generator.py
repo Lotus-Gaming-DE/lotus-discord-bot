@@ -36,7 +36,19 @@ class QuestionGenerator:
 
         if area in self.dynamic_providers:
             provider = self.dynamic_providers[area]
-            question = provider.generate()
+            question = None
+            for _ in range(5):
+                q = provider.generate()
+                if not q:
+                    break
+                qid = q.get("id")
+                if qid in self.state_manager.get_asked_questions(area):
+                    logger.debug(
+                        f"[QuestionGenerator] Frage {qid} bereits gestellt, neuer Versuch"
+                    )
+                    continue
+                question = q
+                break
             questions = [question] if question else []
             logger.debug(
                 f"[QuestionGenerator] Dynamische Frage für '{area}': {len(questions)}"
