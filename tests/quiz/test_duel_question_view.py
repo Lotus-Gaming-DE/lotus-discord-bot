@@ -14,15 +14,6 @@ class DummyMember:
 
 class DummyResponse:
     def __init__(self):
-        self.messages = []
-
-    async def send_message(self, content, **kwargs):
-        self.messages.append(content)
-
-
-class DummyInteraction:
-    def __init__(self, uid):
-        self.user = DummyMember(uid)
         self.sent = []
 
     async def send_message(self, content, **kwargs):
@@ -63,14 +54,6 @@ async def test_modal_ignores_after_finish():
     view = DuelQuestionView(challenger, opponent, ["yes"])
     await view._finish()
 
-    modal = _DuelAnswerModal(view)
-    inter = DummyInteraction(challenger.id)
-    await modal.on_submit(inter)
-
-    assert view.responses == {}
-    assert "Die Runde ist bereits beendet." in inter.response.messages[0]
-
-    await view._finish()
     modal = _DuelAnswerModal(view)
     modal.answer._value = "foo"
     inter = DummyDuelInteraction(challenger)
