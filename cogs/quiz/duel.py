@@ -15,6 +15,7 @@ class DuelConfig:
     area: str
     points: int
     mode: str
+    timeout: int = 30
 
 
 class DuelQuestionView(View):
@@ -23,9 +24,10 @@ class DuelQuestionView(View):
         challenger: discord.Member,
         opponent: discord.Member,
         correct_answers: list[str],
+        timeout: int,
     ) -> None:
         """View handling question answers of a duel round."""
-        super().__init__(timeout=30)
+        super().__init__(timeout=timeout)
         self.challenger = challenger
         self.opponent = opponent
         self.players = {challenger.id, opponent.id}
@@ -251,6 +253,7 @@ class DuelInviteView(View):
             self.cfg.points * 2,
             self.cfg.mode,
             self.message,
+            self.cfg.timeout,
         )
         await game.run()
         self.stop()
@@ -267,6 +270,7 @@ class QuizDuelGame:
         pot: int,
         mode: str,
         invite_message: discord.Message | None = None,
+        timeout: int = 30,
     ) -> None:
         """Hold state for an ongoing duel game."""
 
@@ -278,6 +282,7 @@ class QuizDuelGame:
         self.mode = mode
         self.pot = pot
         self.invite_message = invite_message
+        self.timeout = timeout
         self.stake = pot // 2
         self.scores = {challenger.id: 0, opponent.id: 0}
         self.winner_id: int | None = None
@@ -330,7 +335,12 @@ class QuizDuelGame:
                     description=question["frage"],
                     color=discord.Color.blue(),
                 )
-                view = DuelQuestionView(self.challenger, self.opponent, answers)
+                view = DuelQuestionView(
+                    self.challenger,
+                    self.opponent,
+                    answers,
+                    self.timeout,
+                )
                 msg = await self.thread.send(embed=embed, view=view)
                 view.message = msg
                 views.append(view)
@@ -400,7 +410,12 @@ class QuizDuelGame:
                 description=question["frage"],
                 color=discord.Color.blue(),
             )
-            view = DuelQuestionView(self.challenger, self.opponent, answers)
+            view = DuelQuestionView(
+                self.challenger,
+                self.opponent,
+                answers,
+                self.timeout,
+            )
             msg = await self.thread.send(embed=embed, view=view)
             view.message = msg
             await view.wait()

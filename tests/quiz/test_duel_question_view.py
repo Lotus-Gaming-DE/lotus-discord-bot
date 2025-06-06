@@ -31,7 +31,7 @@ class DummyDuelInteraction:
 async def test_finish_sets_winner_and_disables_buttons():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
-    view = DuelQuestionView(challenger, opponent, ["yes"])
+    view = DuelQuestionView(challenger, opponent, ["yes"], 30)
 
     assert view.timeout == 30
 
@@ -51,7 +51,7 @@ async def test_finish_sets_winner_and_disables_buttons():
 async def test_modal_ignores_after_finish():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
-    view = DuelQuestionView(challenger, opponent, ["yes"])
+    view = DuelQuestionView(challenger, opponent, ["yes"], 30)
 
     await view._finish()
     await view._finish()
