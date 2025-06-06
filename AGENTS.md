@@ -1,6 +1,15 @@
 # Developer Guidelines
 
 - Use **guild-based** slash commands only. Register command groups with `bot.tree.add_command(..., guild=bot.main_guild)` and sync via `await bot.tree.sync(guild=bot.main_guild)`.
+
+## Codex Workflow for Python
+
+- Always use **4 spaces** per indentation level – never tabs.
+- Save files with **LF line endings**.
+- Remove invisible characters like non-breaking spaces before committing.
+- Run `black .` after modifying Python files to autoformat the code.
+- Verify all Python files with `python -m py_compile <file>`.
+- Lint with `flake8 .` and run `pytest` before every commit.
 - The bot operates on a **German-only** Discord server. All user-facing strings
   and documentation should default to **German**. Support for other languages is
   optional and requires explicit maintainer approval.
