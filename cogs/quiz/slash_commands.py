@@ -339,7 +339,7 @@ async def reset(interaction: discord.Interaction):
         return
 
     state = interaction.client.quiz_data[area].question_state
-    state.reset_asked_questions(area)
+    await state.reset_asked_questions(area)
     await interaction.response.send_message(
         f"♻️ Frageverlauf für **{area}** wurde zurückgesetzt.", ephemeral=True
     )

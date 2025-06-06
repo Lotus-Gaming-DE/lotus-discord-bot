@@ -18,7 +18,7 @@ class QuestionRestorer:
         self._create_task = create_task
         self.tasks: list[asyncio.Task] = []
 
-    def restore_all(self) -> None:
+    async def restore_all(self) -> None:
         """Recreate all still active questions from persisted state."""
         for area, _ in self.bot.quiz_data.items():
             active = self.state.get_active_question(area)
@@ -35,7 +35,7 @@ class QuestionRestorer:
                     task = self._create_task(self.repost_question(area, active))
                     self.tasks.append(task)
                 else:
-                    self.state.clear_active_question(area)
+                    await self.state.clear_active_question(area)
             except Exception as e:
                 logger.error(
                     f"[Restorer] Fehler beim Wiederherstellen von '{area}': {e}",
@@ -58,7 +58,7 @@ class QuestionRestorer:
                 logger.warning(
                     f"[Restorer] Ursprüngliche Nachricht für '{area}' nicht mehr vorhanden – lösche Zustand."
                 )
-                self.state.clear_active_question(area)
+                await self.state.clear_active_question(area)
                 return
 
             if msg.embeds and (
@@ -69,7 +69,7 @@ class QuestionRestorer:
                 logger.info(
                     f"[Restorer] Frage in '{area}' war bereits rot markiert oder hatte Footer – wird nicht wiederhergestellt."
                 )
-                self.state.clear_active_question(area)
+                await self.state.clear_active_question(area)
                 return
 
             correct_answers = qinfo.answers
@@ -108,7 +108,7 @@ class QuestionRestorer:
             )
         except Exception as e:
             logger.error(f"[Restorer] Fehler in '{area}': {e}", exc_info=True)
-            self.state.clear_active_question(area)
+            await self.state.clear_active_question(area)
 
     def cancel_all(self) -> None:
         """Cancel all running tasks created by the restorer."""

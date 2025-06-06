@@ -47,7 +47,15 @@ class DummyState:
 async def test_scheduler_start_and_stop(monkeypatch, patch_logged_task, bot):
     patch_logged_task(quiz_cog_mod, msg_mod)
     monkeypatch.setattr(scheduler_mod, "create_logged_task", fake_task_scheduler)
-    monkeypatch.setattr(quiz_cog_mod.QuestionRestorer, "restore_all", lambda self: None)
+
+    async def dummy_restore(self):
+        return None
+
+    monkeypatch.setattr(
+        quiz_cog_mod.QuestionRestorer,
+        "restore_all",
+        dummy_restore,
+    )
 
     bot.data = {"quiz": {"questions": {"de": {}}, "languages": ["de"]}}
     bot.quiz_data = {
@@ -93,7 +101,11 @@ class DummyInteraction:
 async def test_enable_starts_and_disable_stops(monkeypatch, patch_logged_task, bot):
     patch_logged_task(quiz_cog_mod, msg_mod)
     monkeypatch.setattr(scheduler_mod, "create_logged_task", fake_task_scheduler)
-    monkeypatch.setattr(quiz_cog_mod.QuestionRestorer, "restore_all", lambda self: None)
+
+    async def dummy_restore(self):
+        return None
+
+    monkeypatch.setattr(quiz_cog_mod.QuestionRestorer, "restore_all", dummy_restore)
     monkeypatch.setattr(slash_mod, "save_area_config", lambda b: None)
 
     bot.data = {"quiz": {"questions": {"de": {}}, "languages": ["de"]}}

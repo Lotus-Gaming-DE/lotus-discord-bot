@@ -64,7 +64,7 @@ class QuizCog(commands.Cog):
         self.restorer = QuestionRestorer(
             bot=self.bot, state_manager=self.state, create_task=self._track_task
         )
-        self.restorer.restore_all()
+        self._track_task(self.restorer.restore_all())
 
         for area, cfg in self.bot.quiz_data.items():
             active = cfg.active if hasattr(cfg, "active") else cfg.get("active")

@@ -3,6 +3,7 @@
 import json
 import os
 import datetime
+import asyncio
 from dataclasses import dataclass
 from typing import Optional
 
@@ -45,6 +46,7 @@ class QuestionStateManager:
     def __init__(self, filepath: str) -> None:
         """Create a manager for persisting question state at ``filepath``."""
         self.filepath = filepath
+        self._lock = asyncio.Lock()
         self.state = self._load_state()
 
     def _load_state(self) -> dict:
@@ -63,39 +65,43 @@ class QuestionStateManager:
             logger.error(f"[QuestionState] Fehler beim Laden: {e}", exc_info=True)
             return {"active": {}, "history": {}, "schedules": {}}
 
-    def _save_state(self) -> None:
+    async def _save_state(self) -> None:
         """Persist the current state to disk."""
-        try:
-            os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
-            with open(self.filepath, "w", encoding="utf-8") as f:
-                json.dump(self.state, f, indent=4, ensure_ascii=False)
-            logger.debug("[QuestionState] Zustand gespeichert.")
-        except Exception as e:
-            logger.error(f"[QuestionState] Fehler beim Speichern: {e}", exc_info=True)
+        async with self._lock:
+            try:
+                os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
+                with open(self.filepath, "w", encoding="utf-8") as f:
+                    json.dump(self.state, f, indent=4, ensure_ascii=False)
+                logger.debug("[QuestionState] Zustand gespeichert.")
+            except Exception as e:
+                logger.error(
+                    f"[QuestionState] Fehler beim Speichern: {e}",
+                    exc_info=True,
+                )
 
     # ── Aktive Fragen ─────────────────────────────────────────────
 
-    def set_active_question(self, area: str, question: QuestionInfo) -> None:
+    async def set_active_question(self, area: str, question: QuestionInfo) -> None:
         """Remember the currently active question for an area."""
         self.state["active"][area] = question.to_dict()
         logger.info(f"[QuestionState] Neue aktive Frage in '{area}' gespeichert.")
-        self._save_state()
+        await self._save_state()
 
     def get_active_question(self, area: str) -> Optional[QuestionInfo]:
         """Return the active question for ``area`` if one exists."""
         data = self.state.get("active", {}).get(area)
         return QuestionInfo.from_dict(data) if data else None
 
-    def clear_active_question(self, area: str) -> None:
+    async def clear_active_question(self, area: str) -> None:
         """Remove the active question for ``area`` from the state."""
         if area in self.state.get("active", {}):
             self.state["active"].pop(area, None)
             logger.info(f"[QuestionState] Aktive Frage in '{area}' wurde entfernt.")
-            self._save_state()
+            await self._save_state()
 
     # ── Historie ───────────────────────────────────────────────────
 
-    def mark_question_as_asked(self, area: str, question_id: int) -> None:
+    async def mark_question_as_asked(self, area: str, question_id: int) -> None:
         """Add ``question_id`` to the history of ``area``."""
         self.state.setdefault("history", {}).setdefault(area, [])
         if question_id not in self.state["history"][area]:
@@ -103,17 +109,17 @@ class QuestionStateManager:
             logger.info(
                 f"[QuestionState] Frage-ID {question_id} in '{area}' als gestellt markiert."
             )
-            self._save_state()
+            await self._save_state()
 
     def get_asked_questions(self, area: str) -> list[int]:
         """Return a list of question IDs already asked in ``area``."""
         return self.state.get("history", {}).get(area, [])
 
-    def reset_asked_questions(self, area: str) -> None:
+    async def reset_asked_questions(self, area: str) -> None:
         """Clear the question history for ``area``."""
         self.state.setdefault("history", {})[area] = []
         logger.info(f"[QuestionState] Historie in '{area}' zurückgesetzt.")
-        self._save_state()
+        await self._save_state()
 
     # ── Fragefilterung ────────────────────────────────────────────
 
@@ -126,7 +132,7 @@ class QuestionStateManager:
 
     # ── Scheduler-Daten ──────────────────────────────────────────
 
-    def set_schedule(
+    async def set_schedule(
         self, area: str, post_time: datetime.datetime, window_end: datetime.datetime
     ) -> None:
         """Persist the next ``post_time`` and ``window_end`` for ``area``."""
@@ -137,7 +143,7 @@ class QuestionStateManager:
         logger.debug(
             f"[QuestionState] Nächste Planung für '{area}' gespeichert: {post_time}"
         )
-        self._save_state()
+        await self._save_state()
 
     def get_schedule(
         self, area: str
@@ -157,9 +163,9 @@ class QuestionStateManager:
             )
             return None
 
-    def clear_schedule(self, area: str) -> None:
+    async def clear_schedule(self, area: str) -> None:
         """Remove stored schedule info for ``area``."""
         if area in self.state.get("schedules", {}):
             self.state["schedules"].pop(area, None)
             logger.debug(f"[QuestionState] Schedule f\u00fcr '{area}' gel\u00f6scht.")
-            self._save_state()
+            await self._save_state()

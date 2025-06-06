@@ -64,7 +64,7 @@ class QuestionManager:
         qg = cfg.question_generator
 
         language = cfg.language
-        question = qg.generate(area, language=language)
+        question = await qg.generate(area, language=language)
         if not question:
             logger.warning(f"[QuestionManager] Keine Frage generiert für '{area}'.")
             return
@@ -103,6 +103,6 @@ class QuestionManager:
         self.cog.answered_users[area].clear()
         self.cog.tracker.reset(channel.id)
         self.cog.awaiting_activity.pop(channel.id, None)
-        self.cog.state.set_active_question(area, qinfo)
+        await self.cog.state.set_active_question(area, qinfo)
 
         logger.info(f"[QuestionManager] Frage gesendet in '{area}': {frage_text}")

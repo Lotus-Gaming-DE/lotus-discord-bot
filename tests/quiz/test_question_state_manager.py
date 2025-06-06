@@ -5,7 +5,11 @@ import datetime
 from cogs.quiz.question_state import QuestionStateManager, QuestionInfo
 
 
-def test_set_active_question(tmp_path):
+import pytest
+
+
+@pytest.mark.asyncio
+async def test_set_active_question(tmp_path):
     state_file = tmp_path / "state.json"
     manager = QuestionStateManager(str(state_file))
     question = QuestionInfo(
@@ -14,7 +18,7 @@ def test_set_active_question(tmp_path):
         answers=["a"],
         frage="foo",
     )
-    manager.set_active_question("area1", question)
+    await manager.set_active_question("area1", question)
 
     restored = manager.get_active_question("area1")
     assert restored == question
@@ -24,11 +28,12 @@ def test_set_active_question(tmp_path):
     assert saved["active"]["area1"] == question.to_dict()
 
 
-def test_mark_question_as_asked(tmp_path):
+@pytest.mark.asyncio
+async def test_mark_question_as_asked(tmp_path):
     state_file = tmp_path / "state.json"
     manager = QuestionStateManager(str(state_file))
-    manager.mark_question_as_asked("area1", 42)
-    manager.mark_question_as_asked("area1", 42)
+    await manager.mark_question_as_asked("area1", 42)
+    await manager.mark_question_as_asked("area1", 42)
 
     assert manager.get_asked_questions("area1") == [42]
 
@@ -37,11 +42,12 @@ def test_mark_question_as_asked(tmp_path):
     assert saved["history"]["area1"] == [42]
 
 
-def test_filter_unasked_questions(tmp_path):
+@pytest.mark.asyncio
+async def test_filter_unasked_questions(tmp_path):
     state_file = tmp_path / "state.json"
     manager = QuestionStateManager(str(state_file))
-    manager.mark_question_as_asked("area1", 1)
-    manager.mark_question_as_asked("area1", 3)
+    await manager.mark_question_as_asked("area1", 1)
+    await manager.mark_question_as_asked("area1", 3)
 
     questions = [
         {"id": 1},
