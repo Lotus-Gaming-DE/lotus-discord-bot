@@ -2,7 +2,7 @@ import datetime
 import asyncio
 import discord
 
-from log_setup import get_logger, create_logged_task
+from log_setup import get_logger
 
 from .views import AnswerButtonView
 from .question_state import QuestionInfo
@@ -11,16 +11,16 @@ logger = get_logger(__name__)
 
 
 class QuestionRestorer:
-    def __init__(self, bot, state_manager, create_task=create_logged_task) -> None:
+    def __init__(self, bot, state_manager, create_task) -> None:
         """Restore running questions after a bot restart."""
         self.bot = bot
         self.state = state_manager
+        self._create_task = create_task
         self.tasks: list[asyncio.Task] = []
-        self.create_task = create_task
 
     def restore_all(self) -> None:
         """Recreate all still active questions from persisted state."""
-        for area, cfg in self.bot.quiz_data.items():
+        for area, _ in self.bot.quiz_data.items():
             active = self.state.get_active_question(area)
             if not active:
                 continue
@@ -32,7 +32,7 @@ class QuestionRestorer:
                         area,
                         end_time,
                     )
-                    task = self.create_task(self.repost_question(area, active), logger)
+                    task = self._create_task(self.repost_question(area, active))
                     self.tasks.append(task)
                 else:
                     self.state.clear_active_question(area)
@@ -100,9 +100,7 @@ class QuestionRestorer:
             self.bot.quiz_cog.answered_users[area].clear()
 
             delay = max((end_time - datetime.datetime.utcnow()).total_seconds(), 0)
-            task = self.create_task(
-                self.bot.quiz_cog.closer.auto_close(area, delay), logger
-            )
+            task = self._create_task(self.bot.quiz_cog.closer.auto_close(area, delay))
             self.tasks.append(task)
 
             logger.info(
