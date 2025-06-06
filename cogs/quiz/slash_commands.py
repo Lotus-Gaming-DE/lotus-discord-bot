@@ -203,12 +203,15 @@ async def ask(interaction: discord.Interaction):
     name="duel", description="Starte ein Quiz-Duell (bo3, bo5, dynamic)"
 )
 @app_commands.describe(
-    punkte="Gesetzte Punkte", modus="Modus des Duells (bo3, bo5 oder dynamic)"
+    punkte="Gesetzte Punkte",
+    modus="Modus des Duells (bo3, bo5 oder dynamic)",
+    timeout="Antwortzeit in Sekunden (10–120)",
 )
 async def duel(
     interaction: discord.Interaction,
     punkte: app_commands.Range[int, 1, 10000],
     modus: Literal["bo3", "bo5", "dynamic"] = "bo3",
+    timeout: app_commands.Range[int, 10, 120] = 30,
 ):
     area = get_area_by_channel(interaction.client, interaction.channel.id)
     if not area:
@@ -243,7 +246,7 @@ async def duel(
         )
         return
 
-    cfg = DuelConfig(area=area, points=punkte, mode=modus)
+    cfg = DuelConfig(area=area, points=punkte, mode=modus, timeout=timeout)
     view = DuelInviteView(interaction.user, cfg, interaction.client.get_cog("QuizCog"))
     embed = discord.Embed(
         title="Quiz-Duell",

@@ -525,3 +525,70 @@ async def test_accept_rejects_if_player_active():
 
     assert view.accepted is False
     assert inter.response.sent[0][0].startswith("Einer der Spieler")
+async def test_game_run_fetches_user_when_cache_empty(monkeypatch):
+    class DummyQG:
+        def generate(self, area):
+            return {"frage": "f1", "antwort": "a1"}
+
+    class DummyRunThread(DummyThread):
+        async def send(self, msg=None, **kwargs):
+            self.sent.append(kwargs.get("embed", msg))
+            if view := kwargs.get("view"):
+                await view._finish()
+            return DummyMessage()
+
+    class AutoView(DuelQuestionView):
+        async def wait(self):
+            self.winner_id = challenger.id
+            await self._finish()
+
+    class NoCacheBot(DummyBot):
+        def get_user(self, uid):
+            return None
+
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    bot = NoCacheBot()
+
+    async def fetch(uid):
+        return DummyMember(uid)
+
+    bot.fetch_user = fetch
+    bot.quiz_data = {"area": QuizAreaConfig(question_generator=DummyQG())}
+    cog = DummyCog(bot)
+
+    monkeypatch.setattr("cogs.quiz.duel.DuelQuestionView", AutoView)
+
+    thread = DummyRunThread()
+    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
+    game.scores = {challenger.id: 1, opponent.id: 1}
+    await game.run()
+
+    assert any("user1" in m for m in thread.sent if isinstance(m, str))
+
+
+@pytest.mark.asyncio
+async def test_finish_fetches_user_when_cache_empty():
+    class NoCacheBot(DummyBot):
+        def get_user(self, uid):
+            return None
+
+    fetch_calls = []
+
+    async def fetch(uid):
+        fetch_calls.append(uid)
+        return DummyMember(uid)
+
+    bot = NoCacheBot()
+    bot.fetch_user = fetch
+    cog = DummyCog(bot)
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    thread = DummyThread()
+    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
+    game.scores = {1: 2, 2: 1}
+
+    await game._finish()
+
+    assert fetch_calls == [1]
+    assert any("user1" in m for m in thread.sent)
