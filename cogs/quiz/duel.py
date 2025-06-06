@@ -127,6 +127,9 @@ class DuelInviteView(View):
         if not self.accepted and self.message:
             logger.info("[DuelInviteView] invitation timed out")
             await self.message.edit(view=None)
+            await self.message.channel.send(
+                f"{self.challenger.mention}, deine Duellanfrage ist abgelaufen."
+            )
 
     @button(label="Annehmen", style=discord.ButtonStyle.success)
     async def accept(self, interaction: discord.Interaction, _: Button) -> None:
