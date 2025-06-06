@@ -134,6 +134,7 @@ Persistente Daten liegen in `data/pers/` und sollten nicht ins Repository aufgen
 ## Entwicklung
 
 ```bash
+pip install -r requirements.txt  # installiert auch pytest-asyncio
 flake8       # Linting
 pytest -q    # Test Suite
 ```
