@@ -3,6 +3,7 @@ import pytest
 
 
 from cogs.quiz.duel import DuelQuestionView, _DuelAnswerModal
+import discord
 
 
 class DummyMember:
@@ -20,6 +21,15 @@ class DummyResponse:
         self.sent.append((content, kwargs))
 
 
+class DummyMessage:
+    def __init__(self):
+        self.embeds = [discord.Embed(title="t")]
+        self.edited = None
+
+    async def edit(self, **kwargs):
+        self.edited = kwargs
+
+
 class DummyDuelInteraction:
     def __init__(self, user):
         self.user = user
@@ -32,6 +42,7 @@ async def test_finish_sets_winner_and_disables_buttons():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     view = DuelQuestionView(challenger, opponent, ["yes"], 30)
+    view.message = DummyMessage()
 
     assert view.timeout == 30
 
@@ -45,6 +56,9 @@ async def test_finish_sets_winner_and_disables_buttons():
 
     assert view.winner_id == opponent.id
     assert all(child.disabled for child in view.children)
+    fields = {f.name: f.value for f in view.message.edited["embed"].fields}
+    assert "Richtige Antwort" in fields
+    assert "Antworten" in fields
 
 
 @pytest.mark.asyncio
@@ -66,3 +80,15 @@ async def test_modal_ignores_after_finish():
     assert inter.response.sent == [
         ("Die Runde ist bereits beendet.", {"ephemeral": True})
     ]
+
+
+@pytest.mark.asyncio
+async def test_on_timeout_sets_footer():
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    view = DuelQuestionView(challenger, opponent, ["yes"], 30)
+    view.message = DummyMessage()
+
+    await view.on_timeout()
+
+    assert view.message.edited["embed"].footer.text.startswith("⏰")
