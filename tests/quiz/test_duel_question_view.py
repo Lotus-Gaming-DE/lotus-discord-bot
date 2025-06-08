@@ -22,9 +22,10 @@ class DummyResponse:
 
 
 class DummyMessage:
-    def __init__(self):
+    def __init__(self, created_at=None):
         self.embeds = [discord.Embed(title="t")]
         self.edited = None
+        self.created_at = created_at or datetime.datetime.utcnow()
 
     async def edit(self, **kwargs):
         self.edited = kwargs
@@ -42,11 +43,11 @@ async def test_finish_sets_winner_and_disables_buttons():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     view = DuelQuestionView(challenger, opponent, ["yes"], 30)
-    view.message = DummyMessage()
+    base = datetime.datetime(2022, 1, 1, 0, 0, 0)
+    view.message = DummyMessage(created_at=base)
 
     assert view.timeout == 30
 
-    base = datetime.datetime.utcnow()
     view.responses = {
         challenger.id: ("yes", base + datetime.timedelta(seconds=1)),
         opponent.id: ("yes", base),
@@ -59,6 +60,9 @@ async def test_finish_sets_winner_and_disables_buttons():
     fields = {f.name: f.value for f in view.message.edited["embed"].fields}
     assert "Richtige Antwort" in fields
     assert "Antworten" in fields
+    lines = fields["Antworten"].split("\n")
+    assert lines[0].endswith("(1.0s)")
+    assert lines[1].endswith("(0.0s)")
 
 
 @pytest.mark.asyncio
