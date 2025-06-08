@@ -196,6 +196,19 @@ class DuelInviteView(View):
         logger.info(
             f"Starting duel {self.challenger.display_name} vs {interaction.user.display_name} in {self.cfg.area} for {self.cfg.points} points"
         )
+        if (
+            self.challenger.id in self.cog.active_duels
+            or interaction.user.id in self.cog.active_duels
+        ):
+            await interaction.followup.send(
+                "Einer der Spieler befindet sich bereits in einem Duell.",
+                ephemeral=True,
+            )
+            if self.message:
+                await self.message.edit(view=None)
+            self.stop()
+            self.accepted = False
+            return
         champion_cog = self.cog.bot.get_cog("ChampionCog")
         if champion_cog is None:
             await interaction.followup.send(
@@ -273,6 +286,7 @@ class DuelInviteView(View):
             self.stop()
             self.accepted = False
             return
+        self.cog.active_duels.update({self.challenger.id, interaction.user.id})
         game = QuizDuelGame(
             self.cog,
             thread,
@@ -605,3 +619,5 @@ class QuizDuelGame:
                 result_text = f"Unentschieden ({challenger_score}:{opponent_score})"
             embed.add_field(name="Ergebnis", value=result_text)
             await self.invite_message.edit(embed=embed)
+        self.cog.active_duels.discard(self.challenger.id)
+        self.cog.active_duels.discard(self.opponent.id)
