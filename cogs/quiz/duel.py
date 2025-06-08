@@ -17,6 +17,7 @@ class DuelConfig:
     points: int
     mode: str
     timeout: int = 30
+    best_of: int | None = None
 
 
 class DuelQuestionView(View):
@@ -297,6 +298,7 @@ class DuelInviteView(View):
             self.cfg.mode,
             self.message,
             self.cfg.timeout,
+            self.cfg.best_of,
         )
         await game.run()
         self.stop()
@@ -314,6 +316,7 @@ class QuizDuelGame:
         mode: str,
         invite_message: discord.Message | None = None,
         timeout: int = 30,
+        best_of: int | None = None,
     ) -> None:
         """Hold state for an ongoing duel game."""
 
@@ -326,6 +329,7 @@ class QuizDuelGame:
         self.pot = pot
         self.invite_message = invite_message
         self.timeout = timeout
+        self.best_of = best_of
         self.stake = pot // 2
         self.scores = {challenger.id: 0, opponent.id: 0}
         self.winner_id: int | None = None
@@ -333,13 +337,11 @@ class QuizDuelGame:
     async def run(self) -> None:
         """Run the duel until one player has enough wins."""
         qg: QuestionGenerator = self.cog.bot.quiz_data[self.area].question_generator
-        total_rounds = {"bo3": 3, "bo5": 5}.get(self.mode, 5)
-        needed = total_rounds // 2 + 1
-        logger.info(
-            f"QuizDuelGame started between {self.challenger} and {self.opponent} mode={self.mode} rounds={total_rounds}"
-        )
 
         if self.mode == "dynamic":
+            logger.info(
+                f"QuizDuelGame started between {self.challenger} and {self.opponent} mode=dynamic"
+            )
             provider = qg.get_dynamic_provider(self.area)
             if not provider:
                 await self.thread.send("Keine Frage generiert. Duell abgebrochen.")
@@ -454,6 +456,11 @@ class QuizDuelGame:
             return
 
         # classic sequential modes
+        total_rounds = self.best_of or 5
+        needed = total_rounds // 2 + 1
+        logger.info(
+            f"QuizDuelGame started between {self.challenger} and {self.opponent} mode=box rounds={total_rounds}"
+        )
         for rnd in range(1, total_rounds + 1):
             question = qg.generate(self.area)
             if inspect.isawaitable(question):
