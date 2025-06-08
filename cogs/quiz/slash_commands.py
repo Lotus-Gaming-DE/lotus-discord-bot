@@ -249,6 +249,7 @@ async def duel(
     )
     embed.add_field(name="Einsatz", value=f"{punkte} Punkte")
     embed.add_field(name="Modus", value=modus)
+    embed.add_field(name="Zeitlimit", value=f"{timeout}s")
     msg = await interaction.channel.send(embed=embed, view=view)
     view.message = msg
     await interaction.response.send_message("Duelleinladung erstellt.", ephemeral=True)

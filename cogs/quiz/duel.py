@@ -66,15 +66,33 @@ class DuelQuestionView(View):
     async def on_timeout(self) -> None:
         """Finish the duel round when the timeout is reached."""
         logger.info("DuelQuestionView timed out")
-        await self._finish()
+        await self._finish(timed_out=True)
 
-    async def _finish(self) -> None:
-        """Disable buttons, determine winner and stop the view."""
+    async def _finish(self, timed_out: bool = False) -> None:
+        """Disable buttons, show results and stop the view."""
         for child in self.children:
             child.disabled = True
-        if self.message:
-            await self.message.edit(view=self)
         self._determine_winner()
+        if self.message:
+            embed = (
+                self.message.embeds[0]
+                if self.message.embeds
+                else discord.Embed(title="Quiz-Duell")
+            )
+            embed.color = discord.Color.red()
+            embed.add_field(
+                name="Richtige Antwort",
+                value=", ".join(self.correct_answers),
+                inline=False,
+            )
+            answers = []
+            for member in (self.challenger, self.opponent):
+                ans = self.responses.get(member.id)
+                answers.append(f"{member.display_name}: {ans[0] if ans else '–'}")
+            embed.add_field(name="Antworten", value="\n".join(answers), inline=False)
+            footer = "⏰ Zeit abgelaufen!" if timed_out else "Runde beendet"
+            embed.set_footer(text=footer)
+            await self.message.edit(embed=embed, view=self)
         logger.debug(
             f"DuelQuestionView finished, winner={self.winner_id}, responses={self.responses}"
         )
