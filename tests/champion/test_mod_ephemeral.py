@@ -14,7 +14,11 @@ class DummyBot:
 class DummyCog:
     def __init__(self):
         self.updated = []
-        self.data = type("Data", (), {"get_history": self.get_history})()
+        self.data = type(
+            "Data",
+            (),
+            {"get_history": self.get_history, "get_total": self.get_total},
+        )()
 
     async def update_user_score(self, user_id, delta, reason):
         self.updated.append((user_id, delta, reason))
@@ -22,6 +26,9 @@ class DummyCog:
 
     async def get_history(self, user_id, limit=10):
         return []
+
+    async def get_total(self, user_id):
+        return 0
 
 
 class DummyResponse:
