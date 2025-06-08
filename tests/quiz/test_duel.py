@@ -47,6 +47,7 @@ class DummyBot:
 class DummyCog:
     def __init__(self, bot):
         self.bot = bot
+        self.active_duels = set()
 
 
 class DummyThread:
@@ -534,3 +535,100 @@ async def test_finish_fetches_user_when_cache_empty():
 
     assert fetch_calls == [1]
     assert any("user1" in m for m in thread.sent)
+
+
+@pytest.mark.asyncio
+async def test_start_duel_blocks_active_players():
+    bot = DummyBot()
+    bot._champion.data.totals = {"1": 30, "2": 30}
+    cog = DummyCog(bot)
+    cog.active_duels.add(1)
+    message = DummyMessage()
+    view = DuelInviteView(DummyMember(1), DuelConfig("area", 20, "bo3"), cog)
+    view.message = message
+    interaction = DummyInteraction(DummyMember(2))
+
+    await view.start_duel(interaction)
+
+    assert interaction.followup.sent
+    assert view.accepted is False
+    assert bot._champion.calls == []
+    assert message.edited_view is None
+
+
+@pytest.mark.asyncio
+async def test_finish_removes_active_duels():
+    bot = DummyBot()
+    cog = DummyCog(bot)
+    cog.active_duels = {1, 2}
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    thread = DummyThread()
+    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
+    game.scores = {1: 2, 2: 1}
+
+    await game._finish()
+
+    assert cog.active_duels == set()
+
+
+class SlashResponse:
+    def __init__(self):
+        self.messages = []
+
+    async def send_message(self, msg, **kwargs):
+        self.messages.append((msg, kwargs))
+
+
+class SlashChannel:
+    def __init__(self, cid=123):
+        self.id = cid
+        self.sent = []
+
+    async def send(self, embed=None, view=None):
+        self.sent.append((embed, view))
+        return DummyMessage()
+
+
+class SlashInteraction:
+    def __init__(self, bot, user, channel):
+        self.client = bot
+        self.user = user
+        self.channel = channel
+        self.response = SlashResponse()
+
+
+@pytest.mark.asyncio
+async def test_slash_duel_blocks_active_player(monkeypatch):
+    bot = DummyBot()
+    bot._champion.data.totals = {"1": 50}
+
+    class DummyQG:
+        def __init__(self):
+            self.dynamic_providers = {}
+
+    bot.quiz_data = {
+        "area": QuizAreaConfig(channel_id=123, question_generator=DummyQG())
+    }
+    quiz_cog = DummyCog(bot)
+    quiz_cog.active_duels.add(1)
+
+    def get_cog(name):
+        if name == "ChampionCog":
+            return bot._champion
+        if name == "QuizCog":
+            return quiz_cog
+        return None
+
+    monkeypatch.setattr(bot, "get_cog", get_cog)
+
+    from cogs.quiz.slash_commands import duel as duel_cmd
+
+    inter = SlashInteraction(bot, DummyMember(1), SlashChannel())
+    await duel_cmd.callback(inter, 10)
+
+    assert inter.response.messages
+    msg, kwargs = inter.response.messages[0]
+    assert "bereits" in msg
+    assert kwargs.get("ephemeral")
+    assert not inter.channel.sent
