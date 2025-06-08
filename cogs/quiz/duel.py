@@ -88,7 +88,17 @@ class DuelQuestionView(View):
             answers = []
             for member in (self.challenger, self.opponent):
                 ans = self.responses.get(member.id)
-                answers.append(f"{member.display_name}: {ans[0] if ans else '–'}")
+                if ans:
+                    start = getattr(self.message, "created_at", None)
+                    if start:
+                        delta = (ans[1] - start).total_seconds()
+                        answers.append(
+                            f"{member.display_name}: {ans[0]} ({delta:.1f}s)"
+                        )
+                    else:
+                        answers.append(f"{member.display_name}: {ans[0]}")
+                else:
+                    answers.append(f"{member.display_name}: –")
             embed.add_field(name="Antworten", value="\n".join(answers), inline=False)
             footer = "⏰ Zeit abgelaufen!" if timed_out else "Runde beendet"
             embed.set_footer(text=footer)
