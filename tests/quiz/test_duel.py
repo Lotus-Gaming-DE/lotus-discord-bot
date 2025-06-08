@@ -584,6 +584,32 @@ async def test_finish_removes_active_duels():
     assert cog.active_duels == set()
 
 
+@pytest.mark.asyncio
+async def test_start_duel_run_exception_clears_active(monkeypatch):
+    bot = DummyBot()
+    bot._champion.data.totals = {"1": 30, "2": 30}
+    cog = DummyCog(bot)
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    message = DummyMessage()
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "box", best_of=3), cog)
+    view.message = message
+
+    async def fail_run(self):
+        raise Exception("fail")
+
+    monkeypatch.setattr(QuizDuelGame, "run", fail_run)
+
+    interaction = DummyInteraction(opponent)
+    await view.start_duel(interaction)
+
+    assert cog.active_duels == set()
+    assert bot._champion.calls[-2:] == [
+        (1, 20, "Quiz-Duell Rückgabe"),
+        (2, 20, "Quiz-Duell Rückgabe"),
+    ]
+
+
 class SlashResponse:
     def __init__(self):
         self.messages = []
@@ -637,7 +663,7 @@ async def test_slash_duel_blocks_active_player(monkeypatch):
     from cogs.quiz.slash_commands import duel as duel_cmd
 
     inter = SlashInteraction(bot, DummyMember(1), SlashChannel())
-    await duel_cmd.callback(inter, 10)
+    await duel_cmd.callback(inter, 10, "box", 3)
 
     assert inter.response.messages
     msg, kwargs = inter.response.messages[0]

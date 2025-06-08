@@ -300,8 +300,20 @@ class DuelInviteView(View):
             self.cfg.timeout,
             self.cfg.best_of,
         )
-        await game.run()
-        self.stop()
+        try:
+            await game.run()
+        except Exception as e:  # pragma: no cover - log and refund on failure
+            logger.error(f"Duel run failed: {e}", exc_info=True)
+            await champion_cog.update_user_score(
+                self.challenger.id, self.cfg.points, "Quiz-Duell Rückgabe"
+            )
+            await champion_cog.update_user_score(
+                interaction.user.id, self.cfg.points, "Quiz-Duell Rückgabe"
+            )
+        finally:
+            self.cog.active_duels.discard(self.challenger.id)
+            self.cog.active_duels.discard(interaction.user.id)
+            self.stop()
 
 
 class QuizDuelGame:
