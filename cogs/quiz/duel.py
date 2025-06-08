@@ -349,7 +349,12 @@ class QuizDuelGame:
                 await self.thread.edit(archived=True)
                 return
 
-            views: list[DuelQuestionView] = []
+            total_rounds = len(questions)
+            last_correct: dict[int, datetime.datetime | None] = {
+                self.challenger.id: None,
+                self.opponent.id: None,
+            }
+
             for idx, question in enumerate(questions, start=1):
                 answers = (
                     question["antwort"]
@@ -372,21 +377,48 @@ class QuizDuelGame:
                 )
                 msg = await self.thread.send(embed=embed, view=view)
                 view.message = msg
-                views.append(view)
-
-            for v in views:
-                await v.wait()
-
-            last_correct: dict[int, datetime.datetime | None] = {
-                self.challenger.id: None,
-                self.opponent.id: None,
-            }
-            for v in views:
-                for uid, (answer, ts) in v.responses.items():
-                    if check_answer(answer, v.correct_answers):
-                        self.scores[uid] += 1
-                        if last_correct[uid] is None or ts > last_correct[uid]:
-                            last_correct[uid] = ts
+                await view.wait()
+                winner_id = view.winner_id
+                if winner_id:
+                    self.scores[winner_id] += 1
+                    resp = view.responses.get(winner_id)
+                    ts = resp[1] if resp else None
+                    if ts and (
+                        last_correct[winner_id] is None or ts > last_correct[winner_id]
+                    ):
+                        last_correct[winner_id] = ts
+                    member = self.cog.bot.get_user(winner_id)
+                    if member is None:
+                        try:
+                            member = await self.cog.bot.fetch_user(winner_id)
+                        except Exception:
+                            member = None
+                    if member is None:
+                        if winner_id == self.challenger.id:
+                            name = getattr(
+                                self.challenger, "display_name", str(winner_id)
+                            )
+                        elif winner_id == self.opponent.id:
+                            name = getattr(
+                                self.opponent, "display_name", str(winner_id)
+                            )
+                        else:
+                            name = str(winner_id)
+                    else:
+                        name = getattr(
+                            member,
+                            "display_name",
+                            getattr(member, "name", str(winner_id)),
+                        )
+                    logger.debug(f"Round {idx} won by {name}")
+                    await self.thread.send(
+                        f"✅ {name} gewinnt diese Runde. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})"
+                    )
+                else:
+                    logger.debug(f"Round {idx} no correct answer")
+                    await self.thread.send(
+                        f"❌ Keine richtige Antwort. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})"
+                    )
 
             c_score = self.scores[self.challenger.id]
             o_score = self.scores[self.opponent.id]

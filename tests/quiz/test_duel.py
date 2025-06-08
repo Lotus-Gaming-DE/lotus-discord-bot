@@ -373,7 +373,7 @@ async def test_game_run_dynamic(monkeypatch):
 
     embeds = [m for m in thread.sent if isinstance(m, discord.Embed)]
     assert len(embeds) == 3
-    assert game.scores == {1: 3, 2: 2}
+    assert game.scores == {1: 2, 2: 1}
 
 
 @pytest.mark.asyncio
