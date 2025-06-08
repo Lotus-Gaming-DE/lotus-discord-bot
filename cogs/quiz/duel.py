@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import datetime
 
 from .utils import check_answer
+import inspect
 from .question_generator import QuestionGenerator
 from log_setup import get_logger
 
@@ -381,6 +382,8 @@ class QuizDuelGame:
         # classic sequential modes
         for rnd in range(1, total_rounds + 1):
             question = qg.generate(self.area)
+            if inspect.isawaitable(question):
+                question = await question
             if not question:
                 await self.thread.send("Keine Frage generiert. Duell abgebrochen.")
                 champion_cog = self.cog.bot.get_cog("ChampionCog")
