@@ -229,12 +229,6 @@ async def duel(
         )
         return
 
-    if modus == "box" and best_of is None:
-        await interaction.response.send_message(
-            "❌ Bitte gib die Rundenzahl an.", ephemeral=True
-        )
-        return
-
     champion_cog = interaction.client.get_cog("ChampionCog")
     if champion_cog is None:
         await interaction.response.send_message(
@@ -245,6 +239,12 @@ async def duel(
     if quiz_cog and interaction.user.id in quiz_cog.active_duels:
         await interaction.response.send_message(
             "❌ Du bist bereits in einem Duell.", ephemeral=True
+        )
+        return
+
+    if modus == "box" and best_of is None:
+        await interaction.response.send_message(
+            "❌ Bitte gib die Rundenzahl an.", ephemeral=True
         )
         return
     total = await champion_cog.data.get_total(str(interaction.user.id))

@@ -348,7 +348,10 @@ class QuizDuelGame:
                 await self.thread.edit(archived=True)
                 return
 
+            state_manager = qg.state_manager
+
             questions = provider.generate_all_types()
+            questions = state_manager.filter_unasked_questions(self.area, questions)
             logger.debug(
                 f"[QuizDuelGame] dynamic questions generated: {len(questions)}"
             )
@@ -394,6 +397,9 @@ class QuizDuelGame:
                 msg = await self.thread.send(embed=embed, view=view)
                 view.message = msg
                 await view.wait()
+                question_id = question.get("id")
+                if question_id is not None:
+                    await state_manager.mark_question_as_asked(self.area, question_id)
                 winner_id = view.winner_id
                 if winner_id:
                     self.scores[winner_id] += 1
