@@ -128,10 +128,14 @@ async def score(interaction: discord.Interaction, user: discord.Member | None = 
     target = user or interaction.user
     total = await cog.data.get_total(str(target.id))
     if user is None or target.id == interaction.user.id:
-        await interaction.response.send_message(f"🏅 Du hast aktuell {total} Punkte.")
+        await interaction.response.send_message(
+            f"🏅 Du hast aktuell {total} Punkte.",
+            ephemeral=True,
+        )
     else:
         await interaction.response.send_message(
-            f"🏅 {target.display_name} hat aktuell {total} Punkte."
+            f"🏅 {target.display_name} hat aktuell {total} Punkte.",
+            ephemeral=True,
         )
 
 
