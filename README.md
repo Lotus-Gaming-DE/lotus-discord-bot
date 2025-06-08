@@ -92,6 +92,7 @@ Beim ersten Start werden persistente Daten unter `data/pers/` angelegt (Punkteda
 | `/quiz threshold`     | Nachrichten-Schwelle für Auto-Fragen *(Mod)*                       |
 | `/quiz reset`         | Fragehistorie für diesen Channel löschen *(Mod)*                    |
 | `/quiz duel`          | Starte ein Quiz-Duell (bo3, bo5 oder dynamic, optionaler Timeout). Nach jeder Runde werden Lösung, Antworten und Reaktionszeiten angezeigt |
+| `/quiz duelstats`     | Zeigt deine Duell-Bilanz und optional eine Rangliste |
 
 Der Modus `dynamic` passt die Rundenzahl automatisch an und steht nur in Areas mit dynamischen Fragen (momentan `wcr`) zur Verfügung.
 

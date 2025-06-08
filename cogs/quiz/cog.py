@@ -14,6 +14,7 @@ from .question_manager import QuestionManager
 from .question_restorer import QuestionRestorer
 from .question_state import QuestionInfo, QuestionStateManager
 from .scheduler import QuizScheduler
+from .duel_stats import DuelStats
 
 logger = get_logger(__name__)
 
@@ -54,6 +55,8 @@ class QuizCog(commands.Cog):
         if state is None:
             state = QuestionStateManager("data/pers/quiz/question_state.json")
         self.state: QuestionStateManager = state
+
+        self.duel_stats = DuelStats("data/pers/quiz/duel_stats.db")
 
         self.manager = QuestionManager(self)
         self.tracker = MessageTracker(self.bot, self.manager.ask_question)
@@ -98,3 +101,4 @@ class QuizCog(commands.Cog):
             self.restorer.cancel_all()
         for task in self.tasks:
             task.cancel()
+        create_logged_task(self.duel_stats.close(), logger)

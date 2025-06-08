@@ -574,6 +574,13 @@ class QuizDuelGame:
                 f"🏆 {winner_display} gewinnt das Duell und erhält {self.pot} Punkte!"
             )
             logger.info(f"[QuizDuelGame] awarded {self.pot} points to {winner_display}")
+            if hasattr(self.cog, "duel_stats"):
+                loser = (
+                    self.opponent
+                    if winner.id == self.challenger.id
+                    else self.challenger
+                )
+                await self.cog.duel_stats.record_result(winner.id, loser.id)
         else:
             refund = self.pot // 2
             await champion_cog.update_user_score(

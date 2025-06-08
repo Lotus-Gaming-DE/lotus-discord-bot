@@ -256,6 +256,48 @@ async def duel(
 
 
 @quiz_group.command(
+    name="duelstats",
+    description="Zeigt deine Duell-Bilanz und optional ein Leaderboard",
+)
+@app_commands.describe(limit="Anzahl der Top-Plätze (1–20)")
+async def duelstats(
+    interaction: discord.Interaction,
+    limit: app_commands.Range[int, 1, 20] | None = None,
+):
+    """Zeige persönliche Duellstatistik und auf Wunsch eine Rangliste."""
+    cog: QuizCog = interaction.client.get_cog("QuizCog")
+    wins, losses = await cog.duel_stats.get_stats(interaction.user.id)
+    if limit:
+        await interaction.response.defer(thinking=True)
+    else:
+        await interaction.response.defer(ephemeral=True)
+
+    lines = [f"🏅 Deine Bilanz: {wins} Siege / {losses} Niederlagen."]
+
+    if limit:
+        leaderboard = await cog.duel_stats.get_leaderboard(limit)
+        lines.append("")
+        lines.append("```text")
+        lines.append("Rang Name           Siege Niederlagen")
+        lines.append("---- -------------- ----- -----------")
+        rank = 1
+        for uid, w, l in leaderboard:
+            member = interaction.guild.get_member(int(uid))
+            if member is None:
+                try:
+                    member = await interaction.guild.fetch_member(int(uid))
+                except Exception:
+                    member = None
+            name = member.display_name if member else str(uid)
+            lines.append(f"{rank:>4} {name:<14} {w:>5} {l:>11}")
+            rank += 1
+        lines.append("```")
+        await interaction.followup.send("\n".join(lines))
+    else:
+        await interaction.followup.send("\n".join(lines), ephemeral=True)
+
+
+@quiz_group.command(
     name="answer", description="Zeige die richtige Antwort und schließe die Frage"
 )
 @app_commands.default_permissions(manage_guild=True)
