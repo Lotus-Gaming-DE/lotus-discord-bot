@@ -17,6 +17,7 @@ class DuelConfig:
     points: int
     mode: str
     timeout: int = 30
+    best_of: int | None = None
 
 
 class DuelQuestionView(View):
@@ -196,6 +197,19 @@ class DuelInviteView(View):
         logger.info(
             f"Starting duel {self.challenger.display_name} vs {interaction.user.display_name} in {self.cfg.area} for {self.cfg.points} points"
         )
+        if (
+            self.challenger.id in self.cog.active_duels
+            or interaction.user.id in self.cog.active_duels
+        ):
+            await interaction.followup.send(
+                "Einer der Spieler befindet sich bereits in einem Duell.",
+                ephemeral=True,
+            )
+            if self.message:
+                await self.message.edit(view=None)
+            self.stop()
+            self.accepted = False
+            return
         champion_cog = self.cog.bot.get_cog("ChampionCog")
         if champion_cog is None:
             await interaction.followup.send(
@@ -273,6 +287,7 @@ class DuelInviteView(View):
             self.stop()
             self.accepted = False
             return
+        self.cog.active_duels.update({self.challenger.id, interaction.user.id})
         game = QuizDuelGame(
             self.cog,
             thread,
@@ -283,6 +298,7 @@ class DuelInviteView(View):
             self.cfg.mode,
             self.message,
             self.cfg.timeout,
+            self.cfg.best_of,
         )
         await game.run()
         self.stop()
@@ -300,6 +316,7 @@ class QuizDuelGame:
         mode: str,
         invite_message: discord.Message | None = None,
         timeout: int = 30,
+        best_of: int | None = None,
     ) -> None:
         """Hold state for an ongoing duel game."""
 
@@ -312,6 +329,7 @@ class QuizDuelGame:
         self.pot = pot
         self.invite_message = invite_message
         self.timeout = timeout
+        self.best_of = best_of
         self.stake = pot // 2
         self.scores = {challenger.id: 0, opponent.id: 0}
         self.winner_id: int | None = None
@@ -319,13 +337,11 @@ class QuizDuelGame:
     async def run(self) -> None:
         """Run the duel until one player has enough wins."""
         qg: QuestionGenerator = self.cog.bot.quiz_data[self.area].question_generator
-        total_rounds = {"bo3": 3, "bo5": 5}.get(self.mode, 5)
-        needed = total_rounds // 2 + 1
-        logger.info(
-            f"QuizDuelGame started between {self.challenger} and {self.opponent} mode={self.mode} rounds={total_rounds}"
-        )
 
         if self.mode == "dynamic":
+            logger.info(
+                f"QuizDuelGame started between {self.challenger} and {self.opponent} mode=dynamic"
+            )
             provider = qg.get_dynamic_provider(self.area)
             if not provider:
                 await self.thread.send("Keine Frage generiert. Duell abgebrochen.")
@@ -440,6 +456,11 @@ class QuizDuelGame:
             return
 
         # classic sequential modes
+        total_rounds = self.best_of or 5
+        needed = total_rounds // 2 + 1
+        logger.info(
+            f"QuizDuelGame started between {self.challenger} and {self.opponent} mode=box rounds={total_rounds}"
+        )
         for rnd in range(1, total_rounds + 1):
             question = qg.generate(self.area)
             if inspect.isawaitable(question):
@@ -612,3 +633,5 @@ class QuizDuelGame:
                 result_text = f"Unentschieden ({challenger_score}:{opponent_score})"
             embed.add_field(name="Ergebnis", value=result_text)
             await self.invite_message.edit(embed=embed)
+        self.cog.active_duels.discard(self.challenger.id)
+        self.cog.active_duels.discard(self.opponent.id)

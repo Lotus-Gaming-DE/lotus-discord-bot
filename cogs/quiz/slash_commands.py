@@ -200,17 +200,19 @@ async def ask(interaction: discord.Interaction):
 
 
 @quiz_group.command(
-    name="duel", description="Starte ein Quiz-Duell (bo3, bo5, dynamic)"
+    name="duel", description="Starte ein Quiz-Duell (Best-of-X oder dynamic)"
 )
 @app_commands.describe(
     punkte="Gesetzte Punkte",
-    modus="Modus des Duells (bo3, bo5 oder dynamic)",
+    modus="Modus des Duells (box oder dynamic)",
+    best_of="Rundenanzahl für box-Modus",
     timeout="Antwortzeit in Sekunden (10–120)",
 )
 async def duel(
     interaction: discord.Interaction,
     punkte: app_commands.Range[int, 1, 10000],
-    modus: Literal["bo3", "bo5", "dynamic"] = "bo3",
+    modus: Literal["box", "dynamic"] = "box",
+    best_of: app_commands.Range[int, 3, 15] | None = None,
     timeout: app_commands.Range[int, 10, 120] = 30,
 ):
     area = get_area_by_channel(interaction.client, interaction.channel.id)
@@ -227,10 +229,22 @@ async def duel(
         )
         return
 
+    if modus == "box" and best_of is None:
+        await interaction.response.send_message(
+            "❌ Bitte gib die Rundenzahl an.", ephemeral=True
+        )
+        return
+
     champion_cog = interaction.client.get_cog("ChampionCog")
     if champion_cog is None:
         await interaction.response.send_message(
             "❌ Champion-System nicht verfügbar.", ephemeral=True
+        )
+        return
+    quiz_cog: QuizCog | None = interaction.client.get_cog("QuizCog")
+    if quiz_cog and interaction.user.id in quiz_cog.active_duels:
+        await interaction.response.send_message(
+            "❌ Du bist bereits in einem Duell.", ephemeral=True
         )
         return
     total = await champion_cog.data.get_total(str(interaction.user.id))
@@ -240,7 +254,9 @@ async def duel(
         )
         return
 
-    cfg = DuelConfig(area=area, points=punkte, mode=modus, timeout=timeout)
+    cfg = DuelConfig(
+        area=area, points=punkte, mode=modus, timeout=timeout, best_of=best_of
+    )
     view = DuelInviteView(interaction.user, cfg, interaction.client.get_cog("QuizCog"))
     embed = discord.Embed(
         title="Quiz-Duell",
@@ -248,7 +264,10 @@ async def duel(
         color=discord.Color.orange(),
     )
     embed.add_field(name="Einsatz", value=f"{punkte} Punkte")
-    embed.add_field(name="Modus", value=modus)
+    if modus == "box":
+        embed.add_field(name="Modus", value=f"Best of {best_of}")
+    else:
+        embed.add_field(name="Modus", value="dynamic")
     embed.add_field(name="Zeitlimit", value=f"{timeout}s")
     msg = await interaction.channel.send(embed=embed, view=view)
     view.message = msg

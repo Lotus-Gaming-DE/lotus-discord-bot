@@ -128,10 +128,14 @@ async def score(interaction: discord.Interaction, user: discord.Member | None = 
     target = user or interaction.user
     total = await cog.data.get_total(str(target.id))
     if user is None or target.id == interaction.user.id:
-        await interaction.response.send_message(f"🏅 Du hast aktuell {total} Punkte.")
+        await interaction.response.send_message(
+            f"🏅 Du hast aktuell {total} Punkte.",
+            ephemeral=True,
+        )
     else:
         await interaction.response.send_message(
-            f"🏅 {target.display_name} hat aktuell {total} Punkte."
+            f"🏅 {target.display_name} hat aktuell {total} Punkte.",
+            ephemeral=True,
         )
 
 
@@ -144,6 +148,7 @@ async def myhistory(interaction: discord.Interaction):
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     user_id_str = str(interaction.user.id)
     history_list = await cog.data.get_history(user_id_str, limit=10)
+    total = await cog.data.get_total(user_id_str)
 
     if not history_list:
         await interaction.response.send_message("📭 Du hast noch keine Historie.")
@@ -157,6 +162,7 @@ async def myhistory(interaction: discord.Interaction):
         lines.append(f"📅 {date_str}: {sign}{delta} – {entry['reason']}")
 
     text = "\n".join(lines)
+    text += f"\nAktueller Stand: {total} Punkte."
     await interaction.response.send_message(
         f"📜 Dein Punkteverlauf:\n{text}",
         ephemeral=True,
@@ -176,6 +182,7 @@ async def history(interaction: discord.Interaction, user: discord.Member):
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     user_id_str = str(user.id)
     history_list = await cog.data.get_history(user_id_str, limit=10)
+    total = await cog.data.get_total(user_id_str)
 
     if not history_list:
         await interaction.response.send_message(
@@ -192,6 +199,7 @@ async def history(interaction: discord.Interaction, user: discord.Member):
         lines.append(f"📅 {date_str}: {sign}{delta} – {entry['reason']}")
 
     text = "\n".join(lines)
+    text += f"\nAktueller Stand: {total} Punkte."
     await interaction.response.send_message(
         f"📜 Punkteverlauf von {user.display_name}:\n{text}",
         ephemeral=True,

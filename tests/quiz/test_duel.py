@@ -47,6 +47,7 @@ class DummyBot:
 class DummyCog:
     def __init__(self, bot):
         self.bot = bot
+        self.active_duels = set()
 
 
 class DummyThread:
@@ -112,7 +113,9 @@ async def test_finish_awards_pot_to_winner():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     thread = DummyThread()
-    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
+    game = QuizDuelGame(
+        cog, thread, "area", challenger, opponent, 20, "box", None, best_of=3
+    )
     game.scores = {1: 2, 2: 1}
 
     await game._finish()
@@ -128,7 +131,9 @@ async def test_finish_refunds_on_tie():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     thread = DummyThread()
-    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
+    game = QuizDuelGame(
+        cog, thread, "area", challenger, opponent, 20, "box", None, best_of=3
+    )
     game.scores = {1: 1, 2: 1}
 
     await game._finish()
@@ -147,7 +152,9 @@ async def test_finish_handles_missing_champion():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     thread = DummyThread()
-    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
+    game = QuizDuelGame(
+        cog, thread, "area", challenger, opponent, 20, "box", None, best_of=3
+    )
     game.scores = {1: 2, 2: 1}
 
     await game._finish()
@@ -164,7 +171,7 @@ async def test_start_duel_success(monkeypatch):
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     message = DummyMessage()
-    view = DuelInviteView(challenger, DuelConfig("area", 20, "bo3"), cog)
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "box", best_of=3), cog)
     view.message = message
 
     run_called = []
@@ -190,7 +197,7 @@ async def test_start_duel_no_champion_system():
     bot = DummyBot(champion=False)
     cog = DummyCog(bot)
     message = DummyMessage()
-    view = DuelInviteView(DummyMember(1), DuelConfig("area", 20, "bo3"), cog)
+    view = DuelInviteView(DummyMember(1), DuelConfig("area", 20, "box", best_of=3), cog)
     view.message = message
     interaction = DummyInteraction(DummyMember(2))
 
@@ -208,7 +215,7 @@ async def test_start_duel_insufficient_points_challenger():
     cog = DummyCog(bot)
     message = DummyMessage()
     challenger = DummyMember(1)
-    view = DuelInviteView(challenger, DuelConfig("area", 20, "bo3"), cog)
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "box", best_of=3), cog)
     view.message = message
     interaction = DummyInteraction(DummyMember(2))
 
@@ -227,7 +234,7 @@ async def test_start_duel_insufficient_points_opponent():
     cog = DummyCog(bot)
     message = DummyMessage()
     challenger = DummyMember(1)
-    view = DuelInviteView(challenger, DuelConfig("area", 20, "bo3"), cog)
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "box", best_of=3), cog)
     view.message = message
     interaction = DummyInteraction(DummyMember(2))
 
@@ -252,7 +259,7 @@ async def test_start_duel_thread_fail(monkeypatch):
     monkeypatch.setattr(DummyMessage, "create_thread", fail_thread)
 
     challenger = DummyMember(1)
-    view = DuelInviteView(challenger, DuelConfig("area", 20, "bo3"), cog)
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "box", best_of=3), cog)
     view.message = message
     view.accepted = True
     interaction = DummyInteraction(DummyMember(2))
@@ -291,10 +298,10 @@ async def test_invite_timeout_notifies():
     bot = DummyBot()
     cog = DummyCog(bot)
     challenger = DummyMember(1)
-    view = DuelInviteView(challenger, DuelConfig("area", 20, "bo3"), cog)
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "box", best_of=3), cog)
     channel = DummyChannel()
     message = DummyMessage(channel=channel)
-    view = DuelInviteView(DummyMember(1), DuelConfig("area", 5, "bo3"), cog)
+    view = DuelInviteView(DummyMember(1), DuelConfig("area", 5, "box", best_of=3), cog)
     view.message = message
 
     await view.on_timeout()
@@ -458,7 +465,9 @@ async def test_game_run_sequential_sends_question():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     thread = DummyRunThread()
-    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
+    game = QuizDuelGame(
+        cog, thread, "area", challenger, opponent, 20, "box", None, best_of=3
+    )
 
     await game.run()
 
@@ -502,7 +511,9 @@ async def test_game_run_fetches_user_when_cache_empty(monkeypatch):
     monkeypatch.setattr("cogs.quiz.duel.DuelQuestionView", AutoView)
 
     thread = DummyRunThread()
-    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
+    game = QuizDuelGame(
+        cog, thread, "area", challenger, opponent, 20, "box", None, best_of=3
+    )
     game.scores = {challenger.id: 1, opponent.id: 1}
     await game.run()
 
@@ -527,10 +538,109 @@ async def test_finish_fetches_user_when_cache_empty():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     thread = DummyThread()
-    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
+    game = QuizDuelGame(
+        cog, thread, "area", challenger, opponent, 20, "box", None, best_of=3
+    )
     game.scores = {1: 2, 2: 1}
 
     await game._finish()
 
     assert fetch_calls == [1]
     assert any("user1" in m for m in thread.sent)
+
+
+@pytest.mark.asyncio
+async def test_start_duel_blocks_active_players():
+    bot = DummyBot()
+    bot._champion.data.totals = {"1": 30, "2": 30}
+    cog = DummyCog(bot)
+    cog.active_duels.add(1)
+    message = DummyMessage()
+    view = DuelInviteView(DummyMember(1), DuelConfig("area", 20, "bo3"), cog)
+    view.message = message
+    interaction = DummyInteraction(DummyMember(2))
+
+    await view.start_duel(interaction)
+
+    assert interaction.followup.sent
+    assert view.accepted is False
+    assert bot._champion.calls == []
+    assert message.edited_view is None
+
+
+@pytest.mark.asyncio
+async def test_finish_removes_active_duels():
+    bot = DummyBot()
+    cog = DummyCog(bot)
+    cog.active_duels = {1, 2}
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    thread = DummyThread()
+    game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "bo3", None)
+    game.scores = {1: 2, 2: 1}
+
+    await game._finish()
+
+    assert cog.active_duels == set()
+
+
+class SlashResponse:
+    def __init__(self):
+        self.messages = []
+
+    async def send_message(self, msg, **kwargs):
+        self.messages.append((msg, kwargs))
+
+
+class SlashChannel:
+    def __init__(self, cid=123):
+        self.id = cid
+        self.sent = []
+
+    async def send(self, embed=None, view=None):
+        self.sent.append((embed, view))
+        return DummyMessage()
+
+
+class SlashInteraction:
+    def __init__(self, bot, user, channel):
+        self.client = bot
+        self.user = user
+        self.channel = channel
+        self.response = SlashResponse()
+
+
+@pytest.mark.asyncio
+async def test_slash_duel_blocks_active_player(monkeypatch):
+    bot = DummyBot()
+    bot._champion.data.totals = {"1": 50}
+
+    class DummyQG:
+        def __init__(self):
+            self.dynamic_providers = {}
+
+    bot.quiz_data = {
+        "area": QuizAreaConfig(channel_id=123, question_generator=DummyQG())
+    }
+    quiz_cog = DummyCog(bot)
+    quiz_cog.active_duels.add(1)
+
+    def get_cog(name):
+        if name == "ChampionCog":
+            return bot._champion
+        if name == "QuizCog":
+            return quiz_cog
+        return None
+
+    monkeypatch.setattr(bot, "get_cog", get_cog)
+
+    from cogs.quiz.slash_commands import duel as duel_cmd
+
+    inter = SlashInteraction(bot, DummyMember(1), SlashChannel())
+    await duel_cmd.callback(inter, 10)
+
+    assert inter.response.messages
+    msg, kwargs = inter.response.messages[0]
+    assert "bereits" in msg
+    assert kwargs.get("ephemeral")
+    assert not inter.channel.sent
