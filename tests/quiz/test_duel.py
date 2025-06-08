@@ -50,6 +50,17 @@ class DummyCog:
         self.active_duels = set()
 
 
+class DummyStateManager:
+    def __init__(self):
+        self.marked = []
+
+    def filter_unasked_questions(self, area, questions):
+        return questions
+
+    async def mark_question_as_asked(self, area, qid):
+        self.marked.append((area, qid))
+
+
 class DummyThread:
     def __init__(self):
         self.sent = []
@@ -320,14 +331,15 @@ async def test_game_run_dynamic(monkeypatch):
     class DummyProvider:
         def generate_all_types(self):
             return [
-                {"frage": "f1", "antwort": "a1"},
-                {"frage": "f2", "antwort": "a2"},
-                {"frage": "f3", "antwort": "a3"},
+                {"id": 1, "frage": "f1", "antwort": "a1"},
+                {"id": 2, "frage": "f2", "antwort": "a2"},
+                {"id": 3, "frage": "f3", "antwort": "a3"},
             ]
 
     class DummyQG:
-        def __init__(self):
+        def __init__(self, state):
             self.dynamic_providers = {"area": DummyProvider()}
+            self.state_manager = state
 
         def generate(self, area):
             return None
@@ -335,8 +347,9 @@ async def test_game_run_dynamic(monkeypatch):
         def get_dynamic_provider(self, area):
             return self.dynamic_providers.get(area)
 
+    state = DummyStateManager()
     bot = DummyBot()
-    bot.quiz_data = {"area": QuizAreaConfig(question_generator=DummyQG())}
+    bot.quiz_data = {"area": QuizAreaConfig(question_generator=DummyQG(state))}
     cog = DummyCog(bot)
 
     responses = [
@@ -381,6 +394,11 @@ async def test_game_run_dynamic(monkeypatch):
     embeds = [m for m in thread.sent if isinstance(m, discord.Embed)]
     assert len(embeds) == 3
     assert game.scores == {1: 2, 2: 1}
+    assert state.marked == [
+        ("area", 1),
+        ("area", 2),
+        ("area", 3),
+    ]
 
 
 @pytest.mark.asyncio
@@ -391,13 +409,14 @@ async def test_game_run_dynamic_tiebreak(monkeypatch):
     class DummyProvider:
         def generate_all_types(self):
             return [
-                {"frage": "f1", "antwort": "a1"},
-                {"frage": "f2", "antwort": "a2"},
+                {"id": 1, "frage": "f1", "antwort": "a1"},
+                {"id": 2, "frage": "f2", "antwort": "a2"},
             ]
 
     class DummyQG:
-        def __init__(self):
+        def __init__(self, state):
             self.dynamic_providers = {"area": DummyProvider()}
+            self.state_manager = state
 
         def generate(self, area):
             return None
@@ -405,8 +424,9 @@ async def test_game_run_dynamic_tiebreak(monkeypatch):
         def get_dynamic_provider(self, area):
             return self.dynamic_providers.get(area)
 
+    state = DummyStateManager()
     bot = DummyBot()
-    bot.quiz_data = {"area": QuizAreaConfig(question_generator=DummyQG())}
+    bot.quiz_data = {"area": QuizAreaConfig(question_generator=DummyQG(state))}
     cog = DummyCog(bot)
 
     base = datetime.datetime.utcnow()
@@ -438,6 +458,7 @@ async def test_game_run_dynamic_tiebreak(monkeypatch):
 
     assert game.scores == {1: 1, 2: 1}
     assert game.winner_id == opponent.id
+    assert state.marked == [("area", 1), ("area", 2)]
 
 
 @pytest.mark.asyncio
@@ -584,6 +605,32 @@ async def test_finish_removes_active_duels():
     assert cog.active_duels == set()
 
 
+@pytest.mark.asyncio
+async def test_start_duel_run_exception_clears_active(monkeypatch):
+    bot = DummyBot()
+    bot._champion.data.totals = {"1": 30, "2": 30}
+    cog = DummyCog(bot)
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    message = DummyMessage()
+    view = DuelInviteView(challenger, DuelConfig("area", 20, "box", best_of=3), cog)
+    view.message = message
+
+    async def fail_run(self):
+        raise Exception("fail")
+
+    monkeypatch.setattr(QuizDuelGame, "run", fail_run)
+
+    interaction = DummyInteraction(opponent)
+    await view.start_duel(interaction)
+
+    assert cog.active_duels == set()
+    assert bot._champion.calls[-2:] == [
+        (1, 20, "Quiz-Duell Rückgabe"),
+        (2, 20, "Quiz-Duell Rückgabe"),
+    ]
+
+
 class SlashResponse:
     def __init__(self):
         self.messages = []
@@ -637,7 +684,7 @@ async def test_slash_duel_blocks_active_player(monkeypatch):
     from cogs.quiz.slash_commands import duel as duel_cmd
 
     inter = SlashInteraction(bot, DummyMember(1), SlashChannel())
-    await duel_cmd.callback(inter, 10)
+    await duel_cmd.callback(inter, 10, "box", 3)
 
     assert inter.response.messages
     msg, kwargs = inter.response.messages[0]

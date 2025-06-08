@@ -300,8 +300,20 @@ class DuelInviteView(View):
             self.cfg.timeout,
             self.cfg.best_of,
         )
-        await game.run()
-        self.stop()
+        try:
+            await game.run()
+        except Exception as e:  # pragma: no cover - log and refund on failure
+            logger.error(f"Duel run failed: {e}", exc_info=True)
+            await champion_cog.update_user_score(
+                self.challenger.id, self.cfg.points, "Quiz-Duell Rückgabe"
+            )
+            await champion_cog.update_user_score(
+                interaction.user.id, self.cfg.points, "Quiz-Duell Rückgabe"
+            )
+        finally:
+            self.cog.active_duels.discard(self.challenger.id)
+            self.cog.active_duels.discard(interaction.user.id)
+            self.stop()
 
 
 class QuizDuelGame:
@@ -348,7 +360,10 @@ class QuizDuelGame:
                 await self.thread.edit(archived=True)
                 return
 
+            state_manager = qg.state_manager
+
             questions = provider.generate_all_types()
+            questions = state_manager.filter_unasked_questions(self.area, questions)
             logger.debug(
                 f"[QuizDuelGame] dynamic questions generated: {len(questions)}"
             )
@@ -394,6 +409,9 @@ class QuizDuelGame:
                 msg = await self.thread.send(embed=embed, view=view)
                 view.message = msg
                 await view.wait()
+                question_id = question.get("id")
+                if question_id is not None:
+                    await state_manager.mark_question_as_asked(self.area, question_id)
                 winner_id = view.winner_id
                 if winner_id:
                     self.scores[winner_id] += 1

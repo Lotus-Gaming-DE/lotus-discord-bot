@@ -241,6 +241,7 @@ async def duel(
             "❌ Du bist bereits in einem Duell.", ephemeral=True
         )
         return
+
     if modus == "box" and best_of is None:
         await interaction.response.send_message(
             "❌ Bitte gib die Rundenzahl an.", ephemeral=True
