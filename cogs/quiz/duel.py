@@ -595,6 +595,12 @@ class QuizDuelGame:
                 f"🏆 {winner_display} gewinnt das Duell und erhält {self.pot} Punkte!"
             )
             logger.info(f"[QuizDuelGame] awarded {self.pot} points to {winner_display}")
+            loser = (
+                self.opponent if winner.id == self.challenger.id else self.challenger
+            )
+            if hasattr(champion_cog.data, "record_duel_result"):
+                await champion_cog.data.record_duel_result(str(winner.id), "win")
+                await champion_cog.data.record_duel_result(str(loser.id), "loss")
         else:
             refund = self.pot // 2
             await champion_cog.update_user_score(
@@ -605,6 +611,11 @@ class QuizDuelGame:
             )
             await self.thread.send("Unentschieden. Einsätze zurück an Spieler.")
             logger.info(f"[QuizDuelGame] refunded {refund} points to each participant")
+            if hasattr(champion_cog.data, "record_duel_result"):
+                await champion_cog.data.record_duel_result(
+                    str(self.challenger.id), "tie"
+                )
+                await champion_cog.data.record_duel_result(str(self.opponent.id), "tie")
 
         await self.thread.send(
             f"Endstand: {self.challenger.display_name} {challenger_score} - {opponent_score} {self.opponent.display_name}"

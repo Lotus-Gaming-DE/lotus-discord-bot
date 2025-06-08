@@ -229,12 +229,6 @@ async def duel(
         )
         return
 
-    if modus == "box" and best_of is None:
-        await interaction.response.send_message(
-            "❌ Bitte gib die Rundenzahl an.", ephemeral=True
-        )
-        return
-
     champion_cog = interaction.client.get_cog("ChampionCog")
     if champion_cog is None:
         await interaction.response.send_message(
@@ -245,6 +239,11 @@ async def duel(
     if quiz_cog and interaction.user.id in quiz_cog.active_duels:
         await interaction.response.send_message(
             "❌ Du bist bereits in einem Duell.", ephemeral=True
+        )
+        return
+    if modus == "box" and best_of is None:
+        await interaction.response.send_message(
+            "❌ Bitte gib die Rundenzahl an.", ephemeral=True
         )
         return
     total = await champion_cog.data.get_total(str(interaction.user.id))
@@ -344,6 +343,76 @@ async def status(interaction: discord.Interaction):
         await interaction.response.send_message(
             "📊 Aktuell ist keine Frage aktiv.", ephemeral=True
         )
+
+
+@quiz_group.command(name="duelstats", description="Zeigt deine Duell-Bilanz")
+@app_commands.describe(user="Optionaler Nutzer, dessen Statistik gezeigt wird")
+async def duelstats(
+    interaction: discord.Interaction, user: discord.Member | None = None
+):
+    champion_cog = interaction.client.get_cog("ChampionCog")
+    if champion_cog is None:
+        await interaction.response.send_message(
+            "❌ Champion-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    target = user or interaction.user
+    stats = await champion_cog.data.get_duel_stats(str(target.id))
+    wins = stats.get("win", 0)
+    losses = stats.get("loss", 0)
+    ties = stats.get("tie", 0)
+
+    if target.id == interaction.user.id and user is None:
+        msg = (
+            f"⚔️ Deine Bilanz: {wins} Siege, {losses} Niederlagen, {ties} Unentschieden."
+        )
+    else:
+        msg = (
+            f"⚔️ Bilanz von {target.display_name}: "
+            f"{wins} Siege, {losses} Niederlagen, {ties} Unentschieden."
+        )
+    await interaction.response.send_message(msg, ephemeral=True)
+
+
+@quiz_group.command(
+    name="duelleaderboard",
+    description="Rangliste der meisten Duell-Siege",
+)
+async def duelleaderboard(interaction: discord.Interaction):
+    champion_cog = interaction.client.get_cog("ChampionCog")
+    if champion_cog is None:
+        await interaction.response.send_message(
+            "❌ Champion-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    await interaction.response.defer(thinking=True)
+    top = await champion_cog.data.get_duel_leaderboard(limit=10)
+    if not top:
+        await interaction.followup.send("🤷 Keine Duelle aufgezeichnet.")
+        return
+
+    lines = [
+        "```text",
+        "Rang Name                 Siege",
+        "---- -------------------- -----",
+    ]
+    rank = 1
+    for user_id, wins, _losses, _ties in top:
+        member = interaction.guild.get_member(int(user_id))
+        if member is None:
+            try:
+                member = await interaction.guild.fetch_member(int(user_id))
+            except discord.NotFound:
+                member = None
+            except discord.HTTPException:
+                member = None
+        name = member.display_name if member else f"Unbekannt ({user_id})"
+        lines.append(f"{rank:>4} {name:<20} {wins:>5}")
+        rank += 1
+    lines.append("```")
+    await interaction.followup.send("\n".join(lines))
 
 
 @quiz_group.command(

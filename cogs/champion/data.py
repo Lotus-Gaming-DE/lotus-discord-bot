@@ -47,9 +47,22 @@ class ChampionData:
             );
             """
         )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS duel_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                result TEXT NOT NULL,
+                date TEXT NOT NULL
+            );
+            """
+        )
         await db.execute("CREATE INDEX IF NOT EXISTS idx_points_total ON points(total)")
         await db.execute(
             "CREATE INDEX IF NOT EXISTS idx_history_user ON history(user_id)"
+        )
+        await db.execute(
+            "CREATE INDEX IF NOT EXISTS idx_duel_user ON duel_history(user_id)"
         )
         await db.commit()
         self._init_done = True
@@ -181,3 +194,60 @@ class ChampionData:
         cur = await db.execute("SELECT user_id FROM points")
         rows = await cur.fetchall()
         return [r[0] for r in rows]
+
+    async def record_duel_result(self, user_id: str, result: str) -> None:
+        """Add a duel result entry for ``user_id``.
+
+        Parameters
+        ----------
+        user_id:
+            ID of the user as string.
+        result:
+            One of ``"win"``, ``"loss"`` or ``"tie"``.
+        """
+        await self.init_db()
+        if result not in {"win", "loss", "tie"}:
+            raise ValueError("invalid result")
+        now = datetime.utcnow().isoformat()
+        db = await self._get_db()
+        await db.execute(
+            "INSERT INTO duel_history(user_id, result, date) VALUES (?, ?, ?)",
+            (user_id, result, now),
+        )
+        await db.commit()
+
+    async def get_duel_stats(self, user_id: str) -> dict:
+        """Return win/loss/tie counts for ``user_id``."""
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            "SELECT result, COUNT(*) FROM duel_history WHERE user_id = ? GROUP BY result",
+            (user_id,),
+        )
+        rows = await cur.fetchall()
+        stats = {"win": 0, "loss": 0, "tie": 0}
+        for res, cnt in rows:
+            stats[res] = cnt
+        return stats
+
+    async def get_duel_leaderboard(
+        self, limit: int = 10
+    ) -> list[tuple[str, int, int, int]]:
+        """Return a leaderboard sorted by number of wins."""
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT user_id,
+                   SUM(CASE WHEN result='win' THEN 1 ELSE 0 END) AS wins,
+                   SUM(CASE WHEN result='loss' THEN 1 ELSE 0 END) AS losses,
+                   SUM(CASE WHEN result='tie' THEN 1 ELSE 0 END) AS ties
+              FROM duel_history
+             GROUP BY user_id
+             ORDER BY wins DESC
+             LIMIT ?
+            """,
+            (limit,),
+        )
+        rows = await cur.fetchall()
+        return [(r[0], r[1], r[2], r[3]) for r in rows]
