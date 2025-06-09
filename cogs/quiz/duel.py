@@ -541,15 +541,35 @@ class QuizDuelGame:
                     name = getattr(
                         member, "display_name", getattr(member, "name", str(winner_id))
                     )
+                score_embed = discord.Embed(
+                    title="Zwischenstand",
+                    description=(
+                        f"{self.challenger.display_name} {self.scores[self.challenger.id]} - "
+                        f"{self.scores[self.opponent.id]} {self.opponent.display_name}"
+                    ),
+                    color=discord.Color.gold(),
+                )
+                score_embed.set_footer(text=f"Runde {rnd}/{total_rounds} 🔸")
                 logger.debug(f"Round {rnd} won by {name}")
                 await self.thread.send(
                     f"✅ {name} gewinnt diese Runde. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})"
                 )
+                await self.thread.send(embed=score_embed)
             else:
                 logger.debug(f"Round {rnd} no correct answer")
                 await self.thread.send(
                     f"❌ Keine richtige Antwort. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})"
                 )
+                score_embed = discord.Embed(
+                    title="Zwischenstand",
+                    description=(
+                        f"{self.challenger.display_name} {self.scores[self.challenger.id]} - "
+                        f"{self.scores[self.opponent.id]} {self.opponent.display_name}"
+                    ),
+                    color=discord.Color.gold(),
+                )
+                score_embed.set_footer(text=f"Runde {rnd}/{total_rounds} 🔸")
+                await self.thread.send(embed=score_embed)
             if (
                 self.scores[self.challenger.id] >= needed
                 or self.scores[self.opponent.id] >= needed
