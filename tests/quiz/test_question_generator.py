@@ -82,3 +82,35 @@ async def test_generate_dynamic_retries(monkeypatch):
     q = await gen.generate("area")
 
     assert q["id"] == 2
+
+
+@pytest.mark.asyncio
+async def test_generate_dynamic_fallback(monkeypatch):
+    class DummyProvider:
+        def __init__(self):
+            self.calls = 0
+            self.fallback_calls = 0
+
+        def generate(self):
+            self.calls += 1
+            return {"id": 1, "frage": "f1", "antwort": "a1"}
+
+        def generate_all_types(self):
+            self.fallback_calls += 1
+            return [
+                {"id": 1, "frage": "f1", "antwort": "a1"},
+                {"id": 2, "frage": "f2", "antwort": "a2"},
+            ]
+
+    state = DummyStateManager()
+    state.asked = {"area": [1]}
+
+    gen = QuestionGenerator({"de": {}}, state, {"area": DummyProvider()})
+    monkeypatch.setattr(random, "choice", lambda seq: seq[0])
+
+    q = await gen.generate("area")
+
+    assert q["id"] == 2
+
+    assert gen.dynamic_providers["area"].calls == 5
+    assert gen.dynamic_providers["area"].fallback_calls == 1
