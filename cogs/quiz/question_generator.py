@@ -27,9 +27,16 @@ class QuestionGenerator:
         return self.dynamic_providers.get(area)
 
     async def generate(
-        self, area: str | None = None, language: str = "de"
+        self,
+        area: str | None = None,
+        language: str = "de",
+        max_attempts: int = 20,
     ) -> Dict[str, Any] | None:
-        """Generate a new question for ``area`` in the given ``language``."""
+        """Generate a new question for ``area`` in the given ``language``.
+
+        ``max_attempts`` steuert, wie oft bei dynamischen Quellen erneut versucht
+        wird, bis eine noch nicht gestellte Frage gefunden wurde.
+        """
         if not area:
             logger.warning("[QuestionGenerator] Keine Area angegeben.")
             return None
@@ -37,18 +44,32 @@ class QuestionGenerator:
         if area in self.dynamic_providers:
             provider = self.dynamic_providers[area]
             question = None
-            for _ in range(5):
+            attempts = 0
+            asked = set(self.state_manager.get_asked_questions(area))
+
+            while attempts < max_attempts:
                 q = provider.generate()
+                attempts += 1
                 if not q:
                     break
                 qid = q.get("id")
-                if qid in self.state_manager.get_asked_questions(area):
+                if qid in asked:
                     logger.debug(
                         f"[QuestionGenerator] Frage {qid} bereits gestellt, neuer Versuch"
                     )
                     continue
                 question = q
                 break
+
+            if not question and attempts >= max_attempts:
+                logger.info(
+                    f"[QuestionGenerator] Keine neue Frage nach {attempts} Versuchen. Kürze Historie."
+                )
+                await self.state_manager.reset_asked_questions(area)
+                asked.clear()
+                q = provider.generate()
+                if q:
+                    question = q
 
             if question:
                 questions = [question]

@@ -82,6 +82,7 @@ async def test_generate_dynamic_retries(monkeypatch):
     q = await gen.generate("area")
 
     assert q["id"] == 2
+    assert gen.dynamic_providers["area"].calls == 2
 
 
 @pytest.mark.asyncio
@@ -93,7 +94,7 @@ async def test_generate_dynamic_fallback(monkeypatch):
 
         def generate(self):
             self.calls += 1
-            return {"id": 1, "frage": "f1", "antwort": "a1"}
+            return None
 
         def generate_all_types(self):
             self.fallback_calls += 1
@@ -111,6 +112,5 @@ async def test_generate_dynamic_fallback(monkeypatch):
     q = await gen.generate("area")
 
     assert q["id"] == 2
-
-    assert gen.dynamic_providers["area"].calls == 5
+    assert gen.dynamic_providers["area"].calls == 1
     assert gen.dynamic_providers["area"].fallback_calls == 1
