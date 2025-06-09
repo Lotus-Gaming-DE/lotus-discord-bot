@@ -20,6 +20,12 @@ def check_answer(
     """
     normalized_user = normalize_text(user_answer)
 
+    if not normalized_user:
+        logger.debug(
+            f"[check_answer] empty normalized user answer from '{user_answer}'"
+        )
+        return False
+
     for correct in correct_answers:
         normalized_correct = normalize_text(correct)
 

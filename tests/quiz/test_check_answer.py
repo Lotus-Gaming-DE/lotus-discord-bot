@@ -19,3 +19,11 @@ def test_fuzzy_match():
 
 def test_mismatch():
     assert check_answer("London", ["Paris"]) is False
+
+
+def test_empty_normalized_input():
+    assert check_answer("//", ["Paris"]) is False
+
+
+def test_whitespace_input():
+    assert check_answer("   ", ["Paris"]) is False
