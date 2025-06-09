@@ -387,6 +387,21 @@ async def test_game_run_dynamic(monkeypatch):
 
     monkeypatch.setattr("cogs.quiz.duel.DuelQuestionView", AutoView)
 
+    calls = {"ask": 0, "proc": 0}
+    orig_ask = QuizDuelGame._ask_question
+    orig_proc = QuizDuelGame._process_result
+
+    async def ask(self, question, title):
+        calls["ask"] += 1
+        return await orig_ask(self, question, title)
+
+    async def proc(self, view, idx, last=None):
+        calls["proc"] += 1
+        await orig_proc(self, view, idx, last)
+
+    monkeypatch.setattr(QuizDuelGame, "_ask_question", ask)
+    monkeypatch.setattr(QuizDuelGame, "_process_result", proc)
+
     thread = DummyRunThread()
     game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "dynamic", None)
     await game.run()
@@ -399,6 +414,7 @@ async def test_game_run_dynamic(monkeypatch):
         ("area", 2),
         ("area", 3),
     ]
+    assert calls == {"ask": 3, "proc": 3}
 
 
 @pytest.mark.asyncio
@@ -462,7 +478,7 @@ async def test_game_run_dynamic_tiebreak(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_game_run_sequential_sends_question():
+async def test_game_run_sequential_sends_question(monkeypatch):
     class DummyQG:
         def __init__(self):
             self.calls = 0
@@ -486,6 +502,21 @@ async def test_game_run_sequential_sends_question():
     challenger = DummyMember(1)
     opponent = DummyMember(2)
     thread = DummyRunThread()
+    calls = {"ask": 0, "proc": 0}
+    orig_ask = QuizDuelGame._ask_question
+    orig_proc = QuizDuelGame._process_result
+
+    async def ask(self, question, title):
+        calls["ask"] += 1
+        return await orig_ask(self, question, title)
+
+    async def proc(self, view, idx, last=None):
+        calls["proc"] += 1
+        await orig_proc(self, view, idx, last)
+
+    monkeypatch.setattr(QuizDuelGame, "_ask_question", ask)
+    monkeypatch.setattr(QuizDuelGame, "_process_result", proc)
+
     game = QuizDuelGame(
         cog, thread, "area", challenger, opponent, 20, "box", None, best_of=3
     )
@@ -494,6 +525,7 @@ async def test_game_run_sequential_sends_question():
 
     embeds = [m for m in thread.sent if isinstance(m, discord.Embed)]
     assert embeds
+    assert calls == {"ask": 1, "proc": 1}
 
 
 @pytest.mark.asyncio
