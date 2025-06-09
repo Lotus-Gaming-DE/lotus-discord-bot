@@ -691,3 +691,35 @@ async def test_slash_duel_blocks_active_player(monkeypatch):
     assert "bereits" in msg
     assert kwargs.get("ephemeral")
     assert not inter.channel.sent
+
+
+@pytest.mark.asyncio
+async def test_slash_duel_rejects_even_best_of(monkeypatch):
+    bot = DummyBot()
+    bot._champion.data.totals = {"1": 50}
+
+    class DummyQG:
+        def __init__(self):
+            self.dynamic_providers = {}
+
+    bot.quiz_data = {
+        "area": QuizAreaConfig(channel_id=123, question_generator=DummyQG())
+    }
+
+    def get_cog(name):
+        if name == "ChampionCog":
+            return bot._champion
+        return None
+
+    monkeypatch.setattr(bot, "get_cog", get_cog)
+
+    from cogs.quiz.slash_commands import duel as duel_cmd
+
+    inter = SlashInteraction(bot, DummyMember(1), SlashChannel())
+    await duel_cmd.callback(inter, 10, "box", 4)
+
+    assert inter.response.messages
+    msg, kwargs = inter.response.messages[0]
+    assert "ungerade" in msg
+    assert kwargs.get("ephemeral")
+    assert not inter.channel.sent
