@@ -49,7 +49,11 @@ class QuestionGenerator:
                     continue
                 question = q
                 break
-            questions = [question] if question else []
+
+            if question:
+                questions = [question]
+            else:
+                questions = provider.generate_all_types()
             logger.debug(
                 f"[QuestionGenerator] Dynamische Frage für '{area}': {len(questions)}"
             )
