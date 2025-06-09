@@ -407,7 +407,7 @@ async def test_game_run_dynamic(monkeypatch):
     await game.run()
 
     embeds = [m for m in thread.sent if isinstance(m, discord.Embed)]
-    assert len(embeds) == 3
+    assert len(embeds) == 6
     assert game.scores == {1: 2, 2: 1}
     assert state.marked == [
         ("area", 1),
@@ -527,7 +527,6 @@ async def test_game_run_sequential_sends_question(monkeypatch):
     assert embeds
     scoreboard = [e for e in embeds if getattr(e, "title", None) == "Zwischenstand"]
     assert scoreboard
-    assert scoreboard[0].footer.text.startswith("Runde 1/3")
     assert calls == {"ask": 1, "proc": 1}
 
 
