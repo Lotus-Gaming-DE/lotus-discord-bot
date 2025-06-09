@@ -346,6 +346,77 @@ class QuizDuelGame:
         self.scores = {challenger.id: 0, opponent.id: 0}
         self.winner_id: int | None = None
 
+    async def _get_display_name(self, user_id: int) -> str:
+        """Return a user's display name using cache or fetch_user."""
+        user_obj = self.cog.bot.get_user(user_id)
+        if user_obj is None:
+            try:
+                user_obj = await self.cog.bot.fetch_user(user_id)
+            except Exception:
+                user_obj = None
+        if user_obj:
+            return getattr(
+                user_obj, "display_name", getattr(user_obj, "name", str(user_id))
+            )
+        if user_id == self.challenger.id:
+            return getattr(
+                self.challenger,
+                "display_name",
+                getattr(self.challenger, "name", str(user_id)),
+            )
+        if user_id == self.opponent.id:
+            return getattr(
+                self.opponent,
+                "display_name",
+                getattr(self.opponent, "name", str(user_id)),
+            )
+        return str(user_id)
+
+    async def _ask_question(self, question: dict, title: str) -> DuelQuestionView:
+        """Send a question to the thread and wait for responses."""
+        answers = (
+            question["antwort"]
+            if isinstance(question["antwort"], list)
+            else [question["antwort"]]
+        )
+        logger.debug(f"[QuizDuelGame] {title}: {question['frage']}")
+        embed = discord.Embed(
+            title=title, description=question["frage"], color=discord.Color.blue()
+        )
+        view = DuelQuestionView(self.challenger, self.opponent, answers, self.timeout)
+        msg = await self.thread.send(embed=embed, view=view)
+        view.message = msg
+        await view.wait()
+        return view
+
+    async def _process_result(
+        self,
+        view: DuelQuestionView,
+        round_idx: int,
+        last_correct: dict[int, datetime.datetime | None] | None = None,
+    ) -> None:
+        """Update scores and announce the round result."""
+        winner_id = view.winner_id
+        if winner_id:
+            self.scores[winner_id] += 1
+            if last_correct is not None:
+                resp = view.responses.get(winner_id)
+                ts = resp[1] if resp else None
+                if ts and (
+                    last_correct[winner_id] is None or ts > last_correct[winner_id]
+                ):
+                    last_correct[winner_id] = ts
+            name = await self._get_display_name(winner_id)
+            logger.debug(f"Round {round_idx} won by {name}")
+            await self.thread.send(
+                f"✅ {name} gewinnt diese Runde. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})"
+            )
+        else:
+            logger.debug(f"Round {round_idx} no correct answer")
+            await self.thread.send(
+                f"❌ Keine richtige Antwort. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})"
+            )
+
     async def run(self) -> None:
         """Run the duel until one player has enough wins."""
         qg: QuestionGenerator = self.cog.bot.quiz_data[self.area].question_generator
@@ -387,72 +458,11 @@ class QuizDuelGame:
             }
 
             for idx, question in enumerate(questions, start=1):
-                answers = (
-                    question["antwort"]
-                    if isinstance(question["antwort"], list)
-                    else [question["antwort"]]
-                )
-                logger.debug(
-                    f"[QuizDuelGame] dynamic question {idx}: {question['frage']}"
-                )
-                embed = discord.Embed(
-                    title=f"Frage {idx}",
-                    description=question["frage"],
-                    color=discord.Color.blue(),
-                )
-                view = DuelQuestionView(
-                    self.challenger,
-                    self.opponent,
-                    answers,
-                    self.timeout,
-                )
-                msg = await self.thread.send(embed=embed, view=view)
-                view.message = msg
-                await view.wait()
+                view = await self._ask_question(question, f"Frage {idx}")
                 question_id = question.get("id")
                 if question_id is not None:
                     await state_manager.mark_question_as_asked(self.area, question_id)
-                winner_id = view.winner_id
-                if winner_id:
-                    self.scores[winner_id] += 1
-                    resp = view.responses.get(winner_id)
-                    ts = resp[1] if resp else None
-                    if ts and (
-                        last_correct[winner_id] is None or ts > last_correct[winner_id]
-                    ):
-                        last_correct[winner_id] = ts
-                    member = self.cog.bot.get_user(winner_id)
-                    if member is None:
-                        try:
-                            member = await self.cog.bot.fetch_user(winner_id)
-                        except Exception:
-                            member = None
-                    if member is None:
-                        if winner_id == self.challenger.id:
-                            name = getattr(
-                                self.challenger, "display_name", str(winner_id)
-                            )
-                        elif winner_id == self.opponent.id:
-                            name = getattr(
-                                self.opponent, "display_name", str(winner_id)
-                            )
-                        else:
-                            name = str(winner_id)
-                    else:
-                        name = getattr(
-                            member,
-                            "display_name",
-                            getattr(member, "name", str(winner_id)),
-                        )
-                    logger.debug(f"Round {idx} won by {name}")
-                    await self.thread.send(
-                        f"✅ {name} gewinnt diese Runde. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})"
-                    )
-                else:
-                    logger.debug(f"Round {idx} no correct answer")
-                    await self.thread.send(
-                        f"❌ Keine richtige Antwort. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})"
-                    )
+                await self._process_result(view, idx, last_correct)
 
             c_score = self.scores[self.challenger.id]
             o_score = self.scores[self.opponent.id]
@@ -570,6 +580,8 @@ class QuizDuelGame:
                 )
                 score_embed.set_footer(text=f"Runde {rnd}/{total_rounds} 🔸")
                 await self.thread.send(embed=score_embed)
+            view = await self._ask_question(question, f"Runde {rnd}")
+            await self._process_result(view, rnd)
             if (
                 self.scores[self.challenger.id] >= needed
                 or self.scores[self.opponent.id] >= needed
@@ -604,19 +616,7 @@ class QuizDuelGame:
             winner = self.opponent
 
         if winner:
-            user_obj = self.cog.bot.get_user(winner.id)
-            if user_obj is None:
-                try:
-                    user_obj = await self.cog.bot.fetch_user(winner.id)
-                except Exception:
-                    user_obj = None
-            winner_display = (
-                getattr(user_obj, "display_name", getattr(user_obj, "name", None))
-                if user_obj
-                else getattr(
-                    winner, "display_name", getattr(winner, "name", str(winner.id))
-                )
-            )
+            winner_display = await self._get_display_name(winner.id)
 
         logger.info(
             f"QuizDuelGame finished winner={winner_display if winner else 'None'} score={self.scores}"
