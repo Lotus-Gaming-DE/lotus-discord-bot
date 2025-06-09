@@ -509,6 +509,77 @@ class QuizDuelGame:
                     )
                 await self.thread.edit(archived=True)
                 return
+            answers = (
+                question["antwort"]
+                if isinstance(question["antwort"], list)
+                else [question["antwort"]]
+            )
+            logger.debug(
+                f"[QuizDuelGame] question round={rnd} text={question['frage']}"
+            )
+            embed = discord.Embed(
+                title=f"Runde {rnd}",
+                description=question["frage"],
+                color=discord.Color.blue(),
+            )
+            view = DuelQuestionView(
+                self.challenger,
+                self.opponent,
+                answers,
+                self.timeout,
+            )
+            msg = await self.thread.send(embed=embed, view=view)
+            view.message = msg
+            await view.wait()
+            winner_id = view.winner_id
+            if winner_id:
+                self.scores[winner_id] += 1
+                member = self.cog.bot.get_user(winner_id)
+                if member is None:
+                    try:
+                        member = await self.cog.bot.fetch_user(winner_id)
+                    except Exception:
+                        member = None
+                if member is None:
+                    if winner_id == self.challenger.id:
+                        name = getattr(self.challenger, "display_name", str(winner_id))
+                    elif winner_id == self.opponent.id:
+                        name = getattr(self.opponent, "display_name", str(winner_id))
+                    else:
+                        name = str(winner_id)
+                else:
+                    name = getattr(
+                        member, "display_name", getattr(member, "name", str(winner_id))
+                    )
+                score_embed = discord.Embed(
+                    title="Zwischenstand",
+                    description=(
+                        f"{self.challenger.display_name} {self.scores[self.challenger.id]} - "
+                        f"{self.scores[self.opponent.id]} {self.opponent.display_name}"
+                    ),
+                    color=discord.Color.gold(),
+                )
+                score_embed.set_footer(text=f"Runde {rnd}/{total_rounds} 🔸")
+                logger.debug(f"Round {rnd} won by {name}")
+                await self.thread.send(
+                    f"✅ {name} gewinnt diese Runde. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})"
+                )
+                await self.thread.send(embed=score_embed)
+            else:
+                logger.debug(f"Round {rnd} no correct answer")
+                await self.thread.send(
+                    f"❌ Keine richtige Antwort. ({self.scores[self.challenger.id]}:{self.scores[self.opponent.id]})"
+                )
+                score_embed = discord.Embed(
+                    title="Zwischenstand",
+                    description=(
+                        f"{self.challenger.display_name} {self.scores[self.challenger.id]} - "
+                        f"{self.scores[self.opponent.id]} {self.opponent.display_name}"
+                    ),
+                    color=discord.Color.gold(),
+                )
+                score_embed.set_footer(text=f"Runde {rnd}/{total_rounds} 🔸")
+                await self.thread.send(embed=score_embed)
             view = await self._ask_question(question, f"Runde {rnd}")
             await self._process_result(view, rnd)
             if (

@@ -525,6 +525,9 @@ async def test_game_run_sequential_sends_question(monkeypatch):
 
     embeds = [m for m in thread.sent if isinstance(m, discord.Embed)]
     assert embeds
+    scoreboard = [e for e in embeds if getattr(e, "title", None) == "Zwischenstand"]
+    assert scoreboard
+    assert scoreboard[0].footer.text.startswith("Runde 1/3")
     assert calls == {"ask": 1, "proc": 1}
 
 
