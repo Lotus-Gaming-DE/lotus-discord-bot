@@ -494,6 +494,15 @@ class QuizDuelGame:
             if inspect.isawaitable(question):
                 question = await question
             if not question:
+                state_manager = getattr(qg, "state_manager", None)
+                remaining = "?"
+                if state_manager is not None:
+                    asked = len(state_manager.get_asked_questions(self.area))
+                    total = len(qg.questions_by_area.get("de", {}).get(self.area, []))
+                    remaining = max(total - asked, 0)
+                logger.info(
+                    f"[QuizDuelGame] no question generated in '{self.area}' round={rnd} remaining={remaining}"
+                )
                 await self.thread.send("Keine Frage generiert. Duell abgebrochen.")
                 champion_cog = self.cog.bot.get_cog("ChampionCog")
                 if champion_cog:
