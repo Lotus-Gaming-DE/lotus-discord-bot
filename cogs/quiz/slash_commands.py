@@ -247,6 +247,11 @@ async def duel(
             "❌ Bitte gib die Rundenzahl an.", ephemeral=True
         )
         return
+    if modus == "box" and best_of is not None and best_of % 2 == 0:
+        await interaction.response.send_message(
+            "❌ Bitte wähle eine ungerade Rundenzahl.", ephemeral=True
+        )
+        return
     total = await champion_cog.data.get_total(str(interaction.user.id))
     if total < punkte:
         await interaction.response.send_message(
