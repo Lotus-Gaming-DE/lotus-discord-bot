@@ -26,6 +26,15 @@ class MessageTracker:
             if cfg.channel_id is not None
         }
 
+        # Remove counters of channels no longer used
+        active_channels = set(self.channel_to_area)
+        if hasattr(self.bot, "quiz_cog"):
+            active_channels |= set(getattr(self.bot.quiz_cog, "awaiting_activity", {}))
+        for cid in list(self.message_counter):
+            if cid not in active_channels:
+                self.message_counter.pop(cid, None)
+                self.channel_initialized.pop(cid, None)
+
     async def initialize(self) -> None:
         """Warm up counters based on recent channel history."""
         logger.info("[Tracker] Initialisierung gestartet.")
@@ -83,10 +92,17 @@ class MessageTracker:
             return None
 
         cid = message.channel.id
+        area = self.channel_to_area.get(cid)
+        waiting = cid in self.bot.quiz_cog.awaiting_activity
+        if not area and not waiting:
+            # Remove stale counters for unrelated channels
+            self.message_counter.pop(cid, None)
+            self.channel_initialized.pop(cid, None)
+            return None
+
         before = self.message_counter.get(cid, 0)
         self.message_counter[cid] = after = before + 1
 
-        area = self.channel_to_area.get(cid)
         if area:
             logger.info(
                 f"[Tracker] Nachrichtenzähler für '{area}' (Channel {cid}): {before} → {after}"

@@ -76,6 +76,17 @@ def test_register_message_increments_and_triggers(monkeypatch, patch_logged_task
     assert len(triggered) == 1
 
 
+def test_register_message_ignores_unrelated_channels():
+    bot = DummyBot()
+    tracker = MessageTracker(bot, bot.quiz_cog.manager.ask_question)
+
+    msg = DummyMessage(999)
+    tracker.register_message(msg)
+
+    assert 999 not in tracker.message_counter
+    assert tracker.message_counter == {}
+
+
 @pytest.mark.asyncio
 async def test_initialize_counts_history(monkeypatch):
     quiz_embed_title = "Quiz f\u00fcr AREA1"
