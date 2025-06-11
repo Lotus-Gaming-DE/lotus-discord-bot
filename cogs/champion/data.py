@@ -1,3 +1,4 @@
+import asyncio
 import aiosqlite
 from datetime import datetime
 from typing import Optional
@@ -15,6 +16,7 @@ class ChampionData:
         self.db_path = db_path
         self.db: aiosqlite.Connection | None = None
         self._init_done = False
+        self._lock = asyncio.Lock()
 
     async def _get_db(self) -> aiosqlite.Connection:
         if self.db is None:
@@ -25,19 +27,20 @@ class ChampionData:
 
     async def init_db(self):
         """Legt Tabellen an, falls sie noch nicht existieren."""
-        if self._init_done:
-            return
-        db = await self._get_db()
-        await db.execute(
-            """
+        async with self._lock:
+            if self._init_done:
+                return
+            db = await self._get_db()
+            await db.execute(
+                """
             CREATE TABLE IF NOT EXISTS points (
                 user_id TEXT PRIMARY KEY,
                 total INTEGER NOT NULL
             );
             """
-        )
-        await db.execute(
-            """
+            )
+            await db.execute(
+                """
             CREATE TABLE IF NOT EXISTS history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT NOT NULL,
@@ -46,9 +49,9 @@ class ChampionData:
                 date TEXT NOT NULL
             );
             """
-        )
-        await db.execute(
-            """
+            )
+            await db.execute(
+                """
             CREATE TABLE IF NOT EXISTS duel_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT NOT NULL,
@@ -56,16 +59,18 @@ class ChampionData:
                 date TEXT NOT NULL
             );
             """
-        )
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_points_total ON points(total)")
-        await db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_history_user ON history(user_id)"
-        )
-        await db.execute(
-            "CREATE INDEX IF NOT EXISTS idx_duel_user ON duel_history(user_id)"
-        )
-        await db.commit()
-        self._init_done = True
+            )
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_points_total ON points(total)"
+            )
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_history_user ON history(user_id)"
+            )
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_duel_user ON duel_history(user_id)"
+            )
+            await db.commit()
+            self._init_done = True
 
         logger.info("[ChampionData] SQLite‐Datenbank initialisiert.")
 
@@ -88,34 +93,35 @@ class ChampionData:
 
     async def add_delta(self, user_id: str, delta: int, reason: str) -> int:
         await self.init_db()
-        now = datetime.utcnow().isoformat()
+        async with self._lock:
+            now = datetime.utcnow().isoformat()
 
-        db = await self._get_db()
-        cur = await db.execute(
-            "SELECT total FROM points WHERE user_id = ?",
-            (user_id,),
-        )
-        row = await cur.fetchone()
-        current_total = row[0] if row else 0
-
-        new_total = current_total + delta
-        if row:
-            await db.execute(
-                "UPDATE points SET total = ? WHERE user_id = ?",
-                (new_total, user_id),
+            db = await self._get_db()
+            cur = await db.execute(
+                "SELECT total FROM points WHERE user_id = ?",
+                (user_id,),
             )
-        else:
+            row = await cur.fetchone()
+            current_total = row[0] if row else 0
+
+            new_total = current_total + delta
+            if row:
+                await db.execute(
+                    "UPDATE points SET total = ? WHERE user_id = ?",
+                    (new_total, user_id),
+                )
+            else:
+                await db.execute(
+                    "INSERT INTO points(user_id, total) VALUES (?, ?)",
+                    (user_id, new_total),
+                )
+
             await db.execute(
-                "INSERT INTO points(user_id, total) VALUES (?, ?)",
-                (user_id, new_total),
+                "INSERT INTO history(user_id, delta, reason, date) VALUES (?, ?, ?, ?)",
+                (user_id, delta, reason, now),
             )
 
-        await db.execute(
-            "INSERT INTO history(user_id, delta, reason, date) VALUES (?, ?, ?, ?)",
-            (user_id, delta, reason, now),
-        )
-
-        await db.commit()
+            await db.commit()
 
         logger.info(
             f"[ChampionData] {user_id} Punkte geändert um {delta} ({reason}). Neuer Total: {new_total}."
@@ -181,10 +187,11 @@ class ChampionData:
     async def delete_user(self, user_id: str) -> None:
         """Remove all data for ``user_id`` from the database."""
         await self.init_db()
-        db = await self._get_db()
-        await db.execute("DELETE FROM points WHERE user_id = ?", (user_id,))
-        await db.execute("DELETE FROM history WHERE user_id = ?", (user_id,))
-        await db.commit()
+        async with self._lock:
+            db = await self._get_db()
+            await db.execute("DELETE FROM points WHERE user_id = ?", (user_id,))
+            await db.execute("DELETE FROM history WHERE user_id = ?", (user_id,))
+            await db.commit()
         logger.info(f"[ChampionData] Eintrag {user_id} entfernt.")
 
     async def get_all_user_ids(self) -> list[str]:
@@ -206,15 +213,16 @@ class ChampionData:
             One of ``"win"``, ``"loss"`` or ``"tie"``.
         """
         await self.init_db()
-        if result not in {"win", "loss", "tie"}:
-            raise ValueError("invalid result")
-        now = datetime.utcnow().isoformat()
-        db = await self._get_db()
-        await db.execute(
-            "INSERT INTO duel_history(user_id, result, date) VALUES (?, ?, ?)",
-            (user_id, result, now),
-        )
-        await db.commit()
+        async with self._lock:
+            if result not in {"win", "loss", "tie"}:
+                raise ValueError("invalid result")
+            now = datetime.utcnow().isoformat()
+            db = await self._get_db()
+            await db.execute(
+                "INSERT INTO duel_history(user_id, result, date) VALUES (?, ?, ?)",
+                (user_id, result, now),
+            )
+            await db.commit()
 
     async def get_duel_stats(self, user_id: str) -> dict:
         """Return win/loss/tie counts for ``user_id``."""
