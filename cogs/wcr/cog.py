@@ -49,7 +49,11 @@ class WCRCog(commands.Cog):
             self.unit_name_map[lang] = name_map
             self.id_name_map[lang] = id_map
             self.name_token_index[lang] = token_index
-        helpers.build_category_lookup(self.languages, self.pictures)
+
+        (
+            self.lang_category_lookup,
+            self.picture_category_lookup,
+        ) = helpers.build_category_lookup(self.languages, self.pictures)
 
         # Emojis liegen in bot.data["emojis"]
         self.emojis = bot.data["emojis"]

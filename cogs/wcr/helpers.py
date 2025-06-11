@@ -6,20 +6,22 @@ from log_setup import get_logger
 logger = get_logger(__name__)
 
 
-def build_category_lookup(languages: dict, pictures: dict) -> None:
-    """Add lookup dictionaries for faster category access."""
-    for lang_data in languages.values():
+def build_category_lookup(languages: dict, pictures: dict) -> tuple[dict, dict]:
+    """Return lookup dictionaries for faster category access."""
+    lang_lookup: dict[str, dict[str, dict[int, dict]]] = {}
+    for lang, lang_data in languages.items():
         categories = lang_data.get("categories", {})
         lookup = {}
         for name, items in categories.items():
             lookup[name] = {item["id"]: item for item in items}
-        lang_data["category_lookup"] = lookup
+        lang_lookup[lang] = lookup
 
     pic_categories = pictures.get("categories", {})
-    pictures["category_lookup"] = {
+    pic_lookup = {
         name: {item["id"]: item for item in items}
         for name, items in pic_categories.items()
     }
+    return lang_lookup, pic_lookup
 
 
 def get_text_data(unit_id: int, lang: str, languages: dict) -> tuple[str, str, list]:
