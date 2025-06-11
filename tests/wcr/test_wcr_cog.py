@@ -125,6 +125,17 @@ def test_name_map_contains_unit():
     cog.cog_unload()
 
 
+def test_category_lookups_created():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+
+    assert "factions" in cog.lang_category_lookup["de"]
+    assert "factions" in cog.picture_category_lookup
+    assert "category_lookup" not in bot.data["wcr"]["locals"]["de"]
+    assert "category_lookup" not in bot.data["wcr"]["pictures"]
+    cog.cog_unload()
+
+
 def test_token_index_contains_token():
     bot = DummyBot()
     cog = WCRCog(bot)
