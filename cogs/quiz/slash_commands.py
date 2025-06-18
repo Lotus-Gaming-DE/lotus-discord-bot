@@ -84,7 +84,15 @@ async def language(interaction: discord.Interaction, lang: Literal["de", "en"]):
         )
         return
 
-    interaction.client.quiz_data[area].language = lang
+    cfg = interaction.client.quiz_data[area]
+    cfg.language = lang
+
+    qg: QuestionGenerator | None = cfg.question_generator
+    if qg:
+        provider = qg.get_dynamic_provider(area)
+        if provider:
+            provider.language = lang
+
     save_area_config(interaction.client)
 
     await interaction.response.send_message(
@@ -135,6 +143,12 @@ async def enable(
     cfg.channel_id = interaction.channel.id
     cfg.language = lang
     cfg.active = True
+
+    qg: QuestionGenerator | None = cfg.question_generator
+    if qg:
+        provider = qg.get_dynamic_provider(area)
+        if provider and getattr(provider, "language", None) != lang:
+            provider.language = lang
 
     quiz_cog: QuizCog | None = interaction.client.get_cog("QuizCog")
     if quiz_cog and area not in quiz_cog.schedulers:
