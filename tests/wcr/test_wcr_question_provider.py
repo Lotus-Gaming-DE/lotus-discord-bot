@@ -64,12 +64,26 @@ def test_generate_type_4(monkeypatch):
 
 def test_generate_type_5(monkeypatch):
     provider = create_provider()
-    units = provider.units
-    monkeypatch.setattr(random, "sample", lambda seq, k: [units[0], units[1]])
-    monkeypatch.setattr(random, "choice", lambda seq: seq[0])
+    monkeypatch.setattr(random, "choice", lambda seq: "damage")
+    monkeypatch.setattr(random, "sample", lambda seq, k: seq[:k])
     q = provider.generate_type_5()
     assert q is not None
     assert "frage" in q and "antwort" in q and "id" in q
+
+
+def test_generate_type_5_requires_two_units(monkeypatch):
+    provider = create_provider()
+    units = provider.units
+    provider.units = [units[1], units[3]]
+
+    monkeypatch.setattr(random, "choice", lambda seq: "damage")
+
+    def fail(*args, **kwargs):
+        raise AssertionError("sample should not be called")
+
+    monkeypatch.setattr(random, "sample", fail)
+    q = provider.generate_type_5()
+    assert q is None
 
 
 def test_generate_all_types(monkeypatch):
