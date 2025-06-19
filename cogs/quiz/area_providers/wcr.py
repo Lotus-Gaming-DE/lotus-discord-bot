@@ -182,11 +182,14 @@ class WCRQuestionProvider(DynamicQuestionProvider):
         }
 
     def generate_type_5(self):
-        if len(self.units) < 2:
-            return None
-        u1, u2 = random.sample(self.units, 2)
         stat_keys = ["health", "damage", "attack_speed", "dps"]
         stat = random.choice(stat_keys)
+        units_with_stat = [
+            u for u in self.units if u.get("stats", {}).get(stat) is not None
+        ]
+        if len(units_with_stat) < 2:
+            return None
+        u1, u2 = random.sample(units_with_stat, 2)
         template = (
             self.locals.get(self.language, {})
             .get("question_templates", {})
