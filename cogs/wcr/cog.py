@@ -347,6 +347,23 @@ class WCRCog(commands.Cog):
         dps_a = self._compute_dps(data_a, stats_a, data_b)
         dps_b = self._compute_dps(data_b, stats_b, data_a)
 
+        def _flight_issue(att: dict, def_: dict) -> bool:
+            ta = att.get("traits_ids", [])
+            td = def_.get("traits_ids", [])
+            if att.get("type_id") == 2:
+                return False
+            return 15 in td and 11 not in ta and 15 not in ta
+
+        issue_a = _flight_issue(data_a, data_b)
+        issue_b = _flight_issue(data_b, data_a)
+
+        if (issue_a or dps_a == 0) and (issue_b or dps_b == 0):
+            await interaction.followup.send(
+                "Keines der Minis kann den Gegner treffen.",
+                ephemeral=not public,
+            )
+            return
+
         winner_data = self.duel_result(data_a, level_a, data_b, level_b)
 
         is_spell_a = data_a.get("type_id") == 2
@@ -399,16 +416,6 @@ class WCRCog(commands.Cog):
                 f"Level {lvl}: Schaden {dmg_scaled:.0f}, "
                 f"DPS {dps_scaled:.0f}, HP {hp_scaled:.0f}"
             )
-
-        def _flight_issue(att: dict, def_: dict) -> bool:
-            ta = att.get("traits_ids", [])
-            td = def_.get("traits_ids", [])
-            if att.get("type_id") == 2:
-                return False
-            return 15 in td and 11 not in ta and 15 not in ta
-
-        issue_a = _flight_issue(data_a, data_b)
-        issue_b = _flight_issue(data_b, data_a)
 
         parts = [f"{header}\n"]
 
