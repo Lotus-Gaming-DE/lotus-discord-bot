@@ -28,16 +28,22 @@ class ChampionCog(commands.Cog):
         self.roles: List[ChampionRole] = self._load_roles_config()
         self.tasks: list[asyncio.Task] = []
 
+        def _remove_finished(t: asyncio.Task) -> None:
+            if t in self.tasks:
+                self.tasks.remove(t)
+
         task = create_logged_task(self.sync_all_roles(), logger)
         self.tasks.append(task)
 
         if hasattr(task, "add_done_callback"):
-
-            def _remove_finished(t: asyncio.Task) -> None:
-                if t in self.tasks:
-                    self.tasks.remove(t)
-
             task.add_done_callback(_remove_finished)
+
+        self.update_queue: asyncio.Queue[tuple[str, int]] = asyncio.Queue()
+        self.worker_task = create_logged_task(self._worker(), logger)
+        self.tasks.append(self.worker_task)
+
+        if hasattr(self.worker_task, "add_done_callback"):
+            self.worker_task.add_done_callback(_remove_finished)
 
     def _load_roles_config(self) -> list[ChampionRole]:
         """Return the role thresholds sorted descending."""
@@ -65,16 +71,7 @@ class ChampionCog(commands.Cog):
         user_id_str = str(user_id)
         new_total = await self.data.add_delta(user_id_str, delta, reason)
 
-        task = create_logged_task(
-            self._apply_champion_role(user_id_str, new_total), logger
-        )
-        self.tasks.append(task)
-
-        def _remove_finished(t: asyncio.Task) -> None:
-            if t in self.tasks:
-                self.tasks.remove(t)
-
-        task.add_done_callback(_remove_finished)
+        await self.update_queue.put((user_id_str, new_total))
 
         return new_total
 
@@ -84,6 +81,18 @@ class ChampionCog(commands.Cog):
         for user_id_str in user_ids:
             total = await self.data.get_total(user_id_str)
             await self._apply_champion_role(user_id_str, total)
+
+    async def _worker(self) -> None:
+        """Process score updates sequentially from the queue."""
+        try:
+            while True:
+                user_id_str, total = await self.update_queue.get()
+                try:
+                    await self._apply_champion_role(user_id_str, total)
+                finally:
+                    self.update_queue.task_done()
+        except (asyncio.CancelledError, GeneratorExit):
+            pass
 
     async def _apply_champion_role(self, user_id_str: str, score: int) -> None:
         """Assign the correct champion role based on the score."""

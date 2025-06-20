@@ -41,10 +41,10 @@ async def test_sync_called_on_init(monkeypatch, tmp_path):
     bot = DummyBot()
     cog = ChampionCog(bot)
 
-    await asyncio.gather(*tasks)
+    await tasks[0]
 
     assert set(calls) == {("1", 5), ("2", 3)}
 
     cog.cog_unload()
     await data.close()
-    await asyncio.gather(*tasks)
+    await asyncio.gather(*tasks, return_exceptions=True)
