@@ -93,6 +93,7 @@ Beim ersten Start werden persistente Daten unter `data/pers/` angelegt (Punkteda
 | `/quiz reset`         | Fragehistorie für diesen Channel löschen *(Mod)*                    |
 | `/quiz duel`          | Starte ein Quiz-Duell (Best‑of‑X oder dynamic, optionaler Timeout). Nach jeder Runde werden Lösung, Antworten und Reaktionszeiten angezeigt |
 | `/quiz duelstats`     | Eigene oder fremde Duell-Bilanz anzeigen |
+| `/quiz stats`         | Anzahl deiner (oder fremder) richtigen Antworten anzeigen |
 | `/quiz duelleaderboard` | Rangliste der meisten Duell-Siege |
 
 Der Modus `dynamic` passt die Rundenzahl automatisch an und steht nur in Areas mit dynamischen Fragen (momentan `wcr`) zur Verfügung.

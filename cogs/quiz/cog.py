@@ -14,6 +14,7 @@ from .question_manager import QuestionManager
 from .question_restorer import QuestionRestorer
 from .question_state import QuestionInfo, QuestionStateManager
 from .scheduler import QuizScheduler
+from .stats import QuizStats
 
 logger = get_logger(__name__)
 
@@ -42,6 +43,7 @@ class QuizCog(commands.Cog):
         self.awaiting_activity: dict[int, tuple[str, float]] = {}
         self.schedulers: dict[str, QuizScheduler] = {}
         self.active_duels: set[int] = set()
+        self.stats = QuizStats("data/pers/quiz/stats.json")
 
         # Find existing QuestionStateManager or create a default one
         state = None

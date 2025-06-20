@@ -40,6 +40,8 @@ class AnswerModal(Modal, title="Antwort eingeben"):
                 logger.info(
                     f"[Champion] {user.display_name} erhält 1 Punkt für '{self.area}'."
                 )
+            if hasattr(self.cog, "stats"):
+                await self.cog.stats.increment(user_id)
 
             await interaction.response.send_message(
                 "🏆 Richtig! Du erhältst einen Punkt.", ephemeral=True
