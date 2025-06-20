@@ -334,18 +334,63 @@ class WCRCog(commands.Cog):
         name_a = helpers.get_text_data(id_a, lang_a, self.languages)[0]
         name_b = helpers.get_text_data(id_b, lang_b, self.languages)[0]
 
-        result = self.duel_result(data_a, level_a, data_b, level_b)
-        if result is None:
+        base_a = data_a.get("stats", {})
+        base_b = data_b.get("stats", {})
+        stats_a = self._scaled_stats(data_a, level_a)
+        stats_b = self._scaled_stats(data_b, level_b)
+
+        dps_a = self._compute_dps(data_a, stats_a, data_b)
+        dps_b = self._compute_dps(data_b, stats_b, data_a)
+
+        winner_data = self.duel_result(data_a, level_a, data_b, level_b)
+        if winner_data is None:
             await interaction.followup.send(
                 "Unentschieden oder kein Schaden.", ephemeral=not public
             )
             return
 
-        winner, time = result
+        winner, time = winner_data
         if winner == "a":
-            text = f"{name_a} würde {name_b} nach {time:.1f} Sekunden besiegen."
+            header = f"{name_a} würde {name_b} nach {time:.1f} Sekunden besiegen."
         else:
-            text = f"{name_b} würde {name_a} nach {time:.1f} Sekunden besiegen."
+            header = f"{name_b} würde {name_a} nach {time:.1f} Sekunden besiegen."
+
+        def _fmt_stats(base: dict, scaled: dict, lvl: int) -> str:
+            dmg_key = "damage" if "damage" in base else "area_damage"
+            dmg_base = base.get(dmg_key, 0)
+            dmg_scaled = scaled.get(dmg_key, 0)
+            hp_base = base.get("health", 0)
+            hp_scaled = scaled.get("health", 0)
+            dps_base = base.get("dps", scaled.get("dps", 0))
+            dps_scaled = scaled.get("dps", dps_base)
+            lines = [
+                f"Basis: Schaden {dmg_base}, DPS {dps_base}, HP {hp_base}",
+                f"Level {lvl}: Schaden {dmg_scaled:.0f}, DPS {dps_scaled:.0f}, HP {hp_scaled:.0f}",
+            ]
+            return "\n".join(lines)
+
+        def _flight_issue(att: dict, def_: dict) -> bool:
+            ta = att.get("traits_ids", [])
+            td = def_.get("traits_ids", [])
+            return 15 in td and 11 not in ta and 15 not in ta
+
+        issue_a = _flight_issue(data_a, data_b)
+        issue_b = _flight_issue(data_b, data_a)
+
+        text = (
+            f"{header}\n\n"
+            f"{name_a} (Level {level_a})\n{_fmt_stats(base_a, stats_a, level_a)}\n"
+            f"DPS gegen {name_b}: {dps_a:.1f}"
+        )
+        if issue_a:
+            text += " (kann Flieger nicht treffen)"
+        text += "\n\n"
+        text += (
+            f"{name_b} (Level {level_b})\n{_fmt_stats(base_b, stats_b, level_b)}\n"
+            f"DPS gegen {name_a}: {dps_b:.1f}"
+        )
+        if issue_b:
+            text += " (kann Flieger nicht treffen)"
 
         await interaction.followup.send(text, ephemeral=not public)
 

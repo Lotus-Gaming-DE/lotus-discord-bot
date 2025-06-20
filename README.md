@@ -103,6 +103,7 @@ Der Modus `dynamic` passt die Rundenzahl automatisch an und steht nur in Areas m
 |---------------------|---------------------------------------------------------------------|
 | `/wcr name`         | Details und Statistiken zu einer Einheit (mehrsprachig)             |
 | `/wcr filter`       | Minis über diverse Filter finden (Kosten, Fraktion, Traits ...)      |
+| `/wcr duell`        | Simuliert ein Duell zweier Minis und zeigt die Berechnung an |
 
 Autocomplete und Fuzzy-Matching erleichtern die Eingabe.
 Alle `/wcr`-Befehle besitzen zusätzlich den Parameter `public`, um die Antwort öffentlich anzuzeigen.
