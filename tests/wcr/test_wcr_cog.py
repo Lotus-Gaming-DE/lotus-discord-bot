@@ -357,4 +357,7 @@ async def test_cmd_duel_public():
 
     msg = inter.followup.sent[0]
     assert msg["ephemeral"] is False
+    assert "Gargoyle" in msg["content"]
+    assert "General Drakkisath" in msg["content"]
+    assert "DPS" in msg["content"]
     cog.cog_unload()
