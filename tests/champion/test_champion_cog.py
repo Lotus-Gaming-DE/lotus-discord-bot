@@ -73,16 +73,7 @@ async def test_update_user_score_saves_and_calls(
     monkeypatch, patch_logged_task, tmp_path
 ):
     bot = DummyBot()
-    cog = ChampionCog(bot)
-    cog.data = ChampionData(str(tmp_path / "points.db"))
-
-    called = []
-
-    async def fake_apply(user_id, score):
-        called.append((user_id, score))
-
     patch_logged_task(champion_cog_mod, log_setup)
-
     tasks = []
 
     def schedule_task(coro, logger=None):
@@ -91,6 +82,14 @@ async def test_update_user_score_saves_and_calls(
         return task
 
     monkeypatch.setattr(log_setup, "create_logged_task", schedule_task)
+    cog = ChampionCog(bot)
+    cog.data = ChampionData(str(tmp_path / "points.db"))
+
+    called = []
+
+    async def fake_apply(user_id, score):
+        called.append((user_id, score))
+
     monkeypatch.setattr(cog, "_apply_champion_role", fake_apply)
 
     total = await cog.update_user_score(123, 5, "test")
@@ -104,11 +103,7 @@ async def test_update_user_score_saves_and_calls(
 @pytest.mark.asyncio
 async def test_updates_processed_in_order(monkeypatch, patch_logged_task, tmp_path):
     bot = DummyBot()
-    cog = ChampionCog(bot)
-    cog.data = ChampionData(str(tmp_path / "points.db"))
-
     patch_logged_task(champion_cog_mod, log_setup)
-
     tasks = []
 
     def schedule_task(coro, logger=None):
@@ -116,13 +111,16 @@ async def test_updates_processed_in_order(monkeypatch, patch_logged_task, tmp_pa
         tasks.append(task)
         return task
 
+    monkeypatch.setattr(log_setup, "create_logged_task", schedule_task)
+    cog = ChampionCog(bot)
+    cog.data = ChampionData(str(tmp_path / "points.db"))
+
     order = []
 
     async def fake_apply(user_id, score):
         await asyncio.sleep(0)
         order.append((user_id, score))
 
-    monkeypatch.setattr(log_setup, "create_logged_task", schedule_task)
     monkeypatch.setattr(cog, "_apply_champion_role", fake_apply)
 
     for i in range(3):
@@ -180,8 +178,9 @@ async def test_apply_role_removes_when_below_threshold(monkeypatch, patch_logged
 
 
 @pytest.mark.asyncio
-async def test_apply_role_prefers_get_member(monkeypatch):
+async def test_apply_role_prefers_get_member(monkeypatch, patch_logged_task):
     bot = DummyBot()
+    patch_logged_task(champion_cog_mod, log_setup)
     member = DummyMember([])
     guild = DummyGuildGet(member, [])
     bot.main_guild = guild

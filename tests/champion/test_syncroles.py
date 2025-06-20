@@ -3,6 +3,8 @@ import pytest
 from cogs.champion.cog import ChampionCog
 from cogs.champion.data import ChampionData
 from cogs.champion.slash_commands import syncroles
+import cogs.champion.cog as champion_cog_mod
+import log_setup
 
 
 class DummyBot:
@@ -42,8 +44,9 @@ class DummyInteraction:
 
 
 @pytest.mark.asyncio
-async def test_syncroles_processes_all_users(monkeypatch, tmp_path):
+async def test_syncroles_processes_all_users(monkeypatch, tmp_path, patch_logged_task):
     bot = DummyBot()
+    patch_logged_task(champion_cog_mod, log_setup)
     cog = ChampionCog(bot)
     bot._cog = cog
     cog.data = ChampionData(str(tmp_path / "points.db"))

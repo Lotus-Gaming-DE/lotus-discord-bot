@@ -30,8 +30,9 @@ async def test_quiz_setup_uses_main_guild(monkeypatch, patch_logged_task, bot):
 
 
 @pytest.mark.asyncio
-async def test_champion_setup_uses_main_guild(monkeypatch, bot):
+async def test_champion_setup_uses_main_guild(monkeypatch, bot, patch_logged_task):
     bot.data = {"champion": {"roles": []}, "emojis": {}}
+    patch_logged_task(log_setup)
 
     called = []
 
