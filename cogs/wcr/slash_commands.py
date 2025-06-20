@@ -59,6 +59,7 @@ async def _trait_ac(interaction, current):
     type="Typ des Minis",
     trait="Merkmal des Minis",
     lang="Sprache",
+    public="Antwort öffentlich anzeigen",
 )
 @app_commands.autocomplete(
     cost=_cost_ac, speed=_speed_ac, faction=_faction_ac, type=_type_ac, trait=_trait_ac
@@ -71,22 +72,27 @@ async def filter(
     type: str = None,
     trait: str = None,
     lang: str = "de",
+    public: bool = False,
 ):
     logger.info(
         f"/wcr filter by {interaction.user} cost={cost} speed={speed} faction={faction} type={type} trait={trait} lang={lang}"
     )
     cog: WCRCog = interaction.client.get_cog("WCRCog")
-    await cog.cmd_filter(interaction, cost, speed, faction, type, trait, lang)
+    await cog.cmd_filter(interaction, cost, speed, faction, type, trait, lang, public)
 
 
 @wcr_group.command(
     name="name", description="Zeigt Details zu einem Mini basierend auf dem Namen an."
 )
-@app_commands.describe(name="Name des Minis", lang="Sprache")
-async def name(interaction: discord.Interaction, name: str, lang: str = "de"):
+@app_commands.describe(
+    name="Name des Minis", lang="Sprache", public="Antwort öffentlich anzeigen"
+)
+async def name(
+    interaction: discord.Interaction, name: str, lang: str = "de", public: bool = False
+):
     logger.info(f"/wcr name by {interaction.user} name={name} lang={lang}")
     cog: WCRCog = interaction.client.get_cog("WCRCog")
-    await cog.cmd_name(interaction, name, lang)
+    await cog.cmd_name(interaction, name, lang, public)
 
 
 @wcr_group.command(
@@ -99,6 +105,7 @@ async def name(interaction: discord.Interaction, name: str, lang: str = "de"):
     mini_b="Zweites Mini (Name oder ID)",
     level_b="Level des zweiten Minis (1-31)",
     lang="Sprache",
+    public="Antwort \u00f6ffentlich anzeigen",
 )
 async def duell(
     interaction: discord.Interaction,
@@ -107,9 +114,10 @@ async def duell(
     mini_b: str,
     level_b: app_commands.Range[int, 1, 31],
     lang: str = "de",
+    public: bool = False,
 ):
     logger.info(
         f"/wcr duell by {interaction.user} a={mini_a} la={level_a} b={mini_b} lb={level_b} lang={lang}"
     )
     cog: WCRCog = interaction.client.get_cog("WCRCog")
-    await cog.cmd_duel(interaction, mini_a, level_a, mini_b, level_b, lang)
+    await cog.cmd_duel(interaction, mini_a, level_a, mini_b, level_b, lang, public)

@@ -311,3 +311,50 @@ def test_duel_result_flying_vs_melee():
     result = cog.duel_result(unit_a, 1, unit_b, 1)
     assert result[0] == "a"
     cog.cog_unload()
+
+
+@pytest.mark.asyncio
+async def test_cmd_filter_public():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    await cog.cmd_filter(inter, cost="6", lang="de", public=True)
+
+    msg = inter.response.messages[0]
+    assert msg["ephemeral"] is False
+    cog.cog_unload()
+
+
+@pytest.mark.asyncio
+async def test_cmd_name_public():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    await cog.cmd_name(inter, "Abscheulichkeit", lang="de", public=True)
+
+    msg = inter.followup.sent[0]
+    assert msg["ephemeral"] is False
+    cog.cog_unload()
+
+
+@pytest.mark.asyncio
+async def test_cmd_duel_public():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    await cog.cmd_duel(
+        inter,
+        "Gargoyle",
+        1,
+        "General Drakkisath",
+        1,
+        lang="de",
+        public=True,
+    )
+
+    msg = inter.followup.sent[0]
+    assert msg["ephemeral"] is False
+    cog.cog_unload()
