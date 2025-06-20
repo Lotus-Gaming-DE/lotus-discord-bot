@@ -399,6 +399,7 @@ async def test_cmd_duel_public():
 
 @pytest.mark.asyncio
 async def test_cmd_duel_invalid_language():
+async def test_cmd_duel_no_damage_message():
     bot = DummyBot()
     cog = WCRCog(bot)
     inter = DummyInteraction()
@@ -414,5 +415,14 @@ async def test_cmd_duel_invalid_language():
 
     msg = inter.response.messages[0]
     assert msg["content"].startswith("Sprache nicht unterstützt")
+        "Banshee",
+        1,
+        "Bergbewohner",
+        1,
+        lang="de",
+    )
+
+    msg = inter.followup.sent[0]
+    assert msg["content"] == "Keines der Minis kann den Gegner treffen."
     assert msg["ephemeral"] is True
     cog.cog_unload()
