@@ -170,6 +170,7 @@ async def enable(
             prepare_question_callback=quiz_cog.manager.prepare_question,
             close_question_callback=quiz_cog.closer.close_question,
         )
+        scheduler.task = quiz_cog._track_task(scheduler.run())
         quiz_cog.schedulers[area] = scheduler
 
     save_area_config(interaction.client)

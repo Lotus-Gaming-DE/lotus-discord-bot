@@ -25,11 +25,27 @@ class QuizCog(commands.Cog):
         # Allow other modules to access the cog instance
         self.bot.quiz_cog = self
 
+        # Manage all background tasks via a TaskGroup
+        self.task_group = asyncio.TaskGroup()
+        try:
+            self.task_group.__aenter__().send(None)
+        except StopIteration:
+            pass
+
         # list of asyncio.Task objects created via ``_track_task``
         self.tasks: list[asyncio.Task] = []
 
         def _track_task(coro: asyncio.coroutine) -> asyncio.Task:
-            task = create_logged_task(coro, logger)
+            async def wrapper() -> None:
+                try:
+                    await coro
+                except asyncio.CancelledError:
+                    pass
+                except Exception as e:  # pragma: no cover - logging
+                    logger.error("Task raised an exception", exc_info=e)
+                    raise
+
+            task = self.task_group.create_task(wrapper())
             self.tasks.append(task)
             return task
 
@@ -86,6 +102,7 @@ class QuizCog(commands.Cog):
                 post_time=post_time,
                 window_end=window_end,
             )
+            scheduler.task = self._track_task(scheduler.run())
             self.schedulers[area] = scheduler
 
     @commands.Cog.listener()
@@ -95,9 +112,7 @@ class QuizCog(commands.Cog):
         self.tracker.register_message(message)
 
     def cog_unload(self) -> None:
-        for scheduler in self.schedulers.values():
-            scheduler.task.cancel()
-        if hasattr(self.restorer, "cancel_all"):
-            self.restorer.cancel_all()
-        for task in self.tasks:
-            task.cancel()
+        # cancel all running tasks managed by the TaskGroup
+        if hasattr(self.task_group, "_abort"):
+            self.task_group._abort()  # type: ignore[attr-defined]
+        create_logged_task(self.task_group.__aexit__(None, None, None), logger)
