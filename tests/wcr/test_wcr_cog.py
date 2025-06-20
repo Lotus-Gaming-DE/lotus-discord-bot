@@ -5,6 +5,7 @@ import discord
 
 from cogs.wcr.cog import WCRCog
 from cogs.wcr.views import MiniSelectView
+from cogs.wcr.duel import DuelCalculator
 
 
 class DummyBot:
@@ -280,15 +281,16 @@ async def test_trait_autocomplete_returns_sorted_matches():
 def test_scaled_stats_leveling():
     bot = DummyBot()
     cog = WCRCog(bot)
+    calculator = DuelCalculator()
 
     units = bot.data["wcr"]["units"]
     if isinstance(units, dict) and "units" in units:
         units = units["units"]
     unit = next(u for u in units if u["id"] == 26)
 
-    stats_lvl1 = cog._scaled_stats(unit, 1)
-    stats_lvl2 = cog._scaled_stats(unit, 2)
-    stats_lvl5 = cog._scaled_stats(unit, 5)
+    stats_lvl1 = calculator.scaled_stats(unit, 1)
+    stats_lvl2 = calculator.scaled_stats(unit, 2)
+    stats_lvl5 = calculator.scaled_stats(unit, 5)
 
     assert stats_lvl1["health"] == 1300
     assert stats_lvl2["health"] == pytest.approx(1430)
@@ -305,10 +307,11 @@ def test_duel_result_flying_vs_melee():
     units = bot.data["wcr"]["units"]
     if isinstance(units, dict) and "units" in units:
         units = units["units"]
+    calculator = DuelCalculator()
     unit_a = next(u for u in units if u["id"] == 26)
     unit_b = next(u for u in units if u["id"] == 27)
 
-    result = cog.duel_result(unit_a, 1, unit_b, 1)
+    result = calculator.duel_result(unit_a, 1, unit_b, 1)
     assert result[0] == "a"
     cog.cog_unload()
 
@@ -321,11 +324,12 @@ def test_compute_dps_spell_hits_flying():
     if isinstance(units, dict) and "units" in units:
         units = units["units"]
 
+    calculator = DuelCalculator()
     spell = next(u for u in units if u["id"] == 10)
     flying = next(u for u in units if u["id"] == 6)
 
-    stats_spell = cog._scaled_stats(spell, 1)
-    dps = cog._compute_dps(spell, stats_spell, flying)
+    stats_spell = calculator.scaled_stats(spell, 1)
+    dps = calculator.compute_dps(spell, stats_spell, flying)
 
     assert dps > 0
     cog.cog_unload()
@@ -339,10 +343,11 @@ def test_duel_result_spell_vs_mini():
     if isinstance(units, dict) and "units" in units:
         units = units["units"]
 
+    calculator = DuelCalculator()
     spell = next(u for u in units if u["id"] == 10)
     mini = next(u for u in units if u["id"] == 6)
 
-    result = cog.duel_result(spell, 31, mini, 1)
+    result = calculator.duel_result(spell, 31, mini, 1)
     assert result == ("a", 0.0)
     cog.cog_unload()
 
