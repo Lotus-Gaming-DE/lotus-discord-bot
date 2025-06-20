@@ -48,6 +48,17 @@ def save_area_config(bot: commands.Bot):
         json.dump(out, f, indent=2, ensure_ascii=False)
 
 
+async def area_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[app_commands.Choice[str]]:
+    """Autocomplete available quiz areas based on ``current`` text."""
+    bot = interaction.client
+    current_lower = current.lower()
+    matches = [name for name in bot.quiz_data.keys() if current_lower in name.lower()]
+    matches.sort()
+    return [app_commands.Choice(name=m, value=m) for m in matches[:25]]
+
+
 @quiz_group.command(
     name="time", description="Zeitfenster (in Minuten) für dieses Quiz setzen"
 )
@@ -127,6 +138,7 @@ async def threshold(
 @app_commands.describe(
     area_name="Name der Area (z. B. wcr, d4, ptcgp)", lang="de oder en"
 )
+@app_commands.autocomplete(area_name=area_autocomplete)
 @app_commands.default_permissions(manage_guild=True)
 async def enable(
     interaction: discord.Interaction, area_name: str, lang: Literal["de", "en"] = "de"
