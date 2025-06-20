@@ -313,6 +313,40 @@ def test_duel_result_flying_vs_melee():
     cog.cog_unload()
 
 
+def test_compute_dps_spell_hits_flying():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+
+    units = bot.data["wcr"]["units"]
+    if isinstance(units, dict) and "units" in units:
+        units = units["units"]
+
+    spell = next(u for u in units if u["id"] == 10)
+    flying = next(u for u in units if u["id"] == 6)
+
+    stats_spell = cog._scaled_stats(spell, 1)
+    dps = cog._compute_dps(spell, stats_spell, flying)
+
+    assert dps > 0
+    cog.cog_unload()
+
+
+def test_duel_result_spell_vs_mini():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+
+    units = bot.data["wcr"]["units"]
+    if isinstance(units, dict) and "units" in units:
+        units = units["units"]
+
+    spell = next(u for u in units if u["id"] == 10)
+    mini = next(u for u in units if u["id"] == 6)
+
+    result = cog.duel_result(spell, 31, mini, 1)
+    assert result == ("a", 0.0)
+    cog.cog_unload()
+
+
 @pytest.mark.asyncio
 async def test_cmd_filter_public():
     bot = DummyBot()
