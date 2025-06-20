@@ -87,3 +87,29 @@ async def name(interaction: discord.Interaction, name: str, lang: str = "de"):
     logger.info(f"/wcr name by {interaction.user} name={name} lang={lang}")
     cog: WCRCog = interaction.client.get_cog("WCRCog")
     await cog.cmd_name(interaction, name, lang)
+
+
+@wcr_group.command(
+    name="duell",
+    description="Lässt zwei Minis virtuell gegeneinander antreten.",
+)
+@app_commands.describe(
+    mini_a="Erstes Mini (Name oder ID)",
+    level_a="Level des ersten Minis (1-31)",
+    mini_b="Zweites Mini (Name oder ID)",
+    level_b="Level des zweiten Minis (1-31)",
+    lang="Sprache",
+)
+async def duell(
+    interaction: discord.Interaction,
+    mini_a: str,
+    level_a: app_commands.Range[int, 1, 31],
+    mini_b: str,
+    level_b: app_commands.Range[int, 1, 31],
+    lang: str = "de",
+):
+    logger.info(
+        f"/wcr duell by {interaction.user} a={mini_a} la={level_a} b={mini_b} lb={level_b} lang={lang}"
+    )
+    cog: WCRCog = interaction.client.get_cog("WCRCog")
+    await cog.cmd_duel(interaction, mini_a, level_a, mini_b, level_b, lang)
