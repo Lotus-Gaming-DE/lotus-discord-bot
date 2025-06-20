@@ -275,3 +275,39 @@ async def test_trait_autocomplete_returns_sorted_matches():
     assert [c.name for c in choices] == ["Melee", "Elemental"]
     assert [c.value for c in choices] == ["3", "8"]
     cog.cog_unload()
+
+
+def test_scaled_stats_leveling():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+
+    units = bot.data["wcr"]["units"]
+    if isinstance(units, dict) and "units" in units:
+        units = units["units"]
+    unit = next(u for u in units if u["id"] == 26)
+
+    stats_lvl1 = cog._scaled_stats(unit, 1)
+    stats_lvl2 = cog._scaled_stats(unit, 2)
+    stats_lvl5 = cog._scaled_stats(unit, 5)
+
+    assert stats_lvl1["health"] == 1300
+    assert stats_lvl2["health"] == pytest.approx(1430)
+    assert stats_lvl5["health"] == pytest.approx(1820)
+    assert stats_lvl2["dps"] == pytest.approx(162, rel=0.01)
+    assert stats_lvl5["dps"] == pytest.approx(206, rel=0.01)
+    cog.cog_unload()
+
+
+def test_duel_result_flying_vs_melee():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+
+    units = bot.data["wcr"]["units"]
+    if isinstance(units, dict) and "units" in units:
+        units = units["units"]
+    unit_a = next(u for u in units if u["id"] == 26)
+    unit_b = next(u for u in units if u["id"] == 27)
+
+    result = cog.duel_result(unit_a, 1, unit_b, 1)
+    assert result[0] == "a"
+    cog.cog_unload()

@@ -296,6 +296,47 @@ class WCRCog(commands.Cog):
             else:
                 await interaction.followup.send(embed=embed, ephemeral=True)
 
+    async def cmd_duel(
+        self,
+        interaction: discord.Interaction,
+        mini_a: str,
+        level_a: int,
+        mini_b: str,
+        level_b: int,
+        lang: str = "de",
+    ):
+        """Implementation for ``/wcr duell``."""
+        await interaction.response.defer(ephemeral=True)
+
+        res_a = self.resolve_unit(mini_a, lang)
+        res_b = self.resolve_unit(mini_b, lang)
+        if not res_a or not res_b:
+            await interaction.followup.send(
+                "Eines der Minis wurde nicht gefunden.", ephemeral=True
+            )
+            return
+
+        id_a, data_a, lang_a, texts_a = res_a
+        id_b, data_b, lang_b, texts_b = res_b
+
+        name_a = helpers.get_text_data(id_a, lang_a, self.languages)[0]
+        name_b = helpers.get_text_data(id_b, lang_b, self.languages)[0]
+
+        result = self.duel_result(data_a, level_a, data_b, level_b)
+        if result is None:
+            await interaction.followup.send(
+                "Unentschieden oder kein Schaden.", ephemeral=True
+            )
+            return
+
+        winner, time = result
+        if winner == "a":
+            text = f"{name_a} würde {name_b} nach {time:.1f} Sekunden besiegen."
+        else:
+            text = f"{name_b} würde {name_a} nach {time:.1f} Sekunden besiegen."
+
+        await interaction.followup.send(text, ephemeral=True)
+
     def create_mini_embed(self, name_or_id, lang):
         result = self.resolve_unit(name_or_id, lang)
         if not result:
@@ -667,6 +708,93 @@ class WCRCog(commands.Cog):
             await interaction.followup.send(
                 "Ein Fehler ist aufgetreten.", ephemeral=True
             )
+
+    # ─── Duel Feature ------------------------------------------------------------
+    def _scale_stat(self, base: float | int, level: int) -> float:
+        """Return ``base`` scaled by +10% per level above 1."""
+        if level < 1:
+            level = 1
+        return base * (1 + 0.1 * (level - 1))
+
+    def _scaled_stats(self, unit_data: dict, level: int) -> dict:
+        """Return a copy of ``unit_data['stats']`` scaled for ``level``."""
+        stats = unit_data.get("stats", {})
+        result = {}
+        dmg_key = (
+            "damage"
+            if "damage" in stats
+            else "area_damage" if "area_damage" in stats else None
+        )
+        if dmg_key:
+            result[dmg_key] = self._scale_stat(stats[dmg_key], level)
+        if "health" in stats:
+            result["health"] = self._scale_stat(stats["health"], level)
+        attack_speed = stats.get("attack_speed")
+        if attack_speed is not None:
+            result["attack_speed"] = attack_speed
+        if dmg_key and attack_speed:
+            result["dps"] = result[dmg_key] / attack_speed
+        return result
+
+    def _compute_dps(
+        self,
+        attacker: dict,
+        attacker_stats: dict,
+        defender: dict,
+    ) -> float:
+        """Calculate DPS attacker does to defender considering traits."""
+        traits_a = attacker.get("traits_ids", [])
+        traits_d = defender.get("traits_ids", [])
+
+        # Check if attacker can hit flying target
+        if 15 in traits_d and 11 not in traits_a and 15 not in traits_a:
+            return 0.0
+
+        dmg_key = (
+            "damage"
+            if "damage" in attacker_stats
+            else "area_damage" if "area_damage" in attacker_stats else None
+        )
+        if dmg_key is None:
+            return 0.0
+
+        damage = attacker_stats[dmg_key]
+        if 8 in traits_a and 20 in traits_d:  # elemental vs resistant
+            damage *= 0.5
+        elif 8 not in traits_a and 13 in traits_d:  # physical vs armored
+            damage *= 0.5
+
+        attack_speed = attacker_stats.get("attack_speed")
+        if attack_speed:
+            return damage / attack_speed
+        # Fallback to provided dps if available
+        return attacker_stats.get("dps", 0.0)
+
+    def duel_result(
+        self,
+        unit_a: dict,
+        level_a: int,
+        unit_b: dict,
+        level_b: int,
+    ) -> tuple[str, float] | None:
+        """Return (winner_name, time) or None for tie/impossible."""
+        stats_a = self._scaled_stats(unit_a, level_a)
+        stats_b = self._scaled_stats(unit_b, level_b)
+
+        dps_a = self._compute_dps(unit_a, stats_a, unit_b)
+        dps_b = self._compute_dps(unit_b, stats_b, unit_a)
+
+        health_a = stats_a.get("health", 0)
+        health_b = stats_b.get("health", 0)
+
+        time_a = health_b / dps_a if dps_a > 0 else float("inf")
+        time_b = health_a / dps_b if dps_b > 0 else float("inf")
+
+        if time_a == time_b:
+            return None
+        if time_a < time_b:
+            return "a", time_a
+        return "b", time_b
 
     def cog_unload(self):
         """Nothing to clean up when unloading the cog."""
