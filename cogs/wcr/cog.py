@@ -343,54 +343,89 @@ class WCRCog(commands.Cog):
         dps_b = self._compute_dps(data_b, stats_b, data_a)
 
         winner_data = self.duel_result(data_a, level_a, data_b, level_b)
-        if winner_data is None:
-            await interaction.followup.send(
-                "Unentschieden oder kein Schaden.", ephemeral=not public
-            )
-            return
 
-        winner, time = winner_data
-        if winner == "a":
-            header = f"{name_a} würde {name_b} nach {time:.1f} Sekunden besiegen."
+        is_spell_a = data_a.get("type_id") == 2
+        is_spell_b = data_b.get("type_id") == 2
+
+        if is_spell_a and is_spell_b:
+            if winner_data is None:
+                header = "Beide Zauber verursachen gleich viel Schaden."
+            else:
+                winner, _ = winner_data
+                if winner == "a":
+                    header = (
+                        f"Zauber {name_a} hat mehr DPS und w\u00fcrde daher {name_b} "
+                        "outperformen."
+                    )
+                else:
+                    header = (
+                        f"Zauber {name_b} hat mehr DPS und w\u00fcrde daher {name_a} "
+                        "outperformen."
+                    )
+        elif is_spell_a or is_spell_b:
+            spell_name = name_a if is_spell_a else name_b
+            mini_name = name_b if is_spell_a else name_a
+            if winner_data is None:
+                header = f"{spell_name} w\u00fcrde {mini_name} nicht t\u00f6ten."
+            else:
+                header = f"{spell_name} w\u00fcrde {mini_name} t\u00f6ten."
         else:
-            header = f"{name_b} würde {name_a} nach {time:.1f} Sekunden besiegen."
+            if winner_data is None:
+                await interaction.followup.send(
+                    "Unentschieden oder kein Schaden.", ephemeral=not public
+                )
+                return
+            winner, time = winner_data
+            if winner == "a":
+                header = (
+                    f"{name_a} w\u00fcrde {name_b} nach {time:.1f} Sekunden besiegen."
+                )
+            else:
+                header = (
+                    f"{name_b} w\u00fcrde {name_a} nach {time:.1f} Sekunden besiegen."
+                )
 
         def _fmt_stats(base: dict, scaled: dict, lvl: int) -> str:
             dmg_key = "damage" if "damage" in base else "area_damage"
-            dmg_base = base.get(dmg_key, 0)
             dmg_scaled = scaled.get(dmg_key, 0)
-            hp_base = base.get("health", 0)
             hp_scaled = scaled.get("health", 0)
-            dps_base = base.get("dps", scaled.get("dps", 0))
-            dps_scaled = scaled.get("dps", dps_base)
-            lines = [
-                f"Basis: Schaden {dmg_base}, DPS {dps_base}, HP {hp_base}",
-                f"Level {lvl}: Schaden {dmg_scaled:.0f}, DPS {dps_scaled:.0f}, HP {hp_scaled:.0f}",
-            ]
-            return "\n".join(lines)
+            dps_scaled = scaled.get("dps", base.get("dps", 0))
+            return (
+                f"Level {lvl}: Schaden {dmg_scaled:.0f}, "
+                f"DPS {dps_scaled:.0f}, HP {hp_scaled:.0f}"
+            )
 
         def _flight_issue(att: dict, def_: dict) -> bool:
             ta = att.get("traits_ids", [])
             td = def_.get("traits_ids", [])
+            if att.get("type_id") == 2:
+                return False
             return 15 in td and 11 not in ta and 15 not in ta
 
         issue_a = _flight_issue(data_a, data_b)
         issue_b = _flight_issue(data_b, data_a)
 
-        text = (
-            f"{header}\n\n"
-            f"{name_a} (Level {level_a})\n{_fmt_stats(base_a, stats_a, level_a)}\n"
-            f"DPS gegen {name_b}: {dps_a:.1f}"
+        parts = [f"{header}\n"]
+
+        parts.append(
+            f"\n{name_a} (Level {level_a})\n{_fmt_stats(base_a, stats_a, level_a)}"
         )
-        if issue_a:
-            text += " (kann Flieger nicht treffen)"
-        text += "\n\n"
-        text += (
-            f"{name_b} (Level {level_b})\n{_fmt_stats(base_b, stats_b, level_b)}\n"
-            f"DPS gegen {name_a}: {dps_b:.1f}"
+        if not is_spell_b or is_spell_a:
+            line = f"DPS gegen {name_b}: {dps_a:.1f}"
+            if issue_a:
+                line += " (kann Flieger nicht treffen)"
+            parts.append(line)
+
+        parts.append(
+            f"\n{name_b} (Level {level_b})\n{_fmt_stats(base_b, stats_b, level_b)}"
         )
-        if issue_b:
-            text += " (kann Flieger nicht treffen)"
+        if not is_spell_a or is_spell_b:
+            line = f"DPS gegen {name_a}: {dps_b:.1f}"
+            if issue_b:
+                line += " (kann Flieger nicht treffen)"
+            parts.append(line)
+
+        text = "\n".join(parts)
 
         await interaction.followup.send(text, ephemeral=not public)
 
@@ -795,6 +830,15 @@ class WCRCog(commands.Cog):
             result["dps"] = result[dmg_key] / attack_speed
         return result
 
+    def _spell_total_damage(self, unit: dict, stats: dict) -> float:
+        """Return estimated total damage a spell deals."""
+        base_stats = unit.get("stats", {})
+        damage = stats.get("damage", stats.get("area_damage", 0))
+        if "dps" in stats:
+            duration = base_stats.get("duration", 1)
+            damage = max(damage, stats["dps"] * duration)
+        return damage
+
     def _compute_dps(
         self,
         attacker: dict,
@@ -806,7 +850,12 @@ class WCRCog(commands.Cog):
         traits_d = defender.get("traits_ids", [])
 
         # Check if attacker can hit flying target
-        if 15 in traits_d and 11 not in traits_a and 15 not in traits_a:
+        if (
+            attacker.get("type_id") != 2
+            and 15 in traits_d
+            and 11 not in traits_a
+            and 15 not in traits_a
+        ):
             return 0.0
 
         dmg_key = (
@@ -826,6 +875,13 @@ class WCRCog(commands.Cog):
         attack_speed = attacker_stats.get("attack_speed")
         if attack_speed:
             return damage / attack_speed
+
+        if attacker.get("type_id") == 2:
+            dps = attacker_stats.get("dps")
+            if dps is not None:
+                return dps
+            return damage
+
         # Fallback to provided dps if available
         return attacker_stats.get("dps", 0.0)
 
@@ -840,8 +896,28 @@ class WCRCog(commands.Cog):
         stats_a = self._scaled_stats(unit_a, level_a)
         stats_b = self._scaled_stats(unit_b, level_b)
 
+        is_spell_a = unit_a.get("type_id") == 2
+        is_spell_b = unit_b.get("type_id") == 2
+
         dps_a = self._compute_dps(unit_a, stats_a, unit_b)
         dps_b = self._compute_dps(unit_b, stats_b, unit_a)
+
+        if is_spell_a and is_spell_b:
+            if dps_a == dps_b:
+                return None
+            return ("a", 0.0) if dps_a > dps_b else ("b", 0.0)
+
+        if is_spell_a:
+            total_damage = self._spell_total_damage(unit_a, stats_a)
+            if total_damage >= stats_b.get("health", 0):
+                return "a", 0.0
+            return None
+
+        if is_spell_b:
+            total_damage = self._spell_total_damage(unit_b, stats_b)
+            if total_damage >= stats_a.get("health", 0):
+                return "b", 0.0
+            return None
 
         health_a = stats_a.get("health", 0)
         health_b = stats_b.get("health", 0)
