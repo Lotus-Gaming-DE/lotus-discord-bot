@@ -420,8 +420,8 @@ async def test_cmd_duel_public():
     await cog.cmd_duel(
         inter,
         "Gargoyle",
-        1,
         "General Drakkisath",
+        1,
         1,
         lang="de",
         public=True,
@@ -444,8 +444,8 @@ async def test_cmd_duel_no_damage_message():
     await cog.cmd_duel(
         inter,
         "Banshee",
-        1,
         "Bergbewohner",
+        1,
         1,
         lang="de",
     )
@@ -465,8 +465,8 @@ async def test_cmd_duel_identical_minis_tie():
     await cog.cmd_duel(
         inter,
         "Abscheulichkeit",
-        1,
         "Abscheulichkeit",
+        1,
         1,
         lang="de",
     )
@@ -486,8 +486,8 @@ async def test_cmd_duel_unknown_mini():
     await cog.cmd_duel(
         inter,
         "Unbekanntes Mini",
-        1,
         "Abscheulichkeit",
+        1,
         1,
         lang="de",
         public=True,
