@@ -105,6 +105,7 @@ Der Modus `dynamic` passt die Rundenzahl automatisch an und steht nur in Areas m
 | `/wcr filter`       | Minis über diverse Filter finden (Kosten, Fraktion, Traits ...)      |
 
 Autocomplete und Fuzzy-Matching erleichtern die Eingabe.
+Alle `/wcr`-Befehle besitzen zusätzlich den Parameter `public`, um die Antwort öffentlich anzuzeigen.
 
 ### `/ptcgp`
 

@@ -141,6 +141,7 @@ class WCRCog(commands.Cog):
         type: str = None,
         trait: str = None,
         lang: str = "de",
+        public: bool = False,
     ):
         """Implementation for the ``/wcr filter`` command."""
         logger.info(
@@ -152,7 +153,7 @@ class WCRCog(commands.Cog):
             await interaction.response.send_message(
                 "Sprache nicht unterstützt. Verfügbar: "
                 + ", ".join(self.languages.keys()),
-                ephemeral=True,
+                ephemeral=not public,
             )
             return
 
@@ -165,7 +166,8 @@ class WCRCog(commands.Cog):
                 cost_value = int(cost)
             except ValueError:
                 await interaction.response.send_message(
-                    f"Kosten '{cost}' ist keine gültige Zahl.", ephemeral=True
+                    f"Kosten '{cost}' ist keine gültige Zahl.",
+                    ephemeral=not public,
                 )
                 return
             filtered_units = [u for u in filtered_units if u.get("cost") == cost_value]
@@ -179,7 +181,8 @@ class WCRCog(commands.Cog):
             )
             if speed_id is None:
                 await interaction.response.send_message(
-                    f"Geschwindigkeit '{speed}' nicht gefunden.", ephemeral=True
+                    f"Geschwindigkeit '{speed}' nicht gefunden.",
+                    ephemeral=not public,
                 )
                 return
             filtered_units = [
@@ -195,7 +198,8 @@ class WCRCog(commands.Cog):
             )
             if faction_id is None:
                 await interaction.response.send_message(
-                    f"Fraktion '{faction}' nicht gefunden.", ephemeral=True
+                    f"Fraktion '{faction}' nicht gefunden.",
+                    ephemeral=not public,
                 )
                 return
             filtered_units = [
@@ -211,7 +215,8 @@ class WCRCog(commands.Cog):
             )
             if type_id is None:
                 await interaction.response.send_message(
-                    f"Typ '{type}' nicht gefunden.", ephemeral=True
+                    f"Typ '{type}' nicht gefunden.",
+                    ephemeral=not public,
                 )
                 return
             filtered_units = [u for u in filtered_units if u.get("type_id") == type_id]
@@ -225,7 +230,8 @@ class WCRCog(commands.Cog):
             )
             if trait_id is None:
                 await interaction.response.send_message(
-                    f"Merkmal '{trait}' nicht gefunden.", ephemeral=True
+                    f"Merkmal '{trait}' nicht gefunden.",
+                    ephemeral=not public,
                 )
                 return
             filtered_units = [
@@ -235,13 +241,14 @@ class WCRCog(commands.Cog):
         if not filtered_units:
             await interaction.response.send_message(
                 "Keine Minis gefunden, die den angegebenen Kriterien entsprechen.",
-                ephemeral=True,
+                ephemeral=not public,
             )
             return
 
         if len(filtered_units) > 25:
             await interaction.response.send_message(
-                "Zu viele Ergebnisse. Bitte verfeinere deine Filter.", ephemeral=True
+                "Zu viele Ergebnisse. Bitte verfeinere deine Filter.",
+                ephemeral=not public,
             )
             return
 
@@ -261,40 +268,44 @@ class WCRCog(commands.Cog):
                 option = discord.SelectOption(label=unit_name, value=str(unit_id))
             options.append(option)
 
-        view = MiniSelectView(options, self, lang)
+        view = MiniSelectView(options, self, lang, public=public)
         await interaction.response.send_message(
-            "Gefundene Minis:", view=view, ephemeral=True
+            "Gefundene Minis:", view=view, ephemeral=not public
         )
 
     async def cmd_name(
-        self, interaction: discord.Interaction, name: str, lang: str = "de"
+        self,
+        interaction: discord.Interaction,
+        name: str,
+        lang: str = "de",
+        public: bool = False,
     ):
         """Implementation for the ``/wcr name`` command."""
         logger.info(
             f"[WCR] /wcr name von {interaction.user} - name={name}, lang={lang}"
         )
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=not public)
 
         try:
             embed, logo_file = self.create_mini_embed(name, lang)
         except Exception as e:
             logger.error(f"Fehler in create_mini_embed: {e}", exc_info=True)
             await interaction.followup.send(
-                "Ein Fehler ist aufgetreten.", ephemeral=True
+                "Ein Fehler ist aufgetreten.", ephemeral=not public
             )
             return
 
         if embed is None:
             await interaction.followup.send(
-                f"Mini mit Namen '{name}' nicht gefunden.", ephemeral=True
+                f"Mini mit Namen '{name}' nicht gefunden.", ephemeral=not public
             )
         else:
             if logo_file:
                 await interaction.followup.send(
-                    embed=embed, file=logo_file, ephemeral=True
+                    embed=embed, file=logo_file, ephemeral=not public
                 )
             else:
-                await interaction.followup.send(embed=embed, ephemeral=True)
+                await interaction.followup.send(embed=embed, ephemeral=not public)
 
     async def cmd_duel(
         self,
@@ -304,15 +315,16 @@ class WCRCog(commands.Cog):
         mini_b: str,
         level_b: int,
         lang: str = "de",
+        public: bool = False,
     ):
         """Implementation for ``/wcr duell``."""
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=not public)
 
         res_a = self.resolve_unit(mini_a, lang)
         res_b = self.resolve_unit(mini_b, lang)
         if not res_a or not res_b:
             await interaction.followup.send(
-                "Eines der Minis wurde nicht gefunden.", ephemeral=True
+                "Eines der Minis wurde nicht gefunden.", ephemeral=not public
             )
             return
 
@@ -325,7 +337,7 @@ class WCRCog(commands.Cog):
         result = self.duel_result(data_a, level_a, data_b, level_b)
         if result is None:
             await interaction.followup.send(
-                "Unentschieden oder kein Schaden.", ephemeral=True
+                "Unentschieden oder kein Schaden.", ephemeral=not public
             )
             return
 
@@ -335,7 +347,7 @@ class WCRCog(commands.Cog):
         else:
             text = f"{name_b} würde {name_a} nach {time:.1f} Sekunden besiegen."
 
-        await interaction.followup.send(text, ephemeral=True)
+        await interaction.followup.send(text, ephemeral=not public)
 
     def create_mini_embed(self, name_or_id, lang):
         result = self.resolve_unit(name_or_id, lang)
@@ -684,29 +696,31 @@ class WCRCog(commands.Cog):
 
         return embed, logo_file
 
-    async def send_mini_embed(self, interaction, unit_id, lang) -> None:
+    async def send_mini_embed(
+        self, interaction, unit_id, lang, public: bool = False
+    ) -> None:
         """Send an embed with mini details as an ephemeral followup."""
         try:
             embed, logo_file = self.create_mini_embed(unit_id, lang)
             if embed is None:
                 await interaction.followup.send(
                     f"Details für Mini mit ID '{unit_id}' nicht gefunden.",
-                    ephemeral=True,
+                    ephemeral=not public,
                 )
             else:
                 if logo_file:
                     await interaction.followup.send(
-                        embed=embed, file=logo_file, ephemeral=True
+                        embed=embed, file=logo_file, ephemeral=not public
                     )
                 else:
-                    await interaction.followup.send(embed=embed, ephemeral=True)
+                    await interaction.followup.send(embed=embed, ephemeral=not public)
         except Exception as e:
             logger.error(
                 f"Fehler beim Senden des Embeds für unit_id {unit_id}: {e}",
                 exc_info=True,
             )
             await interaction.followup.send(
-                "Ein Fehler ist aufgetreten.", ephemeral=True
+                "Ein Fehler ist aufgetreten.", ephemeral=not public
             )
 
     # ─── Duel Feature ------------------------------------------------------------

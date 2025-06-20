@@ -7,9 +7,10 @@ logger = get_logger(__name__)
 
 
 class MiniSelectView(discord.ui.View):
-    def __init__(self, options, cog, lang) -> None:
+    def __init__(self, options, cog, lang, public: bool = False) -> None:
         """View presenting a select menu of minis."""
         super().__init__(timeout=60)
+        self.public = public
         self.add_item(MiniSelect(options, cog, lang))
 
     async def on_timeout(self) -> None:
@@ -39,5 +40,7 @@ class MiniSelect(discord.ui.Select):
         logger.info(
             f"MiniSelect: {interaction.user} chose id={unit_id} lang={self.lang}"
         )
-        await interaction.response.defer(ephemeral=True)
-        await self.cog.send_mini_embed(interaction, unit_id, self.lang)
+        await interaction.response.defer(ephemeral=not self.view.public)
+        await self.cog.send_mini_embed(
+            interaction, unit_id, self.lang, public=self.view.public
+        )
