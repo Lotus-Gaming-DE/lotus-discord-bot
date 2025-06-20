@@ -6,14 +6,14 @@ from cogs.quiz.slash_commands import quiz_group
 from cogs.champion.slash_commands import champion_group, syncroles
 from cogs.wcr.slash_commands import wcr_group
 from cogs.ptcgp.slash_commands import ptcgp_group
-import cogs.quiz.cog as quiz_cog_mod
 import cogs.quiz.message_tracker as msg_mod
+import log_setup
 from cogs.wcr.utils import load_wcr_data
 
 
 @pytest.mark.asyncio
 async def test_quiz_setup_uses_main_guild(monkeypatch, patch_logged_task, bot):
-    patch_logged_task(quiz_cog_mod, msg_mod)
+    patch_logged_task(log_setup, msg_mod)
     bot.data = {"quiz": {"questions": {"de": {}}, "languages": ["de"]}}
     bot.quiz_data = {}
 

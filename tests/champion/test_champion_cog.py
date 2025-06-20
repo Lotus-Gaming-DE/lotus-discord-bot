@@ -5,6 +5,7 @@ import pytest
 from cogs.champion.cog import ChampionCog
 from cogs.champion.data import ChampionData
 import cogs.champion.cog as champion_cog_mod
+import log_setup
 
 
 class DummyBot:
@@ -80,7 +81,7 @@ async def test_update_user_score_saves_and_calls(
     async def fake_apply(user_id, score):
         called.append((user_id, score))
 
-    patch_logged_task(champion_cog_mod)
+    patch_logged_task(champion_cog_mod, log_setup)
 
     tasks = []
 
@@ -89,7 +90,7 @@ async def test_update_user_score_saves_and_calls(
         tasks.append(task)
         return task
 
-    monkeypatch.setattr(champion_cog_mod, "create_logged_task", schedule_task)
+    monkeypatch.setattr(log_setup, "create_logged_task", schedule_task)
     monkeypatch.setattr(cog, "_apply_champion_role", fake_apply)
 
     total = await cog.update_user_score(123, 5, "test")
@@ -106,7 +107,7 @@ async def test_updates_processed_in_order(monkeypatch, patch_logged_task, tmp_pa
     cog = ChampionCog(bot)
     cog.data = ChampionData(str(tmp_path / "points.db"))
 
-    patch_logged_task(champion_cog_mod)
+    patch_logged_task(champion_cog_mod, log_setup)
 
     tasks = []
 
@@ -121,7 +122,7 @@ async def test_updates_processed_in_order(monkeypatch, patch_logged_task, tmp_pa
         await asyncio.sleep(0)
         order.append((user_id, score))
 
-    monkeypatch.setattr(champion_cog_mod, "create_logged_task", schedule_task)
+    monkeypatch.setattr(log_setup, "create_logged_task", schedule_task)
     monkeypatch.setattr(cog, "_apply_champion_role", fake_apply)
 
     for i in range(3):
@@ -136,7 +137,7 @@ async def test_updates_processed_in_order(monkeypatch, patch_logged_task, tmp_pa
 
 @pytest.mark.asyncio
 async def test_get_current_role(patch_logged_task):
-    patch_logged_task(champion_cog_mod)
+    patch_logged_task(champion_cog_mod, log_setup)
     bot = DummyBot()
     bot.data["champion"]["roles"] = [
         {"name": "Gold", "threshold": 50, "id": 1},
@@ -152,7 +153,7 @@ async def test_get_current_role(patch_logged_task):
 
 @pytest.mark.asyncio
 async def test_apply_role_removes_when_below_threshold(monkeypatch, patch_logged_task):
-    patch_logged_task(champion_cog_mod)
+    patch_logged_task(champion_cog_mod, log_setup)
     bot = DummyBot()
     bot.data["champion"]["roles"] = [{"name": "Silver", "threshold": 5, "id": 1}]
 
@@ -206,7 +207,7 @@ async def test_apply_role_prefers_get_member(monkeypatch):
 async def test_worker_cancelled_on_unload(monkeypatch, patch_logged_task):
     bot = DummyBot()
 
-    patch_logged_task(champion_cog_mod)
+    patch_logged_task(champion_cog_mod, log_setup)
 
     tasks = []
 
@@ -215,7 +216,7 @@ async def test_worker_cancelled_on_unload(monkeypatch, patch_logged_task):
         tasks.append(task)
         return task
 
-    monkeypatch.setattr(champion_cog_mod, "create_logged_task", schedule_task)
+    monkeypatch.setattr(log_setup, "create_logged_task", schedule_task)
 
     cog = ChampionCog(bot)
 

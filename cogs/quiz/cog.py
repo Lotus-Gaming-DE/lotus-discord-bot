@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import asyncio
 from collections import defaultdict
 
 import discord
 from discord.ext import commands
 
-from log_setup import create_logged_task, get_logger
+from log_setup import get_logger
+from utils.managed_cog import ManagedTaskCog
 
 from .message_tracker import MessageTracker
 from .question_closer import QuestionCloser
@@ -19,37 +19,14 @@ from .stats import QuizStats
 logger = get_logger(__name__)
 
 
-class QuizCog(commands.Cog):
+class QuizCog(ManagedTaskCog):
     def __init__(self, bot: commands.Bot) -> None:
+        super().__init__()
         self.bot = bot
         # Allow other modules to access the cog instance
         self.bot.quiz_cog = self
 
-        # Manage all background tasks via a TaskGroup
-        self.task_group = asyncio.TaskGroup()
-        try:
-            self.task_group.__aenter__().send(None)
-        except StopIteration:
-            pass
-
-        # list of asyncio.Task objects created via ``_track_task``
-        self.tasks: list[asyncio.Task] = []
-
-        def _track_task(coro: asyncio.coroutine) -> asyncio.Task:
-            async def wrapper() -> None:
-                try:
-                    await coro
-                except asyncio.CancelledError:
-                    pass
-                except Exception as e:  # pragma: no cover - logging
-                    logger.error("Task raised an exception", exc_info=e)
-                    raise
-
-            task = self.task_group.create_task(wrapper())
-            self.tasks.append(task)
-            return task
-
-        self._track_task = _track_task
+        self._track_task = self.create_task
 
         if not self.bot.quiz_data:
             logger.warning("[QuizCog] Keine Quiz-Konfiguration geladen.")
@@ -112,7 +89,4 @@ class QuizCog(commands.Cog):
         self.tracker.register_message(message)
 
     def cog_unload(self) -> None:
-        # cancel all running tasks managed by the TaskGroup
-        if hasattr(self.task_group, "_abort"):
-            self.task_group._abort()  # type: ignore[attr-defined]
-        create_logged_task(self.task_group.__aexit__(None, None, None), logger)
+        super().cog_unload()

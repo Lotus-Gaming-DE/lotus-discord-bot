@@ -1,0 +1,27 @@
+import asyncio
+from typing import Coroutine, Any
+from discord.ext import commands
+
+import log_setup
+from log_setup import get_logger
+
+
+class ManagedTaskCog(commands.Cog):
+    """Cog base class that tracks created tasks."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__()
+        self.tasks: set[asyncio.Task] = set()
+        self._logger = get_logger(self.__class__.__name__)
+
+    def create_task(self, coro: Coroutine[Any, Any, Any]) -> asyncio.Task:
+        """Create and register a task logging uncaught exceptions."""
+        task = log_setup.create_logged_task(coro, self._logger)
+        self.tasks.add(task)
+        if hasattr(task, "add_done_callback"):
+            task.add_done_callback(lambda t: self.tasks.discard(t))
+        return task
+
+    def cog_unload(self) -> None:
+        for task in list(self.tasks):
+            task.cancel()

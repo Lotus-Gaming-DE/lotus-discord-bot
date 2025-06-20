@@ -3,6 +3,7 @@ import cogs.quiz.message_tracker as msg_mod
 import cogs.quiz.slash_commands as slash_mod
 from cogs.quiz.quiz_config import QuizAreaConfig
 import pytest
+import log_setup
 
 
 class DummyBot:
@@ -14,34 +15,6 @@ class DummyBot:
 bot = DummyBot()
 
 
-class DummyTask:
-    def __init__(self):
-        self.cancelled = False
-
-    def cancel(self):
-        self.cancelled = True
-
-
-class DummyTaskGroup:
-    def __init__(self):
-        self.tasks = []
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, et, exc, tb):
-        return False
-
-    def create_task(self, coro):
-        coro.close()
-        self.tasks.append(DummyTask())
-        return self.tasks[-1]
-
-    def _abort(self):
-        for t in self.tasks:
-            t.cancel()
-
-
 class DummyState:
     def get_schedule(self, area):
         return None
@@ -49,8 +22,7 @@ class DummyState:
 
 @pytest.mark.asyncio
 async def test_scheduler_start_and_stop(monkeypatch, patch_logged_task, bot):
-    patch_logged_task(quiz_cog_mod, msg_mod)
-    monkeypatch.setattr(quiz_cog_mod.asyncio, "TaskGroup", DummyTaskGroup)
+    patch_logged_task(log_setup, msg_mod)
 
     async def dummy_restore(self):
         return None
@@ -73,7 +45,7 @@ async def test_scheduler_start_and_stop(monkeypatch, patch_logged_task, bot):
     monkeypatch.setattr(bot, "get_cog", lambda name: cog if name == "QuizCog" else None)
 
     assert list(cog.schedulers.keys()) == ["area1"]
-    assert len(cog.task_group.tasks) == 3  # tracker, restorer, scheduler
+    assert len(cog.tasks) == 3  # tracker, restorer, scheduler
     task = cog.schedulers["area1"].task
     assert not task.cancelled
 
@@ -103,8 +75,7 @@ class DummyInteraction:
 
 @pytest.mark.asyncio
 async def test_enable_starts_and_disable_stops(monkeypatch, patch_logged_task, bot):
-    patch_logged_task(quiz_cog_mod, msg_mod)
-    monkeypatch.setattr(quiz_cog_mod.asyncio, "TaskGroup", DummyTaskGroup)
+    patch_logged_task(log_setup, msg_mod)
 
     async def dummy_restore(self):
         return None

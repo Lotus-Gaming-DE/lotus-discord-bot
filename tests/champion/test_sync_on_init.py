@@ -4,6 +4,7 @@ import pytest
 from cogs.champion.cog import ChampionCog
 from cogs.champion.data import ChampionData
 import cogs.champion.cog as champion_cog_mod
+import log_setup
 
 
 class DummyBot:
@@ -33,7 +34,7 @@ async def test_sync_called_on_init(monkeypatch, tmp_path):
         tasks.append(task)
         return task
 
-    monkeypatch.setattr(champion_cog_mod, "create_logged_task", schedule_task)
+    monkeypatch.setattr(log_setup, "create_logged_task", schedule_task)
     monkeypatch.setattr(
         champion_cog_mod.ChampionCog, "_apply_champion_role", fake_apply
     )
