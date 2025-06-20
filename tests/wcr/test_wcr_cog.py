@@ -278,6 +278,26 @@ async def test_trait_autocomplete_returns_sorted_matches():
     cog.cog_unload()
 
 
+@pytest.mark.asyncio
+async def test_unit_name_autocomplete_multilang():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    choices = await cog.unit_name_autocomplete(inter, "abo")
+
+    names = {c.name for c in choices}
+    assert "Abscheulichkeit [de]" in names
+    assert "Abomination [en]" in names
+    values = {
+        c.value
+        for c in choices
+        if c.name in {"Abscheulichkeit [de]", "Abomination [en]"}
+    }
+    assert values == {"1"}
+    cog.cog_unload()
+
+
 def test_scaled_stats_leveling():
     bot = DummyBot()
     cog = WCRCog(bot)

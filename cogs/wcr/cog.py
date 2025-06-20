@@ -132,6 +132,31 @@ class WCRCog(commands.Cog):
         """Autocomplete unit traits."""
         return self._autocomplete(self.trait_choices, current)
 
+    async def unit_name_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[discord.app_commands.Choice]:
+        """Autocomplete Minis über alle unterstützten Sprachen."""
+        normalized = " ".join(helpers.normalize_name(current))
+        matched_ids: set[int] = set()
+        for mapping in self.unit_name_map.values():
+            for name, uid in mapping.items():
+                if not normalized or normalized in name:
+                    matched_ids.add(uid)
+
+        results: list[discord.app_commands.Choice] = []
+        for lang in self.languages:
+            for uid in matched_ids:
+                unit_name = helpers.get_text_data(uid, lang, self.languages)[0]
+                results.append(
+                    discord.app_commands.Choice(
+                        name=f"{unit_name} [{lang}]", value=str(uid)
+                    )
+                )
+                if len(results) >= 25:
+                    return results[:25]
+
+        return results[:25]
+
     # ─── Ausgelagerte Slash-Logik ────────────────────────────────────────
     async def cmd_filter(
         self,

@@ -49,6 +49,13 @@ async def _trait_ac(interaction, current):
     return await cog.trait_autocomplete(interaction, current)
 
 
+async def _unit_name_ac(interaction, current):
+    """Delegate unit name autocomplete to the cog."""
+    logger.debug(f"_unit_name_ac invoked by {interaction.user} current={current}")
+    cog: WCRCog = interaction.client.get_cog("WCRCog")
+    return await cog.unit_name_autocomplete(interaction, current)
+
+
 @wcr_group.command(
     name="filter", description="Filtert Minis basierend auf verschiedenen Kriterien."
 )
@@ -107,6 +114,7 @@ async def name(
     lang="Sprache",
     public="Antwort \u00f6ffentlich anzeigen",
 )
+@app_commands.autocomplete(mini_a=_unit_name_ac, mini_b=_unit_name_ac)
 async def duell(
     interaction: discord.Interaction,
     mini_a: str,
