@@ -108,9 +108,9 @@ async def name(
 )
 @app_commands.describe(
     mini_a="Erstes Mini (Name oder ID)",
-    level_a="Level des ersten Minis (1-31)",
+    level_a="Level des ersten Minis (1-31, Standard 1)",
     mini_b="Zweites Mini (Name oder ID)",
-    level_b="Level des zweiten Minis (1-31)",
+    level_b="Level des zweiten Minis (1-31, Standard 1)",
     lang="Sprache",
     public="Antwort \u00f6ffentlich anzeigen",
 )
@@ -118,9 +118,9 @@ async def name(
 async def duell(
     interaction: discord.Interaction,
     mini_a: str,
-    level_a: app_commands.Range[int, 1, 31],
     mini_b: str,
-    level_b: app_commands.Range[int, 1, 31],
+    level_a: app_commands.Range[int, 1, 31] = 1,
+    level_b: app_commands.Range[int, 1, 31] = 1,
     lang: str = "de",
     public: bool = False,
 ):
@@ -128,4 +128,4 @@ async def duell(
         f"/wcr duell by {interaction.user} a={mini_a} la={level_a} b={mini_b} lb={level_b} lang={lang}"
     )
     cog: WCRCog = interaction.client.get_cog("WCRCog")
-    await cog.cmd_duel(interaction, mini_a, level_a, mini_b, level_b, lang, public)
+    await cog.cmd_duel(interaction, mini_a, mini_b, level_a, level_b, lang, public)

@@ -337,9 +337,9 @@ class WCRCog(commands.Cog):
         self,
         interaction: discord.Interaction,
         mini_a: str,
-        level_a: int,
         mini_b: str,
-        level_b: int,
+        level_a: int = 1,
+        level_b: int = 1,
         lang: str = "de",
         public: bool = False,
     ):
