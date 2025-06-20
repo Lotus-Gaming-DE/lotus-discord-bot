@@ -24,20 +24,33 @@ class DummyTask:
         self.cancelled = True
 
 
-def fake_task_scheduler(coro, logger):
-    fake_task_scheduler.coro = coro
-    return DummyTask()
+class DummyTaskGroup:
+    def __init__(self):
+        self.tasks = []
+        self.coro = None
 
+    async def __aenter__(self):
+        return self
 
-def fake_task_scheduler_2(coro, logger):
-    fake_task_scheduler_2.coro = coro
-    return DummyTask()
+    async def __aexit__(self, et, exc, tb):
+        return False
+
+    def create_task(self, coro):
+        self.coro = coro.cr_frame.f_locals.get("coro", coro)
+        coro.close()
+        task = DummyTask()
+        self.tasks.append(task)
+        return task
+
+    def _abort(self):
+        for t in self.tasks:
+            t.cancel()
 
 
 @pytest.mark.asyncio
 async def test_scheduler_resume(monkeypatch, patch_logged_task, tmp_path):
     patch_logged_task(quiz_cog_mod, msg_mod)
-    monkeypatch.setattr(scheduler_mod, "create_logged_task", fake_task_scheduler)
+    monkeypatch.setattr(quiz_cog_mod.asyncio, "TaskGroup", DummyTaskGroup)
 
     async def dummy_restore(self):
         return None
@@ -84,7 +97,7 @@ async def test_scheduler_resume(monkeypatch, patch_logged_task, tmp_path):
     monkeypatch.setattr(cog.closer, "close_question", lambda *a, **k: None)
 
     with pytest.raises(asyncio.CancelledError):
-        await fake_task_scheduler.coro
+        await cog.task_group.coro
 
     saved = manager.get_schedule("area1")
     assert saved is not None
@@ -92,7 +105,7 @@ async def test_scheduler_resume(monkeypatch, patch_logged_task, tmp_path):
 
     # simulate restart
     patch_logged_task(quiz_cog_mod, msg_mod)
-    monkeypatch.setattr(scheduler_mod, "create_logged_task", fake_task_scheduler_2)
+    monkeypatch.setattr(quiz_cog_mod.asyncio, "TaskGroup", DummyTaskGroup)
 
     async def dummy_restore2(self):
         return None

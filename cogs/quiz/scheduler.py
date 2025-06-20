@@ -2,7 +2,7 @@ import random
 import asyncio
 import datetime
 
-from log_setup import get_logger, create_logged_task
+from log_setup import get_logger
 
 
 class QuizScheduler:
@@ -23,7 +23,7 @@ class QuizScheduler:
         self.logger = get_logger(__name__, area=area)
         self.post_time = post_time
         self.window_end = window_end
-        self.task = create_logged_task(self.run(), self.logger)
+        self.task: asyncio.Task | None = None
 
     async def run(self) -> None:
         """Background task loop scheduling questions in random intervals."""

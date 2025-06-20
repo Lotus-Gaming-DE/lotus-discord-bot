@@ -1,5 +1,4 @@
 import cogs.quiz.cog as quiz_cog_mod
-import cogs.quiz.scheduler as scheduler_mod
 import cogs.quiz.message_tracker as msg_mod
 import cogs.quiz.slash_commands as slash_mod
 from cogs.quiz.quiz_config import QuizAreaConfig
@@ -23,19 +22,24 @@ class DummyTask:
         self.cancelled = True
 
 
-def fake_task_general(coro, logger):
-    coro.close()
-    return DummyTask()
+class DummyTaskGroup:
+    def __init__(self):
+        self.tasks = []
 
+    async def __aenter__(self):
+        return self
 
-def fake_task_scheduler(coro, logger):
-    coro.close()
-    task = DummyTask()
-    fake_task_scheduler.tasks.append(task)
-    return task
+    async def __aexit__(self, et, exc, tb):
+        return False
 
+    def create_task(self, coro):
+        coro.close()
+        self.tasks.append(DummyTask())
+        return self.tasks[-1]
 
-fake_task_scheduler.tasks = []
+    def _abort(self):
+        for t in self.tasks:
+            t.cancel()
 
 
 class DummyState:
@@ -46,7 +50,7 @@ class DummyState:
 @pytest.mark.asyncio
 async def test_scheduler_start_and_stop(monkeypatch, patch_logged_task, bot):
     patch_logged_task(quiz_cog_mod, msg_mod)
-    monkeypatch.setattr(scheduler_mod, "create_logged_task", fake_task_scheduler)
+    monkeypatch.setattr(quiz_cog_mod.asyncio, "TaskGroup", DummyTaskGroup)
 
     async def dummy_restore(self):
         return None
@@ -69,8 +73,8 @@ async def test_scheduler_start_and_stop(monkeypatch, patch_logged_task, bot):
     monkeypatch.setattr(bot, "get_cog", lambda name: cog if name == "QuizCog" else None)
 
     assert list(cog.schedulers.keys()) == ["area1"]
-    assert len(fake_task_scheduler.tasks) == 1
-    task = fake_task_scheduler.tasks[0]
+    assert len(cog.task_group.tasks) == 3  # tracker, restorer, scheduler
+    task = cog.schedulers["area1"].task
     assert not task.cancelled
 
     cog.cog_unload()
@@ -100,7 +104,7 @@ class DummyInteraction:
 @pytest.mark.asyncio
 async def test_enable_starts_and_disable_stops(monkeypatch, patch_logged_task, bot):
     patch_logged_task(quiz_cog_mod, msg_mod)
-    monkeypatch.setattr(scheduler_mod, "create_logged_task", fake_task_scheduler)
+    monkeypatch.setattr(quiz_cog_mod.asyncio, "TaskGroup", DummyTaskGroup)
 
     async def dummy_restore(self):
         return None
@@ -124,7 +128,7 @@ async def test_enable_starts_and_disable_stops(monkeypatch, patch_logged_task, b
     await slash_mod.enable.callback(inter, "area1")
 
     assert "area1" in cog.schedulers
-    task = fake_task_scheduler.tasks[-1]
+    task = cog.schedulers["area1"].task
     assert not task.cancelled
 
     await slash_mod.disable.callback(inter)
