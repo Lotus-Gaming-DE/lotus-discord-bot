@@ -326,6 +326,11 @@ class WCRCog(commands.Cog):
             )
             return
 
+        logger.info(
+            f"[WCR] /wcr duell von {interaction.user} - "
+            f"mini_a={mini_a}, level_a={level_a}, "
+            f"mini_b={mini_b}, level_b={level_b}, lang={lang}"
+        )
         await interaction.response.defer(ephemeral=not public)
 
         res_a = self.resolve_unit(mini_a, lang)
