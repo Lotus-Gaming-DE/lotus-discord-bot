@@ -352,6 +352,39 @@ def test_duel_result_spell_vs_mini():
     cog.cog_unload()
 
 
+def test_duel_result_equal_damage_spells():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+
+    units = bot.data["wcr"]["units"]
+    if isinstance(units, dict) and "units" in units:
+        units = units["units"]
+
+    calculator = DuelCalculator()
+    spell_a = next(u for u in units if u["id"] == 10)  # Chain Lightning
+    spell_b = next(u for u in units if u["id"] == 36)  # Holy Nova
+
+    result = calculator.duel_result(spell_a, 1, spell_b, 1)
+    assert result is None
+    cog.cog_unload()
+
+
+def test_duel_result_identical_minis():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+
+    units = bot.data["wcr"]["units"]
+    if isinstance(units, dict) and "units" in units:
+        units = units["units"]
+
+    calculator = DuelCalculator()
+    mini = next(u for u in units if u["id"] == 1)  # Abscheulichkeit
+
+    result = calculator.duel_result(mini, 1, mini, 1)
+    assert result is None
+    cog.cog_unload()
+
+
 @pytest.mark.asyncio
 async def test_cmd_filter_public():
     bot = DummyBot()
@@ -420,4 +453,47 @@ async def test_cmd_duel_no_damage_message():
     msg = inter.followup.sent[0]
     assert msg["content"] == "Keines der Minis kann den Gegner treffen."
     assert msg["ephemeral"] is True
+    cog.cog_unload()
+
+
+@pytest.mark.asyncio
+async def test_cmd_duel_identical_minis_tie():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    await cog.cmd_duel(
+        inter,
+        "Abscheulichkeit",
+        1,
+        "Abscheulichkeit",
+        1,
+        lang="de",
+    )
+
+    msg = inter.followup.sent[0]
+    assert msg["content"] == "Unentschieden oder kein Schaden."
+    assert msg["ephemeral"] is True
+    cog.cog_unload()
+
+
+@pytest.mark.asyncio
+async def test_cmd_duel_unknown_mini():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    await cog.cmd_duel(
+        inter,
+        "Unbekanntes Mini",
+        1,
+        "Abscheulichkeit",
+        1,
+        lang="de",
+        public=True,
+    )
+
+    msg = inter.followup.sent[0]
+    assert msg["content"] == "Eines der Minis wurde nicht gefunden."
+    assert msg["ephemeral"] is False
     cog.cog_unload()
