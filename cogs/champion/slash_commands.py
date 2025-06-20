@@ -151,7 +151,9 @@ async def myhistory(interaction: discord.Interaction):
     total = await cog.data.get_total(user_id_str)
 
     if not history_list:
-        await interaction.response.send_message("📭 Du hast noch keine Historie.")
+        await interaction.response.send_message(
+            "📭 Du hast noch keine Historie.", ephemeral=True
+        )
         return
 
     lines = []
