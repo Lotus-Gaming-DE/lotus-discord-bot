@@ -365,6 +365,26 @@ async def status(interaction: discord.Interaction):
         )
 
 
+@quiz_group.command(name="stats", description="Zeigt Anzahl richtiger Antworten")
+@app_commands.describe(user="Optionaler Nutzer, dessen Statistik gezeigt wird")
+async def stats(interaction: discord.Interaction, user: discord.Member | None = None):
+    quiz_cog: QuizCog | None = interaction.client.get_cog("QuizCog")
+    if quiz_cog is None:
+        await interaction.response.send_message(
+            "❌ Quiz-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    target = user or interaction.user
+    count = quiz_cog.stats.get(target.id)
+
+    if target.id == interaction.user.id and user is None:
+        msg = f"📈 Du hast bisher {count} richtige Antworten gegeben."
+    else:
+        msg = f"📈 {target.display_name} hat bisher {count} richtige Antworten gegeben."
+    await interaction.response.send_message(msg, ephemeral=True)
+
+
 @quiz_group.command(name="duelstats", description="Zeigt deine Duell-Bilanz")
 @app_commands.describe(user="Optionaler Nutzer, dessen Statistik gezeigt wird")
 async def duelstats(
