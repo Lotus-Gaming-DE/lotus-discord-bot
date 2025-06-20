@@ -28,6 +28,17 @@ class ChampionCog(commands.Cog):
         self.roles: List[ChampionRole] = self._load_roles_config()
         self.tasks: list[asyncio.Task] = []
 
+        task = create_logged_task(self.sync_all_roles(), logger)
+        self.tasks.append(task)
+
+        if hasattr(task, "add_done_callback"):
+
+            def _remove_finished(t: asyncio.Task) -> None:
+                if t in self.tasks:
+                    self.tasks.remove(t)
+
+            task.add_done_callback(_remove_finished)
+
     def _load_roles_config(self) -> list[ChampionRole]:
         """Return the role thresholds sorted descending."""
         role_entries = self.bot.data.get("champion", {}).get("roles", [])
@@ -66,6 +77,13 @@ class ChampionCog(commands.Cog):
         task.add_done_callback(_remove_finished)
 
         return new_total
+
+    async def sync_all_roles(self) -> None:
+        """Synchronize champion roles for all users in the database."""
+        user_ids = await self.data.get_all_user_ids()
+        for user_id_str in user_ids:
+            total = await self.data.get_total(user_id_str)
+            await self._apply_champion_role(user_id_str, total)
 
     async def _apply_champion_role(self, user_id_str: str, score: int) -> None:
         """Assign the correct champion role based on the score."""
