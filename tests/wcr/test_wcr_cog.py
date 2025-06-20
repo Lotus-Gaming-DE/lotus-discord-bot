@@ -399,6 +399,8 @@ async def test_cmd_duel_public():
 
 @pytest.mark.asyncio
 async def test_cmd_duel_invalid_language():
+
+    # Ensure the duel command mirrors cmd_filter's error handling
 async def test_cmd_duel_no_damage_message():
     bot = DummyBot()
     cog = WCRCog(bot)
