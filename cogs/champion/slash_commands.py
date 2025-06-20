@@ -253,11 +253,12 @@ async def leaderboard(interaction: discord.Interaction):
                 member = None
 
         name = member.display_name if member else f"Unbekannt ({user_id_str})"
-        role = cog.get_current_role(total) or "Champion"
-        grouped.setdefault(role, []).append((rank, name, total))
+        role_obj = cog.get_current_role(total)
+        role_name = role_obj.name if role_obj else "Champion"
+        grouped.setdefault(role_name, []).append((rank, name, total))
         rank += 1
 
-    role_order = [r[0] for r in cog.roles] + ["Champion"]
+    role_order = [r.name for r in cog.roles] + ["Champion"]
 
     output = []
     for role_name in role_order:
@@ -288,10 +289,10 @@ async def roles(interaction: discord.Interaction):
     logger.info(f"/champion roles requested by {interaction.user}")
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     lines = []
-    for name, threshold in cog.roles:
-        lines.append(f"{name}: ab {threshold} Punkte")
+    for role in cog.roles:
+        lines.append(f"{role.name}: ab {role.threshold} Punkte")
     lines.append(
-        "Champion: unter {0} Punkte".format(cog.roles[-1][1] if cog.roles else 0)
+        "Champion: unter {0} Punkte".format(cog.roles[-1].threshold if cog.roles else 0)
     )
     await interaction.response.send_message("\n".join(lines))
 

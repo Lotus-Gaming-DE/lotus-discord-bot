@@ -1,12 +1,20 @@
 import discord
 import asyncio
+from dataclasses import dataclass
 from discord.ext import commands
-from typing import Optional
+from typing import Optional, List
 
 from log_setup import get_logger, create_logged_task
 from .data import ChampionData
 
 logger = get_logger(__name__)
+
+
+@dataclass
+class ChampionRole:
+    id: int
+    name: str
+    threshold: int
 
 
 class ChampionCog(commands.Cog):
@@ -17,23 +25,28 @@ class ChampionCog(commands.Cog):
         db_path = "data/pers/champion/points.db"
         self.data = ChampionData(db_path)
 
-        self.roles = self._load_roles_config()
+        self.roles: List[ChampionRole] = self._load_roles_config()
         self.tasks: list[asyncio.Task] = []
 
-    def _load_roles_config(self) -> list[tuple[str, int]]:
+    def _load_roles_config(self) -> list[ChampionRole]:
         """Return the role thresholds sorted descending."""
         role_entries = self.bot.data.get("champion", {}).get("roles", [])
-        sorted_roles = sorted(
-            [(entry["name"], entry["threshold"]) for entry in role_entries],
-            key=lambda x: -x[1],
-        )
-        return sorted_roles
+        roles = [
+            ChampionRole(
+                id=int(entry.get("id", 0)),
+                name=entry["name"],
+                threshold=entry["threshold"],
+            )
+            for entry in role_entries
+        ]
+        roles.sort(key=lambda r: -r.threshold)
+        return roles
 
-    def get_current_role(self, score: int) -> Optional[str]:
-        """Return the highest role name a user qualifies for."""
-        for role_name, threshold in self.roles:
-            if score >= threshold:
-                return role_name
+    def get_current_role(self, score: int) -> Optional[ChampionRole]:
+        """Return the highest role a user qualifies for."""
+        for role in self.roles:
+            if score >= role.threshold:
+                return role
         return None
 
     async def update_user_score(self, user_id: int, delta: int, reason: str) -> int:
@@ -78,14 +91,16 @@ class ChampionCog(commands.Cog):
             )
             return
 
-        target_role_name = self.get_current_role(score)
+        target_role = self.get_current_role(score)
 
-        current_role_names = [r.name for r in member.roles]
+        current_role_ids = [r.id for r in member.roles]
 
         roles_to_remove = []
-        for role_name, _ in self.roles:
-            if role_name in current_role_names and role_name != target_role_name:
-                role_obj = discord.utils.get(guild.roles, name=role_name)
+        for role in self.roles:
+            if role.id in current_role_ids and role != target_role:
+                role_obj = guild.get_role(role.id)
+                if role_obj is None:
+                    role_obj = discord.utils.get(guild.roles, name=role.name)
                 if role_obj:
                     roles_to_remove.append(role_obj)
 
@@ -102,19 +117,21 @@ class ChampionCog(commands.Cog):
                     exc_info=True,
                 )
 
-        if not target_role_name or target_role_name in current_role_names:
+        if not target_role or target_role.id in current_role_ids:
             return
 
-        target_role = discord.utils.get(guild.roles, name=target_role_name)
-        if target_role:
+        target_role_obj = guild.get_role(target_role.id)
+        if target_role_obj is None:
+            target_role_obj = discord.utils.get(guild.roles, name=target_role.name)
+        if target_role_obj:
             try:
-                await member.add_roles(target_role)
+                await member.add_roles(target_role_obj)
                 logger.info(
-                    f"[ChampionCog] Rolle '{target_role_name}' an {member.display_name} vergeben (Score {score})."
+                    f"[ChampionCog] Rolle '{target_role.name}' an {member.display_name} vergeben (Score {score})."
                 )
             except discord.Forbidden:
                 logger.warning(
-                    f"[ChampionCog] Keine Berechtigung, Rolle '{target_role_name}' hinzuzufügen."
+                    f"[ChampionCog] Keine Berechtigung, Rolle '{target_role.name}' hinzuzufügen."
                 )
             except Exception as e:
                 logger.error(
@@ -123,7 +140,7 @@ class ChampionCog(commands.Cog):
                 )
         else:
             logger.warning(
-                f"[ChampionCog] Rolle '{target_role_name}' existiert nicht in Discord."
+                f"[ChampionCog] Rolle '{target_role.name}' existiert nicht in Discord."
             )
 
     def cog_unload(self):

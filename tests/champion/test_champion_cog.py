@@ -15,8 +15,9 @@ class DummyBot:
 
 
 class DummyRole:
-    def __init__(self, name):
+    def __init__(self, name, rid=0):
         self.name = name
+        self.id = rid
 
 
 class DummyMember:
@@ -41,6 +42,9 @@ class DummyGuild:
     def get_member(self, uid):
         return None
 
+    def get_role(self, rid):
+        return next((r for r in self.roles if getattr(r, "id", None) == rid), None)
+
     async def fetch_member(self, uid):
         return self._member
 
@@ -54,6 +58,9 @@ class DummyGuildGet(DummyGuild):
     def get_member(self, uid):
         self.get_calls += 1
         return self._member
+
+    def get_role(self, rid):
+        return super().get_role(rid)
 
     async def fetch_member(self, uid):
         self.fetch_calls += 1
@@ -136,13 +143,13 @@ async def test_get_current_role(patch_logged_task):
     patch_logged_task(champion_cog_mod)
     bot = DummyBot()
     bot.data["champion"]["roles"] = [
-        {"name": "Gold", "threshold": 50},
-        {"name": "Silver", "threshold": 20},
+        {"name": "Gold", "threshold": 50, "id": 1},
+        {"name": "Silver", "threshold": 20, "id": 2},
     ]
     cog = ChampionCog(bot)
 
-    assert cog.get_current_role(55) == "Gold"
-    assert cog.get_current_role(25) == "Silver"
+    assert cog.get_current_role(55).name == "Gold"
+    assert cog.get_current_role(25).name == "Silver"
     assert cog.get_current_role(10) is None
     cog.cog_unload()
 
@@ -151,9 +158,9 @@ async def test_get_current_role(patch_logged_task):
 async def test_apply_role_removes_when_below_threshold(monkeypatch, patch_logged_task):
     patch_logged_task(champion_cog_mod)
     bot = DummyBot()
-    bot.data["champion"]["roles"] = [{"name": "Silver", "threshold": 5}]
+    bot.data["champion"]["roles"] = [{"name": "Silver", "threshold": 5, "id": 1}]
 
-    silver = DummyRole("Silver")
+    silver = DummyRole("Silver", 1)
     member = DummyMember([silver])
     guild = DummyGuild(member, [silver])
     bot.main_guild = guild

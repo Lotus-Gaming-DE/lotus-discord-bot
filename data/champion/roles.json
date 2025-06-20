@@ -1,21 +1,26 @@
 [
     {
+      "id": 1313206585186848860,
       "name": "Ultimate Champion",
       "threshold": 750
     },
     {
+      "id": 1313206531684302900,
       "name": "Epic Champion",
       "threshold": 500
     },
     {
+      "id": 1313206485685370910,
       "name": "Renowned Champion",
       "threshold": 300
     },
     {
+      "id": 1288423705231495202,
       "name": "Seasoned Champion",
       "threshold": 150
     },
     {
+      "id": 1288423580043837503,
       "name": "Emerging Champion",
       "threshold": 50
     }
