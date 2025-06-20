@@ -318,6 +318,14 @@ class WCRCog(commands.Cog):
         public: bool = False,
     ):
         """Implementation for ``/wcr duell``."""
+        if lang not in self.languages:
+            await interaction.response.send_message(
+                "Sprache nicht unterstützt. Verfügbar: "
+                + ", ".join(self.languages.keys()),
+                ephemeral=not public,
+            )
+            return
+
         await interaction.response.defer(ephemeral=not public)
 
         res_a = self.resolve_unit(mini_a, lang)

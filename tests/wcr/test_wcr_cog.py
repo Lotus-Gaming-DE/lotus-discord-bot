@@ -395,3 +395,24 @@ async def test_cmd_duel_public():
     assert "General Drakkisath" in msg["content"]
     assert "DPS" in msg["content"]
     cog.cog_unload()
+
+
+@pytest.mark.asyncio
+async def test_cmd_duel_invalid_language():
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    await cog.cmd_duel(
+        inter,
+        "Gargoyle",
+        1,
+        "General Drakkisath",
+        1,
+        lang="fr",
+    )
+
+    msg = inter.response.messages[0]
+    assert msg["content"].startswith("Sprache nicht unterstützt")
+    assert msg["ephemeral"] is True
+    cog.cog_unload()
