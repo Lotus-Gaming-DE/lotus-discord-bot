@@ -40,6 +40,10 @@ class QuestionCloser:
             embed.add_field(
                 name="Richtige Antwort", value=", ".join(qinfo.answers), inline=False
             )
+            if winner and correct_answer is not None:
+                embed.add_field(
+                    name="Eingegebene Antwort", value=correct_answer, inline=False
+                )
             await msg.edit(embed=embed, view=None)
 
             logger.info(f"[Closer] Frage in '{area}' geschlossen: {footer}")
