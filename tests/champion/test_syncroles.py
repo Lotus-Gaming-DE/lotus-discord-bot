@@ -70,4 +70,5 @@ async def test_syncroles_processes_all_users(monkeypatch, tmp_path, patch_logged
     msg, ephemeral = inter.followup.sent[0]
     assert ephemeral is True
     cog.cog_unload()
+    await cog.wait_closed()
     await cog.data.close()

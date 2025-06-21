@@ -107,3 +107,4 @@ async def test_enable_starts_and_disable_stops(monkeypatch, patch_logged_task, b
     assert "area1" not in cog.schedulers
     assert task.cancelled
     cog.cog_unload()
+    await cog.wait_closed()

@@ -97,3 +97,5 @@ async def test_scheduler_resume(monkeypatch, patch_logged_task, tmp_path):
     assert sched.window_end == window_end
     cog.cog_unload()
     cog2.cog_unload()
+    await cog.wait_closed()
+    await cog2.wait_closed()
