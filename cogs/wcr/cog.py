@@ -26,6 +26,7 @@ class WCRCog(commands.Cog):
             self.units = self.units["units"]
         self.languages = bot.data["wcr"]["locals"]
         self.pictures = bot.data["wcr"]["pictures"]
+        self.categories = bot.data["wcr"].get("categories", {})
         self.stat_labels = bot.data["wcr"].get("stat_labels", {})
 
         # Mapping for resolving unit names quickly
@@ -55,7 +56,7 @@ class WCRCog(commands.Cog):
         (
             self.lang_category_lookup,
             self.picture_category_lookup,
-        ) = helpers.build_category_lookup(self.languages, self.pictures)
+        ) = helpers.build_category_lookup(self.categories, self.pictures)
 
         # Emojis liegen in bot.data["emojis"]
         self.emojis = bot.data["emojis"]
@@ -77,22 +78,22 @@ class WCRCog(commands.Cog):
                 cats_lang,
             )
 
-        cats = self.languages[cats_lang]["categories"]
+        cats = self.lang_category_lookup.get(cats_lang, {})
         self.speed_choices = [
-            discord.app_commands.Choice(name=s["name"], value=str(s["id"]))
-            for s in cats["speeds"]
+            discord.app_commands.Choice(name=item["name"], value=str(cid))
+            for cid, item in cats.get("speeds", {}).items()
         ]
         self.faction_choices = [
-            discord.app_commands.Choice(name=f["name"], value=str(f["id"]))
-            for f in cats["factions"]
+            discord.app_commands.Choice(name=item["name"], value=str(cid))
+            for cid, item in cats.get("factions", {}).items()
         ]
         self.type_choices = [
-            discord.app_commands.Choice(name=t["name"], value=str(t["id"]))
-            for t in cats["types"]
+            discord.app_commands.Choice(name=item["name"], value=str(cid))
+            for cid, item in cats.get("types", {}).items()
         ]
         self.trait_choices = [
-            discord.app_commands.Choice(name=t["name"], value=str(t["id"]))
-            for t in cats["traits"]
+            discord.app_commands.Choice(name=item["name"], value=str(cid))
+            for cid, item in cats.get("traits", {}).items()
         ]
 
     def _autocomplete(
@@ -204,7 +205,9 @@ class WCRCog(commands.Cog):
             speed_id = (
                 int(speed)
                 if speed.isdigit()
-                else helpers.find_category_id(speed, "speeds", lang, self.languages)
+                else helpers.find_category_id(
+                    speed, "speeds", lang, self.lang_category_lookup
+                )
             )
             if speed_id is None:
                 await interaction.response.send_message(
@@ -221,7 +224,9 @@ class WCRCog(commands.Cog):
             faction_id = (
                 int(faction)
                 if faction.isdigit()
-                else helpers.find_category_id(faction, "factions", lang, self.languages)
+                else helpers.find_category_id(
+                    faction, "factions", lang, self.lang_category_lookup
+                )
             )
             if faction_id is None:
                 await interaction.response.send_message(
@@ -238,7 +243,9 @@ class WCRCog(commands.Cog):
             type_id = (
                 int(type)
                 if type.isdigit()
-                else helpers.find_category_id(type, "types", lang, self.languages)
+                else helpers.find_category_id(
+                    type, "types", lang, self.lang_category_lookup
+                )
             )
             if type_id is None:
                 await interaction.response.send_message(
@@ -253,7 +260,9 @@ class WCRCog(commands.Cog):
             trait_id = (
                 int(trait)
                 if trait.isdigit()
-                else helpers.find_category_id(trait, "traits", lang, self.languages)
+                else helpers.find_category_id(
+                    trait, "traits", lang, self.lang_category_lookup
+                )
             )
             if trait_id is None:
                 await interaction.response.send_message(
@@ -718,11 +727,11 @@ class WCRCog(commands.Cog):
                 fields.append({"name": "\u200b", "value": "\u200b", "inline": True})
         return fields
 
-    def _prepare_traits_field(self, unit_data, texts, stat_labels):
+    def _prepare_traits_field(self, unit_data, lang, stat_labels):
         """Return a field for trait display if traits exist."""
         traits_ids = unit_data.get("traits_ids", [])
-        all_traits = texts.get("categories", {}).get("traits", [])
-        names = [t["name"] for t in all_traits if t["id"] in traits_ids]
+        trait_lookup = self.lang_category_lookup.get(lang, {}).get("traits", {})
+        names = [trait_lookup[i]["name"] for i in traits_ids if i in trait_lookup]
         if not names:
             return None
         return {
@@ -746,10 +755,10 @@ class WCRCog(commands.Cog):
         )
 
         type_name = helpers.get_category_name(
-            "types", unit_data.get("type_id"), lang, self.languages
+            "types", unit_data.get("type_id"), lang, self.lang_category_lookup
         )
         speed_name = helpers.get_category_name(
-            "speeds", unit_data.get("speed_id"), lang, self.languages
+            "speeds", unit_data.get("speed_id"), lang, self.lang_category_lookup
         )
 
         row1, row2, row3, stats, used_keys = self._prepare_stat_rows(
@@ -757,7 +766,7 @@ class WCRCog(commands.Cog):
         )
         extra_stats = self._prepare_extra_stats(stats, stat_labels, used_keys)
         talent_fields = self._prepare_talent_fields(talents)
-        traits_field = self._prepare_traits_field(unit_data, texts, stat_labels)
+        traits_field = self._prepare_traits_field(unit_data, lang, stat_labels)
 
         embed = discord.Embed(
             title=f"{faction_emoji} {unit_name}",

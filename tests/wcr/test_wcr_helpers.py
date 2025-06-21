@@ -13,6 +13,19 @@ def languages():
 
 
 @pytest.fixture(scope="module")
+def categories():
+    from cogs.wcr.utils import load_categories
+
+    return load_categories()
+
+
+@pytest.fixture(scope="module")
+def lang_lookup(categories, pictures):
+    lookup, _ = helpers.build_category_lookup(categories, pictures)
+    return lookup
+
+
+@pytest.fixture(scope="module")
 def pictures():
     return json.load(open("data/wcr/pictures.json", "r", encoding="utf-8"))
 
@@ -41,13 +54,13 @@ def test_get_pose_url_unknown(pictures):
     assert helpers.get_pose_url(9999, pictures) == ""
 
 
-def test_get_category_name_known(languages):
-    name = helpers.get_category_name("factions", 1, "de", languages)
+def test_get_category_name_known(lang_lookup):
+    name = helpers.get_category_name("factions", 1, "de", lang_lookup)
     assert name == "Untote"
 
 
-def test_get_category_name_unknown(languages):
-    name = helpers.get_category_name("factions", 9999, "de", languages)
+def test_get_category_name_unknown(lang_lookup):
+    name = helpers.get_category_name("factions", 9999, "de", lang_lookup)
     assert name == "Unbekannt"
 
 
@@ -68,23 +81,23 @@ def test_get_faction_icon_unknown(pictures):
     assert helpers.get_faction_icon(9999, pictures) == ""
 
 
-def test_find_category_id_in_current_lang(languages):
-    cid = helpers.find_category_id("Untote", "factions", "de", languages)
+def test_find_category_id_in_current_lang(lang_lookup):
+    cid = helpers.find_category_id("Untote", "factions", "de", lang_lookup)
     assert cid == 1
 
 
-def test_find_category_id_in_other_lang(languages):
-    cid = helpers.find_category_id("Alliance", "factions", "de", languages)
+def test_find_category_id_in_other_lang(lang_lookup):
+    cid = helpers.find_category_id("Alliance", "factions", "de", lang_lookup)
     assert cid == 3
 
 
-def test_find_category_id_case_insensitive(languages):
-    cid = helpers.find_category_id("untote", "factions", "de", languages)
+def test_find_category_id_case_insensitive(lang_lookup):
+    cid = helpers.find_category_id("untote", "factions", "de", lang_lookup)
     assert cid == 1
 
 
-def test_find_category_id_unknown(languages):
-    cid = helpers.find_category_id("Foobar", "factions", "de", languages)
+def test_find_category_id_unknown(lang_lookup):
+    cid = helpers.find_category_id("Foobar", "factions", "de", lang_lookup)
     assert cid is None
 
 
