@@ -167,6 +167,10 @@ Pull Requests sind willkommen! Bitte halte dich an den bestehenden Codestyle (PE
 
 **Antwort:** Bearbeite die Dateien unter `data/quiz/questions_de.json` bzw. `questions_en.json`. Füge eigene Fragen mit eindeutiger ID hinzu und starte den Bot neu.
 
+**Frage:** *Wo passe ich Vorlagen für WCR-Fragen an?*
+
+**Antwort:** Die Texte für dynamische Fragen findest du in `data/quiz/templates/wcr.json`.
+
 ---
 
 ## Changelog

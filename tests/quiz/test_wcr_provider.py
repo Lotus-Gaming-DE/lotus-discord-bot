@@ -6,20 +6,21 @@ from cogs.quiz.utils import create_permutations_list
 
 
 class DummyBot:
-    def __init__(self, units, locals_):
-        self.data = {"wcr": {"units": units, "locals": locals_}}
+    def __init__(self, units, locals_, templates):
+        self.data = {
+            "wcr": {"units": units, "locals": locals_},
+            "quiz": {"templates": {"wcr": templates}},
+        }
 
 
 def test_generate_type_1(monkeypatch, patch_logged_task):
     patch_logged_task(log_setup)
     units = [{"id": 1}]
     locals_ = {
-        "de": {
-            "units": [{"id": 1, "name": "Einheit", "talents": [{"name": "Talent"}]}],
-            "question_templates": {"type_1": "Wer hat {talent_name}?"},
-        }
+        "de": {"units": [{"id": 1, "name": "Einheit", "talents": [{"name": "Talent"}]}]}
     }
-    bot = DummyBot(units, locals_)
+    templates = {"de": {"type_1": "Wer hat {talent_name}?"}}
+    bot = DummyBot(units, locals_, templates)
     provider = WCRQuestionProvider(bot, language="de")
     monkeypatch.setattr(random, "choice", lambda seq: seq[0])
 
@@ -50,11 +51,11 @@ def test_generate_type_2(monkeypatch, patch_logged_task):
                     "name": "U2",
                     "talents": [{"name": "T2", "description": "desc"}],
                 },
-            ],
-            "question_templates": {"type_2": "{talent_description}?"},
+            ]
         }
     }
-    bot = DummyBot(units, locals_)
+    templates = {"de": {"type_2": "{talent_description}?"}}
+    bot = DummyBot(units, locals_, templates)
     provider = WCRQuestionProvider(bot, language="de")
     monkeypatch.setattr(random, "choice", lambda seq: seq[0])
 
@@ -76,10 +77,10 @@ def test_generate_type_3(monkeypatch, patch_logged_task):
         "de": {
             "units": [{"id": 1, "name": "U1"}],
             "categories": {"factions": [{"id": 1, "name": "Faction"}]},
-            "question_templates": {"type_3": "Fraktion von {unit_name}?"},
         }
     }
-    bot = DummyBot(units, locals_)
+    templates = {"de": {"type_3": "Fraktion von {unit_name}?"}}
+    bot = DummyBot(units, locals_, templates)
     provider = WCRQuestionProvider(bot, language="de")
     monkeypatch.setattr(random, "choice", lambda seq: seq[0])
 
@@ -99,10 +100,10 @@ def test_generate_type_4(monkeypatch, patch_logged_task):
     locals_ = {
         "de": {
             "units": [{"id": 1, "name": "U1"}],
-            "question_templates": {"type_4": "Kosten von {unit_name}?"},
         }
     }
-    bot = DummyBot(units, locals_)
+    templates = {"de": {"type_4": "Kosten von {unit_name}?"}}
+    bot = DummyBot(units, locals_, templates)
     provider = WCRQuestionProvider(bot, language="de")
     monkeypatch.setattr(random, "choice", lambda seq: seq[0])
 
@@ -125,12 +126,10 @@ def test_generate_type_5(monkeypatch, patch_logged_task):
     locals_ = {
         "de": {
             "units": [{"id": 1, "name": "U1"}, {"id": 2, "name": "U2"}],
-            "question_templates": {
-                "type_5": "Wer hat mehr {stat_label}, {unit1} oder {unit2}?"
-            },
         }
     }
-    bot = DummyBot(units, locals_)
+    templates = {"de": {"type_5": "Wer hat mehr {stat_label}, {unit1} oder {unit2}?"}}
+    bot = DummyBot(units, locals_, templates)
     provider = WCRQuestionProvider(bot, language="de")
     monkeypatch.setattr(random, "choice", lambda seq: "health")
     monkeypatch.setattr(random, "sample", lambda seq, k: seq[:k])

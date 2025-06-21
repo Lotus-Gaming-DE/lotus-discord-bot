@@ -131,6 +131,13 @@ class MyBot(commands.Bot):
             quiz_questions[lang] = load_json(f)
             quiz_languages.append(lang)
 
+        # Vorlagen für dynamische Fragen laden
+        quiz_templates = {}
+        templates_dir = quiz_dir / "templates"
+        if templates_dir.exists():
+            for f in templates_dir.glob("*.json"):
+                quiz_templates[f.stem] = load_json(f)
+
         # WCR-Daten zentral laden
         wcr_data = load_wcr_data()
 
@@ -143,6 +150,7 @@ class MyBot(commands.Bot):
             "quiz": {
                 "questions": quiz_questions,
                 "languages": quiz_languages,
+                "templates": quiz_templates,
             },
             "wcr": wcr_data,
             "champion": {

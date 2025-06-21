@@ -18,12 +18,14 @@ class WCRQuestionProvider(DynamicQuestionProvider):
     ]
 
     def __init__(self, bot, language="de"):
+        """Initialize the provider and load data from ``bot.data``."""
         units_data = bot.data["wcr"].get("units", [])
         # ``units.json`` may wrap the list of units in a top level key
         if isinstance(units_data, dict) and "units" in units_data:
             units_data = units_data["units"]
         self.units = units_data
         self.locals = bot.data["wcr"]["locals"]
+        self.templates = bot.data.get("quiz", {}).get("templates", {}).get("wcr", {})
         self.language = language
 
     def get_unit_name(self, unit_id: int, lang: str) -> str:
@@ -77,11 +79,7 @@ class WCRQuestionProvider(DynamicQuestionProvider):
         if not talents:
             return None
         pick = random.choice(talents)
-        template = (
-            self.locals.get(self.language, {})
-            .get("question_templates", {})
-            .get("type_1")
-        )
+        template = self.templates.get(self.language, {}).get("type_1")
         if not template:
             return None
         question_text = template.format(talent_name=pick["talent_name"])
@@ -109,11 +107,7 @@ class WCRQuestionProvider(DynamicQuestionProvider):
         if not talents:
             return None
         pick = random.choice(talents)
-        template = (
-            self.locals.get(self.language, {})
-            .get("question_templates", {})
-            .get("type_2")
-        )
+        template = self.templates.get(self.language, {}).get("type_2")
         if not template:
             return None
         question_text = template.format(talent_description=pick["talent_description"])
@@ -133,11 +127,7 @@ class WCRQuestionProvider(DynamicQuestionProvider):
         if not self.units:
             return None
         unit = random.choice(self.units)
-        template = (
-            self.locals.get(self.language, {})
-            .get("question_templates", {})
-            .get("type_3")
-        )
+        template = self.templates.get(self.language, {}).get("type_3")
         if not template:
             return None
         question_text = template.format(
@@ -161,11 +151,7 @@ class WCRQuestionProvider(DynamicQuestionProvider):
         if not self.units:
             return None
         unit = random.choice(self.units)
-        template = (
-            self.locals.get(self.language, {})
-            .get("question_templates", {})
-            .get("type_4")
-        )
+        template = self.templates.get(self.language, {}).get("type_4")
         if not template:
             return None
         cost = unit.get("cost")
@@ -190,11 +176,7 @@ class WCRQuestionProvider(DynamicQuestionProvider):
         if len(units_with_stat) < 2:
             return None
         u1, u2 = random.sample(units_with_stat, 2)
-        template = (
-            self.locals.get(self.language, {})
-            .get("question_templates", {})
-            .get("type_5")
-        )
+        template = self.templates.get(self.language, {}).get("type_5")
         if not template:
             return None
         v1 = u1.get("stats", {}).get(stat)

@@ -1,4 +1,5 @@
 import random
+import json
 
 
 from cogs.quiz.area_providers.wcr import WCRQuestionProvider
@@ -13,7 +14,12 @@ def create_provider():
     bot = DummyBot()
     from cogs.wcr.utils import load_wcr_data
 
-    bot.data = {"wcr": load_wcr_data()}
+    from pathlib import Path
+
+    with open(Path("data/quiz/templates/wcr.json"), "r", encoding="utf-8") as f:
+        templates = json.load(f)
+
+    bot.data = {"wcr": load_wcr_data(), "quiz": {"templates": {"wcr": templates}}}
     return WCRQuestionProvider(bot, language="de")
 
 
