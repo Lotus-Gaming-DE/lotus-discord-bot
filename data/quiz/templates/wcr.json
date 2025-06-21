@@ -1,0 +1,16 @@
+{
+  "de": {
+    "type_1": "Welches Mini kann das Talent '{talent_name}' erlernen?",
+    "type_2": "\"{talent_description}\" - Welches Talent ist gesucht?",
+    "type_3": "Zu welcher Fraktion gehört der Mini '{unit_name}'?",
+    "type_4": "Wie viel Gold kostet es, den Mini '{unit_name}' zu spielen?",
+    "type_5": "Welches Mini hat mehr {stat_label}, '{unit1}' oder '{unit2}'?"
+  },
+  "en": {
+    "type_1": "Which mini can learn the talent '{talent_name}'?",
+    "type_2": "\"{talent_description}\" - Which talent is being sought?",
+    "type_3": "Which faction does the mini '{unit_name}' belong to?",
+    "type_4": "How much gold does it cost to play the mini '{unit_name}'?",
+    "type_5": "Which mini has more {stat_label}, '{unit1}' or '{unit2}'?"
+  }
+}
