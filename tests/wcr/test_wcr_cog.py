@@ -107,6 +107,19 @@ async def test_cmd_name_creates_embed():
     cog.cog_unload()
 
 
+@pytest.mark.asyncio
+async def test_cmd_name_respects_lang(monkeypatch):
+    bot = DummyBot()
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    await cog.cmd_name(inter, "Abscheulichkeit", lang="en")
+
+    embed = inter.followup.sent[0]["embed"]
+    assert embed.title.strip() == "Abomination"
+    cog.cog_unload()
+
+
 def test_name_map_contains_unit():
     bot = DummyBot()
     cog = WCRCog(bot)

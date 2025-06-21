@@ -477,10 +477,12 @@ class WCRCog(commands.Cog):
         result = self.resolve_unit(name_or_id, lang)
         if not result:
             return None, None
-        if lang not in self.languages:
-            return None, None
+        unit_id, unit_data, found_lang, _texts = result
 
-        unit_id, unit_data, lang, texts = result
+        if lang not in self.languages:
+            lang = found_lang
+
+        texts = self.languages.get(lang, self.languages[found_lang])
 
         return self.build_mini_embed(unit_id, unit_data, lang, texts)
 
