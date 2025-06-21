@@ -22,6 +22,13 @@ class ManagedTaskCog(commands.Cog):
             task.add_done_callback(lambda t: self.tasks.discard(t))
         return task
 
+    async def wait_closed(self) -> None:
+        to_await = [
+            t for t in self.tasks if asyncio.isfuture(t) or asyncio.iscoroutine(t)
+        ]
+        if to_await:
+            await asyncio.gather(*to_await, return_exceptions=True)
+
     def cog_unload(self) -> None:
         for task in list(self.tasks):
             task.cancel()
