@@ -1,15 +1,17 @@
 import asyncio
 from discord.ext import commands
 
-from log_setup import get_logger, create_logged_task
+from log_setup import get_logger
+from utils.managed_cog import ManagedTaskCog
 from .data import PTCGPData
 from .api import fetch_all_cards
 
 logger = get_logger(__name__)
 
 
-class PTCGPCog(commands.Cog):
+class PTCGPCog(ManagedTaskCog):
     def __init__(self, bot: commands.Bot) -> None:
+        super().__init__()
         self.bot = bot
         self.data = PTCGPData("data/pers/ptcgp/cards.db")
         self._lock = asyncio.Lock()
@@ -39,4 +41,4 @@ class PTCGPCog(commands.Cog):
         return await self.data.get_card(card_id)
 
     def cog_unload(self):
-        create_logged_task(self.data.close(), logger)
+        self.create_task(self.data.close())
