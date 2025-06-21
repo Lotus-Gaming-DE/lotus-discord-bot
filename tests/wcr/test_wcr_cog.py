@@ -138,7 +138,7 @@ def test_resolve_unit_cross_language():
 
     result = cog.resolve_unit("Abomination", "de")
     assert result is not None
-    unit_id, _, lang, _ = result
+    unit_id, _, lang = result
     assert unit_id == 1
     assert lang == "en"
     cog.cog_unload()
@@ -150,7 +150,7 @@ def test_resolve_unit_fuzzy_partial():
 
     result = cog.resolve_unit("sylvanas", "de")
     assert result is not None
-    unit_id, _, lang, _ = result
+    unit_id, _, lang = result
     assert unit_id == 62
     assert lang == "de"
     cog.cog_unload()
@@ -162,7 +162,7 @@ def test_resolve_unit_cross_language_fuzzy():
 
     result = cog.resolve_unit("windrunner", "de")
     assert result is not None
-    unit_id, _, lang, _ = result
+    unit_id, _, lang = result
     assert unit_id == 62
     assert lang == "en"
     cog.cog_unload()
