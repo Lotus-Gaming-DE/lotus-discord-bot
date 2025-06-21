@@ -26,6 +26,7 @@ class WCRCog(commands.Cog):
             self.units = self.units["units"]
         self.languages = bot.data["wcr"]["locals"]
         self.pictures = bot.data["wcr"]["pictures"]
+        self.stat_labels = bot.data["wcr"].get("stat_labels", {})
 
         # Mapping for resolving unit names quickly
         # {lang: {normalized_name: id}}
@@ -735,7 +736,7 @@ class WCRCog(commands.Cog):
             unit_id, lang, self.languages
         )
 
-        stat_labels = texts.get("stat_labels", {})
+        stat_labels = self.stat_labels.get(lang, {})
         faction_data = helpers.get_faction_data(
             unit_data.get("faction_id"), self.pictures
         )
