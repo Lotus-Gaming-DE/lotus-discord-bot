@@ -120,6 +120,7 @@ Der Modus `dynamic` passt die Rundenzahl automatisch an und steht nur in Areas m
 Wird kein Level angegeben, verwendet der Bot die Basiswerte (Level 1).
 
 Autocomplete und Fuzzy-Matching erleichtern die Eingabe.
+Der Parameter `lang` bestimmt ausschließlich die Ausgabesprache; die Namenssuche berücksichtigt alle unterstützten Sprachen.
 Alle `/wcr`-Befehle besitzen zusätzlich den Parameter `public`, um die Antwort öffentlich anzuzeigen.
 
 ### `/ptcgp`
