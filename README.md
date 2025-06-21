@@ -120,6 +120,7 @@ Der Modus `dynamic` passt die Rundenzahl automatisch an und steht nur in Areas m
 Wird kein Level angegeben, verwendet der Bot die Basiswerte (Level 1).
 
 Autocomplete und Fuzzy-Matching erleichtern die Eingabe.
+Der Parameter `lang` bestimmt ausschließlich die Ausgabesprache; die Namenssuche berücksichtigt alle unterstützten Sprachen.
 Alle `/wcr`-Befehle besitzen zusätzlich den Parameter `public`, um die Antwort öffentlich anzuzeigen.
 
 ### `/ptcgp`
@@ -146,9 +147,12 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
 - **WCR-Modul** verarbeitet die Daten unter `data/wcr/` und nutzt sie für Autocomplete sowie dynamische Fragen.  
   - `units.json` enthält alle Minis samt Werten und mehrsprachigen Texten.  
   - `categories.json` definiert Fraktionen, Typen, Geschwindigkeiten und Traits.  
-  - `stat_labels.json` übersetzt die Statistik-Bezeichnungen.  
-  - `pictures.json` ordnet jedem Mini ein Icon zu.  
+  - `stat_labels.json` übersetzt die Statistik-Bezeichnungen.
+  - `pictures.json` ordnet jedem Mini ein Icon zu.
   - Die Fragevorlagen liegen unter `data/quiz/templates/wcr.json`.
+  - Beim Start erzeugt `_export_emojis` automatisch `data/emojis.json`; die darin
+    hinterlegten Emoji-Namen müssen mit den Angaben in `data/wcr/categories.json`
+    übereinstimmen.
 - Alle Slash-Commands werden **guild-basiert** registriert und nur für die Haupt-Guild synchronisiert.
 
 Persistente Daten liegen in `data/pers/` und sollten nicht ins Repository aufgenommen werden.

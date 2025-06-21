@@ -365,8 +365,8 @@ class WCRCog(commands.Cog):
             )
             return
 
-        id_a, data_a, *_ = res_a
-        id_b, data_b, *_ = res_b
+        id_a, data_a, _ = res_a
+        id_b, data_b, _ = res_b
 
         name_a = helpers.get_text_data(id_a, lang, self.languages)[0]
         name_b = helpers.get_text_data(id_b, lang, self.languages)[0]
@@ -489,8 +489,9 @@ class WCRCog(commands.Cog):
 
         texts = self.languages.get(lang, self.languages[found_lang])
         unit_id, unit_data, *_ = result
+        unit_id, unit_data, _ = result
 
-        return self.build_mini_embed(unit_id, unit_data, lang, self.languages)
+        return self.build_mini_embed(unit_id, unit_data, lang)
 
     def _find_unit_id_by_name(
         self, normalized: str, lang: str
@@ -547,7 +548,6 @@ class WCRCog(commands.Cog):
             name, _, _ = helpers.get_text_data(unit_id, lang, self.languages)
             if name == "Unbekannt":
                 return None
-            texts = self.languages[lang]
         except ValueError:
             normalized = " ".join(helpers.normalize_name(name_or_id))
             unit_id, lang = self._find_unit_id_by_name(normalized, lang)
@@ -560,10 +560,7 @@ class WCRCog(commands.Cog):
                     )
                     if unit_id is not None:
                         lang = found_lang
-                        texts = self.languages[found_lang]
                         break
-            else:
-                texts = self.languages[lang]
             if unit_id is None:
                 return None
 
@@ -573,7 +570,7 @@ class WCRCog(commands.Cog):
             if not unit_data:
                 return None
 
-        return unit_id, unit_data, lang, texts
+        return unit_id, unit_data, lang
 
     # Helper methods -----------------------------------------------------
     def _prepare_stat_rows(self, unit_data, stat_labels, type_name, speed_name):
@@ -746,7 +743,7 @@ class WCRCog(commands.Cog):
             "inline": False,
         }
 
-    def build_mini_embed(self, unit_id, unit_data, lang, texts):
+    def build_mini_embed(self, unit_id, unit_data, lang):
         unit_name, unit_description, talents = helpers.get_text_data(
             unit_id, lang, self.languages
         )
