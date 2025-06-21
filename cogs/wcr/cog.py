@@ -171,7 +171,7 @@ class WCRCog(commands.Cog):
         """Implementation for the ``/wcr filter`` command."""
         logger.info(
             f"[WCR] /wcr filter von {interaction.user} - "
-            f"cost={cost}, speed={speed}, faction={faction}, type={type}, trait={trait}, lang={lang}"
+            f"cost={cost}, speed={speed}, faction={faction}, type={type}, trait={trait}, lang={lang}, public={public}"
         )
 
         if lang not in self.languages:
@@ -314,7 +314,7 @@ class WCRCog(commands.Cog):
     ):
         """Implementation for the ``/wcr name`` command."""
         logger.info(
-            f"[WCR] /wcr name von {interaction.user} - name={name}, lang={lang}"
+            f"[WCR] /wcr name von {interaction.user} - name={name}, lang={lang}, public={public}"
         )
         await interaction.response.defer(ephemeral=not public)
 
@@ -353,7 +353,7 @@ class WCRCog(commands.Cog):
         logger.info(
             f"[WCR] /wcr duell von {interaction.user} - "
             f"mini_a={mini_a}, level_a={level_a}, "
-            f"mini_b={mini_b}, level_b={level_b}, lang={lang}"
+            f"mini_b={mini_b}, level_b={level_b}, lang={lang}, public={public}"
         )
         await interaction.response.defer(ephemeral=not public)
 
@@ -365,11 +365,11 @@ class WCRCog(commands.Cog):
             )
             return
 
-        id_a, data_a, lang_a, texts_a = res_a
-        id_b, data_b, lang_b, texts_b = res_b
+        id_a, data_a, *_ = res_a
+        id_b, data_b, *_ = res_b
 
-        name_a = helpers.get_text_data(id_a, lang_a, self.languages)[0]
-        name_b = helpers.get_text_data(id_b, lang_b, self.languages)[0]
+        name_a = helpers.get_text_data(id_a, lang, self.languages)[0]
+        name_b = helpers.get_text_data(id_b, lang, self.languages)[0]
 
         calculator = DuelCalculator()
 
@@ -474,6 +474,11 @@ class WCRCog(commands.Cog):
         await interaction.followup.send(text, ephemeral=not public)
 
     def create_mini_embed(self, name_or_id, lang):
+        """Baue ein Mini-Embed.
+
+        Lookup erfolgt sprachübergreifend, die Ausgabe richtet sich nach
+        ``lang``.
+        """
         result = self.resolve_unit(name_or_id, lang)
         if not result:
             return None, None
@@ -483,8 +488,9 @@ class WCRCog(commands.Cog):
             lang = found_lang
 
         texts = self.languages.get(lang, self.languages[found_lang])
+        unit_id, unit_data, *_ = result
 
-        return self.build_mini_embed(unit_id, unit_data, lang, texts)
+        return self.build_mini_embed(unit_id, unit_data, lang, self.languages)
 
     def _find_unit_id_by_name(
         self, normalized: str, lang: str
@@ -523,6 +529,11 @@ class WCRCog(commands.Cog):
         return None, lang
 
     def resolve_unit(self, name_or_id, lang):
+        """Finde ein Mini in allen Sprachen.
+
+        Lookup erfolgt sprachübergreifend, die Ausgabe richtet sich nach
+        ``lang``.
+        """
         if lang not in self.languages:
             return None
 

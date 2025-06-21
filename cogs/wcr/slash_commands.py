@@ -82,7 +82,7 @@ async def filter(
     public: bool = False,
 ):
     logger.info(
-        f"/wcr filter by {interaction.user} cost={cost} speed={speed} faction={faction} type={type} trait={trait} lang={lang}"
+        f"/wcr filter by {interaction.user} cost={cost} speed={speed} faction={faction} type={type} trait={trait} lang={lang} public={public}"
     )
     cog: WCRCog = interaction.client.get_cog("WCRCog")
     await cog.cmd_filter(interaction, cost, speed, faction, type, trait, lang, public)
@@ -97,7 +97,9 @@ async def filter(
 async def name(
     interaction: discord.Interaction, name: str, lang: str = "de", public: bool = False
 ):
-    logger.info(f"/wcr name by {interaction.user} name={name} lang={lang}")
+    logger.info(
+        f"/wcr name by {interaction.user} name={name} lang={lang} public={public}"
+    )
     cog: WCRCog = interaction.client.get_cog("WCRCog")
     await cog.cmd_name(interaction, name, lang, public)
 
@@ -125,7 +127,7 @@ async def duell(
     public: bool = False,
 ):
     logger.info(
-        f"/wcr duell by {interaction.user} a={mini_a} la={level_a} b={mini_b} lb={level_b} lang={lang}"
+        f"/wcr duell by {interaction.user} a={mini_a} la={level_a} b={mini_b} lb={level_b} lang={lang} public={public}"
     )
     cog: WCRCog = interaction.client.get_cog("WCRCog")
     await cog.cmd_duel(interaction, mini_a, mini_b, level_a, level_b, lang, public)
