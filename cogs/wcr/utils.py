@@ -11,12 +11,11 @@ BASE_PATH = Path("data/wcr")
 
 
 def load_units():
-    """Lädt die Einheitendaten aus units.json."""
+    """Lädt die Einheitendaten aus ``units.json``."""
     path = BASE_PATH / "units.json"
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        # ``units.json`` wraps the actual list in a top-level "units" key
         units = data.get("units", data)
         logger.info("[WCRUtils] Einheiten erfolgreich geladen.")
         return units
@@ -26,18 +25,29 @@ def load_units():
 
 
 def load_languages():
-    """Lädt alle Lokalisierungsdateien aus dem Unterordner 'locals'."""
-    folder = BASE_PATH / "locals"
-    result = {}
-    for file in folder.glob("*.json"):
-        lang = file.stem
-        try:
-            with open(file, "r", encoding="utf-8") as f:
-                result[lang] = json.load(f)
-        except Exception as e:
-            logger.error(f"[WCRUtils] Fehler beim Laden von {file}: {e}")
-    logger.info(f"[WCRUtils] Sprachdateien erfolgreich geladen: {list(result.keys())}")
-    return result
+    """Lädt die Lokalisationen aus ``units.json``."""
+    path = BASE_PATH / "units.json"
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        locals_ = data.get("locals", {})
+        # Einheiten-Texte aus den Units einsammeln
+        for unit in data.get("units", []):
+            texts = unit.get("texts", {})
+            for lang, info in texts.items():
+                lang_data = locals_.setdefault(lang, {})
+                units = lang_data.setdefault("units", [])
+                unit_entry = {"id": unit.get("id")}
+                unit_entry.update(info)
+                units.append(unit_entry)
+        logger.info(
+            "[WCRUtils] Sprachdateien erfolgreich geladen: %s",
+            list(locals_.keys()),
+        )
+        return locals_
+    except Exception as e:
+        logger.error(f"[WCRUtils] Fehler beim Laden der Sprachdaten: {e}")
+        return {}
 
 
 def load_pictures():

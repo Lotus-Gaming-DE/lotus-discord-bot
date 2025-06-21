@@ -1,4 +1,3 @@
-import json
 import random
 
 
@@ -12,18 +11,9 @@ class DummyBot:
 
 def create_provider():
     bot = DummyBot()
-    bot.data = {
-        "wcr": {
-            "units": json.load(open("data/wcr/units.json", "r", encoding="utf-8")),
-            "locals": {
-                "de": json.load(open("data/wcr/locals/de.json", "r", encoding="utf-8")),
-                "en": json.load(open("data/wcr/locals/en.json", "r", encoding="utf-8")),
-            },
-            "pictures": json.load(
-                open("data/wcr/pictures.json", "r", encoding="utf-8")
-            ),
-        }
-    }
+    from cogs.wcr.utils import load_wcr_data
+
+    bot.data = {"wcr": load_wcr_data()}
     return WCRQuestionProvider(bot, language="de")
 
 

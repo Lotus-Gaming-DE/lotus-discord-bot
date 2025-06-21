@@ -1,4 +1,3 @@
-import json
 import logging
 import pytest
 import discord
@@ -10,23 +9,9 @@ from cogs.wcr.duel import DuelCalculator
 
 class DummyBot:
     def __init__(self):
-        self.data = {
-            "emojis": {},
-            "wcr": {
-                "units": json.load(open("data/wcr/units.json", "r", encoding="utf-8")),
-                "locals": {
-                    "de": json.load(
-                        open("data/wcr/locals/de.json", "r", encoding="utf-8")
-                    ),
-                    "en": json.load(
-                        open("data/wcr/locals/en.json", "r", encoding="utf-8")
-                    ),
-                },
-                "pictures": json.load(
-                    open("data/wcr/pictures.json", "r", encoding="utf-8")
-                ),
-            },
-        }
+        from cogs.wcr.utils import load_wcr_data
+
+        self.data = {"emojis": {}, "wcr": load_wcr_data()}
 
 
 class DummyResponse:
