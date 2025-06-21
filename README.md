@@ -47,6 +47,17 @@ PTCGP_SKIP_SSL_VERIFY=0
 
 Beim ersten Start werden persistente Daten unter `data/pers/` angelegt (Punktedatenbank, Quiz-Historie etc.).
 
+## Datenstruktur
+
+Die statischen Dateien sind wie folgt organisiert:
+
+- `data/quiz/questions_*.json` enthalten den Fragepool.
+- `data/quiz/templates/` hält Textbausteine für dynamische Fragen.
+- `data/wcr/units.json` speichert alle Minis inklusive Werte und lokalisierter Texte.
+- `data/wcr/categories.json` definiert Fraktionen, Typen, Geschwindigkeiten und Traits.
+- `data/wcr/stat_labels.json` bietet Übersetzungen der Statistikbezeichnungen.
+- `data/wcr/pictures.json` ordnet Einheiten zugehörige Icons zu.
+
 ---
 
 ## Features
@@ -132,7 +143,12 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
 - **Quiz-Subsystem** nutzt einen `QuestionGenerator` (statisch & dynamisch), `QuestionStateManager` für Persistenz und einen Scheduler für automatische Fragen. Der nächste geplante Zeitpunkt wird gespeichert, sodass laufende Fenster nach einem Neustart fortgeführt werden können.
 - **Champion-System** speichert Punkte in SQLite und vergibt Rollen gemäß `data/champion/roles.json` (Rollen-ID und Schwelle pro Eintrag).
 - Beim Entladen des Champion-Cogs wird die Datenbankverbindung sauber geschlossen.
-- **WCR-Modul** verarbeitet die Daten unter `data/wcr/` und bietet Autocomplete sowie dynamische Fragen als Quiz-Provider. Einheiten, Kategorien und Stat-Bezeichnungen werden dabei aus `units.json`, `categories.json` und `stat_labels.json` geladen.
+- **WCR-Modul** verarbeitet die Daten unter `data/wcr/` und nutzt sie für Autocomplete sowie dynamische Fragen.  
+  - `units.json` enthält alle Minis samt Werten und mehrsprachigen Texten.  
+  - `categories.json` definiert Fraktionen, Typen, Geschwindigkeiten und Traits.  
+  - `stat_labels.json` übersetzt die Statistik-Bezeichnungen.  
+  - `pictures.json` ordnet jedem Mini ein Icon zu.  
+  - Die Fragevorlagen liegen unter `data/quiz/templates/wcr.json`.
 - Alle Slash-Commands werden **guild-basiert** registriert und nur für die Haupt-Guild synchronisiert.
 
 Persistente Daten liegen in `data/pers/` und sollten nicht ins Repository aufgenommen werden.
