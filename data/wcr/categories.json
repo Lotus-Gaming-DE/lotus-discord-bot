@@ -1,0 +1,456 @@
+{
+  "factions": [
+    {
+      "id": 1,
+      "icon": "wcr_undead",
+      "color": "#6D4DBB",
+      "names": {
+        "de": "Untote",
+        "en": "Undead"
+      }
+    },
+    {
+      "id": 2,
+      "icon": "wcr_beast",
+      "color": "#B08F58",
+      "names": {
+        "de": "Bestie",
+        "en": "Beast"
+      }
+    },
+    {
+      "id": 3,
+      "icon": "wcr_alliance",
+      "color": "#3A5FD0",
+      "names": {
+        "de": "Allianz",
+        "en": "Alliance"
+      }
+    },
+    {
+      "id": 4,
+      "icon": "wcr_horde",
+      "color": "#BE4532",
+      "names": {
+        "de": "Horde",
+        "en": "Horde"
+      }
+    },
+    {
+      "id": 5,
+      "icon": "wcr_blackrock",
+      "color": "#486166",
+      "names": {
+        "de": "Schwarzfels",
+        "en": "Blackrock"
+      }
+    },
+    {
+      "id": 6,
+      "icon": "wcr_cenarion",
+      "color": "#359078",
+      "names": {
+        "de": "Cenarion",
+        "en": "Cenarion"
+      }
+    }
+  ],
+  "types": [
+    {
+      "id": 1,
+      "names": {
+        "de": "Truppe",
+        "en": "Troop"
+      }
+    },
+    {
+      "id": 2,
+      "names": {
+        "de": "Zauber",
+        "en": "Spell"
+      }
+    },
+    {
+      "id": 3,
+      "names": {
+        "de": "Anführer",
+        "en": "Leader"
+      }
+    }
+  ],
+  "traits": [
+    {
+      "id": 1,
+      "names": {
+        "de": "Tank",
+        "en": "Tank"
+      }
+    },
+    {
+      "id": 2,
+      "names": {
+        "de": "Haken",
+        "en": "Hook"
+      }
+    },
+    {
+      "id": 3,
+      "names": {
+        "de": "Nahkampf",
+        "en": "Melee"
+      }
+    },
+    {
+      "id": 4,
+      "names": {
+        "de": "Flächenschaden",
+        "en": "AoE"
+      }
+    },
+    {
+      "id": 5,
+      "names": {
+        "de": "Zyklus",
+        "en": "Cycle"
+      }
+    },
+    {
+      "id": 6,
+      "names": {
+        "de": "Schnell",
+        "en": "Fast"
+      }
+    },
+    {
+      "id": 7,
+      "names": {
+        "de": "Trupp",
+        "en": "Squad"
+      }
+    },
+    {
+      "id": 8,
+      "names": {
+        "de": "Elementar",
+        "en": "Elemental"
+      }
+    },
+    {
+      "id": 9,
+      "names": {
+        "de": "Zauber",
+        "en": "Spell"
+      }
+    },
+    {
+      "id": 10,
+      "names": {
+        "de": "Besitz",
+        "en": "Possession"
+      }
+    },
+    {
+      "id": 11,
+      "names": {
+        "de": "Fernkampf",
+        "en": "Ranged"
+      }
+    },
+    {
+      "id": 12,
+      "names": {
+        "de": "Einzelziel",
+        "en": "One-Target"
+      }
+    },
+    {
+      "id": 13,
+      "names": {
+        "de": "Gepanzert",
+        "en": "Armored"
+      }
+    },
+    {
+      "id": 14,
+      "names": {
+        "de": "Beschuss",
+        "en": "Bombard"
+      }
+    },
+    {
+      "id": 15,
+      "names": {
+        "de": "Fliegend",
+        "en": "Flying"
+      }
+    },
+    {
+      "id": 16,
+      "names": {
+        "de": "Frost",
+        "en": "Frost"
+      }
+    },
+    {
+      "id": 17,
+      "names": {
+        "de": "Angriff Betäubung",
+        "en": "Attack Stun"
+      }
+    },
+    {
+      "id": 18,
+      "names": {
+        "de": "Prozentschaden",
+        "en": "Percent Damage"
+      }
+    },
+    {
+      "id": 19,
+      "names": {
+        "de": "Angriff Wurzeln",
+        "en": "Attack Root"
+      }
+    },
+    {
+      "id": 20,
+      "names": {
+        "de": "Resistent",
+        "en": "Resistant"
+      }
+    },
+    {
+      "id": 21,
+      "names": {
+        "de": "Wiederbeleben",
+        "en": "Revive"
+      }
+    },
+    {
+      "id": 22,
+      "names": {
+        "de": "Ungebunden",
+        "en": "Unbound"
+      }
+    },
+    {
+      "id": 23,
+      "names": {
+        "de": "Minenarbeiter",
+        "en": "Miner"
+      }
+    },
+    {
+      "id": 24,
+      "names": {
+        "de": "Verstohlenheit",
+        "en": "Stealth"
+      }
+    },
+    {
+      "id": 25,
+      "names": {
+        "de": "Hinterhältiger Schlag",
+        "en": "Cheap Shot"
+      }
+    },
+    {
+      "id": 26,
+      "names": {
+        "de": "Belagerungsschaden",
+        "en": "Siege Damage"
+      }
+    },
+    {
+      "id": 27,
+      "names": {
+        "de": "Belagerungsspezialist",
+        "en": "Siege Specialist"
+      }
+    },
+    {
+      "id": 28,
+      "names": {
+        "de": "Wut",
+        "en": "Fury"
+      }
+    },
+    {
+      "id": 29,
+      "names": {
+        "de": "Beschuss",
+        "en": "Bomabrd"
+      }
+    },
+    {
+      "id": 30,
+      "names": {
+        "de": "Heiler",
+        "en": "Healer"
+      }
+    },
+    {
+      "id": 31,
+      "names": {
+        "de": "Kannibalisieren",
+        "en": "Cannibalize"
+      }
+    },
+    {
+      "id": 32,
+      "names": {
+        "de": "Tank",
+        "en": "tank"
+      }
+    },
+    {
+      "id": 33,
+      "names": {
+        "de": "Blutdurst",
+        "en": "Bloodlist"
+      }
+    },
+    {
+      "id": 34,
+      "names": {
+        "de": "Wiedergeburt",
+        "en": "Rebirth"
+      }
+    },
+    {
+      "id": 35,
+      "names": {
+        "de": "Weitschuss",
+        "en": "Longshot"
+      }
+    },
+    {
+      "id": 36,
+      "names": {
+        "de": "Heilt Truppkameraden",
+        "en": "Heal Squadmate"
+      }
+    },
+    {
+      "id": 37,
+      "names": {
+        "de": "Beschwörer",
+        "en": "Summoner"
+      }
+    },
+    {
+      "id": 38,
+      "names": {
+        "de": "Blutrausch",
+        "en": "Bloodlust"
+      }
+    },
+    {
+      "id": 39,
+      "names": {
+        "de": "Giftig",
+        "en": "Poisonous"
+      }
+    },
+    {
+      "id": 40,
+      "names": {
+        "de": "Absteigen",
+        "en": "Dismount"
+      }
+    },
+    {
+      "id": 41,
+      "names": {
+        "de": "Verwundbar",
+        "en": "Vulnerable"
+      }
+    },
+    {
+      "id": 42,
+      "names": {
+        "de": "Ansturm",
+        "en": "Charge"
+      }
+    },
+    {
+      "id": 43,
+      "names": {
+        "de": "Heimsuchung",
+        "en": "Haunt"
+      }
+    },
+    {
+      "id": 44,
+      "names": {
+        "de": "Aasfresser",
+        "en": "Carrion"
+      }
+    },
+    {
+      "id": 45,
+      "names": {
+        "de": "Schlüpfen",
+        "en": "Hatching"
+      }
+    },
+    {
+      "id": 46,
+      "names": {
+        "de": "Hinterhalt",
+        "en": "Ambush"
+      }
+    },
+    {
+      "id": 47,
+      "names": {
+        "de": "Feurige Waffenverzauberung",
+        "en": "Fiery Weapon Enchant"
+      }
+    },
+    {
+      "id": 48,
+      "names": {
+        "de": "Aufdecken",
+        "en": "Detect"
+      }
+    },
+    {
+      "id": 49,
+      "names": {
+        "de": "Neutralisieren",
+        "en": "Nullify"
+      }
+    }
+  ],
+  "speeds": [
+    {
+      "id": 1,
+      "names": {
+        "de": "Langsam",
+        "en": "Slow"
+      }
+    },
+    {
+      "id": 2,
+      "names": {
+        "de": "Mittel-Schnell",
+        "en": "Med-Fast"
+      }
+    },
+    {
+      "id": 3,
+      "names": {
+        "de": "Mittel",
+        "en": "Medium"
+      }
+    },
+    {
+      "id": 4,
+      "names": {
+        "de": "Schnell",
+        "en": "Fast"
+      }
+    }
+  ]
+}
