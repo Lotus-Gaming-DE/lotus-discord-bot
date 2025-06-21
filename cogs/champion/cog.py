@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from discord.ext import commands
 from typing import Optional, List
 
-from log_setup import get_logger, create_logged_task
+from log_setup import get_logger
 from utils.managed_cog import ManagedTaskCog
 from .data import ChampionData
 
@@ -157,5 +157,7 @@ class ChampionCog(ManagedTaskCog):
             )
 
     def cog_unload(self):
+        """Cancel Tasks und schließe die Datenbankverbindung."""
         super().cog_unload()
-        create_logged_task(self.data.close(), logger)
+        # Datenbank sauber schließen, damit keine offenen Tasks bleiben
+        self.create_task(self.data.close())
