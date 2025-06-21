@@ -64,4 +64,5 @@ async def test_update_command(monkeypatch, tmp_path):
     counts = await cog.data.count_cards()
     assert counts == {"en": 1, "de": 1}
 
-    await cog.data.close()
+    cog.cog_unload()
+    await cog.wait_closed()

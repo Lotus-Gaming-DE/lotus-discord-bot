@@ -195,6 +195,12 @@ class MyBot(commands.Bot):
         with open(emoji_file, "r", encoding="utf-8") as f:
             return json.load(f)
 
+    async def close(self) -> None:
+        """Entlade alle Cogs, bevor der Bot beendet wird."""
+        for cog_name in list(self.cogs.keys()):
+            await self.remove_cog(cog_name)
+        await super().close()
+
 
 if __name__ == "__main__":
     token = os.getenv("bot_key")
