@@ -6,15 +6,19 @@ from log_setup import get_logger
 logger = get_logger(__name__)
 
 
-def build_category_lookup(languages: dict, pictures: dict) -> tuple[dict, dict]:
-    """Return lookup dictionaries for faster category access."""
+def build_category_lookup(categories: dict, pictures: dict) -> tuple[dict, dict]:
+    """Erstellt Lookup-Tabellen für Kategorien."""
     lang_lookup: dict[str, dict[str, dict[int, dict]]] = {}
-    for lang, lang_data in languages.items():
-        categories = lang_data.get("categories", {})
-        lookup = {}
-        for name, items in categories.items():
-            lookup[name] = {item["id"]: item for item in items}
-        lang_lookup[lang] = lookup
+    for cat_name, items in categories.items():
+        for item in items:
+            for lang, name in item.get("names", {}).items():
+                lang_dict = lang_lookup.setdefault(lang, {})
+                cat_dict = lang_dict.setdefault(cat_name, {})
+                cat_dict[item["id"]] = {
+                    "id": item["id"],
+                    "name": name,
+                    **{k: item[k] for k in ("icon", "color") if k in item},
+                }
 
     pic_categories = pictures.get("categories", {})
     pic_lookup = {
@@ -55,16 +59,10 @@ def get_faction_data(faction_id: int, pictures: dict) -> dict:
 
 
 def get_category_name(
-    category: str, category_id: int, lang: str, languages: dict
+    category: str, category_id: int, lang: str, lang_lookup: dict
 ) -> str:
-    """Return the localized name of a category item."""
-    cat_lookup = languages.get(lang, {}).get("category_lookup")
-    if cat_lookup is None:
-        categories = languages.get(lang, {}).get("categories", {})
-        cat_lookup = {
-            k: {item["id"]: item for item in v} for k, v in categories.items()
-        }
-    item = cat_lookup.get(category, {}).get(category_id)
+    """Gibt den lokalisierten Namen eines Kategorie-Eintrags zurück."""
+    item = lang_lookup.get(lang, {}).get(category, {}).get(category_id)
     if item:
         return item.get("name", "Unbekannt")
     return "Unbekannt"
@@ -82,17 +80,11 @@ def normalize_name(name: str) -> list[str]:
 
 
 def find_category_id(
-    category_name: str, category: str, lang: str, languages: dict
+    category_name: str, category: str, lang: str, lang_lookup: dict
 ) -> int | None:
-    """Return the ID of ``category_name`` searching all languages."""
+    """Sucht die ID zu ``category_name`` über alle Sprachen hinweg."""
     # Zuerst in der aktuellen Sprache suchen
-    lookup = languages[lang].get("category_lookup")
-    if lookup is None:
-        lookup = {
-            k: {i["id"]: i for i in v}
-            for k, v in languages[lang].get("categories", {}).items()
-        }
-    category_dict = lookup.get(category, {})
+    category_dict = lang_lookup.get(lang, {}).get(category, {})
     matching_item = next(
         (
             item
@@ -105,16 +97,10 @@ def find_category_id(
         return matching_item["id"]
 
     # In anderen Sprachen suchen
-    for other_lang, other_texts in languages.items():
+    for other_lang, other_lookup in lang_lookup.items():
         if other_lang == lang:
             continue
-        lookup = other_texts.get("category_lookup")
-        if lookup is None:
-            lookup = {
-                k: {i["id"]: i for i in v}
-                for k, v in other_texts.get("categories", {}).items()
-            }
-        category_dict = lookup.get(category, {})
+        category_dict = other_lookup.get(category, {})
         matching_item = next(
             (
                 item

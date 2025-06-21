@@ -63,6 +63,19 @@ def load_pictures():
         return {}
 
 
+def load_categories():
+    """Lädt die Kategorien aus ``categories.json``."""
+    path = BASE_PATH / "categories.json"
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            categories = json.load(f)
+        logger.info("[WCRUtils] Kategorien erfolgreich geladen.")
+        return categories
+    except Exception as e:
+        logger.error(f"[WCRUtils] Fehler beim Laden der Kategorien: {e}")
+        return {}
+
+
 def load_stat_labels():
     """Lädt die Stat-Labels aus ``stat_labels.json``."""
     path = BASE_PATH / "stat_labels.json"
@@ -82,5 +95,6 @@ def load_wcr_data():
         "units": load_units(),
         "locals": load_languages(),
         "pictures": load_pictures(),
+        "categories": load_categories(),
         "stat_labels": load_stat_labels(),
     }

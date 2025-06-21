@@ -4,6 +4,7 @@ from log_setup import get_logger
 import hashlib
 from ..utils import create_permutations_list
 from .base import DynamicQuestionProvider
+from ...wcr import helpers
 
 logger = get_logger(__name__)
 
@@ -25,8 +26,12 @@ class WCRQuestionProvider(DynamicQuestionProvider):
             units_data = units_data["units"]
         self.units = units_data
         self.locals = bot.data["wcr"]["locals"]
+        self.categories = bot.data["wcr"].get("categories", {})
         self.templates = bot.data.get("quiz", {}).get("templates", {}).get("wcr", {})
         self.language = language
+        self.lang_category_lookup, _ = helpers.build_category_lookup(
+            self.categories, {}
+        )
 
     def get_unit_name(self, unit_id: int, lang: str) -> str:
         try:
@@ -134,10 +139,9 @@ class WCRQuestionProvider(DynamicQuestionProvider):
             unit_name=self.get_unit_name(unit["id"], self.language)
         )
         faction_id = unit.get("faction_id")
-        factions = (
-            self.locals.get(self.language, {}).get("categories", {}).get("factions", [])
+        faction = helpers.get_category_name(
+            "factions", faction_id, self.language, self.lang_category_lookup
         )
-        faction = next((f["name"] for f in factions if f["id"] == faction_id), None)
         if not faction:
             return None
         return {
