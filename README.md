@@ -104,7 +104,7 @@ Der Modus `dynamic` passt die Rundenzahl automatisch an und steht nur in Areas m
 |---------------------|---------------------------------------------------------------------|
 | `/wcr name`         | Details und Statistiken zu einer Einheit (mehrsprachig)             |
 | `/wcr filter`       | Minis über diverse Filter finden (Kosten, Fraktion, Traits ...)      |
-| `/wcr duell`        | Simuliert ein Duell zweier Minis (Level optional) und zeigt die Berechnung an |
+| `/wcr duell`        | Simuliert ein Duell zweier Minis (Level optional) und zeigt eine detaillierte Berechnung inkl. Trait-Effekten an |
 
 Wird kein Level angegeben, verwendet der Bot die Basiswerte (Level 1).
 
