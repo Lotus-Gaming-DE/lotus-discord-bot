@@ -53,10 +53,7 @@ class WCRCog(commands.Cog):
             self.id_name_map[lang] = id_map
             self.name_token_index[lang] = token_index
 
-        (
-            self.lang_category_lookup,
-            self.picture_category_lookup,
-        ) = helpers.build_category_lookup(self.categories, self.pictures)
+        self.lang_category_lookup = helpers.build_category_lookup(self.categories)
 
         # Emojis liegen in bot.data["emojis"]
         self.emojis = bot.data["emojis"]
@@ -292,7 +289,8 @@ class WCRCog(commands.Cog):
             unit_id = unit["id"]
             unit_name = helpers.get_text_data(unit_id, lang, self.languages)[0]
             emoji_syntax = self.emojis.get(
-                helpers.get_faction_icon(unit["faction_id"], self.pictures), {}
+                helpers.get_faction_icon(unit["faction_id"], self.lang_category_lookup),
+                {},
             ).get("syntax")
             if emoji_syntax:
                 option = discord.SelectOption(
@@ -742,7 +740,7 @@ class WCRCog(commands.Cog):
 
         stat_labels = self.stat_labels.get(lang, {})
         faction_data = helpers.get_faction_data(
-            unit_data.get("faction_id"), self.pictures
+            unit_data.get("faction_id"), self.lang_category_lookup
         )
         embed_color = int(faction_data.get("color", "#3498db").strip("#"), 16)
         faction_emoji = self.emojis.get(faction_data.get("icon", ""), {}).get(

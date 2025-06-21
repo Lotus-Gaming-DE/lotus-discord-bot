@@ -29,9 +29,7 @@ class WCRQuestionProvider(DynamicQuestionProvider):
         self.categories = bot.data["wcr"].get("categories", {})
         self.templates = bot.data.get("quiz", {}).get("templates", {}).get("wcr", {})
         self.language = language
-        self.lang_category_lookup, _ = helpers.build_category_lookup(
-            self.categories, {}
-        )
+        self.lang_category_lookup = helpers.build_category_lookup(self.categories)
 
     def get_unit_name(self, unit_id: int, lang: str) -> str:
         try:

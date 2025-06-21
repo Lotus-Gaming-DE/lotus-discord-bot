@@ -6,8 +6,13 @@ from log_setup import get_logger
 logger = get_logger(__name__)
 
 
-def build_category_lookup(categories: dict, pictures: dict) -> tuple[dict, dict]:
-    """Erstellt Lookup-Tabellen für Kategorien."""
+def build_category_lookup(categories: dict) -> dict:
+    """Erstellt eine Lookup-Tabelle für Kategorien.
+
+    Die Tabelle enthält für jede Sprache die verfügbaren Kategorien und
+    speichert neben dem Namen auch Zusatzinformationen wie Icon und Farbe.
+    """
+
     lang_lookup: dict[str, dict[str, dict[int, dict]]] = {}
     for cat_name, items in categories.items():
         for item in items:
@@ -20,12 +25,7 @@ def build_category_lookup(categories: dict, pictures: dict) -> tuple[dict, dict]
                     **{k: item[k] for k in ("icon", "color") if k in item},
                 }
 
-    pic_categories = pictures.get("categories", {})
-    pic_lookup = {
-        name: {item["id"]: item for item in items}
-        for name, items in pic_categories.items()
-    }
-    return lang_lookup, pic_lookup
+    return lang_lookup
 
 
 def get_text_data(unit_id: int, lang: str, languages: dict) -> tuple[str, str, list]:
@@ -48,14 +48,18 @@ def get_pose_url(unit_id: int, pictures: dict) -> str:
     return unit_picture.get("pose", "")
 
 
-def get_faction_data(faction_id: int, pictures: dict) -> dict:
-    """Return faction meta information for ``faction_id``."""
-    factions = pictures.get("category_lookup", {}).get("factions")
-    if factions is None:
-        factions = {
-            f["id"]: f for f in pictures.get("categories", {}).get("factions", [])
-        }
-    return factions.get(faction_id, {})
+def get_faction_data(faction_id: int, lang_lookup: dict) -> dict:
+    """Gibt Metadaten für eine Fraktion zurück.
+
+    Die Daten enthalten Icon und Farbe der Fraktion. Es wird dabei die erste
+    verfügbare Sprache im Lookup verwendet.
+    """
+
+    for cat_data in lang_lookup.values():
+        factions = cat_data.get("factions")
+        if factions and faction_id in factions:
+            return factions[faction_id]
+    return {}
 
 
 def get_category_name(
@@ -68,9 +72,9 @@ def get_category_name(
     return "Unbekannt"
 
 
-def get_faction_icon(faction_id: int, pictures: dict) -> str:
-    """Return the emoji/icon name for a faction."""
-    faction_data = get_faction_data(faction_id, pictures)
+def get_faction_icon(faction_id: int, lang_lookup: dict) -> str:
+    """Gibt den Emoji-/Icon-Namen einer Fraktion zurück."""
+    faction_data = get_faction_data(faction_id, lang_lookup)
     return faction_data.get("icon", "")
 
 

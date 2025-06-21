@@ -119,7 +119,6 @@ def test_category_lookups_created():
     cog = WCRCog(bot)
 
     assert "factions" in cog.lang_category_lookup["de"]
-    assert "factions" in cog.picture_category_lookup
     assert "category_lookup" not in bot.data["wcr"]["locals"]["de"]
     assert "category_lookup" not in bot.data["wcr"]["pictures"]
     cog.cog_unload()
