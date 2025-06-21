@@ -5,6 +5,7 @@ from discord.ext import commands
 from typing import Optional, List
 
 from log_setup import get_logger, create_logged_task
+from utils.managed_cog import ManagedTaskCog
 from .data import ChampionData
 
 logger = get_logger(__name__)
@@ -17,33 +18,21 @@ class ChampionRole:
     threshold: int
 
 
-class ChampionCog(commands.Cog):
+class ChampionCog(ManagedTaskCog):
     def __init__(self, bot: commands.Bot) -> None:
         """Initialize the cog and load role configuration."""
+        super().__init__()
         self.bot = bot
 
         db_path = "data/pers/champion/points.db"
         self.data = ChampionData(db_path)
 
         self.roles: List[ChampionRole] = self._load_roles_config()
-        self.tasks: list[asyncio.Task] = []
 
-        def _remove_finished(t: asyncio.Task) -> None:
-            if t in self.tasks:
-                self.tasks.remove(t)
-
-        task = create_logged_task(self.sync_all_roles(), logger)
-        self.tasks.append(task)
-
-        if hasattr(task, "add_done_callback"):
-            task.add_done_callback(_remove_finished)
+        self.create_task(self.sync_all_roles())
 
         self.update_queue: asyncio.Queue[tuple[str, int]] = asyncio.Queue()
-        self.worker_task = create_logged_task(self._worker(), logger)
-        self.tasks.append(self.worker_task)
-
-        if hasattr(self.worker_task, "add_done_callback"):
-            self.worker_task.add_done_callback(_remove_finished)
+        self.worker_task = self.create_task(self._worker())
 
     def _load_roles_config(self) -> list[ChampionRole]:
         """Return the role thresholds sorted descending."""
@@ -84,15 +73,12 @@ class ChampionCog(commands.Cog):
 
     async def _worker(self) -> None:
         """Process score updates sequentially from the queue."""
-        try:
-            while True:
-                user_id_str, total = await self.update_queue.get()
-                try:
-                    await self._apply_champion_role(user_id_str, total)
-                finally:
-                    self.update_queue.task_done()
-        except (asyncio.CancelledError, GeneratorExit):
-            pass
+        while True:
+            user_id_str, total = await self.update_queue.get()
+            try:
+                await self._apply_champion_role(user_id_str, total)
+            finally:
+                self.update_queue.task_done()
 
     async def _apply_champion_role(self, user_id_str: str, score: int) -> None:
         """Assign the correct champion role based on the score."""
@@ -171,6 +157,5 @@ class ChampionCog(commands.Cog):
             )
 
     def cog_unload(self):
-        for task in self.tasks:
-            task.cancel()
+        super().cog_unload()
         create_logged_task(self.data.close(), logger)

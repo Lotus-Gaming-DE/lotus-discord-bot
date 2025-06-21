@@ -7,6 +7,7 @@ import cogs.quiz.scheduler as scheduler_mod
 import cogs.quiz.message_tracker as msg_mod
 from cogs.quiz.quiz_config import QuizAreaConfig
 from cogs.quiz.question_state import QuestionStateManager
+import log_setup
 
 
 class DummyBot:
@@ -16,41 +17,9 @@ class DummyBot:
         self.main_guild = 0
 
 
-class DummyTask:
-    def __init__(self):
-        self.cancelled = False
-
-    def cancel(self):
-        self.cancelled = True
-
-
-class DummyTaskGroup:
-    def __init__(self):
-        self.tasks = []
-        self.coro = None
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, et, exc, tb):
-        return False
-
-    def create_task(self, coro):
-        self.coro = coro.cr_frame.f_locals.get("coro", coro)
-        coro.close()
-        task = DummyTask()
-        self.tasks.append(task)
-        return task
-
-    def _abort(self):
-        for t in self.tasks:
-            t.cancel()
-
-
 @pytest.mark.asyncio
 async def test_scheduler_resume(monkeypatch, patch_logged_task, tmp_path):
-    patch_logged_task(quiz_cog_mod, msg_mod)
-    monkeypatch.setattr(quiz_cog_mod.asyncio, "TaskGroup", DummyTaskGroup)
+    patch_logged_task(log_setup, msg_mod)
 
     async def dummy_restore(self):
         return None
@@ -96,16 +65,16 @@ async def test_scheduler_resume(monkeypatch, patch_logged_task, tmp_path):
     monkeypatch.setattr(bot, "wait_until_ready", wait_ready, raising=False)
     monkeypatch.setattr(cog.closer, "close_question", lambda *a, **k: None)
 
+    scheduler = cog.schedulers["area1"]
     with pytest.raises(asyncio.CancelledError):
-        await cog.task_group.coro
+        await scheduler.run()
 
     saved = manager.get_schedule("area1")
     assert saved is not None
     post_time, window_end = saved
 
     # simulate restart
-    patch_logged_task(quiz_cog_mod, msg_mod)
-    monkeypatch.setattr(quiz_cog_mod.asyncio, "TaskGroup", DummyTaskGroup)
+    patch_logged_task(log_setup, msg_mod)
 
     async def dummy_restore2(self):
         return None
