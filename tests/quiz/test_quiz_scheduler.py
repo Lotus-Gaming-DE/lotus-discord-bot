@@ -50,6 +50,7 @@ async def test_scheduler_start_and_stop(monkeypatch, patch_logged_task, bot):
     assert not task.cancelled
 
     cog.cog_unload()
+    await cog.wait_closed()
     assert task.cancelled
 
 

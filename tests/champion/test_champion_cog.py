@@ -98,6 +98,7 @@ async def test_update_user_score_saves_and_calls(
     assert called == [("123", 5)]
     cog.cog_unload()
     await asyncio.gather(*tasks, return_exceptions=True)
+    await cog.wait_closed()
 
 
 @pytest.mark.asyncio
@@ -175,6 +176,7 @@ async def test_apply_role_removes_when_below_threshold(monkeypatch, patch_logged
     assert member.added == []
     cog.cog_unload()
     await cog.data.close()
+    await cog.wait_closed()
 
 
 @pytest.mark.asyncio
@@ -221,5 +223,6 @@ async def test_worker_cancelled_on_unload(monkeypatch, patch_logged_task):
 
     cog.cog_unload()
     await asyncio.gather(*tasks, return_exceptions=True)
+    await cog.wait_closed()
 
     assert cog.worker_task.cancelled()
