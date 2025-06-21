@@ -63,6 +63,7 @@ async def test_finish_sets_winner_and_disables_buttons():
     lines = fields["Antworten"].split("\n")
     assert lines[0].endswith("(1.0s)")
     assert lines[1].endswith("(0.0s)")
+    view.stop()
 
 
 @pytest.mark.asyncio
@@ -84,6 +85,7 @@ async def test_modal_ignores_after_finish():
     assert inter.response.sent == [
         ("Die Runde ist bereits beendet.", {"ephemeral": True})
     ]
+    view.stop()
 
 
 @pytest.mark.asyncio
@@ -96,3 +98,4 @@ async def test_on_timeout_sets_footer():
     await view.on_timeout()
 
     assert view.message.edited["embed"].footer.text.startswith("⏰")
+    view.stop()

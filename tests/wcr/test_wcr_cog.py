@@ -66,8 +66,10 @@ async def test_cmd_filter_no_emojis():
 
     assert inter.response.messages
     msg = inter.response.messages[0]
-    assert isinstance(msg["view"], MiniSelectView)
+    view: MiniSelectView = msg["view"]
+    assert isinstance(view, MiniSelectView)
     assert msg["ephemeral"] is True
+    view.stop()
     cog.cog_unload()
 
 
@@ -80,7 +82,7 @@ async def test_cmd_filter_generates_options():
     await cog.cmd_filter(inter, cost="6", lang="de")
 
     msg = inter.response.messages[0]
-    view = msg["view"]
+    view: MiniSelectView = msg["view"]
     options = view.children[0].options
 
     units = bot.data["wcr"]["units"]
@@ -95,6 +97,7 @@ async def test_cmd_filter_generates_options():
     expected = [names[u["id"]] for u in units if u["cost"] == 6]
 
     assert [o.label for o in options] == expected
+    view.stop()
     cog.cog_unload()
 
 
@@ -414,7 +417,9 @@ async def test_cmd_filter_public():
     await cog.cmd_filter(inter, cost="6", lang="de", public=True)
 
     msg = inter.response.messages[0]
+    view: MiniSelectView = msg["view"]
     assert msg["ephemeral"] is False
+    view.stop()
     cog.cog_unload()
 
 
