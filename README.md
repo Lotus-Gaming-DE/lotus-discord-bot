@@ -132,7 +132,7 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
 - **Quiz-Subsystem** nutzt einen `QuestionGenerator` (statisch & dynamisch), `QuestionStateManager` für Persistenz und einen Scheduler für automatische Fragen. Der nächste geplante Zeitpunkt wird gespeichert, sodass laufende Fenster nach einem Neustart fortgeführt werden können.
 - **Champion-System** speichert Punkte in SQLite und vergibt Rollen gemäß `data/champion/roles.json` (Rollen-ID und Schwelle pro Eintrag).
 - Beim Entladen des Champion-Cogs wird die Datenbankverbindung sauber geschlossen.
-- **WCR-Modul** verarbeitet die Daten unter `data/wcr/` und bietet Autocomplete sowie dynamische Fragen als Quiz-Provider.
+- **WCR-Modul** verarbeitet die Daten unter `data/wcr/` und bietet Autocomplete sowie dynamische Fragen als Quiz-Provider. Einheiten, Kategorien und Stat-Bezeichnungen werden dabei aus `units.json`, `categories.json` und `stat_labels.json` geladen.
 - Alle Slash-Commands werden **guild-basiert** registriert und nur für die Haupt-Guild synchronisiert.
 
 Persistente Daten liegen in `data/pers/` und sollten nicht ins Repository aufgenommen werden.

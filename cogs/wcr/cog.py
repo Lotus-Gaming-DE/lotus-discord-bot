@@ -185,7 +185,6 @@ class WCRCog(commands.Cog):
             )
             return
 
-        texts = self.languages[lang]
         filtered_units = self.units
 
         # Kosten filtern
@@ -291,8 +290,7 @@ class WCRCog(commands.Cog):
         options = []
         for unit in filtered_units:
             unit_id = unit["id"]
-            unit_text = next((u for u in texts["units"] if u["id"] == unit_id), {})
-            unit_name = unit_text.get("name", "Unbekannt")
+            unit_name = helpers.get_text_data(unit_id, lang, self.languages)[0]
             emoji_syntax = self.emojis.get(
                 helpers.get_faction_icon(unit["faction_id"], self.pictures), {}
             ).get("syntax")
@@ -528,8 +526,6 @@ class WCRCog(commands.Cog):
         if lang not in self.languages:
             return None
 
-        texts = self.languages[lang]
-
         try:
             unit_id = int(name_or_id)
             unit_data = next(
@@ -537,11 +533,10 @@ class WCRCog(commands.Cog):
             )
             if not unit_data:
                 return None
-            matching_unit_text = next(
-                (u for u in texts["units"] if u["id"] == unit_id), None
-            )
-            if not matching_unit_text:
+            name, _, _ = helpers.get_text_data(unit_id, lang, self.languages)
+            if name == "Unbekannt":
                 return None
+            texts = self.languages[lang]
         except ValueError:
             normalized = " ".join(helpers.normalize_name(name_or_id))
             unit_id, lang = self._find_unit_id_by_name(normalized, lang)
