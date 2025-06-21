@@ -3,6 +3,7 @@ import sys
 import pytest
 import pytest_asyncio
 import discord
+import asyncio
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
@@ -63,6 +64,18 @@ def auto_stop_views(monkeypatch):
             view.stop()
         except Exception:
             pass
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def assert_no_tasks():
+    """Ensure that tests do not leave running tasks behind."""
+
+    yield
+
+    current = asyncio.current_task()
+    stray = [t for t in asyncio.all_tasks() if t is not current and not t.done()]
+
+    assert not stray, f"Stray tasks detected: {stray}"
 
 
 @pytest_asyncio.fixture
