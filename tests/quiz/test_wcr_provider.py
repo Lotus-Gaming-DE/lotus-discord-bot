@@ -1,33 +1,48 @@
+import json
 import random
+from pathlib import Path
+
 import log_setup
 
 from cogs.quiz.area_providers.wcr import WCRQuestionProvider
 from cogs.quiz.utils import create_permutations_list
+from cogs.wcr.utils import load_wcr_data
+
+
+def create_bot():
+    with open(Path("data/quiz/templates/wcr.json"), "r", encoding="utf-8") as f:
+        templates = json.load(f)
+    return DummyBot(templates)
+
+
+def create_provider():
+    bot = create_bot()
+    return bot, WCRQuestionProvider(bot, language="de")
 
 
 class DummyBot:
-    def __init__(self, units, locals_, categories, templates):
+    def __init__(self, templates):
         self.data = {
-            "wcr": {"units": units, "locals": locals_, "categories": categories},
+            "wcr": load_wcr_data(),
             "quiz": {"templates": {"wcr": templates}},
         }
 
 
 def test_generate_type_1(monkeypatch, patch_logged_task):
     patch_logged_task(log_setup)
-    units = [{"id": 1}]
-    locals_ = {
-        "de": {"units": [{"id": 1, "name": "Einheit", "talents": [{"name": "Talent"}]}]}
-    }
-    templates = {"de": {"type_1": "Wer hat {talent_name}?"}}
-    bot = DummyBot(units, locals_, {}, templates)
-    provider = WCRQuestionProvider(bot, language="de")
+    bot, provider = create_provider()
+    first_unit = provider.locals["de"]["units"][0]
+    first_talent = first_unit["talents"][0]
     monkeypatch.setattr(random, "choice", lambda seq: seq[0])
 
     q = provider.generate_type_1()
 
-    assert q["frage"] == "Wer hat Talent?"
-    assert set(q["antwort"]) == set(create_permutations_list(["Einheit"]))
+    template = provider.templates["de"]["type_1"]
+    expected_question = template.format(talent_name=first_talent["name"])
+    expected_answers = create_permutations_list([first_unit["name"]])
+
+    assert q["frage"] == expected_question
+    assert set(q["antwort"]) == set(expected_answers)
     assert q["category"] == "Mechanik"
     assert isinstance(q["id"], int)
 
@@ -37,53 +52,41 @@ def test_generate_type_1(monkeypatch, patch_logged_task):
 
 def test_generate_type_2(monkeypatch, patch_logged_task):
     patch_logged_task(log_setup)
-    units = [{"id": 1}, {"id": 2}]
-    locals_ = {
-        "de": {
-            "units": [
-                {
-                    "id": 1,
-                    "name": "U1",
-                    "talents": [{"name": "T1", "description": "desc"}],
-                },
-                {
-                    "id": 2,
-                    "name": "U2",
-                    "talents": [{"name": "T2", "description": "desc"}],
-                },
-            ]
-        }
-    }
-    templates = {"de": {"type_2": "{talent_description}?"}}
-    bot = DummyBot(units, locals_, {}, templates)
-    provider = WCRQuestionProvider(bot, language="de")
+    bot, provider = create_provider()
+    first_talent = provider.locals["de"]["units"][0]["talents"][0]
     monkeypatch.setattr(random, "choice", lambda seq: seq[0])
 
     q = provider.generate_type_2()
 
-    expected_answers = create_permutations_list(["T1", "T2"])
-    assert "desc" in q["frage"]
+    template = provider.templates["de"]["type_2"]
+    expected_question = template.format(talent_description=first_talent["description"])
+    expected_answers = create_permutations_list([first_talent["name"]])
+
+    assert q["frage"] == expected_question
     assert set(q["antwort"]) == set(expected_answers)
     assert isinstance(q["id"], int)
 
-    provider.locals["de"]["units"] = []
+    provider.locals = {}
     assert provider.generate_type_2() is None
 
 
 def test_generate_type_3(monkeypatch, patch_logged_task):
     patch_logged_task(log_setup)
-    units = [{"id": 1, "faction_id": 1}]
-    locals_ = {"de": {"units": [{"id": 1, "name": "U1"}]}}
-    categories = {"factions": [{"id": 1, "names": {"de": "Faction"}}]}
-    templates = {"de": {"type_3": "Fraktion von {unit_name}?"}}
-    bot = DummyBot(units, locals_, categories, templates)
-    provider = WCRQuestionProvider(bot, language="de")
+    bot, provider = create_provider()
+    first_unit = provider.units[0]
+    first_unit_name = provider.locals["de"]["units"][0]["name"]
+    faction_lookup = provider.lang_category_lookup["de"]["factions"]
+    faction_name = faction_lookup[first_unit["faction_id"]]["name"]
     monkeypatch.setattr(random, "choice", lambda seq: seq[0])
 
     q = provider.generate_type_3()
 
-    assert "U1" in q["frage"]
-    assert set(q["antwort"]) == set(create_permutations_list(["Faction"]))
+    template = provider.templates["de"]["type_3"]
+    expected_question = template.format(unit_name=first_unit_name)
+    expected_answers = create_permutations_list([faction_name])
+
+    assert q["frage"] == expected_question
+    assert set(q["antwort"]) == set(expected_answers)
     assert q["category"] == "Franchise"
 
     provider.units = []
@@ -92,21 +95,19 @@ def test_generate_type_3(monkeypatch, patch_logged_task):
 
 def test_generate_type_4(monkeypatch, patch_logged_task):
     patch_logged_task(log_setup)
-    units = [{"id": 1, "cost": 5}]
-    locals_ = {
-        "de": {
-            "units": [{"id": 1, "name": "U1"}],
-        }
-    }
-    templates = {"de": {"type_4": "Kosten von {unit_name}?"}}
-    bot = DummyBot(units, locals_, {}, templates)
-    provider = WCRQuestionProvider(bot, language="de")
+    bot, provider = create_provider()
+    first_unit = provider.units[0]
+    first_unit_name = provider.locals["de"]["units"][0]["name"]
     monkeypatch.setattr(random, "choice", lambda seq: seq[0])
 
     q = provider.generate_type_4()
 
-    assert "U1" in q["frage"]
-    assert set(q["antwort"]) == set(create_permutations_list(["5"]))
+    template = provider.templates["de"]["type_4"]
+    expected_question = template.format(unit_name=first_unit_name)
+    expected_answers = create_permutations_list([str(first_unit["cost"])])
+
+    assert q["frage"] == expected_question
+    assert set(q["antwort"]) == set(expected_answers)
     assert q["category"] == "Mechanik"
 
     provider.units = []
@@ -115,26 +116,18 @@ def test_generate_type_4(monkeypatch, patch_logged_task):
 
 def test_generate_type_5(monkeypatch, patch_logged_task):
     patch_logged_task(log_setup)
-    units = [
-        {"id": 1, "stats": {"health": 100}},
-        {"id": 2, "stats": {"health": 50}},
-    ]
-    locals_ = {
-        "de": {
-            "units": [{"id": 1, "name": "U1"}, {"id": 2, "name": "U2"}],
-        }
-    }
-    templates = {"de": {"type_5": "Wer hat mehr {stat_label}, {unit1} oder {unit2}?"}}
-    bot = DummyBot(units, locals_, {}, templates)
-    provider = WCRQuestionProvider(bot, language="de")
+    bot, provider = create_provider()
     monkeypatch.setattr(random, "choice", lambda seq: "health")
     monkeypatch.setattr(random, "sample", lambda seq, k: seq[:k])
 
     q = provider.generate_type_5()
 
+    unit_names = [provider.locals["de"]["units"][i]["name"] for i in range(2)]
+    expected_answers = create_permutations_list([unit_names[0]])
+
     assert "health" in q["frage"]
-    assert set(q["antwort"]) == set(create_permutations_list(["U1"]))
+    assert set(q["antwort"]) == set(expected_answers)
     assert q["category"] == "Mechanik"
 
-    provider.units = [{"id": 1, "stats": {"health": 100}}]
+    provider.units = [provider.units[0]]
     assert provider.generate_type_5() is None
