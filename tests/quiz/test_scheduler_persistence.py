@@ -95,3 +95,5 @@ async def test_scheduler_resume(monkeypatch, patch_logged_task, tmp_path):
     sched = cog2.schedulers["area1"]
     assert sched.post_time == post_time
     assert sched.window_end == window_end
+    cog.cog_unload()
+    cog2.cog_unload()
