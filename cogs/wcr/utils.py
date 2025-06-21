@@ -63,10 +63,24 @@ def load_pictures():
         return {}
 
 
+def load_stat_labels():
+    """Lädt die Stat-Labels aus ``stat_labels.json``."""
+    path = BASE_PATH / "stat_labels.json"
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            labels = json.load(f)
+        logger.info("[WCRUtils] Stat-Labels erfolgreich geladen.")
+        return labels
+    except Exception as e:
+        logger.error(f"[WCRUtils] Fehler beim Laden der Stat-Labels: {e}")
+        return {}
+
+
 def load_wcr_data():
     """Fasst alle WCR-Daten zusammen, wie sie im Bot verwendet werden."""
     return {
         "units": load_units(),
         "locals": load_languages(),
         "pictures": load_pictures(),
+        "stat_labels": load_stat_labels(),
     }

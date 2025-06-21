@@ -102,7 +102,7 @@ async def test_cmd_name_creates_embed():
     assert msg["ephemeral"] is True
     assert embed.title.strip() == "Abscheulichkeit"
     assert embed.thumbnail.url.endswith("Statue_Abomination_Pose.webp")
-    assert embed.fields[0].name.strip() == "Cost"
+    assert embed.fields[0].name.strip() == "Kosten"
     assert embed.fields[0].value == "6"
     cog.cog_unload()
 
