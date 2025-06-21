@@ -201,6 +201,7 @@ async def test_start_duel_success(monkeypatch):
     ]
     assert message.edited_view is None
     assert run_called
+    view.stop()
 
 
 @pytest.mark.asyncio
@@ -217,6 +218,7 @@ async def test_start_duel_no_champion_system():
     assert view.accepted is False
     assert message.edited_view is None
     assert interaction.followup.sent[0][0].startswith("Champion-System")
+    view.stop()
 
 
 @pytest.mark.asyncio
@@ -236,6 +238,7 @@ async def test_start_duel_insufficient_points_challenger():
     assert message.edited_view is None
     assert bot._champion.calls == []
     assert interaction.followup.sent[0][0].startswith("Der Herausforderer")
+    view.stop()
 
 
 @pytest.mark.asyncio
@@ -255,6 +258,7 @@ async def test_start_duel_insufficient_points_opponent():
     assert message.edited_view == "INIT"
     assert bot._champion.calls == []
     assert interaction.followup.sent[0][0].startswith("Du hast nicht genug")
+    view.stop()
 
 
 @pytest.mark.asyncio
@@ -285,6 +289,7 @@ async def test_start_duel_thread_fail(monkeypatch):
         (1, 20, "Quiz-Duell Rückgabe"),
         (2, 20, "Quiz-Duell Rückgabe"),
     ]
+    view.stop()
 
 
 @pytest.mark.asyncio
@@ -321,6 +326,7 @@ async def test_invite_timeout_notifies():
     assert message.edited_view is None
     assert message.edited_view is None
     assert channel.sent == ["<@1>, deine Duellanfrage ist abgelaufen."]
+    view.stop()
 
 
 @pytest.mark.asyncio
@@ -621,6 +627,7 @@ async def test_start_duel_blocks_active_players():
     assert view.accepted is False
     assert bot._champion.calls == []
     assert message.edited_view is None
+    view.stop()
 
 
 @pytest.mark.asyncio
@@ -663,6 +670,7 @@ async def test_start_duel_run_exception_clears_active(monkeypatch):
         (1, 20, "Quiz-Duell Rückgabe"),
         (2, 20, "Quiz-Duell Rückgabe"),
     ]
+    view.stop()
 
 
 class SlashResponse:
