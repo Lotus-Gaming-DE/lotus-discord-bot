@@ -20,9 +20,9 @@ def categories():
 
 
 @pytest.fixture(scope="module")
-def lang_lookup(categories, pictures):
-    lookup, _ = helpers.build_category_lookup(categories, pictures)
-    return lookup
+def lang_lookup(categories):
+    """Erzeuge die Kategorie-Lookup-Tabelle für die Tests."""
+    return helpers.build_category_lookup(categories)
 
 
 @pytest.fixture(scope="module")
@@ -64,21 +64,21 @@ def test_get_category_name_unknown(lang_lookup):
     assert name == "Unbekannt"
 
 
-def test_get_faction_data_known(pictures):
-    data = helpers.get_faction_data(1, pictures)
+def test_get_faction_data_known(lang_lookup):
+    data = helpers.get_faction_data(1, lang_lookup)
     assert data["icon"] == "wcr_undead"
 
 
-def test_get_faction_data_unknown(pictures):
-    assert helpers.get_faction_data(9999, pictures) == {}
+def test_get_faction_data_unknown(lang_lookup):
+    assert helpers.get_faction_data(9999, lang_lookup) == {}
 
 
-def test_get_faction_icon_known(pictures):
-    assert helpers.get_faction_icon(1, pictures) == "wcr_undead"
+def test_get_faction_icon_known(lang_lookup):
+    assert helpers.get_faction_icon(1, lang_lookup) == "wcr_undead"
 
 
-def test_get_faction_icon_unknown(pictures):
-    assert helpers.get_faction_icon(9999, pictures) == ""
+def test_get_faction_icon_unknown(lang_lookup):
+    assert helpers.get_faction_icon(9999, lang_lookup) == ""
 
 
 def test_find_category_id_in_current_lang(lang_lookup):
