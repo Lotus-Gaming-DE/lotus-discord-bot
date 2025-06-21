@@ -7,10 +7,9 @@ from cogs.wcr import helpers
 
 @pytest.fixture(scope="module")
 def languages():
-    return {
-        "de": json.load(open("data/wcr/locals/de.json", "r", encoding="utf-8")),
-        "en": json.load(open("data/wcr/locals/en.json", "r", encoding="utf-8")),
-    }
+    from cogs.wcr.utils import load_languages
+
+    return load_languages()
 
 
 @pytest.fixture(scope="module")
