@@ -1665,7 +1665,7 @@
             },
             {
                 "id": 10,
-                "name": "Possesion"
+                "name": "Possession"
             },
             {
                 "id": 11,
@@ -1849,7 +1849,7 @@
         "health": "Health",
         "speed_id": "Speed",
         "damage": "Damage",
-        "area_damage": "AOE Damange",
+        "area_damage": "AOE Damage",
         "attack_speed": "ATK Speed",
         "dps": "DPS",
         "range": "Range",
