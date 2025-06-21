@@ -42,10 +42,11 @@ class DuelCalculator:
             damage = max(damage, stats["dps"] * duration)
         return damage
 
-    def compute_dps(
+    def compute_dps_details(
         self, attacker: dict, attacker_stats: dict, defender: dict
-    ) -> float:
-        """Calculate DPS attacker does to defender considering traits."""
+    ) -> tuple[float, list[str]]:
+        """Calculate DPS and return notes about trait interactions."""
+        notes: list[str] = []
         traits_a = attacker.get("traits_ids", [])
         traits_d = defender.get("traits_ids", [])
 
@@ -55,7 +56,8 @@ class DuelCalculator:
             and 11 not in traits_a
             and 15 not in traits_a
         ):
-            return 0.0
+            notes.append("kann Flieger nicht treffen")
+            return 0.0, notes
 
         dmg_key = (
             "damage"
@@ -63,25 +65,35 @@ class DuelCalculator:
             else "area_damage" if "area_damage" in attacker_stats else None
         )
         if dmg_key is None:
-            return 0.0
+            notes.append("verursacht keinen Schaden")
+            return 0.0, notes
 
         damage = attacker_stats[dmg_key]
         if 8 in traits_a and 20 in traits_d:
             damage *= 0.5
+            notes.append("Resistent halbiert Elementarschaden")
         elif 8 not in traits_a and 13 in traits_d:
             damage *= 0.5
+            notes.append("Gepanzert halbiert Schaden")
 
         attack_speed = attacker_stats.get("attack_speed")
         if attack_speed:
-            return damage / attack_speed
+            return damage / attack_speed, notes
 
         if attacker.get("type_id") == 2:
             dps = attacker_stats.get("dps")
             if dps is not None:
-                return dps
-            return damage
+                return dps, notes
+            return damage, notes
 
-        return attacker_stats.get("dps", 0.0)
+        return attacker_stats.get("dps", 0.0), notes
+
+    def compute_dps(
+        self, attacker: dict, attacker_stats: dict, defender: dict
+    ) -> float:
+        """Backward compatible wrapper around ``compute_dps_details``."""
+        dps, _ = self.compute_dps_details(attacker, attacker_stats, defender)
+        return dps
 
     def duel_result(
         self,

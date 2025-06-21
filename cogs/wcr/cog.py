@@ -372,8 +372,8 @@ class WCRCog(commands.Cog):
         stats_a = calculator.scaled_stats(data_a, level_a)
         stats_b = calculator.scaled_stats(data_b, level_b)
 
-        dps_a = calculator.compute_dps(data_a, stats_a, data_b)
-        dps_b = calculator.compute_dps(data_b, stats_b, data_a)
+        dps_a, notes_a = calculator.compute_dps_details(data_a, stats_a, data_b)
+        dps_b, notes_b = calculator.compute_dps_details(data_b, stats_b, data_a)
 
         def _flight_issue(att: dict, def_: dict) -> bool:
             ta = att.get("traits_ids", [])
@@ -451,19 +451,17 @@ class WCRCog(commands.Cog):
             f"\n{name_a} (Level {level_a})\n{_fmt_stats(base_a, stats_a, level_a)}"
         )
         if not is_spell_b or is_spell_a:
-            line = f"DPS gegen {name_b}: {dps_a:.1f}"
-            if issue_a:
-                line += " (kann Flieger nicht treffen)"
-            parts.append(line)
+            parts.append(f"DPS gegen {name_b}: {dps_a:.1f}")
+            for note in notes_a:
+                parts.append(f"- {note}")
 
         parts.append(
             f"\n{name_b} (Level {level_b})\n{_fmt_stats(base_b, stats_b, level_b)}"
         )
         if not is_spell_a or is_spell_b:
-            line = f"DPS gegen {name_a}: {dps_b:.1f}"
-            if issue_b:
-                line += " (kann Flieger nicht treffen)"
-            parts.append(line)
+            parts.append(f"DPS gegen {name_a}: {dps_b:.1f}")
+            for note in notes_b:
+                parts.append(f"- {note}")
 
         text = "\n".join(parts)
 
