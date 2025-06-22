@@ -127,6 +127,19 @@ def test_name_map_contains_unit():
     cog.cog_unload()
 
 
+def test_build_mini_embed_uses_emoji():
+    bot = DummyBot()
+    bot.data["emojis"] = {"wcr_undead": "<:wcr_undead:id>"}
+    cog = WCRCog(bot)
+    units = bot.data["wcr"]["units"]
+    if isinstance(units, dict) and "units" in units:
+        units = units["units"]
+    unit = next(u for u in units if u["id"] == 1)
+    embed, _ = cog.build_mini_embed(unit["id"], unit, "de")
+    assert embed.title.startswith("<:wcr_undead:id>")
+    cog.cog_unload()
+
+
 def test_category_lookups_created():
     bot = DummyBot()
     cog = WCRCog(bot)
