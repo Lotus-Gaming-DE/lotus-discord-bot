@@ -150,9 +150,9 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
   - `stat_labels.json` übersetzt die Statistik-Bezeichnungen.
   - `pictures.json` ordnet jedem Mini ein Icon zu.
   - Die Fragevorlagen liegen unter `data/quiz/templates/wcr.json`.
-  - Beim Start erzeugt `_export_emojis` automatisch `data/emojis.json`; die darin
-    hinterlegten Emoji-Namen müssen mit den Angaben in `data/wcr/categories.json`
-    übereinstimmen.
+  - Beim Start erzeugt `_export_emojis` automatisch `data/emojis.json`; diese
+    Datei enthält ein einfaches Mapping `{name: syntax}`. Die Emoji-Namen müssen
+    mit den Angaben in `data/wcr/categories.json` übereinstimmen.
 - Alle Slash-Commands werden **guild-basiert** registriert und nur für die Haupt-Guild synchronisiert.
 
 Persistente Daten liegen in `data/pers/` und sollten nicht ins Repository aufgenommen werden.

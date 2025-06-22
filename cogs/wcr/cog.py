@@ -290,8 +290,8 @@ class WCRCog(commands.Cog):
             unit_name = helpers.get_text_data(unit_id, lang, self.languages)[0]
             emoji_syntax = self.emojis.get(
                 helpers.get_faction_icon(unit["faction_id"], self.lang_category_lookup),
-                {},
-            ).get("syntax")
+                "",
+            )
             if emoji_syntax:
                 option = discord.SelectOption(
                     label=unit_name, value=str(unit_id), emoji=emoji_syntax
@@ -580,16 +580,14 @@ class WCRCog(commands.Cog):
         cost = unit_data.get("cost", "N/A")
         row1_stats.append(
             {
-                "name": f"{self.emojis.get('wcr_cost', {}).get('syntax', '')} "
-                f"{stat_labels.get('cost', 'Kosten')}",
+                "name": f"{self.emojis.get('wcr_cost', '')} {stat_labels.get('cost', 'Kosten')}",
                 "value": str(cost),
                 "inline": True,
             }
         )
         row1_stats.append(
             {
-                "name": f"{self.emojis.get('wcr_type', {}).get('syntax', '')} "
-                f"{stat_labels.get('type_id', 'Typ')}",
+                "name": f"{self.emojis.get('wcr_type', '')} {stat_labels.get('type_id', 'Typ')}",
                 "value": type_name,
                 "inline": True,
             }
@@ -599,8 +597,7 @@ class WCRCog(commands.Cog):
         if health is not None:
             row2_stats.append(
                 {
-                    "name": f"{self.emojis.get('wcr_health', {}).get('syntax', '')} "
-                    f"{stat_labels.get('health', 'Gesundheit')}",
+                    "name": f"{self.emojis.get('wcr_health', '')} {stat_labels.get('health', 'Gesundheit')}",
                     "value": str(health),
                     "inline": True,
                 }
@@ -608,8 +605,7 @@ class WCRCog(commands.Cog):
         if speed_name:
             row2_stats.append(
                 {
-                    "name": f"{self.emojis.get('wcr_speed', {}).get('syntax', '')} "
-                    f"{stat_labels.get('speed_id', 'Geschwindigkeit')}",
+                    "name": f"{self.emojis.get('wcr_speed', '')} {stat_labels.get('speed_id', 'Geschwindigkeit')}",
                     "value": speed_name,
                     "inline": True,
                 }
@@ -621,24 +617,20 @@ class WCRCog(commands.Cog):
                 damage_value = stats["damage"]
                 if is_elemental:
                     damage_label = stat_labels.get("damage", "Elementarschaden")
-                    damage_emoji = self.emojis.get("wcr_damage_ele", {}).get(
-                        "syntax", ""
-                    )
+                    damage_emoji = self.emojis.get("wcr_damage_ele", "")
                 else:
                     damage_label = stat_labels.get("damage", "Schaden")
-                    damage_emoji = self.emojis.get("wcr_damage", {}).get("syntax", "")
+                    damage_emoji = self.emojis.get("wcr_damage", "")
             else:
                 damage_value = stats["area_damage"]
                 if is_elemental:
                     damage_label = stat_labels.get(
                         "area_damage", "Elementarflächenschaden"
                     )
-                    damage_emoji = self.emojis.get("wcr_damage_ele", {}).get(
-                        "syntax", ""
-                    )
+                    damage_emoji = self.emojis.get("wcr_damage_ele", "")
                 else:
                     damage_label = stat_labels.get("area_damage", "Flächenschaden")
-                    damage_emoji = self.emojis.get("wcr_damage", {}).get("syntax", "")
+                    damage_emoji = self.emojis.get("wcr_damage", "")
             row3_stats.append(
                 {
                     "name": f"{damage_emoji} {damage_label}",
@@ -651,8 +643,7 @@ class WCRCog(commands.Cog):
         if attack_speed is not None:
             row3_stats.append(
                 {
-                    "name": f"{self.emojis.get('wcr_attack_speed', {}).get('syntax', '')} "
-                    f"{stat_labels.get('attack_speed', 'Angriffsgeschwindigkeit')}",
+                    "name": f"{self.emojis.get('wcr_attack_speed', '')} {stat_labels.get('attack_speed', 'Angriffsgeschwindigkeit')}",
                     "value": str(attack_speed),
                     "inline": True,
                 }
@@ -662,8 +653,7 @@ class WCRCog(commands.Cog):
         if dps is not None:
             row3_stats.append(
                 {
-                    "name": f"{self.emojis.get('wcr_dps', {}).get('syntax', '')} "
-                    f"{stat_labels.get('dps', 'DPS')}",
+                    "name": f"{self.emojis.get('wcr_dps', '')} {stat_labels.get('dps', 'DPS')}",
                     "value": str(dps),
                     "inline": True,
                 }
@@ -698,7 +688,7 @@ class WCRCog(commands.Cog):
                 label = stat_labels.get(stat_key, stat_key.capitalize())
                 extra_stats.append(
                     {
-                        "name": f"{self.emojis.get(emoji_name, {}).get('syntax', '')} {label}",
+                        "name": f"{self.emojis.get(emoji_name, '')} {label}",
                         "value": str(stats[stat_key]),
                         "inline": True,
                     }
@@ -749,9 +739,7 @@ class WCRCog(commands.Cog):
             unit_data.get("faction_id"), self.lang_category_lookup
         )
         embed_color = int(faction_data.get("color", "#3498db").strip("#"), 16)
-        faction_emoji = self.emojis.get(faction_data.get("icon", ""), {}).get(
-            "syntax", ""
-        )
+        faction_emoji = self.emojis.get(faction_data.get("icon", ""), "")
 
         type_name = helpers.get_category_name(
             "types", unit_data.get("type_id"), lang, self.lang_category_lookup
