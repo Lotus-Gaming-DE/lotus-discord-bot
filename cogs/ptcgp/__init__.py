@@ -3,17 +3,17 @@ import discord
 from log_setup import get_logger
 
 from .cog import PTCGPCog
+from utils.setup_helpers import register_cog_and_group
 
 logger = get_logger(__name__)
 
 
 async def setup(bot: discord.ext.commands.Bot):
-    """Register the PTCGP cog and its slash commands."""
+    """Registriert Cog und Slash-Befehle für PTCGP."""
     try:
         from .slash_commands import ptcgp_group
 
-        await bot.add_cog(PTCGPCog(bot))
-        bot.tree.add_command(ptcgp_group, guild=bot.main_guild)
+        await register_cog_and_group(bot, PTCGPCog, ptcgp_group)
         logger.info("[PTCGPCog] Cog und Slash-Command-Gruppe erfolgreich registriert.")
     except Exception as e:
         logger.error(f"[PTCGPCog] Fehler beim Setup: {e}", exc_info=True)

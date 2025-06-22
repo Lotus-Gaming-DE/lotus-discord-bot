@@ -5,17 +5,17 @@ import discord
 from log_setup import get_logger
 
 from .cog import WCRCog
+from utils.setup_helpers import register_cog_and_group
 
 logger = get_logger(__name__)  # z.B. "cogs.wcr.__init__"
 
 
 async def setup(bot: discord.ext.commands.Bot):
-    """Register the WCR cog and its slash commands."""
+    """Registriert Cog und Slash-Befehle für WCR."""
     try:
         from .slash_commands import wcr_group
 
-        await bot.add_cog(WCRCog(bot))
-        bot.tree.add_command(wcr_group, guild=bot.main_guild)
+        await register_cog_and_group(bot, WCRCog, wcr_group)
         logger.info("[WCRCog] Cog und Slash-Command-Gruppe erfolgreich registriert.")
     except Exception as e:
         logger.error(f"[WCRCog] Fehler beim Setup: {e}", exc_info=True)
