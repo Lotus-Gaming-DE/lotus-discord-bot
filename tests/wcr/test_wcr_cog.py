@@ -529,3 +529,11 @@ async def test_cmd_duel_unknown_mini(wcr_data):
     assert msg["content"] == "Eines der Minis wurde nicht gefunden."
     assert msg["ephemeral"] is False
     cog.cog_unload()
+
+
+def test_init_without_localization(caplog):
+    bot = DummyBot({})
+    with caplog.at_level(logging.WARNING):
+        with pytest.raises(ValueError) as exc:
+            WCRCog(bot)
+    assert "localization data" in str(exc.value)
