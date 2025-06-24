@@ -1,4 +1,4 @@
-import discord
+from discord.ext import commands
 
 from log_setup import get_logger
 
@@ -8,7 +8,7 @@ from utils.setup_helpers import register_cog_and_group
 logger = get_logger(__name__)
 
 
-async def setup(bot: discord.ext.commands.Bot):
+async def setup(bot: commands.Bot):
     """Registriert Cog und Slash-Befehle für das Champion-System."""
     try:
         from .slash_commands import champion_group, syncroles

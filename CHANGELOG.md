@@ -15,3 +15,4 @@
 - ChampionCog besitzt nun eine begrenzte Update-Warteschlange (1000 Einträge);
   beim Füllen wird ein ``QueueFull``-Fehler geloggt.
 
+- Bereinigt: `cogs/champion/__init__.py` verwendet nun `commands.Bot` und entfernt den Import von `discord`.
