@@ -57,11 +57,13 @@ Die statischen Dateien sind wie folgt organisiert:
 
 - `data/quiz/questions_*.json` enthalten den Fragepool.
 - `data/quiz/templates/` hält Textbausteine für dynamische Fragen.
-- `data/wcr/units.json` speichert alle Minis inklusive Werte und lokalisierter Texte.
-- `data/wcr/categories.json` definiert Fraktionen, Typen, Geschwindigkeiten und Traits (ohne Icons).
-- `data/wcr/faction_meta.json` enthält Zusatzdaten zu Fraktionen wie Icon und Farbe.
-- `data/wcr/stat_labels.json` bietet Übersetzungen der Statistikbezeichnungen.
-- `data/wcr/pictures.json` ordnet Einheiten zugehörige Icons zu.
+- `data/wcr/units.json` dient lediglich als Testdatenbasis für alle Minis.
+- `data/wcr/categories.json` stellt Testdaten für Fraktionen, Typen, Geschwindigkeiten und Traits bereit.
+- `data/wcr/stat_labels.json` bietet Testübersetzungen der Statistikbezeichnungen.
+- `data/wcr/pictures.json` ordnet Einheiten testweise Icons zu.
+- `data/wcr/faction_meta.json` enthält weiterhin lokale Angaben zu Fraktionen wie Icon und Farbe.
+
+Die aktuellen Spieldaten werden beim Start einmalig über die in `WCR_API_URL` definierte API geladen und im Speicher gehalten.
 
 ---
 
