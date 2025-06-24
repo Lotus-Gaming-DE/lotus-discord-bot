@@ -241,23 +241,31 @@ async def test_worker_cancelled_on_unload(monkeypatch, patch_logged_task):
 
 
 @pytest.mark.asyncio
-async def test_queue_logs_when_full(monkeypatch, patch_logged_task, caplog):
+async def test_queue_raises_when_full(monkeypatch, patch_logged_task, caplog):
     patch_logged_task(champion_cog_mod, log_setup)
     bot = DummyBot()
 
-    cog = ChampionCog(bot, queue_maxsize=2)
+    # erzwinge eine kleine Warteschlange für den Test
+    original_queue = asyncio.Queue
+
+    def small_queue(*args, **kwargs):
+        return original_queue(maxsize=2)
+
+    monkeypatch.setattr(champion_cog_mod.asyncio, "Queue", small_queue)
+    cog = ChampionCog(bot)
 
     async def fake_add(user_id, delta, reason):
         return delta
 
     monkeypatch.setattr(cog.data, "add_delta", fake_add)
 
+    await cog.update_user_score(1, 1, "a")
+    await cog.update_user_score(2, 1, "b")
     with caplog.at_level(logging.ERROR):
-        await cog.update_user_score(1, 1, "a")
-        await cog.update_user_score(2, 1, "b")
-        await cog.update_user_score(3, 1, "c")
+        with pytest.raises(RuntimeError):
+            await cog.update_user_score(3, 1, "c")
 
     assert any("update_queue voll" in r.message for r in caplog.records)
 
-    cog.cog_unload()
+    await cog.cog_unload()
     await cog.wait_closed()
