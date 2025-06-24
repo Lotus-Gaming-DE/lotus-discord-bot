@@ -30,6 +30,8 @@ class WCRCog(commands.Cog):
         if isinstance(self.units, dict) and "units" in self.units:
             self.units = self.units["units"]
         self.languages = wcr_data.get("locals", {})
+        if not self.languages:
+            raise ValueError("WCR localization data missing")
         self.categories = wcr_data.get("categories", {})
         self.stat_labels = wcr_data.get("stat_labels", {})
         self.faction_combinations = wcr_data.get("faction_combinations", {})

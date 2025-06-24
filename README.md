@@ -49,6 +49,8 @@ WCR_IMAGE_BASE=https://www.method.gg
 PTCGP_SKIP_SSL_VERIFY=0
 ```
 
+Ohne eine gesetzte `WCR_API_URL` wird das WCR-Modul beim Start deaktiviert.
+
 Beim ersten Start werden persistente Daten unter `data/pers/` angelegt (Punktedatenbank, Quiz-Historie etc.).
 
 ## Datenstruktur
