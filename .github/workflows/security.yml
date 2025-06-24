@@ -27,6 +27,7 @@ jobs:
       - name: Run Snyk
         uses: snyk/actions/python@master
         with:
-          args: pip install -r requirements.txt
+          command: test
+          args: --file=requirements.txt
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}

@@ -3,7 +3,12 @@ import discord
 import pytest
 
 
-from lotus_bot.cogs.quiz.duel import QuizDuelGame, DuelInviteView, DuelConfig, DuelQuestionView
+from lotus_bot.cogs.quiz.duel import (
+    QuizDuelGame,
+    DuelInviteView,
+    DuelConfig,
+    DuelQuestionView,
+)
 from lotus_bot.cogs.quiz.quiz_config import QuizAreaConfig
 
 
