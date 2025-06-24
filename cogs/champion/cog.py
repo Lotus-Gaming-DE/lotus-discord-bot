@@ -165,8 +165,7 @@ class ChampionCog(ManagedTaskCog):
                     exc_info=True,
                 )
 
-    def cog_unload(self):
-        """Beendet Tasks und schließt die Datenbankverbindung."""
+    async def cog_unload(self) -> None:
+        """Schlie\u00dft zun\u00e4chst die Datenbank und beendet anschlie\u00dfend alle Tasks."""
+        await self.data.close()
         super().cog_unload()
-        # Datenbank sauber schließen, damit keine offenen Tasks bleiben
-        self.create_task(self.data.close())

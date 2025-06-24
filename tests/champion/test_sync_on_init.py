@@ -46,7 +46,7 @@ async def test_sync_called_on_init(monkeypatch, tmp_path):
 
     assert set(calls) == {("1", 5), ("2", 3)}
 
-    cog.cog_unload()
+    await cog.cog_unload()
     await data.close()
     await asyncio.gather(*tasks, return_exceptions=True)
     await cog.wait_closed()

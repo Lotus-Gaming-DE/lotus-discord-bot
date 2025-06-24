@@ -22,6 +22,5 @@ async def test_env_db_path(monkeypatch, patch_logged_task, tmp_path):
 
     assert cog.data.db_path == str(path)
 
-    cog.cog_unload()
-    await cog.data.close()
+    await cog.cog_unload()
     await cog.wait_closed()
