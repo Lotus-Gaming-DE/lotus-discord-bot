@@ -24,6 +24,21 @@ async def test_add_and_get_total(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_subtract_more_than_total_sets_zero(tmp_path):
+    db_path = tmp_path / "neg" / "points.db"
+    data = ChampionData(str(db_path))
+
+    await data.add_delta("user1", 5, "init")
+    total = await data.add_delta("user1", -10, "remove")
+
+    assert total == 0
+
+    await data.close()
+    db_path.unlink()
+    assert not db_path.exists()
+
+
+@pytest.mark.asyncio
 async def test_get_history(tmp_path):
     db_path = tmp_path / "history" / "points.db"
     data = ChampionData(str(db_path))
