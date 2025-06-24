@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from discord.ext import commands
 from typing import Optional, List
 import os
+import aiosqlite
 
 from log_setup import get_logger
 from utils.managed_cog import ManagedTaskCog
@@ -65,9 +66,23 @@ class ChampionCog(ManagedTaskCog):
         return None
 
     async def update_user_score(self, user_id: int, delta: int, reason: str) -> int:
-        """Wendet eine Punktänderung an und passt die Rolle des Mitglieds an."""
+        """Wendet eine Punktänderung an und passt die Rolle des Mitglieds an.
+
+        Raises
+        ------
+        RuntimeError
+            Wenn die Punkte aufgrund eines Datenbankfehlers nicht gespeichert
+            werden können.
+        """
         user_id_str = str(user_id)
-        new_total = await self.data.add_delta(user_id_str, delta, reason)
+        try:
+            new_total = await self.data.add_delta(user_id_str, delta, reason)
+        except aiosqlite.Error as exc:
+            logger.error(
+                f"[ChampionCog] DB-Fehler beim Aktualisieren von {user_id_str}: {exc}",
+                exc_info=True,
+            )
+            raise RuntimeError("Fehler beim Speichern der Punkte.") from exc
 
         try:
             self.update_queue.put_nowait((user_id_str, new_total))
