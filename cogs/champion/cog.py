@@ -86,7 +86,11 @@ class ChampionCog(ManagedTaskCog):
                 self.update_queue.task_done()
 
     async def _apply_champion_role(self, user_id_str: str, score: int) -> None:
-        """Vergibt anhand der Punkte die passende Champion-Rolle."""
+        """Vergibt anhand der Punkte die passende Champion-Rolle.
+
+        Existiert die im Config definierte Rollen-ID nicht, wird keine Rolle
+        vergeben und ein Hinweis geloggt.
+        """
         # Zugriff auf Guild NUR noch über self.bot.main_guild (Zentral, wie in bot.py gesetzt)
         guild = self.bot.main_guild
         if not isinstance(guild, discord.Guild):
@@ -118,8 +122,10 @@ class ChampionCog(ManagedTaskCog):
             if role.id in current_role_ids and role != target_role:
                 role_obj = guild.get_role(role.id)
                 if role_obj is None:
-                    role_obj = discord.utils.get(guild.roles, name=role.name)
-                if role_obj:
+                    logger.warning(
+                        f"[ChampionCog] Rolle '{role.name}' mit ID {role.id} existiert nicht."
+                    )
+                else:
                     roles_to_remove.append(role_obj)
 
         if roles_to_remove:
@@ -140,8 +146,10 @@ class ChampionCog(ManagedTaskCog):
 
         target_role_obj = guild.get_role(target_role.id)
         if target_role_obj is None:
-            target_role_obj = discord.utils.get(guild.roles, name=target_role.name)
-        if target_role_obj:
+            logger.warning(
+                f"[ChampionCog] Rolle '{target_role.name}' mit ID {target_role.id} existiert nicht."
+            )
+        else:
             try:
                 await member.add_roles(target_role_obj)
                 logger.info(
@@ -156,10 +164,6 @@ class ChampionCog(ManagedTaskCog):
                     f"[ChampionCog] Fehler beim Hinzufügen der Rolle: {e}",
                     exc_info=True,
                 )
-        else:
-            logger.warning(
-                f"[ChampionCog] Rolle '{target_role.name}' existiert nicht in Discord."
-            )
 
     def cog_unload(self):
         """Beendet Tasks und schließt die Datenbankverbindung."""

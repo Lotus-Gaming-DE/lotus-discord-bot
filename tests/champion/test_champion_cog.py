@@ -162,11 +162,6 @@ async def test_apply_role_removes_when_below_threshold(monkeypatch, patch_logged
     bot.main_guild = guild
 
     monkeypatch.setattr(champion_cog_mod.discord, "Guild", DummyGuild)
-    monkeypatch.setattr(
-        champion_cog_mod.discord.utils,
-        "get",
-        lambda seq, *, name=None: next((r for r in seq if r.name == name), None),
-    )
 
     cog = ChampionCog(bot)
 
@@ -188,11 +183,6 @@ async def test_apply_role_prefers_get_member(monkeypatch, patch_logged_task):
     bot.main_guild = guild
 
     monkeypatch.setattr(champion_cog_mod.discord, "Guild", DummyGuildGet)
-    monkeypatch.setattr(
-        champion_cog_mod.discord.utils,
-        "get",
-        lambda seq, *, name=None: next((r for r in seq if r.name == name), None),
-    )
 
     cog = ChampionCog(bot)
 
@@ -200,6 +190,30 @@ async def test_apply_role_prefers_get_member(monkeypatch, patch_logged_task):
 
     assert guild.get_calls == 1
     assert guild.fetch_calls == 0
+    cog.cog_unload()
+    await cog.data.close()
+
+
+@pytest.mark.asyncio
+async def test_apply_role_ignores_same_name_if_id_missing(
+    monkeypatch, patch_logged_task
+):
+    patch_logged_task(champion_cog_mod, log_setup)
+    bot = DummyBot()
+    bot.data["champion"]["roles"] = [{"name": "Silver", "threshold": 5, "id": 999}]
+
+    silver_real = DummyRole("Silver", 1)
+    member = DummyMember([])
+    guild = DummyGuild(member, [silver_real])
+    bot.main_guild = guild
+
+    monkeypatch.setattr(champion_cog_mod.discord, "Guild", DummyGuild)
+
+    cog = ChampionCog(bot)
+
+    await cog._apply_champion_role("123", 5)
+
+    assert member.added == []
     cog.cog_unload()
     await cog.data.close()
 
