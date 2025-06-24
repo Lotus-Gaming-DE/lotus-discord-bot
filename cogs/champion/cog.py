@@ -20,11 +20,13 @@ class ChampionRole:
 
 
 class ChampionCog(ManagedTaskCog):
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot, queue_maxsize: int = 1000) -> None:
         """Initialisiert das Cog und lädt die Rollenkonfiguration.
 
         Der Pfad zur Punkte-Datenbank kann \u00fcber die Environment-Variable
-        ``CHAMPION_DB_PATH`` angepasst werden.
+        ``CHAMPION_DB_PATH`` angepasst werden. Die Warteschlange für
+        Rollen-Updates ist auf ``queue_maxsize`` Einträge begrenzt. Wird sie
+        überschritten, erscheint ein ``QueueFull``-Fehler im Log.
         """
         super().__init__()
         self.bot = bot
@@ -36,7 +38,9 @@ class ChampionCog(ManagedTaskCog):
 
         self.create_task(self.sync_all_roles())
 
-        self.update_queue: asyncio.Queue[tuple[str, int]] = asyncio.Queue()
+        self.update_queue: asyncio.Queue[tuple[str, int]] = asyncio.Queue(
+            maxsize=queue_maxsize
+        )
         self.worker_task = self.create_task(self._worker())
 
     def _load_roles_config(self) -> list[ChampionRole]:
@@ -65,7 +69,10 @@ class ChampionCog(ManagedTaskCog):
         user_id_str = str(user_id)
         new_total = await self.data.add_delta(user_id_str, delta, reason)
 
-        await self.update_queue.put((user_id_str, new_total))
+        try:
+            self.update_queue.put_nowait((user_id_str, new_total))
+        except asyncio.QueueFull as exc:
+            logger.error("[ChampionCog] update_queue voll", exc_info=exc)
 
         return new_total
 

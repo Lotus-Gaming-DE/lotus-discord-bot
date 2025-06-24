@@ -1,5 +1,6 @@
 import asyncio
 import pytest
+import logging
 
 
 from cogs.champion.cog import ChampionCog
@@ -240,3 +241,26 @@ async def test_worker_cancelled_on_unload(monkeypatch, patch_logged_task):
     await cog.wait_closed()
 
     assert cog.worker_task.cancelled()
+
+
+@pytest.mark.asyncio
+async def test_queue_logs_when_full(monkeypatch, patch_logged_task, caplog):
+    patch_logged_task(champion_cog_mod, log_setup)
+    bot = DummyBot()
+
+    cog = ChampionCog(bot, queue_maxsize=2)
+
+    async def fake_add(user_id, delta, reason):
+        return delta
+
+    monkeypatch.setattr(cog.data, "add_delta", fake_add)
+
+    with caplog.at_level(logging.ERROR):
+        await cog.update_user_score(1, 1, "a")
+        await cog.update_user_score(2, 1, "b")
+        await cog.update_user_score(3, 1, "c")
+
+    assert any("update_queue voll" in r.message for r in caplog.records)
+
+    cog.cog_unload()
+    await cog.wait_closed()
