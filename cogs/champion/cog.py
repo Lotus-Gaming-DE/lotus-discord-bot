@@ -15,6 +15,8 @@ logger = get_logger(__name__)
 
 @dataclass
 class ChampionRole:
+    """Definiert eine Champion-Rolle mit ID, Name und Punktschwelle."""
+
     id: int
     name: str
     threshold: int
@@ -99,12 +101,15 @@ class ChampionCog(ManagedTaskCog):
 
     async def _worker(self) -> None:
         """Verarbeitet Punktänderungen aus der Warteschlange nacheinander."""
-        while True:
-            user_id_str, total = await self.update_queue.get()
-            try:
-                await self._apply_champion_role(user_id_str, total)
-            finally:
-                self.update_queue.task_done()
+        try:
+            while True:
+                user_id_str, total = await self.update_queue.get()
+                try:
+                    await self._apply_champion_role(user_id_str, total)
+                finally:
+                    self.update_queue.task_done()
+        except asyncio.CancelledError:
+            pass
 
     async def _apply_champion_role(self, user_id_str: str, score: int) -> None:
         """Vergibt anhand der Punkte die passende Champion-Rolle.
@@ -187,6 +192,7 @@ class ChampionCog(ManagedTaskCog):
                 )
 
     async def cog_unload(self) -> None:
-        """Schlie\u00dft zun\u00e4chst die Datenbank und beendet anschlie\u00dfend alle Tasks."""
+        """Schließt die Datenbank und wartet auf alle Hintergrund-Tasks."""
         await self.data.close()
         super().cog_unload()
+        await self.wait_closed()

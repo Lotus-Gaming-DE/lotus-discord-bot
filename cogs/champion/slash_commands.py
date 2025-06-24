@@ -21,13 +21,22 @@ champion_group = app_commands.Group(
     grund="Begründung",
 )
 async def give(
-    interaction: discord.Interaction, user: discord.Member, punkte: int, grund: str
+    interaction: discord.Interaction,
+    user: discord.Member,
+    punkte: app_commands.Range[int, 1],
+    grund: str,
 ):
     """Verleiht einem Nutzer Punkte."""
 
     logger.info(
         f"/champion give by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
     )
+
+    if punkte < 1:
+        await interaction.response.send_message(
+            "❌ Punkte müssen mindestens 1 betragen.", ephemeral=True
+        )
+        return
 
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     new_total = await cog.update_user_score(user.id, punkte, grund)
@@ -46,13 +55,22 @@ async def give(
     grund="Begründung",
 )
 async def remove(
-    interaction: discord.Interaction, user: discord.Member, punkte: int, grund: str
+    interaction: discord.Interaction,
+    user: discord.Member,
+    punkte: app_commands.Range[int, 1],
+    grund: str,
 ):
     """Zieht einem Nutzer Punkte ab."""
 
     logger.info(
         f"/champion remove by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
     )
+
+    if punkte < 1:
+        await interaction.response.send_message(
+            "❌ Punkte müssen mindestens 1 betragen.", ephemeral=True
+        )
+        return
 
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     new_total = await cog.update_user_score(user.id, -punkte, grund)
@@ -73,13 +91,22 @@ async def remove(
     grund="Begründung",
 )
 async def set_points(
-    interaction: discord.Interaction, user: discord.Member, punkte: int, grund: str
+    interaction: discord.Interaction,
+    user: discord.Member,
+    punkte: app_commands.Range[int, 1],
+    grund: str,
 ):
     """Setzt die Punktzahl eines Nutzers direkt."""
 
     logger.info(
         f"/champion set by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
     )
+
+    if punkte < 1:
+        await interaction.response.send_message(
+            "❌ Punktzahl muss mindestens 1 betragen.", ephemeral=True
+        )
+        return
 
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     old_total = await cog.data.get_total(str(user.id))

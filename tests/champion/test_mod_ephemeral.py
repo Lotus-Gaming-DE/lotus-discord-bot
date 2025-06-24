@@ -1,6 +1,12 @@
 import pytest
 
-from cogs.champion.slash_commands import give, history, score
+from cogs.champion.slash_commands import (
+    give,
+    history,
+    remove,
+    score,
+    set_points,
+)
 
 
 class DummyBot:
@@ -72,6 +78,23 @@ async def test_give_sends_ephemeral_message():
 
 
 @pytest.mark.asyncio
+async def test_give_rejects_non_positive():
+    bot = DummyBot()
+    cog = DummyCog()
+    bot._cog = cog
+    inter = DummyInteraction(bot)
+    target = DummyMember(1)
+
+    await give.callback(inter, target, 0, "reason")
+
+    assert cog.updated == []
+    assert inter.response.messages
+    msg, ephemeral = inter.response.messages[0]
+    assert "mindestens 1" in msg
+    assert ephemeral is True
+
+
+@pytest.mark.asyncio
 async def test_history_empty_is_ephemeral():
     bot = DummyBot()
     cog = DummyCog()
@@ -87,6 +110,23 @@ async def test_history_empty_is_ephemeral():
 
 
 @pytest.mark.asyncio
+async def test_remove_rejects_non_positive():
+    bot = DummyBot()
+    cog = DummyCog()
+    bot._cog = cog
+    inter = DummyInteraction(bot)
+    target = DummyMember(2)
+
+    await remove.callback(inter, target, -1, "reason")
+
+    assert cog.updated == []
+    assert inter.response.messages
+    msg, ephemeral = inter.response.messages[0]
+    assert "mindestens 1" in msg
+    assert ephemeral is True
+
+
+@pytest.mark.asyncio
 async def test_score_is_ephemeral():
     bot = DummyBot()
     cog = DummyCog()
@@ -97,4 +137,21 @@ async def test_score_is_ephemeral():
 
     assert inter.response.messages
     _, ephemeral = inter.response.messages[0]
+    assert ephemeral is True
+
+
+@pytest.mark.asyncio
+async def test_set_points_rejects_non_positive():
+    bot = DummyBot()
+    cog = DummyCog()
+    bot._cog = cog
+    inter = DummyInteraction(bot)
+    target = DummyMember(3)
+
+    await set_points.callback(inter, target, 0, "reason")
+
+    assert cog.updated == []
+    assert inter.response.messages
+    msg, ephemeral = inter.response.messages[0]
+    assert "mindestens 1" in msg
     assert ephemeral is True
