@@ -60,7 +60,7 @@ Die statischen Dateien sind wie folgt organisiert:
 - `data/wcr/units.json` dient lediglich als Testdatenbasis für alle Minis.
 - `data/wcr/categories.json` stellt Testdaten für Fraktionen, Typen, Geschwindigkeiten und Traits bereit.
 - `data/wcr/stat_labels.json` bietet Testübersetzungen der Statistikbezeichnungen.
-- `data/wcr/faction_meta.json` enthält weiterhin lokale Angaben zu Fraktionen wie Icon und Farbe.
+ - `data/wcr/faction_meta.json` enthält lokale Angaben zu Fraktionen wie Icon und Farbe und listet Leader-Icons für kombinierte Fraktionen.
 
 Die aktuellen Spieldaten werden beim Start einmalig über die in `WCR_API_URL` definierte API geladen und im Speicher gehalten.
 

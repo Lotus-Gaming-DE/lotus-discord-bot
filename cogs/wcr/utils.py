@@ -61,6 +61,7 @@ async def fetch_wcr_data(base_url: str) -> dict[str, Any]:
             str(item["id"]): {k: item[k] for k in ("icon", "color") if k in item}
             for item in meta.get("factions", [])
         }
+        data["faction_combinations"] = meta.get("combinations", {})
         for faction in data["categories"].get("factions", []):
             faction.update(meta_map.get(str(faction.get("id")), {}))
 
@@ -106,4 +107,5 @@ async def load_wcr_data(base_url: str | None = None) -> dict[str, Any]:
         "locals": locals_,
         "categories": api_data.get("categories", {}),
         "stat_labels": stat_labels,
+        "faction_combinations": api_data.get("faction_combinations", {}),
     }

@@ -94,12 +94,14 @@ async def wcr_data(monkeypatch):
             m["id"]: {k: m[k] for k in ("icon", "color") if k in m}
             for m in meta.get("factions", [])
         }
+        combinations = meta.get("combinations", {})
         for faction in categories.get("factions", []):
             faction.update(meta_map.get(faction.get("id"), {}))
 
         return {
             "units": json.load(open(base / "units.json", encoding="utf-8")),
             "categories": categories,
+            "faction_combinations": combinations,
         }
 
     monkeypatch.setattr("cogs.wcr.utils.fetch_wcr_data", fake_fetch)

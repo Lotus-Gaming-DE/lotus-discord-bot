@@ -6,5 +6,12 @@
     {"id": 4, "icon": "wcr_horde", "color": "#BE4532"},
     {"id": 5, "icon": "wcr_blackrock", "color": "#486166"},
     {"id": 6, "icon": "wcr_cenarion", "color": "#359078"}
-  ]
+  ],
+  "combinations": {
+    "3_1": "wcr_alliance_undead",
+    "3_6": "wcr_alliance_cenarion",
+    "4_5": "wcr_horde_blackrock",
+    "1_4": "wcr_undead_horde",
+    "1_2": "wcr_undead_beast"
+  }
 }

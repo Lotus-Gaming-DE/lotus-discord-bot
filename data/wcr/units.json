@@ -3947,6 +3947,7 @@
       "id": "62",
       "cost": 6,
       "faction_id": "1",
+      "faction_ids": ["1", "4"],
       "type_id": "3",
       "speed_id": "3",
       "stats": {
