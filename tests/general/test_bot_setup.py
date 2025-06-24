@@ -3,7 +3,6 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_setup_hook_clears_global_commands(monkeypatch, bot):
-
     clear_calls = []
 
     def fake_clear(guild=None):

@@ -54,9 +54,11 @@ class WCRCog(commands.Cog):
         self.faction_combinations = wcr_data.get("faction_combinations", {})
 
         # Mapping for resolving unit names quickly
-        self.unit_name_map, self.id_name_map, self.name_token_index = (
-            resolver.build_lookup_tables(self.languages)
-        )
+        (
+            self.unit_name_map,
+            self.id_name_map,
+            self.name_token_index,
+        ) = resolver.build_lookup_tables(self.languages)
 
         self.lang_category_lookup = helpers.build_category_lookup(self.categories)
 

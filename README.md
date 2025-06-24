@@ -49,8 +49,7 @@ LOG_LEVEL=INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 WCR_API_URL=https://wcr-api.up.railway.app
 # Basis-URL für Bilder (Standard: https://www.method.gg)
 WCR_IMAGE_BASE=https://www.method.gg
-# Maximales Alter des WCR-Caches in Sekunden (Standard: 86400)
-# Maximales Alter des WCR-Caches in Sekunden (0 schaltet den Cache ab)
+# Maximales Alter des WCR-Caches in Sekunden (Standard: 86400, 0 schaltet den Cache ab)
 WCR_CACHE_TTL=86400
 # Bei Zertifikatsproblemen kann die Überprüfung für die PTCGP-API deaktiviert werden
 PTCGP_SKIP_SSL_VERIFY=0
