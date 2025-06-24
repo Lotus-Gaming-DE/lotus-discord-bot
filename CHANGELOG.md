@@ -20,3 +20,7 @@
 
 - Bereinigt: `cogs/champion/__init__.py` verwendet nun `commands.Bot` und entfernt den Import von `discord`.
 - Dokumentation erweitert: Beispiele für `/wcr`-Befehle und Hinweise zum neuen WCR-Cache.
+- ``create_logged_task`` ignoriert nun ``asyncio.CancelledError``.
+- ``QuizCog.cog_unload`` löscht das Attribut ``quiz_cog`` am Bot.
+- Tests verwenden ein sessionweites ``event_loop``-Fixture.
+- Neue Tests für ``QuestionManager.ask_question`` und ``QuestionRestorer.repost_question``.

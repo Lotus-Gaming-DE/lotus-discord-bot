@@ -231,7 +231,7 @@ flake8       # Linting
 pytest -q    # Test Suite
 ```
 
-Neue Features benötigen passende Tests. Die Fixtures in `tests/conftest.py` stellen Umgebungsvariablen bereit und bieten `patch_logged_task`, das `create_logged_task` nun global ersetzt. Ebenfalls sorgt `auto_stop_views` dafür, dass in Tests erstellte `discord.ui.View`-Instanzen automatisch gestoppt werden. Das neue Fixture `assert_no_tasks` prüft zudem, ob nach jedem Test noch asyncio-Tasks laufen und schlägt sonst fehl.
+Neue Features benötigen passende Tests. Die Fixtures in `tests/conftest.py` stellen Umgebungsvariablen bereit und bieten `patch_logged_task`, das `create_logged_task` nun global ersetzt. Ebenfalls sorgt `auto_stop_views` dafür, dass in Tests erstellte `discord.ui.View`-Instanzen automatisch gestoppt werden. Das neue Fixture `assert_no_tasks` prüft zudem, ob nach jedem Test noch asyncio-Tasks laufen und schlägt sonst fehl. Zusätzlich stellt `tests/conftest.py` ein sessionweites ``event_loop``-Fixture bereit, damit alle Async-Tests denselben Loop nutzen und am Ende sauber schließen.
 
 Pull Requests sind willkommen! Bitte halte dich an den bestehenden Codestyle (PEP8, formatiert mit *Black*) und prüfe vor dem Commit, dass `flake8` und `pytest` grün sind.
 

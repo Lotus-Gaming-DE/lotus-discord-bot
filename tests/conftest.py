@@ -9,6 +9,16 @@ from pathlib import Path
 
 pytest_plugins = ["pytest_asyncio"]
 
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create a dedicated event loop for the entire test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.run_until_complete(loop.shutdown_asyncgens())
+    loop.close()
+
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
