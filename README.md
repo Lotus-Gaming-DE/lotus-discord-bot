@@ -32,8 +32,9 @@ Voraussetzung ist Python ≥3.11. Der Bot läuft vorzugsweise auf [Railway](http
 
 ```bash
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 cp .env.example .env  # Bot-Token und Server-ID eintragen
-python bot.py
+python -m lotusbot.bot
 ```
 
 Die wichtigsten Variablen aus `.env`:
@@ -228,10 +229,13 @@ Persistente Daten liegen in `data/pers/` und sollten nicht ins Repository aufgen
 ## Entwicklung
 
 ```bash
-pip install -r requirements.txt  # installiert auch pytest-asyncio
-flake8       # Linting
-pytest -q    # Test Suite
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+pre-commit install
+pre-commit run --all-files
+pytest
 ```
+Der gesamte Python-Code befindet sich im Ordner `src/lotusbot/`.
 
 Neue Features benötigen passende Tests. Die Fixtures in `tests/conftest.py` stellen Umgebungsvariablen bereit und bieten `patch_logged_task`, das `create_logged_task` nun global ersetzt. Ebenfalls sorgt `auto_stop_views` dafür, dass in Tests erstellte `discord.ui.View`-Instanzen automatisch gestoppt werden. Das neue Fixture `assert_no_tasks` prüft zudem, ob nach jedem Test noch asyncio-Tasks laufen und schlägt sonst fehl. Zusätzlich stellt `tests/conftest.py` ein sessionweites ``event_loop``-Fixture bereit, damit alle Async-Tests denselben Loop nutzen und am Ende sauber schließen.
 
@@ -243,7 +247,7 @@ Pull Requests sind willkommen! Bitte halte dich an den bestehenden Codestyle (PE
 
 **Frage:** *Kann ich den Bot auch auf meinem eigenen Server hosten?*
 
-**Antwort:** Ja. Trage in `.env` dein Bot-Token (`bot_key`) und die Server-ID (`server_id`) ein und starte `python bot.py`.
+**Antwort:** Ja. Trage in `.env` dein Bot-Token (`bot_key`) und die Server-ID (`server_id`) ein und starte `python -m lotusbot.bot`.
 
 **Frage:** *Wie richte ich ein Quiz nur für bestimmte Channels ein?*
 

@@ -2,7 +2,7 @@ import json
 import datetime
 
 
-from cogs.quiz.question_state import QuestionStateManager, QuestionInfo
+from lotusbot.cogs.quiz.question_state import QuestionStateManager, QuestionInfo
 
 
 import pytest

@@ -1,9 +1,9 @@
 import pytest
 
-import cogs.quiz.cog as quiz_cog_mod
-import cogs.quiz.message_tracker as msg_mod
-import log_setup
-from cogs.quiz.quiz_config import QuizAreaConfig
+import lotusbot.cogs.quiz.cog as quiz_cog_mod
+import lotusbot.cogs.quiz.message_tracker as msg_mod
+from lotusbot import log_setup
+from lotusbot.cogs.quiz.quiz_config import QuizAreaConfig
 
 
 class DummyState:

@@ -20,8 +20,10 @@ def event_loop():
 
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if ROOT not in sys.path:
-    sys.path.insert(0, ROOT)
+SRC = os.path.join(ROOT, "src")
+for path in (SRC, ROOT):
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
 
 @pytest.fixture(autouse=True)
@@ -46,7 +48,7 @@ def patch_logged_task(monkeypatch):
             coro.close()
             return DummyTask()
 
-        import log_setup
+        from lotusbot import log_setup
 
         monkeypatch.setattr(log_setup, "create_logged_task", fake_task)
         for module in modules:
@@ -114,8 +116,8 @@ async def wcr_data(monkeypatch):
             "faction_combinations": combinations,
         }
 
-    monkeypatch.setattr("cogs.wcr.utils.fetch_wcr_data", fake_fetch)
-    from cogs.wcr.utils import load_wcr_data
+    monkeypatch.setattr("lotusbot.cogs.wcr.utils.fetch_wcr_data", fake_fetch)
+    from lotusbot.cogs.wcr.utils import load_wcr_data
 
     return await load_wcr_data("http://test")
 
@@ -123,7 +125,7 @@ async def wcr_data(monkeypatch):
 @pytest_asyncio.fixture
 async def bot():
     """Yield a ``MyBot`` instance and ensure it is properly closed."""
-    from bot import MyBot
+    from lotusbot.bot import MyBot
 
     bot = MyBot()
     try:

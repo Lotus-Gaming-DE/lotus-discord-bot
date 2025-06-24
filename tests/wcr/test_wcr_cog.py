@@ -2,10 +2,10 @@ import logging
 import pytest
 import discord
 
-from cogs.wcr.cog import WCRCog
-from cogs.wcr import embed_builder
-from cogs.wcr.views import MiniSelectView
-from cogs.wcr.duel import DuelCalculator
+from lotusbot.cogs.wcr.cog import WCRCog
+from lotusbot.cogs.wcr import embed_builder
+from lotusbot.cogs.wcr.views import MiniSelectView
+from lotusbot.cogs.wcr.duel import DuelCalculator
 
 
 class DummyBot:

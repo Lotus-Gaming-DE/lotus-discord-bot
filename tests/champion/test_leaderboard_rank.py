@@ -1,6 +1,6 @@
 import pytest
 
-from cogs.champion.slash_commands import leaderboard, rank
+from lotusbot.cogs.champion.slash_commands import leaderboard, rank
 
 
 class DummyMember:

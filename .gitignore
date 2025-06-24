@@ -1,4 +1,7 @@
 # Ignoriere persistente Daten (liegen im Railway Volume)
 data/pers/
+logs/
 bot.log
+.env
 __pycache__/
+*.pyc

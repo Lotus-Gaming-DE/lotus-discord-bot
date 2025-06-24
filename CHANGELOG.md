@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+- Projektstruktur nun unter `src/lotusbot/` organisiert.
+- Strukturierte JSON-Logs über ``structlog`` unter ``logs/``.
+- Neue ``pre-commit`` Hooks und aktualisierte CI inklusive Sicherheits-Scan.
 - Verbessertes Shutdown-Verhalten: ChampionCog schließt die Datenbank, stoppt alle Tasks und wartet auf deren Abschluss.
 - Champion-Mod-Befehle verlangen nun positive Punktwerte.
 - WCR-Cog aufgeteilt: Namensauflösung und Embed-Aufbau sind nun in eigenen Modulen. Fehlerbehandlung und Tests wurden erweitert.

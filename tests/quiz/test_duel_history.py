@@ -1,5 +1,5 @@
 import pytest
-from cogs.champion.data import ChampionData
+from lotusbot.cogs.champion.data import ChampionData
 
 
 @pytest.mark.asyncio

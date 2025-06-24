@@ -1,10 +1,10 @@
 import pytest
 
-from cogs.champion.cog import ChampionCog
-from cogs.champion.data import ChampionData
-from cogs.champion.slash_commands import syncroles
-import cogs.champion.cog as champion_cog_mod
-import log_setup
+from lotusbot.cogs.champion.cog import ChampionCog
+from lotusbot.cogs.champion.data import ChampionData
+from lotusbot.cogs.champion.slash_commands import syncroles
+import lotusbot.cogs.champion.cog as champion_cog_mod
+from lotusbot import log_setup
 
 
 class DummyBot:

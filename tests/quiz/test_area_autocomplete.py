@@ -1,7 +1,7 @@
 import pytest
 
-from cogs.quiz.quiz_config import QuizAreaConfig
-from cogs.quiz.slash_commands import area_autocomplete
+from lotusbot.cogs.quiz.quiz_config import QuizAreaConfig
+from lotusbot.cogs.quiz.slash_commands import area_autocomplete
 
 
 class DummyBot:
