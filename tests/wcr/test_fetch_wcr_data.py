@@ -45,8 +45,6 @@ async def test_fetch_wcr_data_merges_faction_meta(monkeypatch):
     data_map = {
         "units": {},
         "categories": json.load(open(base / "categories.json", encoding="utf-8")),
-        "pictures": {},
-        "stat_labels": {},
     }
 
     monkeypatch.setattr(
@@ -58,7 +56,7 @@ async def test_fetch_wcr_data_merges_faction_meta(monkeypatch):
     meta = json.load(open(base / "faction_meta.json", encoding="utf-8"))
     for item in meta.get("factions", []):
         faction = next(
-            f for f in result["categories"]["factions"] if f["id"] == item["id"]
+            f for f in result["categories"]["factions"] if f["id"] == str(item["id"])
         )
-        assert faction["icon"] == item["icon"]
-        assert faction["color"] == item["color"]
+        assert faction.get("icon") == item["icon"]
+        assert faction.get("color") == item["color"]

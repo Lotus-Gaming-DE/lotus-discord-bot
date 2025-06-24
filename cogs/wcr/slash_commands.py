@@ -131,3 +131,12 @@ async def duell(
     )
     cog: WCRCog = interaction.client.get_cog("WCRCog")
     await cog.cmd_duel(interaction, mini_a, mini_b, level_a, level_b, lang, public)
+
+
+@wcr_group.command(name="debug", description="Zeigt geladene WCR-Daten an.")
+@app_commands.checks.has_permissions(manage_guild=True)
+async def debug(interaction: discord.Interaction):
+    """Gibt Anzahl geladener Einheiten und Kategorien aus."""
+    logger.info(f"/wcr debug by {interaction.user}")
+    cog: WCRCog = interaction.client.get_cog("WCRCog")
+    await cog.cmd_debug(interaction)

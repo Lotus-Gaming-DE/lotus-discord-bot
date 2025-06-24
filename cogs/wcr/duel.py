@@ -47,14 +47,14 @@ class DuelCalculator:
     ) -> tuple[float, list[str]]:
         """Calculate DPS and return notes about trait interactions."""
         notes: list[str] = []
-        traits_a = attacker.get("traits_ids", [])
-        traits_d = defender.get("traits_ids", [])
+        traits_a = [str(t) for t in attacker.get("trait_ids", [])]
+        traits_d = [str(t) for t in defender.get("trait_ids", [])]
 
         if (
-            attacker.get("type_id") != 2
-            and 15 in traits_d
-            and 11 not in traits_a
-            and 15 not in traits_a
+            attacker.get("type_id") != "2"
+            and "15" in traits_d
+            and "11" not in traits_a
+            and "15" not in traits_a
         ):
             notes.append("kann Flieger nicht treffen")
             return 0.0, notes
@@ -69,10 +69,10 @@ class DuelCalculator:
             return 0.0, notes
 
         damage = attacker_stats[dmg_key]
-        if 8 in traits_a and 20 in traits_d:
+        if "8" in traits_a and "20" in traits_d:
             damage *= 0.5
             notes.append("Resistent halbiert Elementarschaden")
-        elif 8 not in traits_a and 13 in traits_d:
+        elif "8" not in traits_a and "13" in traits_d:
             damage *= 0.5
             notes.append("Gepanzert halbiert Schaden")
 
@@ -106,8 +106,8 @@ class DuelCalculator:
         stats_a = self.scaled_stats(unit_a, level_a)
         stats_b = self.scaled_stats(unit_b, level_b)
 
-        is_spell_a = unit_a.get("type_id") == 2
-        is_spell_b = unit_b.get("type_id") == 2
+        is_spell_a = unit_a.get("type_id") == "2"
+        is_spell_b = unit_b.get("type_id") == "2"
 
         dps_a = self.compute_dps(unit_a, stats_a, unit_b)
         dps_b = self.compute_dps(unit_b, stats_b, unit_a)

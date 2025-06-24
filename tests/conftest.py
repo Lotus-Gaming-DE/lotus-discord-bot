@@ -100,8 +100,6 @@ async def wcr_data(monkeypatch):
         return {
             "units": json.load(open(base / "units.json", encoding="utf-8")),
             "categories": categories,
-            "pictures": json.load(open(base / "pictures.json", encoding="utf-8")),
-            "stat_labels": json.load(open(base / "stat_labels.json", encoding="utf-8")),
         }
 
     monkeypatch.setattr("cogs.wcr.utils.fetch_wcr_data", fake_fetch)

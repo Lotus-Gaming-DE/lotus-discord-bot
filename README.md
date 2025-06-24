@@ -60,7 +60,6 @@ Die statischen Dateien sind wie folgt organisiert:
 - `data/wcr/units.json` dient lediglich als Testdatenbasis für alle Minis.
 - `data/wcr/categories.json` stellt Testdaten für Fraktionen, Typen, Geschwindigkeiten und Traits bereit.
 - `data/wcr/stat_labels.json` bietet Testübersetzungen der Statistikbezeichnungen.
-- `data/wcr/pictures.json` ordnet Einheiten testweise Icons zu.
 - `data/wcr/faction_meta.json` enthält weiterhin lokale Angaben zu Fraktionen wie Icon und Farbe.
 
 Die aktuellen Spieldaten werden beim Start einmalig über die in `WCR_API_URL` definierte API geladen und im Speicher gehalten.
@@ -153,7 +152,7 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
 - Beim Entladen des Champion-Cogs wird die Datenbankverbindung sauber geschlossen.
 - **WCR-Modul** bezieht seine Daten über die in ``WCR_API_URL`` angegebene API und nutzt sie für Autocomplete sowie dynamische Fragen.
   - Bilder werden relativ zu ``WCR_IMAGE_BASE`` aufgel\u00f6st.
-  - Die API stellt ``units``, ``categories``, ``pictures`` und ``stat_labels`` bereit.
+  - Die API stellt nur ``units`` und ``categories`` bereit. IDs sind dabei Strings.
   - Beim Abrufen dieser Daten wird ein Timeout von 10 Sekunden verwendet.
   - Die Fragevorlagen liegen unter `data/quiz/templates/wcr.json`.
   - Beim Start erzeugt `_export_emojis` automatisch `data/emojis.json`; diese

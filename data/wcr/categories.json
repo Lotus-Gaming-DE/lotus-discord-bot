@@ -1,42 +1,42 @@
 {
   "factions": [
     {
-      "id": 1,
+      "id": "1",
       "names": {
         "de": "Untote",
         "en": "Undead"
       }
     },
     {
-      "id": 2,
+      "id": "2",
       "names": {
         "de": "Bestie",
         "en": "Beast"
       }
     },
     {
-      "id": 3,
+      "id": "3",
       "names": {
         "de": "Allianz",
         "en": "Alliance"
       }
     },
     {
-      "id": 4,
+      "id": "4",
       "names": {
         "de": "Horde",
         "en": "Horde"
       }
     },
     {
-      "id": 5,
+      "id": "5",
       "names": {
         "de": "Schwarzfels",
         "en": "Blackrock"
       }
     },
     {
-      "id": 6,
+      "id": "6",
       "names": {
         "de": "Cenarion",
         "en": "Cenarion"
@@ -45,21 +45,21 @@
   ],
   "types": [
     {
-      "id": 1,
+      "id": "1",
       "names": {
         "de": "Truppe",
         "en": "Troop"
       }
     },
     {
-      "id": 2,
+      "id": "2",
       "names": {
         "de": "Zauber",
         "en": "Spell"
       }
     },
     {
-      "id": 3,
+      "id": "3",
       "names": {
         "de": "Anführer",
         "en": "Leader"
@@ -68,343 +68,343 @@
   ],
   "traits": [
     {
-      "id": 1,
+      "id": "1",
       "names": {
         "de": "Tank",
         "en": "Tank"
       }
     },
     {
-      "id": 2,
+      "id": "2",
       "names": {
         "de": "Haken",
         "en": "Hook"
       }
     },
     {
-      "id": 3,
+      "id": "3",
       "names": {
         "de": "Nahkampf",
         "en": "Melee"
       }
     },
     {
-      "id": 4,
+      "id": "4",
       "names": {
         "de": "Flächenschaden",
         "en": "AoE"
       }
     },
     {
-      "id": 5,
+      "id": "5",
       "names": {
         "de": "Zyklus",
         "en": "Cycle"
       }
     },
     {
-      "id": 6,
+      "id": "6",
       "names": {
         "de": "Schnell",
         "en": "Fast"
       }
     },
     {
-      "id": 7,
+      "id": "7",
       "names": {
         "de": "Trupp",
         "en": "Squad"
       }
     },
     {
-      "id": 8,
+      "id": "8",
       "names": {
         "de": "Elementar",
         "en": "Elemental"
       }
     },
     {
-      "id": 9,
+      "id": "9",
       "names": {
         "de": "Zauber",
         "en": "Spell"
       }
     },
     {
-      "id": 10,
+      "id": "10",
       "names": {
         "de": "Besitz",
         "en": "Possession"
       }
     },
     {
-      "id": 11,
+      "id": "11",
       "names": {
         "de": "Fernkampf",
         "en": "Ranged"
       }
     },
     {
-      "id": 12,
+      "id": "12",
       "names": {
         "de": "Einzelziel",
         "en": "One-Target"
       }
     },
     {
-      "id": 13,
+      "id": "13",
       "names": {
         "de": "Gepanzert",
         "en": "Armored"
       }
     },
     {
-      "id": 14,
+      "id": "14",
       "names": {
         "de": "Beschuss",
         "en": "Bombard"
       }
     },
     {
-      "id": 15,
+      "id": "15",
       "names": {
         "de": "Fliegend",
         "en": "Flying"
       }
     },
     {
-      "id": 16,
+      "id": "16",
       "names": {
         "de": "Frost",
         "en": "Frost"
       }
     },
     {
-      "id": 17,
+      "id": "17",
       "names": {
         "de": "Angriff Betäubung",
         "en": "Attack Stun"
       }
     },
     {
-      "id": 18,
+      "id": "18",
       "names": {
         "de": "Prozentschaden",
         "en": "Percent Damage"
       }
     },
     {
-      "id": 19,
+      "id": "19",
       "names": {
         "de": "Angriff Wurzeln",
         "en": "Attack Root"
       }
     },
     {
-      "id": 20,
+      "id": "20",
       "names": {
         "de": "Resistent",
         "en": "Resistant"
       }
     },
     {
-      "id": 21,
+      "id": "21",
       "names": {
         "de": "Wiederbeleben",
         "en": "Revive"
       }
     },
     {
-      "id": 22,
+      "id": "22",
       "names": {
         "de": "Ungebunden",
         "en": "Unbound"
       }
     },
     {
-      "id": 23,
+      "id": "23",
       "names": {
         "de": "Minenarbeiter",
         "en": "Miner"
       }
     },
     {
-      "id": 24,
+      "id": "24",
       "names": {
         "de": "Verstohlenheit",
         "en": "Stealth"
       }
     },
     {
-      "id": 25,
+      "id": "25",
       "names": {
         "de": "Hinterhältiger Schlag",
         "en": "Cheap Shot"
       }
     },
     {
-      "id": 26,
+      "id": "26",
       "names": {
         "de": "Belagerungsschaden",
         "en": "Siege Damage"
       }
     },
     {
-      "id": 27,
+      "id": "27",
       "names": {
         "de": "Belagerungsspezialist",
         "en": "Siege Specialist"
       }
     },
     {
-      "id": 28,
+      "id": "28",
       "names": {
         "de": "Wut",
         "en": "Fury"
       }
     },
     {
-      "id": 29,
+      "id": "29",
       "names": {
         "de": "Beschuss",
         "en": "Bombard"
       }
     },
     {
-      "id": 30,
+      "id": "30",
       "names": {
         "de": "Heiler",
         "en": "Healer"
       }
     },
     {
-      "id": 31,
+      "id": "31",
       "names": {
         "de": "Kannibalisieren",
         "en": "Cannibalize"
       }
     },
     {
-      "id": 32,
+      "id": "32",
       "names": {
         "de": "Tank",
         "en": "Tank"
       }
     },
     {
-      "id": 33,
+      "id": "33",
       "names": {
         "de": "Blutdurst",
         "en": "Bloodlust"
       }
     },
     {
-      "id": 34,
+      "id": "34",
       "names": {
         "de": "Wiedergeburt",
         "en": "Rebirth"
       }
     },
     {
-      "id": 35,
+      "id": "35",
       "names": {
         "de": "Weitschuss",
         "en": "Longshot"
       }
     },
     {
-      "id": 36,
+      "id": "36",
       "names": {
         "de": "Heilt Truppkameraden",
         "en": "Heal Squadmate"
       }
     },
     {
-      "id": 37,
+      "id": "37",
       "names": {
         "de": "Beschwörer",
         "en": "Summoner"
       }
     },
     {
-      "id": 38,
+      "id": "38",
       "names": {
         "de": "Blutrausch",
         "en": "Bloodlust"
       }
     },
     {
-      "id": 39,
+      "id": "39",
       "names": {
         "de": "Giftig",
         "en": "Poisonous"
       }
     },
     {
-      "id": 40,
+      "id": "40",
       "names": {
         "de": "Absteigen",
         "en": "Dismount"
       }
     },
     {
-      "id": 41,
+      "id": "41",
       "names": {
         "de": "Verwundbar",
         "en": "Vulnerable"
       }
     },
     {
-      "id": 42,
+      "id": "42",
       "names": {
         "de": "Ansturm",
         "en": "Charge"
       }
     },
     {
-      "id": 43,
+      "id": "43",
       "names": {
         "de": "Heimsuchung",
         "en": "Haunt"
       }
     },
     {
-      "id": 44,
+      "id": "44",
       "names": {
         "de": "Aasfresser",
         "en": "Carrion"
       }
     },
     {
-      "id": 45,
+      "id": "45",
       "names": {
         "de": "Schlüpfen",
         "en": "Hatching"
       }
     },
     {
-      "id": 46,
+      "id": "46",
       "names": {
         "de": "Hinterhalt",
         "en": "Ambush"
       }
     },
     {
-      "id": 47,
+      "id": "47",
       "names": {
         "de": "Feurige Waffenverzauberung",
         "en": "Fiery Weapon Enchant"
       }
     },
     {
-      "id": 48,
+      "id": "48",
       "names": {
         "de": "Aufdecken",
         "en": "Detect"
       }
     },
     {
-      "id": 49,
+      "id": "49",
       "names": {
         "de": "Neutralisieren",
         "en": "Nullify"
@@ -413,28 +413,28 @@
   ],
   "speeds": [
     {
-      "id": 1,
+      "id": "1",
       "names": {
         "de": "Langsam",
         "en": "Slow"
       }
     },
     {
-      "id": 2,
+      "id": "2",
       "names": {
         "de": "Mittel-Schnell",
         "en": "Med-Fast"
       }
     },
     {
-      "id": 3,
+      "id": "3",
       "names": {
         "de": "Mittel",
         "en": "Medium"
       }
     },
     {
-      "id": 4,
+      "id": "4",
       "names": {
         "de": "Schnell",
         "en": "Fast"
