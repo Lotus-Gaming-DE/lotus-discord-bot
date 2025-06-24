@@ -92,6 +92,12 @@ class ChampionData:
         return row[0] if row else 0
 
     async def add_delta(self, user_id: str, delta: int, reason: str) -> int:
+        """Passt den Punktestand von ``user_id`` um ``delta`` an.
+
+        Der neue Gesamtstand kann nicht negativ werden. Jede Änderung wird in
+        der Historie vermerkt.
+        """
+
         await self.init_db()
         async with self._lock:
             now = datetime.utcnow().isoformat()
@@ -104,7 +110,7 @@ class ChampionData:
             row = await cur.fetchone()
             current_total = row[0] if row else 0
 
-            new_total = current_total + delta
+            new_total = max(0, current_total + delta)
             if row:
                 await db.execute(
                     "UPDATE points SET total = ? WHERE user_id = ?",
@@ -124,7 +130,8 @@ class ChampionData:
             await db.commit()
 
         logger.info(
-            f"[ChampionData] {user_id} Punkte geändert um {delta} ({reason}). Neuer Total: {new_total}."
+            f"[ChampionData] {user_id} Punkte geändert um {delta} ({reason}). "
+            f"Vorher: {current_total}, jetzt: {new_total}."
         )
         return new_total
 
