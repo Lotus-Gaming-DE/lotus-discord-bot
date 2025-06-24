@@ -47,6 +47,8 @@ WCR_API_URL=https://wcr-api.up.railway.app
 WCR_IMAGE_BASE=https://www.method.gg
 # Bei Zertifikatsproblemen kann die Überprüfung für die PTCGP-API deaktiviert werden
 PTCGP_SKIP_SSL_VERIFY=0
+# Optional: Pfad zur Champion-Datenbank
+CHAMPION_DB_PATH=data/pers/champion/points.db
 ```
 
 Ohne eine gesetzte `WCR_API_URL` wird das WCR-Modul beim Start deaktiviert.
@@ -150,7 +152,7 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
 - **Cogs** trennen Funktionsbereiche sauber: `quiz`, `champion`, `wcr`.
 - **Zentrale Daten** werden im `setup_hook` geladen (`bot.data`) und allen Cogs bereitgestellt.
 - **Quiz-Subsystem** nutzt einen `QuestionGenerator` (statisch & dynamisch), `QuestionStateManager` für Persistenz und einen Scheduler für automatische Fragen. Der nächste geplante Zeitpunkt wird gespeichert, sodass laufende Fenster nach einem Neustart fortgeführt werden können.
-- **Champion-System** speichert Punkte in SQLite und vergibt Rollen gemäß `data/champion/roles.json` (Rollen-ID und Schwelle pro Eintrag).
+- **Champion-System** speichert Punkte in SQLite (Pfad über `CHAMPION_DB_PATH` anpassbar) und vergibt Rollen gemäß `data/champion/roles.json` (Rollen-ID und Schwelle pro Eintrag).
 - Beim Entladen des Champion-Cogs wird die Datenbankverbindung sauber geschlossen.
 - **WCR-Modul** bezieht seine Daten über die in ``WCR_API_URL`` angegebene API und nutzt sie für Autocomplete sowie dynamische Fragen.
   - Bilder werden relativ zu ``WCR_IMAGE_BASE`` aufgel\u00f6st.

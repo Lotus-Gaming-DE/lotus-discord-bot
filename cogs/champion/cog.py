@@ -3,6 +3,7 @@ import asyncio
 from dataclasses import dataclass
 from discord.ext import commands
 from typing import Optional, List
+import os
 
 from log_setup import get_logger
 from utils.managed_cog import ManagedTaskCog
@@ -20,11 +21,15 @@ class ChampionRole:
 
 class ChampionCog(ManagedTaskCog):
     def __init__(self, bot: commands.Bot) -> None:
-        """Initialisiert das Cog und lädt die Rollenkonfiguration."""
+        """Initialisiert das Cog und lädt die Rollenkonfiguration.
+
+        Der Pfad zur Punkte-Datenbank kann \u00fcber die Environment-Variable
+        ``CHAMPION_DB_PATH`` angepasst werden.
+        """
         super().__init__()
         self.bot = bot
 
-        db_path = "data/pers/champion/points.db"
+        db_path = os.getenv("CHAMPION_DB_PATH", "data/pers/champion/points.db")
         self.data = ChampionData(db_path)
 
         self.roles: List[ChampionRole] = self._load_roles_config()
