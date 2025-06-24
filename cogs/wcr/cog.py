@@ -4,6 +4,7 @@ import discord
 from discord.ext import commands
 import os
 import difflib
+from dataclasses import dataclass
 
 from log_setup import get_logger
 from . import helpers
@@ -11,6 +12,13 @@ from .views import MiniSelectView
 from .duel import DuelCalculator
 
 logger = get_logger(__name__)
+
+
+@dataclass
+class DuelOutcome:
+    """Ergebnistext eines Mini-Duells."""
+
+    text: str
 
 
 class WCRCog(commands.Cog):
@@ -365,121 +373,8 @@ class WCRCog(commands.Cog):
         )
         await interaction.response.defer(ephemeral=not public)
 
-        res_a = self.resolve_unit(mini_a, lang)
-        res_b = self.resolve_unit(mini_b, lang)
-        if not res_a or not res_b:
-            await interaction.followup.send(
-                "Eines der Minis wurde nicht gefunden.", ephemeral=not public
-            )
-            return
-
-        id_a, data_a, _ = res_a
-        id_b, data_b, _ = res_b
-
-        name_a = helpers.get_text_data(id_a, lang, self.languages)[0]
-        name_b = helpers.get_text_data(id_b, lang, self.languages)[0]
-
-        calculator = DuelCalculator()
-
-        base_a = data_a.get("stats", {})
-        base_b = data_b.get("stats", {})
-        stats_a = calculator.scaled_stats(data_a, level_a)
-        stats_b = calculator.scaled_stats(data_b, level_b)
-
-        dps_a, notes_a = calculator.compute_dps_details(data_a, stats_a, data_b)
-        dps_b, notes_b = calculator.compute_dps_details(data_b, stats_b, data_a)
-
-        def _flight_issue(att: dict, def_: dict) -> bool:
-            ta = [str(t) for t in att.get("trait_ids", [])]
-            td = [str(t) for t in def_.get("trait_ids", [])]
-            if att.get("type_id") == "2":
-                return False
-            return "15" in td and "11" not in ta and "15" not in ta
-
-        issue_a = _flight_issue(data_a, data_b)
-        issue_b = _flight_issue(data_b, data_a)
-
-        if (issue_a or dps_a == 0) and (issue_b or dps_b == 0):
-            await interaction.followup.send(
-                "Keines der Minis kann den Gegner treffen.",
-                ephemeral=not public,
-            )
-            return
-
-        winner_data = calculator.duel_result(data_a, level_a, data_b, level_b)
-
-        is_spell_a = data_a.get("type_id") == 2
-        is_spell_b = data_b.get("type_id") == 2
-
-        if is_spell_a and is_spell_b:
-            if winner_data is None:
-                header = "Beide Zauber verursachen gleich viel Schaden."
-            else:
-                winner, _ = winner_data
-                if winner == "a":
-                    header = (
-                        f"Zauber {name_a} hat mehr DPS und w\u00fcrde daher {name_b} "
-                        "outperformen."
-                    )
-                else:
-                    header = (
-                        f"Zauber {name_b} hat mehr DPS und w\u00fcrde daher {name_a} "
-                        "outperformen."
-                    )
-        elif is_spell_a or is_spell_b:
-            spell_name = name_a if is_spell_a else name_b
-            mini_name = name_b if is_spell_a else name_a
-            if winner_data is None:
-                header = f"{spell_name} w\u00fcrde {mini_name} nicht t\u00f6ten."
-            else:
-                header = f"{spell_name} w\u00fcrde {mini_name} t\u00f6ten."
-        else:
-            if winner_data is None:
-                await interaction.followup.send(
-                    "Unentschieden oder kein Schaden.", ephemeral=not public
-                )
-                return
-            winner, time = winner_data
-            if winner == "a":
-                header = (
-                    f"{name_a} w\u00fcrde {name_b} nach {time:.1f} Sekunden besiegen."
-                )
-            else:
-                header = (
-                    f"{name_b} w\u00fcrde {name_a} nach {time:.1f} Sekunden besiegen."
-                )
-
-        def _fmt_stats(base: dict, scaled: dict, lvl: int) -> str:
-            dmg_key = "damage" if "damage" in base else "area_damage"
-            dmg_scaled = scaled.get(dmg_key, 0)
-            hp_scaled = scaled.get("health", 0)
-            dps_scaled = scaled.get("dps", base.get("dps", 0))
-            return (
-                f"Level {lvl}: Schaden {dmg_scaled:.0f}, "
-                f"DPS {dps_scaled:.0f}, HP {hp_scaled:.0f}"
-            )
-
-        parts = [f"{header}\n"]
-
-        parts.append(
-            f"\n{name_a} (Level {level_a})\n{_fmt_stats(base_a, stats_a, level_a)}"
-        )
-        if not is_spell_b or is_spell_a:
-            parts.append(f"DPS gegen {name_b}: {dps_a:.1f}")
-            for note in notes_a:
-                parts.append(f"- {note}")
-
-        parts.append(
-            f"\n{name_b} (Level {level_b})\n{_fmt_stats(base_b, stats_b, level_b)}"
-        )
-        if not is_spell_a or is_spell_b:
-            parts.append(f"DPS gegen {name_a}: {dps_b:.1f}")
-            for note in notes_b:
-                parts.append(f"- {note}")
-
-        text = "\n".join(parts)
-
-        await interaction.followup.send(text, ephemeral=not public)
+        outcome = self._compute_duel_outcome(mini_a, mini_b, level_a, level_b, lang)
+        await interaction.followup.send(outcome.text, ephemeral=not public)
 
     async def cmd_debug(self, interaction: discord.Interaction) -> None:
         """Sendet eine kurze Übersicht der geladenen WCR-Daten."""
@@ -584,6 +479,116 @@ class WCRCog(commands.Cog):
         return unit_id, unit_data, lang
 
     # Helper methods -----------------------------------------------------
+    def _compute_duel_outcome(
+        self,
+        mini_a: str,
+        mini_b: str,
+        level_a: int = 1,
+        level_b: int = 1,
+        lang: str = "de",
+    ) -> DuelOutcome:
+        """Berechne den Ergebnistext für ``/wcr duell``."""
+
+        res_a = self.resolve_unit(mini_a, lang)
+        res_b = self.resolve_unit(mini_b, lang)
+        if not res_a or not res_b:
+            return DuelOutcome("Eines der Minis wurde nicht gefunden.")
+
+        id_a, data_a, _ = res_a
+        id_b, data_b, _ = res_b
+
+        name_a = helpers.get_text_data(id_a, lang, self.languages)[0]
+        name_b = helpers.get_text_data(id_b, lang, self.languages)[0]
+
+        calculator = DuelCalculator()
+
+        base_a = data_a.get("stats", {})
+        base_b = data_b.get("stats", {})
+        stats_a = calculator.scaled_stats(data_a, level_a)
+        stats_b = calculator.scaled_stats(data_b, level_b)
+
+        dps_a, notes_a = calculator.compute_dps_details(data_a, stats_a, data_b)
+        dps_b, notes_b = calculator.compute_dps_details(data_b, stats_b, data_a)
+
+        def _flight_issue(att: dict, def_: dict) -> bool:
+            ta = [str(t) for t in att.get("trait_ids", [])]
+            td = [str(t) for t in def_.get("trait_ids", [])]
+            if att.get("type_id") == "2":
+                return False
+            return "15" in td and "11" not in ta and "15" not in ta
+
+        issue_a = _flight_issue(data_a, data_b)
+        issue_b = _flight_issue(data_b, data_a)
+
+        if (issue_a or dps_a == 0) and (issue_b or dps_b == 0):
+            return DuelOutcome("Keines der Minis kann den Gegner treffen.")
+
+        winner_data = calculator.duel_result(data_a, level_a, data_b, level_b)
+
+        is_spell_a = data_a.get("type_id") == 2
+        is_spell_b = data_b.get("type_id") == 2
+
+        if is_spell_a and is_spell_b:
+            if winner_data is None:
+                header = "Beide Zauber verursachen gleich viel Schaden."
+            else:
+                winner, _ = winner_data
+                if winner == "a":
+                    header = f"Zauber {name_a} hat mehr DPS und w\u00fcrde daher {name_b} outperformen."
+                else:
+                    header = f"Zauber {name_b} hat mehr DPS und w\u00fcrde daher {name_a} outperformen."
+        elif is_spell_a or is_spell_b:
+            spell_name = name_a if is_spell_a else name_b
+            mini_name = name_b if is_spell_a else name_a
+            if winner_data is None:
+                header = f"{spell_name} w\u00fcrde {mini_name} nicht t\u00f6ten."
+            else:
+                header = f"{spell_name} w\u00fcrde {mini_name} t\u00f6ten."
+        else:
+            if winner_data is None:
+                return DuelOutcome("Unentschieden oder kein Schaden.")
+            winner, time = winner_data
+            if winner == "a":
+                header = (
+                    f"{name_a} w\u00fcrde {name_b} nach {time:.1f} Sekunden besiegen."
+                )
+            else:
+                header = (
+                    f"{name_b} w\u00fcrde {name_a} nach {time:.1f} Sekunden besiegen."
+                )
+
+        def _fmt_stats(base: dict, scaled: dict, lvl: int) -> str:
+            dmg_key = "damage" if "damage" in base else "area_damage"
+            dmg_scaled = scaled.get(dmg_key, 0)
+            hp_scaled = scaled.get("health", 0)
+            dps_scaled = scaled.get("dps", base.get("dps", 0))
+            return (
+                f"Level {lvl}: Schaden {dmg_scaled:.0f}, "
+                f"DPS {dps_scaled:.0f}, HP {hp_scaled:.0f}"
+            )
+
+        parts = [f"{header}\n"]
+
+        parts.append(
+            f"\n{name_a} (Level {level_a})\n{_fmt_stats(base_a, stats_a, level_a)}"
+        )
+        if not is_spell_b or is_spell_a:
+            parts.append(f"DPS gegen {name_b}: {dps_a:.1f}")
+            for note in notes_a:
+                parts.append(f"- {note}")
+
+        parts.append(
+            f"\n{name_b} (Level {level_b})\n{_fmt_stats(base_b, stats_b, level_b)}"
+        )
+        if not is_spell_a or is_spell_b:
+            parts.append(f"DPS gegen {name_a}: {dps_b:.1f}")
+            for note in notes_b:
+                parts.append(f"- {note}")
+
+        text = "\n".join(parts)
+
+        return DuelOutcome(text)
+
     def _prepare_stat_rows(self, unit_data, stat_labels, type_name, speed_name):
         """Return stat rows and set of used stat keys."""
         stats = unit_data.get("stats", {})
