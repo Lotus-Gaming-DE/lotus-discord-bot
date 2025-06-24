@@ -209,6 +209,7 @@ Pull Requests sind willkommen! Bitte halte dich an den bestehenden Codestyle (PE
 ## Changelog
 
 Eine detaillierte Liste aller Änderungen findest du im [Changelog](CHANGELOG.md) und im Release-Bereich des [Projekt-Repositorys](https://github.com/LotusGamingDE).
+Eine detaillierte Liste aller Änderungen findest du in der Datei `CHANGELOG.md`.
 
 ---
 
