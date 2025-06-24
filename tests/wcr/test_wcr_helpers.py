@@ -49,6 +49,20 @@ def test_get_pose_url_unknown(pictures):
     assert helpers.get_pose_url(9999, pictures) == ""
 
 
+def test_get_pose_url_relative_default_base(pictures, monkeypatch):
+    pictures["units"][0]["pose"] = "images/test.webp"
+    monkeypatch.delenv("WCR_IMAGE_BASE", raising=False)
+    url = helpers.get_pose_url(1, pictures)
+    assert url == "https://www.method.gg/images/test.webp"
+
+
+def test_get_pose_url_relative_custom_base(pictures, monkeypatch):
+    pictures["units"][0]["pose"] = "/img/foobar.webp"
+    monkeypatch.setenv("WCR_IMAGE_BASE", "https://cdn.example.com")
+    url = helpers.get_pose_url(1, pictures)
+    assert url == "https://cdn.example.com/img/foobar.webp"
+
+
 def test_get_category_name_known(lang_lookup):
     name = helpers.get_category_name("factions", 1, "de", lang_lookup)
     assert name == "Untote"

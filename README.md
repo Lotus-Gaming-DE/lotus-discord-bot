@@ -43,6 +43,8 @@ server_id=DEINE_GUILD_ID
 LOG_LEVEL=INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 # Basis-URL der WCR-API
 WCR_API_URL=https://wcr-api.up.railway.app
+# Basis-URL für Bilder (Standard: https://www.method.gg)
+WCR_IMAGE_BASE=https://www.method.gg
 # Bei Zertifikatsproblemen kann die Überprüfung für die PTCGP-API deaktiviert werden
 PTCGP_SKIP_SSL_VERIFY=0
 ```
@@ -146,7 +148,8 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
 - **Quiz-Subsystem** nutzt einen `QuestionGenerator` (statisch & dynamisch), `QuestionStateManager` für Persistenz und einen Scheduler für automatische Fragen. Der nächste geplante Zeitpunkt wird gespeichert, sodass laufende Fenster nach einem Neustart fortgeführt werden können.
 - **Champion-System** speichert Punkte in SQLite und vergibt Rollen gemäß `data/champion/roles.json` (Rollen-ID und Schwelle pro Eintrag).
 - Beim Entladen des Champion-Cogs wird die Datenbankverbindung sauber geschlossen.
- - **WCR-Modul** bezieht seine Daten über die in ``WCR_API_URL`` angegebene API und nutzt sie für Autocomplete sowie dynamische Fragen.
+- **WCR-Modul** bezieht seine Daten über die in ``WCR_API_URL`` angegebene API und nutzt sie für Autocomplete sowie dynamische Fragen.
+  - Bilder werden relativ zu ``WCR_IMAGE_BASE`` aufgel\u00f6st.
   - Die API stellt ``units``, ``categories``, ``pictures`` und ``stat_labels`` bereit.
   - Die Fragevorlagen liegen unter `data/quiz/templates/wcr.json`.
   - Beim Start erzeugt `_export_emojis` automatisch `data/emojis.json`; diese

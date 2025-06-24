@@ -1,6 +1,8 @@
 # cogs/wcr/helpers.py
 
 
+import os
+
 from log_setup import get_logger
 
 logger = get_logger(__name__)
@@ -41,11 +43,21 @@ def get_text_data(unit_id: int, lang: str, languages: dict) -> tuple[str, str, l
     )
 
 
+def _normalize_image_url(path: str) -> str:
+    """Gibt eine vollst\u00e4ndige URL f\u00fcr ``path`` zur\u00fcck."""
+
+    base = os.getenv("WCR_IMAGE_BASE", "https://www.method.gg")
+    if path and not path.startswith("http"):
+        return f"{base.rstrip('/')}/{path.lstrip('/')}"
+    return path
+
+
 def get_pose_url(unit_id: int, pictures: dict) -> str:
-    """Return the pose image URL for a unit."""
+    """Gibt die URL des Pose-Bildes einer Einheit zur\u00fcck."""
     unit_pictures = pictures.get("units", [])
     unit_picture = next((pic for pic in unit_pictures if pic["id"] == unit_id), {})
-    return unit_picture.get("pose", "")
+    url = unit_picture.get("pose", "")
+    return _normalize_image_url(url)
 
 
 def get_faction_data(faction_id: int, lang_lookup: dict) -> dict:
