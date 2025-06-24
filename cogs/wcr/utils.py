@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import aiohttp
+import asyncio
 import json
 
 from log_setup import get_logger
@@ -27,17 +28,25 @@ async def fetch_wcr_data(base_url: str) -> dict[str, Any]:
 
     endpoints = ["units", "categories", "pictures", "stat_labels"]
     data: dict[str, Any] = {}
-    async with aiohttp.ClientSession() as session:
-        for ep in endpoints:
+    timeout = aiohttp.ClientTimeout(total=10)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+
+        async def fetch(ep: str) -> tuple[str, Any]:
             url = f"{base_url.rstrip('/')}/{ep}"
             try:
                 async with session.get(url) as resp:
                     resp.raise_for_status()
-                    data[ep] = await resp.json()
+                    payload = await resp.json()
                 logger.info("[WCRUtils] '%s' erfolgreich geladen.", ep)
-            except Exception as exc:
+                return ep, payload
+            except asyncio.TimeoutError:
+                logger.error("[WCRUtils] Timeout beim Abrufen von %s", ep)
+            except Exception as exc:  # pragma: no cover - unexpected errors
                 logger.error("[WCRUtils] Fehler beim Abrufen von %s: %s", ep, exc)
-                data[ep] = {}
+            return ep, {}
+
+        results = await asyncio.gather(*(fetch(ep) for ep in endpoints))
+        data.update(dict(results))
 
     # Fraktions-Metadaten aus lokaler Datei zusammenführen
     meta_file = BASE_PATH / "faction_meta.json"
