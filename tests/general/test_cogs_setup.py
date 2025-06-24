@@ -55,9 +55,9 @@ async def test_wcr_setup_uses_main_guild(monkeypatch, bot):
         return {
             "units": [],
             "locals": {"en": {"units": []}},
-            "pictures": {},
             "categories": {},
             "stat_labels": {},
+            "faction_combinations": {},
         }
 
     monkeypatch.setattr("cogs.wcr.utils.load_wcr_data", fake_load)

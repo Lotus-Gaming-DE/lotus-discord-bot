@@ -32,6 +32,7 @@ class WCRCog(commands.Cog):
         self.languages = wcr_data.get("locals", {})
         self.categories = wcr_data.get("categories", {})
         self.stat_labels = wcr_data.get("stat_labels", {})
+        self.faction_combinations = wcr_data.get("faction_combinations", {})
 
         # Mapping for resolving unit names quickly
         # {lang: {normalized_name: id}}
@@ -235,7 +236,10 @@ class WCRCog(commands.Cog):
                 )
                 return
             filtered_units = [
-                u for u in filtered_units if u.get("faction_id") == faction_id
+                u
+                for u in filtered_units
+                if str(faction_id)
+                in [str(fid) for fid in (u.get("faction_ids") or [u.get("faction_id")])]
             ]
 
         # Typ filtern
@@ -744,11 +748,25 @@ class WCRCog(commands.Cog):
         )
 
         stat_labels = self.stat_labels.get(lang, {})
+        factions = unit_data.get("faction_ids") or [unit_data.get("faction_id")]
+        factions = [str(f) for f in factions if f is not None]
+        primary_faction = factions[0] if factions else None
         faction_data = helpers.get_faction_data(
-            unit_data.get("faction_id"), self.lang_category_lookup
+            primary_faction, self.lang_category_lookup
         )
         embed_color = int(faction_data.get("color", "#3498db").strip("#"), 16)
-        faction_emoji = self.emojis.get(faction_data.get("icon", ""), "")
+        icon_name = ""
+        if len(factions) > 1:
+            key = f"{factions[0]}_{factions[1]}"
+            icon_name = self.faction_combinations.get(key)
+            if not icon_name:
+                key = f"{factions[1]}_{factions[0]}"
+                icon_name = self.faction_combinations.get(
+                    key, faction_data.get("icon", "")
+                )
+        else:
+            icon_name = faction_data.get("icon", "")
+        faction_emoji = self.emojis.get(icon_name, "")
 
         type_name = helpers.get_category_name(
             "types", unit_data.get("type_id"), lang, self.lang_category_lookup

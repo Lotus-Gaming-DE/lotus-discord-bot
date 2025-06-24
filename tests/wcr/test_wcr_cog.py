@@ -85,6 +85,20 @@ async def test_cmd_filter_generates_options(wcr_data):
 
 
 @pytest.mark.asyncio
+async def test_cmd_filter_cross_faction(wcr_data):
+    bot = DummyBot(wcr_data)
+    cog = WCRCog(bot)
+    inter = DummyInteraction()
+
+    await cog.cmd_filter(inter, faction="Horde", lang="de")
+
+    options = inter.response.messages[0]["view"].children[0].options
+    labels = [o.label for o in options]
+    assert any("Sylvanas" in label for label in labels)
+    cog.cog_unload()
+
+
+@pytest.mark.asyncio
 async def test_cmd_name_creates_embed(wcr_data):
     bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
@@ -135,6 +149,19 @@ def test_build_mini_embed_uses_emoji(wcr_data):
     unit = next(u for u in units if u["id"] == "1")
     embed, _ = cog.build_mini_embed(unit["id"], unit, "de")
     assert isinstance(embed, discord.Embed)
+    cog.cog_unload()
+
+
+def test_build_mini_embed_combines_factions(wcr_data):
+    bot = DummyBot(wcr_data)
+    bot.data["emojis"] = {"wcr_undead_horde": "<:wcr_undead_horde:id>"}
+    cog = WCRCog(bot)
+    units = bot.data["wcr"]["units"]
+    if isinstance(units, dict) and "units" in units:
+        units = units["units"]
+    unit = next(u for u in units if u["id"] == "62")
+    embed, _ = cog.build_mini_embed(unit["id"], unit, "de")
+    assert embed.title.startswith("<:wcr_undead_horde:id>")
     cog.cog_unload()
 
 

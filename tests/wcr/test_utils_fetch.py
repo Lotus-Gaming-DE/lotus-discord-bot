@@ -57,7 +57,7 @@ async def test_fetch_concurrent(monkeypatch):
     assert all(e.is_set() for e in start_events)
     release.set()
     result = await task
-    assert set(result) == {"units", "categories"}
+    assert set(result) == {"units", "categories", "faction_combinations"}
 
 
 @pytest.mark.asyncio
