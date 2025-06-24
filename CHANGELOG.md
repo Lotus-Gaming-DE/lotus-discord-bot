@@ -31,3 +31,4 @@
 - CI speichert Railway-Logs und führt einen Snyk-Scan aus.
 - Behoben: Formatierungsfehler in ``tests/quiz/test_duel.py``.
 - Behoben: Snyk-Workflow nutzt nun ``--file=requirements.txt``.
+- Behoben: Snyk-Workflow authentifiziert sich nun explizit.
