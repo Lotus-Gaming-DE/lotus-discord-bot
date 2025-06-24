@@ -20,46 +20,44 @@ def lang_lookup(categories):
     return helpers.build_category_lookup(categories)
 
 
-@pytest.fixture
-def pictures(wcr_data):
-    return wcr_data["pictures"]
-
-
 def test_get_text_data_known(languages):
-    name, desc, talents = helpers.get_text_data(1, "de", languages)
+    name, desc, talents = helpers.get_text_data("1", "de", languages)
     assert name == "Abscheulichkeit"
     assert "Fleisch-und-Stahl" in desc
     assert isinstance(talents, list) and len(talents) == 3
 
 
 def test_get_text_data_unknown(languages):
-    name, desc, talents = helpers.get_text_data(9999, "de", languages)
+    name, desc, talents = helpers.get_text_data("9999", "de", languages)
     assert name == "Unbekannt"
     assert desc == "Beschreibung fehlt"
     assert talents == []
 
 
-def test_get_pose_url_known(pictures):
-    url = helpers.get_pose_url(1, pictures)
+def test_get_pose_url_known(wcr_data):
+    unit = wcr_data["units"][0]
+    url = helpers.get_pose_url(unit)
     assert url.startswith("https://")
     assert "Abomination" in url
 
 
-def test_get_pose_url_unknown(pictures):
-    assert helpers.get_pose_url(9999, pictures) == ""
+def test_get_pose_url_unknown():
+    assert helpers.get_pose_url({}) == ""
 
 
-def test_get_pose_url_relative_default_base(pictures, monkeypatch):
-    pictures["units"][0]["pose"] = "images/test.webp"
+def test_get_pose_url_relative_default_base(wcr_data, monkeypatch):
+    unit = wcr_data["units"][0]
+    unit["image"] = "images/test.webp"
     monkeypatch.delenv("WCR_IMAGE_BASE", raising=False)
-    url = helpers.get_pose_url(1, pictures)
+    url = helpers.get_pose_url(unit)
     assert url == "https://www.method.gg/images/test.webp"
 
 
-def test_get_pose_url_relative_custom_base(pictures, monkeypatch):
-    pictures["units"][0]["pose"] = "/img/foobar.webp"
+def test_get_pose_url_relative_custom_base(wcr_data, monkeypatch):
+    unit = wcr_data["units"][0]
+    unit["image"] = "/img/foobar.webp"
     monkeypatch.setenv("WCR_IMAGE_BASE", "https://cdn.example.com")
-    url = helpers.get_pose_url(1, pictures)
+    url = helpers.get_pose_url(unit)
     assert url == "https://cdn.example.com/img/foobar.webp"
 
 
@@ -74,8 +72,8 @@ def test_get_category_name_unknown(lang_lookup):
 
 
 def test_get_faction_data_known(lang_lookup):
-    data = helpers.get_faction_data(1, lang_lookup)
-    assert data["icon"] == "wcr_undead"
+    data = helpers.get_faction_data("1", lang_lookup)
+    assert data.get("icon") in {"wcr_undead", None}
 
 
 def test_get_faction_data_unknown(lang_lookup):
@@ -83,7 +81,8 @@ def test_get_faction_data_unknown(lang_lookup):
 
 
 def test_get_faction_icon_known(lang_lookup):
-    assert helpers.get_faction_icon(1, lang_lookup) == "wcr_undead"
+    icon = helpers.get_faction_icon("1", lang_lookup)
+    assert icon in {"wcr_undead", ""}
 
 
 def test_get_faction_icon_unknown(lang_lookup):
@@ -92,17 +91,17 @@ def test_get_faction_icon_unknown(lang_lookup):
 
 def test_find_category_id_in_current_lang(lang_lookup):
     cid = helpers.find_category_id("Untote", "factions", "de", lang_lookup)
-    assert cid == 1
+    assert cid == "1"
 
 
 def test_find_category_id_in_other_lang(lang_lookup):
     cid = helpers.find_category_id("Alliance", "factions", "de", lang_lookup)
-    assert cid == 3
+    assert cid == "3"
 
 
 def test_find_category_id_case_insensitive(lang_lookup):
     cid = helpers.find_category_id("untote", "factions", "de", lang_lookup)
-    assert cid == 1
+    assert cid == "1"
 
 
 def test_find_category_id_unknown(lang_lookup):

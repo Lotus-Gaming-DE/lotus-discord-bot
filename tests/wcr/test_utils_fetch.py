@@ -9,7 +9,7 @@ from cogs.wcr.utils import fetch_wcr_data
 
 @pytest.mark.asyncio
 async def test_fetch_concurrent(monkeypatch):
-    start_events = [asyncio.Event() for _ in range(4)]
+    start_events = [asyncio.Event() for _ in range(2)]
     release = asyncio.Event()
 
     class DummyResponse:
@@ -57,7 +57,7 @@ async def test_fetch_concurrent(monkeypatch):
     assert all(e.is_set() for e in start_events)
     release.set()
     result = await task
-    assert set(result) == {"units", "categories", "pictures", "stat_labels"}
+    assert set(result) == {"units", "categories"}
 
 
 @pytest.mark.asyncio

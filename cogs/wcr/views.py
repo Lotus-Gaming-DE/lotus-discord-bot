@@ -36,7 +36,7 @@ class MiniSelect(discord.ui.Select):
                 "Auswahl nicht mehr verfügbar.", ephemeral=True
             )
             return
-        unit_id = int(self.values[0])
+        unit_id = self.values[0]
         logger.info(
             f"MiniSelect: {interaction.user} chose id={unit_id} lang={self.lang}"
         )

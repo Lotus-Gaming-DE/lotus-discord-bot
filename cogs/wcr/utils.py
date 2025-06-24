@@ -22,11 +22,10 @@ BASE_PATH = Path("data/wcr")
 async def fetch_wcr_data(base_url: str) -> dict[str, Any]:
     """Ruft alle WCR-Endpunkte von ``base_url`` ab.
 
-    Erwartet die Unterpfade ``/units``, ``/categories``, ``/pictures`` und
-    ``/stat_labels``.
+    Erwartet die Unterpfade ``/units`` und ``/categories``.
     """
 
-    endpoints = ["units", "categories", "pictures", "stat_labels"]
+    endpoints = ["units", "categories"]
     data: dict[str, Any] = {}
     timeout = aiohttp.ClientTimeout(total=10)
     async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -59,11 +58,11 @@ async def fetch_wcr_data(base_url: str) -> dict[str, Any]:
             meta = {}
 
         meta_map = {
-            item["id"]: {k: item[k] for k in ("icon", "color") if k in item}
+            str(item["id"]): {k: item[k] for k in ("icon", "color") if k in item}
             for item in meta.get("factions", [])
         }
         for faction in data["categories"].get("factions", []):
-            faction.update(meta_map.get(faction.get("id"), {}))
+            faction.update(meta_map.get(str(faction.get("id")), {}))
 
     return data
 
@@ -92,10 +91,19 @@ async def load_wcr_data(base_url: str | None = None) -> dict[str, Any]:
                 entry.update(info)
                 lang_units.append(entry)
 
+    # Stat-Labels lokal laden
+    stat_labels_file = BASE_PATH / "stat_labels.json"
+    stat_labels = {}
+    if stat_labels_file.exists():
+        try:
+            with open(stat_labels_file, "r", encoding="utf-8") as f:
+                stat_labels = json.load(f)
+        except Exception as exc:  # pragma: no cover - should not happen in tests
+            logger.error("[WCRUtils] Fehler beim Laden von stat_labels.json: %s", exc)
+
     return {
         "units": units_list,
         "locals": locals_,
-        "pictures": api_data.get("pictures", {}),
         "categories": api_data.get("categories", {}),
-        "stat_labels": api_data.get("stat_labels", {}),
+        "stat_labels": stat_labels,
     }

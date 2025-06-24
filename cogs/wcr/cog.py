@@ -30,26 +30,25 @@ class WCRCog(commands.Cog):
         if isinstance(self.units, dict) and "units" in self.units:
             self.units = self.units["units"]
         self.languages = wcr_data.get("locals", {})
-        self.pictures = wcr_data.get("pictures", {})
         self.categories = wcr_data.get("categories", {})
         self.stat_labels = wcr_data.get("stat_labels", {})
 
         # Mapping for resolving unit names quickly
         # {lang: {normalized_name: id}}
-        self.unit_name_map: dict[str, dict[str, int]] = {}
+        self.unit_name_map: dict[str, dict[str, str]] = {}
         # Reverse mapping and token index for fuzzy search
         # {lang: {id: normalized_name}}
-        self.id_name_map: dict[str, dict[int, str]] = {}
+        self.id_name_map: dict[str, dict[str, str]] = {}
         # {lang: {token: set(ids)}}
-        self.name_token_index: dict[str, dict[str, set[int]]] = {}
+        self.name_token_index: dict[str, dict[str, set[str]]] = {}
 
         for lang, texts in self.languages.items():
-            name_map: dict[str, int] = {}
-            id_map: dict[int, str] = {}
-            token_index: dict[str, set[int]] = {}
+            name_map: dict[str, str] = {}
+            id_map: dict[str, str] = {}
+            token_index: dict[str, set[str]] = {}
             for unit in texts.get("units", []):
                 normalized = " ".join(helpers.normalize_name(unit.get("name", "")))
-                unit_id = unit.get("id")
+                unit_id = str(unit.get("id"))
                 name_map[normalized] = unit_id
                 id_map[unit_id] = normalized
                 for token in normalized.split():
@@ -141,7 +140,7 @@ class WCRCog(commands.Cog):
     ) -> list[discord.app_commands.Choice]:
         """Autocomplete Minis über alle unterstützten Sprachen."""
         normalized = " ".join(helpers.normalize_name(current))
-        matched_ids: set[int] = set()
+        matched_ids: set[str] = set()
         for mapping in self.unit_name_map.values():
             for name, uid in mapping.items():
                 if not normalized or normalized in name:
@@ -204,11 +203,11 @@ class WCRCog(commands.Cog):
         # Geschwindigkeit filtern
         if speed is not None:
             speed_id = (
-                int(speed)
-                if speed.isdigit()
-                else helpers.find_category_id(
+                helpers.find_category_id(
                     speed, "speeds", lang, self.lang_category_lookup
                 )
+                if not speed.isdigit()
+                else speed
             )
             if speed_id is None:
                 await interaction.response.send_message(
@@ -223,11 +222,11 @@ class WCRCog(commands.Cog):
         # Fraktion filtern
         if faction is not None:
             faction_id = (
-                int(faction)
-                if faction.isdigit()
-                else helpers.find_category_id(
+                helpers.find_category_id(
                     faction, "factions", lang, self.lang_category_lookup
                 )
+                if not faction.isdigit()
+                else faction
             )
             if faction_id is None:
                 await interaction.response.send_message(
@@ -242,11 +241,9 @@ class WCRCog(commands.Cog):
         # Typ filtern
         if type is not None:
             type_id = (
-                int(type)
-                if type.isdigit()
-                else helpers.find_category_id(
-                    type, "types", lang, self.lang_category_lookup
-                )
+                helpers.find_category_id(type, "types", lang, self.lang_category_lookup)
+                if not type.isdigit()
+                else type
             )
             if type_id is None:
                 await interaction.response.send_message(
@@ -259,11 +256,11 @@ class WCRCog(commands.Cog):
         # Merkmal filtern
         if trait is not None:
             trait_id = (
-                int(trait)
-                if trait.isdigit()
-                else helpers.find_category_id(
+                helpers.find_category_id(
                     trait, "traits", lang, self.lang_category_lookup
                 )
+                if not trait.isdigit()
+                else trait
             )
             if trait_id is None:
                 await interaction.response.send_message(
@@ -272,7 +269,7 @@ class WCRCog(commands.Cog):
                 )
                 return
             filtered_units = [
-                u for u in filtered_units if trait_id in u.get("traits_ids", [])
+                u for u in filtered_units if trait_id in u.get("trait_ids", [])
             ]
 
         if not filtered_units:
@@ -387,11 +384,11 @@ class WCRCog(commands.Cog):
         dps_b, notes_b = calculator.compute_dps_details(data_b, stats_b, data_a)
 
         def _flight_issue(att: dict, def_: dict) -> bool:
-            ta = att.get("traits_ids", [])
-            td = def_.get("traits_ids", [])
-            if att.get("type_id") == 2:
+            ta = [str(t) for t in att.get("trait_ids", [])]
+            td = [str(t) for t in def_.get("trait_ids", [])]
+            if att.get("type_id") == "2":
                 return False
-            return 15 in td and 11 not in ta and 15 not in ta
+            return "15" in td and "11" not in ta and "15" not in ta
 
         issue_a = _flight_issue(data_a, data_b)
         issue_b = _flight_issue(data_b, data_a)
@@ -478,6 +475,15 @@ class WCRCog(commands.Cog):
 
         await interaction.followup.send(text, ephemeral=not public)
 
+    async def cmd_debug(self, interaction: discord.Interaction) -> None:
+        """Sendet eine kurze Übersicht der geladenen WCR-Daten."""
+        units_count = len(self.units)
+        categories = {k: len(v) for k, v in self.categories.items()}
+        msg = f"{units_count} Minis geladen. Kategorien: " + ", ".join(
+            f"{k}={v}" for k, v in categories.items()
+        )
+        await interaction.response.send_message(msg, ephemeral=True)
+
     def create_mini_embed(self, name_or_id, lang):
         """Baue ein Mini-Embed.
 
@@ -496,7 +502,7 @@ class WCRCog(commands.Cog):
 
     def _find_unit_id_by_name(
         self, normalized: str, lang: str
-    ) -> tuple[int | None, str]:
+    ) -> tuple[str | None, str]:
         """Search a unit ID by normalized name with fuzzy matching."""
         mapping = self.unit_name_map.get(lang, {})
         id_map = self.id_name_map.get(lang, {})
@@ -506,7 +512,7 @@ class WCRCog(commands.Cog):
             return mapping[normalized], lang
 
         tokens = normalized.split()
-        candidate_ids: set[int] = set()
+        candidate_ids: set[str] = set()
         for token in tokens:
             candidate_ids.update(token_index.get(token, set()))
 
@@ -539,17 +545,15 @@ class WCRCog(commands.Cog):
         if lang not in self.languages:
             return None
 
-        try:
-            unit_id = int(name_or_id)
-            unit_data = next(
-                (unit for unit in self.units if unit["id"] == unit_id), None
-            )
+        if any(unit["id"] == str(name_or_id) for unit in self.units):
+            unit_id = str(name_or_id)
+            unit_data = next((u for u in self.units if u["id"] == unit_id), None)
             if not unit_data:
                 return None
             name, _, _ = helpers.get_text_data(unit_id, lang, self.languages)
             if name == "Unbekannt":
                 return None
-        except ValueError:
+        else:
             normalized = " ".join(helpers.normalize_name(name_or_id))
             unit_id, lang = self._find_unit_id_by_name(normalized, lang)
             if unit_id is None:
@@ -616,7 +620,7 @@ class WCRCog(commands.Cog):
                 }
             )
 
-        is_elemental = 8 in unit_data.get("traits_ids", [])
+        is_elemental = "8" in unit_data.get("trait_ids", [])
         if "damage" in stats or "area_damage" in stats:
             if "damage" in stats:
                 damage_value = stats["damage"]
@@ -723,7 +727,7 @@ class WCRCog(commands.Cog):
 
     def _prepare_traits_field(self, unit_data, lang, stat_labels):
         """Return a field for trait display if traits exist."""
-        traits_ids = unit_data.get("traits_ids", [])
+        traits_ids = unit_data.get("trait_ids", [])
         trait_lookup = self.lang_category_lookup.get(lang, {}).get("traits", {})
         names = [trait_lookup[i]["name"] for i in traits_ids if i in trait_lookup]
         if not names:
@@ -798,7 +802,7 @@ class WCRCog(commands.Cog):
                 inline=traits_field.get("inline", True),
             )
 
-        pose_url = helpers.get_pose_url(unit_id, self.pictures)
+        pose_url = helpers.get_pose_url(unit_data)
         if pose_url:
             embed.set_thumbnail(url=pose_url)
 

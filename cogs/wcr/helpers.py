@@ -15,14 +15,14 @@ def build_category_lookup(categories: dict) -> dict:
     speichert neben dem Namen auch Zusatzinformationen wie Icon und Farbe.
     """
 
-    lang_lookup: dict[str, dict[str, dict[int, dict]]] = {}
+    lang_lookup: dict[str, dict[str, dict[str, dict]]] = {}
     for cat_name, items in categories.items():
         for item in items:
             for lang, name in item.get("names", {}).items():
                 lang_dict = lang_lookup.setdefault(lang, {})
                 cat_dict = lang_dict.setdefault(cat_name, {})
-                cat_dict[item["id"]] = {
-                    "id": item["id"],
+                cat_dict[str(item["id"])] = {
+                    "id": str(item["id"]),
                     "name": name,
                     **{k: item[k] for k in ("icon", "color") if k in item},
                 }
@@ -30,11 +30,11 @@ def build_category_lookup(categories: dict) -> dict:
     return lang_lookup
 
 
-def get_text_data(unit_id: int, lang: str, languages: dict) -> tuple[str, str, list]:
+def get_text_data(unit_id: str, lang: str, languages: dict) -> tuple[str, str, list]:
     """Return name, description and talents for a unit in ``lang``."""
     texts = languages.get(lang, languages.get("de", {}))
     unit_text = next(
-        (unit for unit in texts.get("units", []) if unit["id"] == unit_id), {}
+        (unit for unit in texts.get("units", []) if str(unit["id"]) == unit_id), {}
     )
     return (
         unit_text.get("name", "Unbekannt"),
@@ -52,15 +52,13 @@ def _normalize_image_url(path: str) -> str:
     return path
 
 
-def get_pose_url(unit_id: int, pictures: dict) -> str:
+def get_pose_url(unit: dict) -> str:
     """Gibt die URL des Pose-Bildes einer Einheit zur\u00fcck."""
-    unit_pictures = pictures.get("units", [])
-    unit_picture = next((pic for pic in unit_pictures if pic["id"] == unit_id), {})
-    url = unit_picture.get("pose", "")
+    url = unit.get("image", "")
     return _normalize_image_url(url)
 
 
-def get_faction_data(faction_id: int, lang_lookup: dict) -> dict:
+def get_faction_data(faction_id: str, lang_lookup: dict) -> dict:
     """Gibt Metadaten für eine Fraktion zurück.
 
     Die Daten enthalten Icon und Farbe der Fraktion. Es wird dabei die erste
@@ -69,22 +67,22 @@ def get_faction_data(faction_id: int, lang_lookup: dict) -> dict:
 
     for cat_data in lang_lookup.values():
         factions = cat_data.get("factions")
-        if factions and faction_id in factions:
-            return factions[faction_id]
+        if factions and str(faction_id) in factions:
+            return factions[str(faction_id)]
     return {}
 
 
 def get_category_name(
-    category: str, category_id: int, lang: str, lang_lookup: dict
+    category: str, category_id: str, lang: str, lang_lookup: dict
 ) -> str:
     """Gibt den lokalisierten Namen eines Kategorie-Eintrags zurück."""
-    item = lang_lookup.get(lang, {}).get(category, {}).get(category_id)
+    item = lang_lookup.get(lang, {}).get(category, {}).get(str(category_id))
     if item:
         return item.get("name", "Unbekannt")
     return "Unbekannt"
 
 
-def get_faction_icon(faction_id: int, lang_lookup: dict) -> str:
+def get_faction_icon(faction_id: str, lang_lookup: dict) -> str:
     """Gibt den Emoji-/Icon-Namen einer Fraktion zurück."""
     faction_data = get_faction_data(faction_id, lang_lookup)
     return faction_data.get("icon", "")
@@ -97,7 +95,7 @@ def normalize_name(name: str) -> list[str]:
 
 def find_category_id(
     category_name: str, category: str, lang: str, lang_lookup: dict
-) -> int | None:
+) -> str | None:
     """Sucht die ID zu ``category_name`` über alle Sprachen hinweg."""
     # Zuerst in der aktuellen Sprache suchen
     category_dict = lang_lookup.get(lang, {}).get(category, {})

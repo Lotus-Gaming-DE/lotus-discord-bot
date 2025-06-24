@@ -14,7 +14,7 @@ def test_spell_total_damage(wcr_data):
     units = wcr_data["units"]
     if isinstance(units, dict) and "units" in units:
         units = units["units"]
-    blizzard = next(u for u in units if u["id"] == 7)
+    blizzard = next(u for u in units if u["id"] == "7")
 
     stats_lvl1 = calc.scaled_stats(blizzard, 1)
     stats_lvl2 = calc.scaled_stats(blizzard, 2)
@@ -31,7 +31,7 @@ def test_duel_result_equal_damage_spells(wcr_data):
     units = wcr_data["units"]
     if isinstance(units, dict) and "units" in units:
         units = units["units"]
-    spell_a = next(u for u in units if u["id"] == 10)
-    spell_b = next(u for u in units if u["id"] == 36)
+    spell_a = next(u for u in units if u["id"] == "10")
+    spell_b = next(u for u in units if u["id"] == "36")
 
     assert calc.duel_result(spell_a, 1, spell_b, 1) is None
