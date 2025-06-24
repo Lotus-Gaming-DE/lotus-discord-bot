@@ -1,3 +1,4 @@
+import json
 import logging
 import pytest
 import discord
@@ -291,7 +292,8 @@ def test_init_without_en_language(wcr_data, caplog):
         cog = WCRCog(bot)
 
     assert cog.speed_choices
-    assert any("language not found" in r.message for r in caplog.records)
+    events = [json.loads(r.getMessage()).get("event", "") for r in caplog.records]
+    assert any("language not found" in e for e in events)
     cog.cog_unload()
 
 
@@ -578,6 +580,7 @@ def test_init_without_localization_fallback(wcr_data, caplog):
     with caplog.at_level(logging.WARNING):
         cog = WCRCog(bot)
 
-    assert "fallback" in caplog.records[0].message.lower()
+    events = [json.loads(r.getMessage()).get("event", "") for r in caplog.records]
+    assert "fallback" in events[0].lower()
     assert "en" in cog.languages
     cog.cog_unload()

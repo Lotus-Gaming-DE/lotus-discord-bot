@@ -1,4 +1,5 @@
 import logging
+import json
 import pytest
 import aiosqlite
 
@@ -33,7 +34,8 @@ async def test_update_user_score_db_error(
         with pytest.raises(RuntimeError):
             await cog.update_user_score(1, 1, "test")
 
-    assert any("DB-Fehler" in r.message for r in caplog.records)
+    events = [json.loads(r.getMessage()).get("event", "") for r in caplog.records]
+    assert any("DB-Fehler" in e for e in events)
 
     await cog.cog_unload()
     await cog.wait_closed()

@@ -1,6 +1,7 @@
 import asyncio
-import pytest
+import json
 import logging
+import pytest
 
 
 from cogs.champion.cog import ChampionCog
@@ -259,6 +260,7 @@ async def test_queue_raises_when_full(monkeypatch, patch_logged_task, caplog):
         with pytest.raises(RuntimeError):
             await cog.update_user_score(3, 1, "c")
 
-    assert any("update_queue voll" in r.message for r in caplog.records)
+    events = [json.loads(r.getMessage()).get("event", "") for r in caplog.records]
+    assert any("update_queue voll" in e for e in events)
 
     await cog.cog_unload()

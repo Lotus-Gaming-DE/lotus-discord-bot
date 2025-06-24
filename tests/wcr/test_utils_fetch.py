@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 
 import aiohttp
@@ -98,4 +99,5 @@ async def test_fetch_timeout(monkeypatch, caplog):
     assert isinstance(captured["timeout"], aiohttp.ClientTimeout)
     assert captured["timeout"].total == 10
     assert result["units"] == {}
-    assert any("Timeout" in r.message for r in caplog.records)
+    events = [json.loads(r.getMessage()).get("event", "") for r in caplog.records]
+    assert any("Timeout" in e for e in events)

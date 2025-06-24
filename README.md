@@ -32,9 +32,12 @@ Voraussetzung ist Python ≥3.11. Der Bot läuft vorzugsweise auf [Railway](http
 
 ```bash
 pip install -r requirements.txt
+pre-commit install
 cp .env.example .env  # Bot-Token und Server-ID eintragen
 python bot.py
 ```
+
+Logdateien werden im Verzeichnis `logs/` als rotierendes JSON-File `bot.json` gespeichert.
 
 Die wichtigsten Variablen aus `.env`:
 
@@ -102,6 +105,7 @@ Die aktuellen Spieldaten werden beim Start einmalig über die in `WCR_API_URL` d
 | `/champion roles`     | Alle Rollen und ihre Punktschwellen                |
 | `/champion rank`      | Rang eines Nutzers in der Bestenliste              |
 | `/champion clean`     | Entfernt Daten ausgeschiedener Mitglieder *(Mod)*  |
+| `/champion syncroles` | Synchronisiert Champion-Rollen *(Mod)*             |
 
 ### `/quiz`
 
@@ -130,6 +134,7 @@ Der Modus `dynamic` passt die Rundenzahl automatisch an und steht nur in Areas m
 | `/wcr name`         | Details und Statistiken zu einer Einheit (mehrsprachig)             |
 | `/wcr filter`       | Minis über diverse Filter finden (Kosten, Fraktion, Traits ...)      |
 | `/wcr duell`        | Simuliert ein Duell zweier Minis (Level optional) und zeigt eine detaillierte Berechnung inkl. Trait-Effekten an |
+| `/wcr debug`        | Zeigt geladene WCR-Daten *(Mod)* |
 
 Wird kein Level angegeben, verwendet der Bot die Basiswerte (Level 1).
 
@@ -229,13 +234,15 @@ Persistente Daten liegen in `data/pers/` und sollten nicht ins Repository aufgen
 
 ```bash
 pip install -r requirements.txt  # installiert auch pytest-asyncio
-flake8       # Linting
-pytest -q    # Test Suite
+pre-commit install
+pre-commit run --all-files
+pytest -q
 ```
+Das CI-System führt zusätzlich `pip-audit` aus, um bekannte Sicherheitslücken in den Abhängigkeiten zu erkennen.
 
 Neue Features benötigen passende Tests. Die Fixtures in `tests/conftest.py` stellen Umgebungsvariablen bereit und bieten `patch_logged_task`, das `create_logged_task` nun global ersetzt. Ebenfalls sorgt `auto_stop_views` dafür, dass in Tests erstellte `discord.ui.View`-Instanzen automatisch gestoppt werden. Das neue Fixture `assert_no_tasks` prüft zudem, ob nach jedem Test noch asyncio-Tasks laufen und schlägt sonst fehl. Zusätzlich stellt `tests/conftest.py` ein sessionweites ``event_loop``-Fixture bereit, damit alle Async-Tests denselben Loop nutzen und am Ende sauber schließen.
 
-Pull Requests sind willkommen! Bitte halte dich an den bestehenden Codestyle (PEP8, formatiert mit *Black*) und prüfe vor dem Commit, dass `flake8` und `pytest` grün sind.
+Pull Requests sind willkommen! Bitte halte dich an den bestehenden Codestyle (PEP8, formatiert mit *Black*). Verwende `pre-commit` vor jedem Commit, um Formatierung und Linting sicherzustellen, und lass die Tests (`pytest`) laufen.
 
 ---
 
@@ -266,7 +273,6 @@ Pull Requests sind willkommen! Bitte halte dich an den bestehenden Codestyle (PE
 ## Changelog
 
 Eine detaillierte Liste aller Änderungen findest du im [Changelog](CHANGELOG.md) und im Release-Bereich des [Projekt-Repositorys](https://github.com/LotusGamingDE).
-Eine detaillierte Liste aller Änderungen findest du in der Datei `CHANGELOG.md`.
 
 ---
 

@@ -1,6 +1,11 @@
 import logging
-from logging.handlers import RotatingFileHandler
 import asyncio
+from pathlib import Path
+from logging.handlers import RotatingFileHandler
+
+import structlog
+
+_configured = False
 
 
 def setup_logging(log_level: str = "INFO"):
@@ -11,33 +16,51 @@ def setup_logging(log_level: str = "INFO"):
     log_level: str
         The desired log level (e.g. "INFO" or "DEBUG").
     """
+    global _configured
+    if _configured:
+        return
+
     log_level = log_level.upper()
     level = getattr(logging, log_level, logging.INFO)
 
-    formatter = logging.Formatter("%(asctime)s %(levelname)s:%(name)s: %(message)s")
+    logs_dir = Path("logs")
+    logs_dir.mkdir(exist_ok=True)
 
-    handlers = [logging.StreamHandler()]
-    file_handler = RotatingFileHandler("bot.log", maxBytes=1_000_000, backupCount=3)
-    file_handler.setFormatter(formatter)
-    handlers.append(file_handler)
+    handlers = [
+        logging.StreamHandler(),
+        RotatingFileHandler(
+            logs_dir / "bot.json", maxBytes=1_000_000, backupCount=3, encoding="utf-8"
+        ),
+    ]
 
     logging.basicConfig(
-        level=level,
-        format="%(asctime)s %(levelname)s:%(name)s: %(message)s",
-        handlers=handlers,
-        force=True,
+        level=level, handlers=handlers, format="%(message)s", force=True
+    )
+
+    structlog.configure(
+        processors=[
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.stdlib.add_log_level,
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.JSONRenderer(),
+        ],
+        wrapper_class=structlog.make_filtering_bound_logger(level),
+        logger_factory=structlog.stdlib.LoggerFactory(),
     )
 
     logging.getLogger("discord").setLevel(logging.WARNING)
+    _configured = True
 
 
-def get_logger(name: str, **context) -> logging.LoggerAdapter:
-    """Return a LoggerAdapter with optional contextual information."""
-    base = logging.getLogger(name)
-    return logging.LoggerAdapter(base, context)
+def get_logger(name: str, **context) -> structlog.BoundLogger:
+    """Return a structlog ``BoundLogger`` with optional context."""
+    if not _configured:
+        setup_logging()
+    return structlog.get_logger(name).bind(**context)
 
 
-def create_logged_task(coro, logger: logging.Logger) -> asyncio.Task:
+def create_logged_task(coro, logger) -> asyncio.Task:
     """Create an ``asyncio.Task`` and log uncaught exceptions.
 
     The returned task ignores :class:`asyncio.CancelledError` when finished and

@@ -29,6 +29,13 @@ def _set_env(monkeypatch):
     monkeypatch.setenv("server_id", "0")
 
 
+@pytest.fixture(autouse=True, scope="session")
+def configure_logging():
+    import log_setup
+
+    log_setup.setup_logging("INFO")
+
+
 class DummyTask:
     def __init__(self):
         self.cancelled = False

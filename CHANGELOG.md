@@ -25,3 +25,6 @@
 - ``QuizCog.cog_unload`` löscht das Attribut ``quiz_cog`` am Bot.
 - Tests verwenden ein sessionweites ``event_loop``-Fixture.
 - Neue Tests für ``QuestionManager.ask_question`` und ``QuestionRestorer.repost_question``.
+- Logging nutzt jetzt ``structlog`` und schreibt JSON-Dateien unter ``logs/bot.json``.
+- Pre-commit Hooks mit ``black``, ``flake8``, ``ruff`` und mehr.
+- Neue GitHub-Action ``security.yml`` führt ``pip-audit`` aus.
