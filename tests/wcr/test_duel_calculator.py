@@ -9,10 +9,11 @@ def test_scale_stat():
     assert calc.scale_stat(100, 5) == pytest.approx(140)
 
 
-def test_spell_total_damage():
+def test_spell_total_damage(wcr_data):
     calc = DuelCalculator()
-    units = __import__("json").load(open("data/wcr/units.json", encoding="utf-8"))
-    units = units["units"] if isinstance(units, dict) and "units" in units else units
+    units = wcr_data["units"]
+    if isinstance(units, dict) and "units" in units:
+        units = units["units"]
     blizzard = next(u for u in units if u["id"] == 7)
 
     stats_lvl1 = calc.scaled_stats(blizzard, 1)
@@ -25,10 +26,11 @@ def test_spell_total_damage():
     assert dmg2 == pytest.approx(550)
 
 
-def test_duel_result_equal_damage_spells():
+def test_duel_result_equal_damage_spells(wcr_data):
     calc = DuelCalculator()
-    units = __import__("json").load(open("data/wcr/units.json", encoding="utf-8"))
-    units = units["units"] if isinstance(units, dict) and "units" in units else units
+    units = wcr_data["units"]
+    if isinstance(units, dict) and "units" in units:
+        units = units["units"]
     spell_a = next(u for u in units if u["id"] == 10)
     spell_b = next(u for u in units if u["id"] == 36)
 
