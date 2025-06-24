@@ -1,4 +1,4 @@
 # Ignoriere persistente Daten (liegen im Railway Volume)
 data/pers/
-bot.log
+logs/
 __pycache__/

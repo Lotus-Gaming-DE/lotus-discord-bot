@@ -417,9 +417,7 @@ async def duelstats(
     ties = stats.get("tie", 0)
 
     if target.id == interaction.user.id and user is None:
-        msg = (
-            f"⚔️ Deine Bilanz: {wins} Siege, {losses} Niederlagen, {ties} Unentschieden."
-        )
+        msg = f"⚔️ Deine Bilanz: {wins} Siege, {losses} Niederlagen, {ties} Unentschieden."
     else:
         msg = (
             f"⚔️ Bilanz von {target.display_name}: "

@@ -9,13 +9,11 @@
 - Neues JSON-Cache-System für WCR-Daten (``WCR_CACHE_TTL`` konfiguriert die
   Gültigkeitsdauer).
 - Refaktor: `cmd_duel` nutzt nun `_compute_duel_outcome` und die neue
-  `DuelOutcome`-Dataclass.
 - ChampionData.add_delta begrenzt Punktestände auf mindestens 0 und protokolliert Vorher- und Nachher-Wert.
 - WCRCog fällt nun auf englische Texte zurück, wenn ``locals`` fehlen.
 - Abhängigkeiten aktualisiert: ``discord.py`` 2.5.2, ``Unidecode`` 1.4.0,
   ``aiosqlite`` 0.21.0, ``python-dotenv`` 1.1.1, ``pytest-asyncio`` 1.0.0 und
   ``aiohttp`` 3.12.13.
-- Refaktor: `cmd_duel` nutzt nun `_compute_duel_outcome` und die neue `DuelOutcome`-Dataclass.
  - ChampionCog besitzt nun eine begrenzte Update-Warteschlange (1000 Einträge);
     beim Füllen wird nun ein ``RuntimeError`` ausgelöst.
 
@@ -25,3 +23,6 @@
 - ``QuizCog.cog_unload`` löscht das Attribut ``quiz_cog`` am Bot.
 - Tests verwenden ein sessionweites ``event_loop``-Fixture.
 - Neue Tests für ``QuestionManager.ask_question`` und ``QuestionRestorer.repost_question``.
+- Logging nutzt jetzt ``structlog`` und schreibt JSON-Dateien unter ``logs/bot.json``.
+- Pre-commit Hooks mit ``black``, ``flake8``, ``ruff`` und mehr.
+- Neue GitHub-Action ``security.yml`` führt ``pip-audit`` aus.

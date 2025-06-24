@@ -12,7 +12,9 @@ from . import helpers
 logger = get_logger(__name__)
 
 
-def build_lookup_tables(languages: Dict[str, Any]) -> Tuple[
+def build_lookup_tables(
+    languages: Dict[str, Any]
+) -> Tuple[
     Dict[str, Dict[str, str]],
     Dict[str, Dict[str, str]],
     Dict[str, Dict[str, Set[str]]],
