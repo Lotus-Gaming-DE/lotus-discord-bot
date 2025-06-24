@@ -734,7 +734,10 @@ class WCRCog(commands.Cog):
     def _prepare_traits_field(self, unit_data, lang, stat_labels):
         """Return a field for trait display if traits exist."""
         traits_ids = unit_data.get("trait_ids", [])
-        trait_lookup = self.lang_category_lookup.get(lang, {}).get("traits", {})
+        trait_lookup = (
+            self.lang_category_lookup.get(lang)
+            or self.lang_category_lookup.get("en", {})
+        ).get("traits", {})
         names = [trait_lookup[i]["name"] for i in traits_ids if i in trait_lookup]
         if not names:
             return None
@@ -749,7 +752,7 @@ class WCRCog(commands.Cog):
             unit_id, lang, self.languages
         )
 
-        stat_labels = self.stat_labels.get(lang, {})
+        stat_labels = self.stat_labels.get(lang) or self.stat_labels.get("en", {})
         factions = unit_data.get("faction_ids") or [unit_data.get("faction_id")]
         factions = [str(f) for f in factions if f is not None]
         primary_faction = factions[0] if factions else None

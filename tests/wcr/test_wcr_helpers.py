@@ -34,6 +34,14 @@ def test_get_text_data_unknown(languages):
     assert talents == []
 
 
+def test_get_text_data_fallback_to_en(languages):
+    en_data = languages["en"]
+    del languages["de"]
+    name, desc, _ = helpers.get_text_data("1", "de", languages)
+    assert name == en_data["units"][0]["name"]
+    assert desc == en_data["units"][0]["description"]
+
+
 def test_get_pose_url_known(wcr_data):
     unit = wcr_data["units"][0]
     url = helpers.get_pose_url(unit)
@@ -69,6 +77,14 @@ def test_get_category_name_known(lang_lookup):
 def test_get_category_name_unknown(lang_lookup):
     name = helpers.get_category_name("factions", 9999, "de", lang_lookup)
     assert name == "Unbekannt"
+
+
+def test_get_category_name_fallback_to_en(categories):
+    for item in categories["factions"]:
+        item["names"].pop("de", None)
+    lang_lookup = helpers.build_category_lookup(categories)
+    name = helpers.get_category_name("factions", 1, "de", lang_lookup)
+    assert name == "Undead"
 
 
 def test_get_faction_data_known(lang_lookup):
