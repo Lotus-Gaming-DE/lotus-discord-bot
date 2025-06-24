@@ -23,7 +23,7 @@ class DuelOutcome:
 
 class WCRCog(commands.Cog):
     def __init__(self, bot) -> None:
-        """Cog providing Warcraft Rumble helper commands."""
+        """Cog für Warcraft Rumble Befehle mit automatischem Fallback."""
         self.bot = bot
 
         wcr_data = bot.data.get("wcr") or {}
@@ -39,7 +39,17 @@ class WCRCog(commands.Cog):
             self.units = self.units["units"]
         self.languages = wcr_data.get("locals", {})
         if not self.languages:
-            raise ValueError("WCR localization data missing")
+            logger.warning(
+                "[WCRCog] Keine Lokalisierung gefunden, fallback auf Englisch."
+            )
+            en_units = []
+            for unit in self.units:
+                text = unit.get("texts", {}).get("en")
+                if text:
+                    entry = {"id": unit.get("id")}
+                    entry.update(text)
+                    en_units.append(entry)
+            self.languages = {"en": {"units": en_units}}
         self.categories = wcr_data.get("categories", {})
         self.stat_labels = wcr_data.get("stat_labels", {})
         self.faction_combinations = wcr_data.get("faction_combinations", {})

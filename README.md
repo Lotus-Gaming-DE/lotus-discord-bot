@@ -187,6 +187,8 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
   - Beim Abrufen dieser Daten wird ein Timeout von 10 Sekunden verwendet.
   - Wenn deutsche Texte fehlen, greift das Modul automatisch auf die englischen
     Daten zurück.
+  - Fehlen die Lokalisierungsdaten komplett (``locals``), wird aus den
+    ``units`` ein englischer Fallback erzeugt.
   - Die Fragevorlagen liegen unter `data/quiz/templates/wcr.json`.
   - Geladene Daten werden in `data/pers/wcr_cache.json` zwischengespeichert.
     Die Gültigkeitsdauer lässt sich über ``WCR_CACHE_TTL`` steuern.

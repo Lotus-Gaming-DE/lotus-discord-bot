@@ -544,9 +544,12 @@ async def test_cmd_duel_unknown_mini(wcr_data):
     cog.cog_unload()
 
 
-def test_init_without_localization(caplog):
-    bot = DummyBot({})
+def test_init_without_localization_fallback(wcr_data, caplog):
+    wcr_data["locals"] = {}
+    bot = DummyBot(wcr_data)
     with caplog.at_level(logging.WARNING):
-        with pytest.raises(ValueError) as exc:
-            WCRCog(bot)
-    assert "localization data" in str(exc.value)
+        cog = WCRCog(bot)
+
+    assert "fallback" in caplog.records[0].message.lower()
+    assert "en" in cog.languages
+    cog.cog_unload()
