@@ -45,6 +45,8 @@ LOG_LEVEL=INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 WCR_API_URL=https://wcr-api.up.railway.app
 # Basis-URL für Bilder (Standard: https://www.method.gg)
 WCR_IMAGE_BASE=https://www.method.gg
+# Maximales Alter des WCR-Caches in Sekunden (Standard: 86400)
+WCR_CACHE_TTL=86400
 # Bei Zertifikatsproblemen kann die Überprüfung für die PTCGP-API deaktiviert werden
 PTCGP_SKIP_SSL_VERIFY=0
 # Optional: Pfad zur Champion-Datenbank
@@ -164,6 +166,8 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
   - Wenn deutsche Texte fehlen, greift das Modul automatisch auf die englischen
     Daten zurück.
   - Die Fragevorlagen liegen unter `data/quiz/templates/wcr.json`.
+  - Geladene Daten werden in `data/pers/wcr_cache.json` zwischengespeichert.
+    Die Gültigkeitsdauer lässt sich über ``WCR_CACHE_TTL`` steuern.
   - Beim Start erzeugt `_export_emojis` automatisch `data/emojis.json`; diese
     Datei enthält ein einfaches Mapping `{name: syntax}`. Die Emoji-Namen müssen
     mit den Angaben in `data/wcr/faction_meta.json` übereinstimmen.
