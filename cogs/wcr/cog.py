@@ -2,11 +2,10 @@
 
 import discord
 from discord.ext import commands
-import os
-import difflib
 from dataclasses import dataclass
 
 from log_setup import get_logger
+from . import resolver, embed_builder
 from . import helpers
 from .views import MiniSelectView
 from .duel import DuelCalculator
@@ -55,28 +54,9 @@ class WCRCog(commands.Cog):
         self.faction_combinations = wcr_data.get("faction_combinations", {})
 
         # Mapping for resolving unit names quickly
-        # {lang: {normalized_name: id}}
-        self.unit_name_map: dict[str, dict[str, str]] = {}
-        # Reverse mapping and token index for fuzzy search
-        # {lang: {id: normalized_name}}
-        self.id_name_map: dict[str, dict[str, str]] = {}
-        # {lang: {token: set(ids)}}
-        self.name_token_index: dict[str, dict[str, set[str]]] = {}
-
-        for lang, texts in self.languages.items():
-            name_map: dict[str, str] = {}
-            id_map: dict[str, str] = {}
-            token_index: dict[str, set[str]] = {}
-            for unit in texts.get("units", []):
-                normalized = " ".join(helpers.normalize_name(unit.get("name", "")))
-                unit_id = str(unit.get("id"))
-                name_map[normalized] = unit_id
-                id_map[unit_id] = normalized
-                for token in normalized.split():
-                    token_index.setdefault(token, set()).add(unit_id)
-            self.unit_name_map[lang] = name_map
-            self.id_name_map[lang] = id_map
-            self.name_token_index[lang] = token_index
+        self.unit_name_map, self.id_name_map, self.name_token_index = (
+            resolver.build_lookup_tables(self.languages)
+        )
 
         self.lang_category_lookup = helpers.build_category_lookup(self.categories)
 
@@ -409,43 +389,27 @@ class WCRCog(commands.Cog):
 
         unit_id, unit_data, _ = result
 
-        return self.build_mini_embed(unit_id, unit_data, lang)
+        return embed_builder.build_mini_embed(
+            unit_id,
+            unit_data,
+            lang,
+            self.emojis,
+            self.languages,
+            self.lang_category_lookup,
+            self.stat_labels,
+            self.faction_combinations,
+        )
 
     def _find_unit_id_by_name(
         self, normalized: str, lang: str
     ) -> tuple[str | None, str]:
-        """Search a unit ID by normalized name with fuzzy matching."""
-        mapping = self.unit_name_map.get(lang, {})
-        id_map = self.id_name_map.get(lang, {})
-        token_index = self.name_token_index.get(lang, {})
-
-        if normalized in mapping:
-            return mapping[normalized], lang
-
-        tokens = normalized.split()
-        candidate_ids: set[str] = set()
-        for token in tokens:
-            candidate_ids.update(token_index.get(token, set()))
-
-        if not candidate_ids:
-            candidate_ids = set(mapping.values())
-
-        for unit_id in candidate_ids:
-            key = id_map.get(unit_id, "")
-            if normalized in key:
-                return unit_id, lang
-
-        best_id = None
-        best_ratio = 0.0
-        for unit_id in candidate_ids:
-            key = id_map.get(unit_id, "")
-            ratio = difflib.SequenceMatcher(None, normalized, key).ratio()
-            if ratio > best_ratio:
-                best_ratio = ratio
-                best_id = unit_id
-        if best_ratio >= 0.6:
-            return best_id, lang
-        return None, lang
+        return resolver.find_unit_id_by_name(
+            normalized,
+            lang,
+            self.unit_name_map,
+            self.id_name_map,
+            self.name_token_index,
+        )
 
     def resolve_unit(self, name_or_id, lang):
         """Finde ein Mini in allen Sprachen.
@@ -598,265 +562,6 @@ class WCRCog(commands.Cog):
         text = "\n".join(parts)
 
         return DuelOutcome(text)
-
-    def _prepare_stat_rows(self, unit_data, stat_labels, type_name, speed_name):
-        """Return stat rows and set of used stat keys."""
-        stats = unit_data.get("stats", {})
-
-        row1_stats: list[dict] = []
-        row2_stats: list[dict] = []
-        row3_stats: list[dict] = []
-
-        cost = unit_data.get("cost", "N/A")
-        row1_stats.append(
-            {
-                "name": f"{self.emojis.get('wcr_cost', '')} {stat_labels.get('cost', 'Kosten')}",
-                "value": str(cost),
-                "inline": True,
-            }
-        )
-        row1_stats.append(
-            {
-                "name": f"{self.emojis.get('wcr_type', '')} {stat_labels.get('type_id', 'Typ')}",
-                "value": type_name,
-                "inline": True,
-            }
-        )
-
-        health = stats.get("health")
-        if health is not None:
-            row2_stats.append(
-                {
-                    "name": f"{self.emojis.get('wcr_health', '')} {stat_labels.get('health', 'Gesundheit')}",
-                    "value": str(health),
-                    "inline": True,
-                }
-            )
-        if speed_name:
-            row2_stats.append(
-                {
-                    "name": f"{self.emojis.get('wcr_speed', '')} {stat_labels.get('speed_id', 'Geschwindigkeit')}",
-                    "value": speed_name,
-                    "inline": True,
-                }
-            )
-
-        is_elemental = "8" in unit_data.get("trait_ids", [])
-        if "damage" in stats or "area_damage" in stats:
-            if "damage" in stats:
-                damage_value = stats["damage"]
-                if is_elemental:
-                    damage_label = stat_labels.get("damage", "Elementarschaden")
-                    damage_emoji = self.emojis.get("wcr_damage_ele", "")
-                else:
-                    damage_label = stat_labels.get("damage", "Schaden")
-                    damage_emoji = self.emojis.get("wcr_damage", "")
-            else:
-                damage_value = stats["area_damage"]
-                if is_elemental:
-                    damage_label = stat_labels.get(
-                        "area_damage", "Elementarflächenschaden"
-                    )
-                    damage_emoji = self.emojis.get("wcr_damage_ele", "")
-                else:
-                    damage_label = stat_labels.get("area_damage", "Flächenschaden")
-                    damage_emoji = self.emojis.get("wcr_damage", "")
-            row3_stats.append(
-                {
-                    "name": f"{damage_emoji} {damage_label}",
-                    "value": str(damage_value),
-                    "inline": True,
-                }
-            )
-
-        attack_speed = stats.get("attack_speed")
-        if attack_speed is not None:
-            row3_stats.append(
-                {
-                    "name": f"{self.emojis.get('wcr_attack_speed', '')} {stat_labels.get('attack_speed', 'Angriffsgeschwindigkeit')}",
-                    "value": str(attack_speed),
-                    "inline": True,
-                }
-            )
-
-        dps = stats.get("dps")
-        if dps is not None:
-            row3_stats.append(
-                {
-                    "name": f"{self.emojis.get('wcr_dps', '')} {stat_labels.get('dps', 'DPS')}",
-                    "value": str(dps),
-                    "inline": True,
-                }
-            )
-
-        used_stats_keys = {"damage", "area_damage", "attack_speed", "dps", "health"}
-        return row1_stats, row2_stats, row3_stats, stats, used_stats_keys
-
-    def _prepare_extra_stats(self, stats, stat_labels, used_stats_keys):
-        """Return a list with remaining stats."""
-        extra_stats: list[dict] = []
-        for stat_key, emoji_name in [
-            ("range", "wcr_range"),
-            ("duration", "wcr_duration"),
-            ("healing", "wcr_healing"),
-            ("radius", "wcr_radius"),
-            ("lvl_advantage", "wcr_advantage"),
-            ("percent_dmg", "wcr_percent_dmg"),
-            ("percent_dps", "wcr_percent_dps"),
-            ("fan_damage", "wcr_fan_damage"),
-            ("crash_damage", "wcr_crash_damage"),
-            ("area_healing", "wcr_area_healing"),
-            ("dwarf_dmg", "wcr_damage"),
-            ("bear_dmg", "wcr_damage"),
-            ("dwarf_dps", "wcr_dps"),
-            ("bear_dps", "wcr_dps"),
-            ("dwarf_health", "wcr_health"),
-            ("bear_health", "wcr_health"),
-            ("dwarf_range", "wcr_range"),
-        ]:
-            if stat_key in stats and stat_key not in used_stats_keys:
-                label = stat_labels.get(stat_key, stat_key.capitalize())
-                extra_stats.append(
-                    {
-                        "name": f"{self.emojis.get(emoji_name, '')} {label}",
-                        "value": str(stats[stat_key]),
-                        "inline": True,
-                    }
-                )
-                used_stats_keys.add(stat_key)
-        return extra_stats
-
-    def _prepare_talent_fields(self, talents):
-        """Return fields for talents."""
-        fields: list[dict] = []
-        if not talents:
-            return fields
-        fields.append({"name": "\u200b", "value": "**Talents**", "inline": False})
-        for talent in talents[:3]:
-            fields.append(
-                {
-                    "name": talent.get("name", "Unbekanntes Talent"),
-                    "value": talent.get("description", "Beschreibung fehlt"),
-                    "inline": True,
-                }
-            )
-        remainder = len(talents[:3]) % 3
-        if remainder:
-            for _ in range(3 - remainder):
-                fields.append({"name": "\u200b", "value": "\u200b", "inline": True})
-        return fields
-
-    def _prepare_traits_field(self, unit_data, lang, stat_labels):
-        """Return a field for trait display if traits exist."""
-        traits_ids = unit_data.get("trait_ids", [])
-        trait_lookup = (
-            self.lang_category_lookup.get(lang)
-            or self.lang_category_lookup.get("en", {})
-        ).get("traits", {})
-        names = [trait_lookup[i]["name"] for i in traits_ids if i in trait_lookup]
-        if not names:
-            return None
-        return {
-            "name": stat_labels.get("traits", "Traits"),
-            "value": ", ".join(names),
-            "inline": False,
-        }
-
-    def build_mini_embed(self, unit_id, unit_data, lang):
-        unit_name, unit_description, talents = helpers.get_text_data(
-            unit_id, lang, self.languages
-        )
-
-        stat_labels = self.stat_labels.get(lang) or self.stat_labels.get("en", {})
-        factions = unit_data.get("faction_ids") or [unit_data.get("faction_id")]
-        factions = [str(f) for f in factions if f is not None]
-        primary_faction = factions[0] if factions else None
-        faction_data = helpers.get_faction_data(
-            primary_faction, self.lang_category_lookup
-        )
-        embed_color = int(faction_data.get("color", "#3498db").strip("#"), 16)
-        icon_name = ""
-        if len(factions) > 1:
-            key = f"{factions[0]}_{factions[1]}"
-            icon_name = self.faction_combinations.get(key)
-            if not icon_name:
-                key = f"{factions[1]}_{factions[0]}"
-                icon_name = self.faction_combinations.get(
-                    key, faction_data.get("icon", "")
-                )
-        else:
-            icon_name = faction_data.get("icon", "")
-        faction_emoji = self.emojis.get(icon_name, "")
-
-        type_name = helpers.get_category_name(
-            "types", unit_data.get("type_id"), lang, self.lang_category_lookup
-        )
-        speed_name = helpers.get_category_name(
-            "speeds", unit_data.get("speed_id"), lang, self.lang_category_lookup
-        )
-
-        row1, row2, row3, stats, used_keys = self._prepare_stat_rows(
-            unit_data, stat_labels, type_name, speed_name
-        )
-        extra_stats = self._prepare_extra_stats(stats, stat_labels, used_keys)
-        talent_fields = self._prepare_talent_fields(talents)
-        traits_field = self._prepare_traits_field(unit_data, lang, stat_labels)
-
-        embed = discord.Embed(
-            title=f"{faction_emoji} {unit_name}",
-            description=f"{unit_description}\n\n**Stats**",
-            color=embed_color,
-        )
-
-        def _add_group(fields: list[dict]):
-            for field in fields:
-                embed.add_field(
-                    name=field["name"],
-                    value=field["value"],
-                    inline=field.get("inline", True),
-                )
-            while len(fields) < 3:
-                embed.add_field(name="\u200b", value="\u200b", inline=True)
-                fields.append(None)
-
-        for group in (row1, row2, row3):
-            if group:
-                _add_group(group)
-
-        for i in range(0, len(extra_stats), 3):
-            _add_group(extra_stats[i : i + 3])
-
-        for field in talent_fields:
-            embed.add_field(
-                name=field["name"],
-                value=field["value"],
-                inline=field.get("inline", True),
-            )
-
-        if traits_field:
-            embed.add_field(
-                name=traits_field["name"],
-                value=traits_field["value"],
-                inline=traits_field.get("inline", True),
-            )
-
-        pose_url = helpers.get_pose_url(unit_data)
-        if pose_url:
-            embed.set_thumbnail(url=pose_url)
-
-        logo_filename = "LotusGaming.png"
-        logo_path = os.path.join("data", "media", logo_filename)
-        if os.path.exists(logo_path):
-            embed.set_footer(
-                text="a service brought to you by Lotus Gaming",
-                icon_url=f"attachment://{logo_filename}",
-            )
-            logo_file = discord.File(logo_path, filename=logo_filename)
-        else:
-            embed.set_footer(text="a service brought to you by Lotus Gaming")
-            logo_file = None
-
-        return embed, logo_file
 
     async def send_mini_embed(
         self, interaction, unit_id, lang, public: bool = False
