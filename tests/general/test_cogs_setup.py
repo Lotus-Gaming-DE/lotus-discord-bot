@@ -51,15 +51,25 @@ async def test_champion_setup_uses_main_guild(monkeypatch, bot, patch_logged_tas
 
 @pytest.mark.asyncio
 async def test_wcr_setup_uses_main_guild(monkeypatch, bot):
-    bot.data = {"wcr": load_wcr_data(), "emojis": {}}
+    async def fake_load():
+        return {
+            "units": [],
+            "locals": {"en": {"units": []}},
+            "pictures": {},
+            "categories": {},
+            "stat_labels": {},
+        }
+
+    monkeypatch.setattr("cogs.wcr.utils.load_wcr_data", fake_load)
+    monkeypatch.setattr("tests.general.test_cogs_setup.load_wcr_data", fake_load)
+    bot.data = {"wcr": await load_wcr_data(), "emojis": {}}
+
+    async def fake_register(bot_, cog_cls, group):
+        called.append((group, bot_.main_guild))
+
+    monkeypatch.setattr(wcr, "register_cog_and_group", fake_register)
 
     called = []
-
-    def fake_add(cmd, *, guild=None):
-        called.append((cmd, guild))
-
-    monkeypatch.setattr(bot.tree, "add_command", fake_add)
-
     await wcr.setup(bot)
 
     assert called == [(wcr_group, bot.main_guild)]

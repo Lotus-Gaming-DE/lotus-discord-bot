@@ -1,33 +1,28 @@
-import json
 import pytest
 
 
 from cogs.wcr import helpers
 
 
-@pytest.fixture(scope="module")
-def languages():
-    from cogs.wcr.utils import load_languages
-
-    return load_languages()
+@pytest.fixture
+def languages(wcr_data):
+    return wcr_data["locals"]
 
 
-@pytest.fixture(scope="module")
-def categories():
-    from cogs.wcr.utils import load_categories
-
-    return load_categories()
+@pytest.fixture
+def categories(wcr_data):
+    return wcr_data["categories"]
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def lang_lookup(categories):
     """Erzeuge die Kategorie-Lookup-Tabelle für die Tests."""
     return helpers.build_category_lookup(categories)
 
 
-@pytest.fixture(scope="module")
-def pictures():
-    return json.load(open("data/wcr/pictures.json", "r", encoding="utf-8"))
+@pytest.fixture
+def pictures(wcr_data):
+    return wcr_data["pictures"]
 
 
 def test_get_text_data_known(languages):

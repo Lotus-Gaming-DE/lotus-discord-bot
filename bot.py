@@ -139,7 +139,7 @@ class MyBot(commands.Bot):
                 quiz_templates[f.stem] = load_json(f)
 
         # WCR-Daten zentral laden
-        wcr_data = load_wcr_data()
+        wcr_data = await load_wcr_data()
 
         # Champion-Rollen laden
         champion_roles = load_json("data/champion/roles.json")

@@ -1,7 +1,14 @@
 # cogs/wcr/utils.py
 
-import json
+"""Hilfsfunktionen zum Laden der WCR-Daten."""
+
+from __future__ import annotations
+
+import os
 from pathlib import Path
+from typing import Any
+
+import aiohttp
 
 from log_setup import get_logger
 
@@ -10,91 +17,57 @@ logger = get_logger(__name__)
 BASE_PATH = Path("data/wcr")
 
 
-def load_units():
-    """Lädt die Einheitendaten aus ``units.json``."""
-    path = BASE_PATH / "units.json"
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        units = data.get("units", data)
-        logger.info("[WCRUtils] Einheiten erfolgreich geladen.")
-        return units
-    except Exception as e:
-        logger.error(f"[WCRUtils] Fehler beim Laden der Einheiten: {e}")
+async def fetch_wcr_data(base_url: str) -> dict[str, Any]:
+    """Ruft alle WCR-Endpunkte von ``base_url`` ab.
+
+    Erwartet die Unterpfade ``/units``, ``/categories``, ``/pictures`` und
+    ``/stat_labels``.
+    """
+
+    endpoints = ["units", "categories", "pictures", "stat_labels"]
+    data: dict[str, Any] = {}
+    async with aiohttp.ClientSession() as session:
+        for ep in endpoints:
+            url = f"{base_url.rstrip('/')}/{ep}"
+            try:
+                async with session.get(url) as resp:
+                    resp.raise_for_status()
+                    data[ep] = await resp.json()
+                logger.info("[WCRUtils] '%s' erfolgreich geladen.", ep)
+            except Exception as exc:
+                logger.error("[WCRUtils] Fehler beim Abrufen von %s: %s", ep, exc)
+                data[ep] = {}
+    return data
+
+
+async def load_wcr_data(base_url: str | None = None) -> dict[str, Any]:
+    """Lädt alle benötigten WCR-Daten über ``fetch_wcr_data``."""
+
+    base_url = base_url or os.getenv("WCR_API_URL")
+    if not base_url:
+        logger.error("[WCRUtils] Basis-URL f\u00fcr die WCR-API fehlt.")
         return {}
 
+    api_data = await fetch_wcr_data(base_url)
 
-def load_languages():
-    """Lädt die Lokalisationen aus ``units.json``."""
-    path = BASE_PATH / "units.json"
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        locals_ = data.get("locals", {})
-        # Einheiten-Texte aus den Units einsammeln
-        for unit in data.get("units", []):
+    units = api_data.get("units", {})
+    units_list = units.get("units", units)
+
+    locals_ = units.get("locals", {})
+    if not locals_:
+        for unit in units_list:
             texts = unit.get("texts", {})
             for lang, info in texts.items():
                 lang_data = locals_.setdefault(lang, {})
-                units = lang_data.setdefault("units", [])
-                unit_entry = {"id": unit.get("id")}
-                unit_entry.update(info)
-                units.append(unit_entry)
-        logger.info(
-            "[WCRUtils] Sprachdateien erfolgreich geladen: %s",
-            list(locals_.keys()),
-        )
-        return locals_
-    except Exception as e:
-        logger.error(f"[WCRUtils] Fehler beim Laden der Sprachdaten: {e}")
-        return {}
+                lang_units = lang_data.setdefault("units", [])
+                entry = {"id": unit.get("id")}
+                entry.update(info)
+                lang_units.append(entry)
 
-
-def load_pictures():
-    """Lädt Bilddaten aus pictures.json."""
-    path = BASE_PATH / "pictures.json"
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            pictures = json.load(f)
-        logger.info("[WCRUtils] Bilddaten erfolgreich geladen.")
-        return pictures
-    except Exception as e:
-        logger.error(f"[WCRUtils] Fehler beim Laden der Bilddaten: {e}")
-        return {}
-
-
-def load_categories():
-    """Lädt die Kategorien aus ``categories.json``."""
-    path = BASE_PATH / "categories.json"
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            categories = json.load(f)
-        logger.info("[WCRUtils] Kategorien erfolgreich geladen.")
-        return categories
-    except Exception as e:
-        logger.error(f"[WCRUtils] Fehler beim Laden der Kategorien: {e}")
-        return {}
-
-
-def load_stat_labels():
-    """Lädt die Stat-Labels aus ``stat_labels.json``."""
-    path = BASE_PATH / "stat_labels.json"
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            labels = json.load(f)
-        logger.info("[WCRUtils] Stat-Labels erfolgreich geladen.")
-        return labels
-    except Exception as e:
-        logger.error(f"[WCRUtils] Fehler beim Laden der Stat-Labels: {e}")
-        return {}
-
-
-def load_wcr_data():
-    """Fasst alle WCR-Daten zusammen, wie sie im Bot verwendet werden."""
     return {
-        "units": load_units(),
-        "locals": load_languages(),
-        "pictures": load_pictures(),
-        "categories": load_categories(),
-        "stat_labels": load_stat_labels(),
+        "units": units_list,
+        "locals": locals_,
+        "pictures": api_data.get("pictures", {}),
+        "categories": api_data.get("categories", {}),
+        "stat_labels": api_data.get("stat_labels", {}),
     }

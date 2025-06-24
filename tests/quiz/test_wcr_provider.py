@@ -6,31 +6,30 @@ import log_setup
 
 from cogs.quiz.area_providers.wcr import WCRQuestionProvider
 from cogs.quiz.utils import create_permutations_list
-from cogs.wcr.utils import load_wcr_data
 
 
-def create_bot():
+def create_bot(wcr_data):
     with open(Path("data/quiz/templates/wcr.json"), "r", encoding="utf-8") as f:
         templates = json.load(f)
-    return DummyBot(templates)
+    return DummyBot(templates, wcr_data)
 
 
-def create_provider():
-    bot = create_bot()
+def create_provider(wcr_data):
+    bot = create_bot(wcr_data)
     return bot, WCRQuestionProvider(bot, language="de")
 
 
 class DummyBot:
-    def __init__(self, templates):
+    def __init__(self, templates, wcr_data):
         self.data = {
-            "wcr": load_wcr_data(),
+            "wcr": wcr_data,
             "quiz": {"templates": {"wcr": templates}},
         }
 
 
-def test_generate_type_1(monkeypatch, patch_logged_task):
+def test_generate_type_1(wcr_data, monkeypatch, patch_logged_task):
     patch_logged_task(log_setup)
-    bot, provider = create_provider()
+    bot, provider = create_provider(wcr_data)
     first_unit = provider.locals["de"]["units"][0]
     first_talent = first_unit["talents"][0]
     monkeypatch.setattr(random, "choice", lambda seq: seq[0])
@@ -50,9 +49,9 @@ def test_generate_type_1(monkeypatch, patch_logged_task):
     assert provider.generate_type_1() is None
 
 
-def test_generate_type_2(monkeypatch, patch_logged_task):
+def test_generate_type_2(wcr_data, monkeypatch, patch_logged_task):
     patch_logged_task(log_setup)
-    bot, provider = create_provider()
+    bot, provider = create_provider(wcr_data)
     first_talent = provider.locals["de"]["units"][0]["talents"][0]
     monkeypatch.setattr(random, "choice", lambda seq: seq[0])
 
@@ -70,9 +69,9 @@ def test_generate_type_2(monkeypatch, patch_logged_task):
     assert provider.generate_type_2() is None
 
 
-def test_generate_type_3(monkeypatch, patch_logged_task):
+def test_generate_type_3(wcr_data, monkeypatch, patch_logged_task):
     patch_logged_task(log_setup)
-    bot, provider = create_provider()
+    bot, provider = create_provider(wcr_data)
     first_unit = provider.units[0]
     first_unit_name = provider.locals["de"]["units"][0]["name"]
     faction_lookup = provider.lang_category_lookup["de"]["factions"]
@@ -93,9 +92,9 @@ def test_generate_type_3(monkeypatch, patch_logged_task):
     assert provider.generate_type_3() is None
 
 
-def test_generate_type_4(monkeypatch, patch_logged_task):
+def test_generate_type_4(wcr_data, monkeypatch, patch_logged_task):
     patch_logged_task(log_setup)
-    bot, provider = create_provider()
+    bot, provider = create_provider(wcr_data)
     first_unit = provider.units[0]
     first_unit_name = provider.locals["de"]["units"][0]["name"]
     monkeypatch.setattr(random, "choice", lambda seq: seq[0])
@@ -114,9 +113,9 @@ def test_generate_type_4(monkeypatch, patch_logged_task):
     assert provider.generate_type_4() is None
 
 
-def test_generate_type_5(monkeypatch, patch_logged_task):
+def test_generate_type_5(wcr_data, monkeypatch, patch_logged_task):
     patch_logged_task(log_setup)
-    bot, provider = create_provider()
+    bot, provider = create_provider(wcr_data)
     monkeypatch.setattr(random, "choice", lambda seq: "health")
     monkeypatch.setattr(random, "sample", lambda seq, k: seq[:k])
 
