@@ -15,13 +15,14 @@ Der **Lotus Gaming Bot** bringt interaktive Quiz-Events, ein Punktesystem mit au
 1. [Schnellstart](#schnellstart)
 2. [Features](#features)
 3. [Slash-Commands](#slash-commands)
-4. [Moderatorenbereich](#moderatorenbereich)
-5. [Architektur](#architektur)
-6. [Entwicklung](#entwicklung)
-7. [FAQ](#faq)
-8. [Changelog](#changelog)
-9. [Lizenz](#lizenz)
-10. [Links](#links)
+4. [Champion-System](#champion-system)
+5. [Moderatorenbereich](#moderatorenbereich)
+6. [Architektur](#architektur)
+7. [Entwicklung](#entwicklung)
+8. [FAQ](#faq)
+9. [Changelog](#changelog)
+10. [Lizenz](#lizenz)
+11. [Links](#links)
 
 ---
 
@@ -139,6 +140,27 @@ Alle `/wcr`-Befehle besitzen zusätzlich den Parameter `public`, um die Antwort 
 |-----------------|------------------------------------------------|
 | `/ptcgp update` | Lädt alle Karten neu *(Mod)*                  |
 | `/ptcgp stats`  | Zeigt die Anzahl gespeicherter Karten         |
+---
+
+## Champion-System
+
+Das Modul verwaltet Punkte und Rollen der Mitglieder. Die Datenbank liegt
+standardmäßig unter `data/pers/champion/points.db`. Über die Umgebungsvariable
+`CHAMPION_DB_PATH` kannst du einen eigenen Speicherort festlegen.
+
+Die Datei `data/champion/roles.json` definiert alle Champion-Rollen:
+
+```json
+[
+    {"id": 0, "name": "Emerging Champion", "threshold": 50}
+]
+```
+
+`id` ist die Rollen-ID (optional), `name` der Anzeigename und `threshold` die
+erforderlichen Punkte. Sortiere die Einträge absteigend nach `threshold`.
+Um Schwellenwerte anzupassen oder neue Rollen einzufügen, editiere die Datei und
+starte den Bot neu.
+
 ---
 
 ## Moderatorenbereich
