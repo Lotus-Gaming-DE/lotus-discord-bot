@@ -8,10 +8,8 @@ from cogs.wcr.duel import DuelCalculator
 
 
 class DummyBot:
-    def __init__(self):
-        from cogs.wcr.utils import load_wcr_data
-
-        self.data = {"emojis": {}, "wcr": load_wcr_data()}
+    def __init__(self, wcr_data):
+        self.data = {"emojis": {}, "wcr": wcr_data}
 
 
 class DummyResponse:
@@ -42,8 +40,8 @@ class DummyInteraction:
 
 
 @pytest.mark.asyncio
-async def test_cmd_filter_no_emojis():
-    bot = DummyBot()
+async def test_cmd_filter_no_emojis(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -59,8 +57,8 @@ async def test_cmd_filter_no_emojis():
 
 
 @pytest.mark.asyncio
-async def test_cmd_filter_generates_options():
-    bot = DummyBot()
+async def test_cmd_filter_generates_options(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -87,8 +85,8 @@ async def test_cmd_filter_generates_options():
 
 
 @pytest.mark.asyncio
-async def test_cmd_name_creates_embed():
-    bot = DummyBot()
+async def test_cmd_name_creates_embed(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -108,8 +106,8 @@ async def test_cmd_name_creates_embed():
 
 
 @pytest.mark.asyncio
-async def test_cmd_name_respects_lang(monkeypatch):
-    bot = DummyBot()
+async def test_cmd_name_respects_lang(wcr_data, monkeypatch):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -120,15 +118,15 @@ async def test_cmd_name_respects_lang(monkeypatch):
     cog.cog_unload()
 
 
-def test_name_map_contains_unit():
-    bot = DummyBot()
+def test_name_map_contains_unit(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     assert cog.unit_name_map["de"]["abscheulichkeit"] == 1
     cog.cog_unload()
 
 
-def test_build_mini_embed_uses_emoji():
-    bot = DummyBot()
+def test_build_mini_embed_uses_emoji(wcr_data):
+    bot = DummyBot(wcr_data)
     bot.data["emojis"] = {"wcr_undead": "<:wcr_undead:id>"}
     cog = WCRCog(bot)
     units = bot.data["wcr"]["units"]
@@ -140,8 +138,8 @@ def test_build_mini_embed_uses_emoji():
     cog.cog_unload()
 
 
-def test_category_lookups_created():
-    bot = DummyBot()
+def test_category_lookups_created(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
 
     assert "factions" in cog.lang_category_lookup["de"]
@@ -150,16 +148,16 @@ def test_category_lookups_created():
     cog.cog_unload()
 
 
-def test_token_index_contains_token():
-    bot = DummyBot()
+def test_token_index_contains_token(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
 
     assert 62 in cog.name_token_index["de"]["sylvanas"]
     cog.cog_unload()
 
 
-def test_resolve_unit_cross_language():
-    bot = DummyBot()
+def test_resolve_unit_cross_language(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
 
     result = cog.resolve_unit("Abomination", "de")
@@ -170,8 +168,8 @@ def test_resolve_unit_cross_language():
     cog.cog_unload()
 
 
-def test_resolve_unit_fuzzy_partial():
-    bot = DummyBot()
+def test_resolve_unit_fuzzy_partial(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
 
     result = cog.resolve_unit("sylvanas", "de")
@@ -182,8 +180,8 @@ def test_resolve_unit_fuzzy_partial():
     cog.cog_unload()
 
 
-def test_resolve_unit_cross_language_fuzzy():
-    bot = DummyBot()
+def test_resolve_unit_cross_language_fuzzy(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
 
     result = cog.resolve_unit("windrunner", "de")
@@ -195,8 +193,8 @@ def test_resolve_unit_cross_language_fuzzy():
 
 
 @pytest.mark.asyncio
-async def test_select_view_timeout_disables_select():
-    bot = DummyBot()
+async def test_select_view_timeout_disables_select(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -212,8 +210,8 @@ async def test_select_view_timeout_disables_select():
     cog.cog_unload()
 
 
-def test_init_without_en_language(caplog):
-    bot = DummyBot()
+def test_init_without_en_language(wcr_data, caplog):
+    bot = DummyBot(wcr_data)
     del bot.data["wcr"]["locals"]["en"]
 
     with caplog.at_level(logging.WARNING):
@@ -225,8 +223,8 @@ def test_init_without_en_language(caplog):
 
 
 @pytest.mark.asyncio
-async def test_cost_autocomplete_returns_all():
-    bot = DummyBot()
+async def test_cost_autocomplete_returns_all(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -239,8 +237,8 @@ async def test_cost_autocomplete_returns_all():
 
 
 @pytest.mark.asyncio
-async def test_speed_autocomplete_matches_substring():
-    bot = DummyBot()
+async def test_speed_autocomplete_matches_substring(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -252,8 +250,8 @@ async def test_speed_autocomplete_matches_substring():
 
 
 @pytest.mark.asyncio
-async def test_faction_autocomplete_case_insensitive():
-    bot = DummyBot()
+async def test_faction_autocomplete_case_insensitive(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -266,8 +264,8 @@ async def test_faction_autocomplete_case_insensitive():
 
 
 @pytest.mark.asyncio
-async def test_type_autocomplete_multiple_results():
-    bot = DummyBot()
+async def test_type_autocomplete_multiple_results(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -279,8 +277,8 @@ async def test_type_autocomplete_multiple_results():
 
 
 @pytest.mark.asyncio
-async def test_trait_autocomplete_returns_sorted_matches():
-    bot = DummyBot()
+async def test_trait_autocomplete_returns_sorted_matches(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -292,8 +290,8 @@ async def test_trait_autocomplete_returns_sorted_matches():
 
 
 @pytest.mark.asyncio
-async def test_unit_name_autocomplete_multilang():
-    bot = DummyBot()
+async def test_unit_name_autocomplete_multilang(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -311,8 +309,8 @@ async def test_unit_name_autocomplete_multilang():
     cog.cog_unload()
 
 
-def test_scaled_stats_leveling():
-    bot = DummyBot()
+def test_scaled_stats_leveling(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     calculator = DuelCalculator()
 
@@ -333,8 +331,8 @@ def test_scaled_stats_leveling():
     cog.cog_unload()
 
 
-def test_duel_result_flying_vs_melee():
-    bot = DummyBot()
+def test_duel_result_flying_vs_melee(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
 
     units = bot.data["wcr"]["units"]
@@ -349,8 +347,8 @@ def test_duel_result_flying_vs_melee():
     cog.cog_unload()
 
 
-def test_compute_dps_spell_hits_flying():
-    bot = DummyBot()
+def test_compute_dps_spell_hits_flying(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
 
     units = bot.data["wcr"]["units"]
@@ -368,8 +366,8 @@ def test_compute_dps_spell_hits_flying():
     cog.cog_unload()
 
 
-def test_duel_result_spell_vs_mini():
-    bot = DummyBot()
+def test_duel_result_spell_vs_mini(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
 
     units = bot.data["wcr"]["units"]
@@ -385,8 +383,8 @@ def test_duel_result_spell_vs_mini():
     cog.cog_unload()
 
 
-def test_duel_result_equal_damage_spells():
-    bot = DummyBot()
+def test_duel_result_equal_damage_spells(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
 
     units = bot.data["wcr"]["units"]
@@ -402,8 +400,8 @@ def test_duel_result_equal_damage_spells():
     cog.cog_unload()
 
 
-def test_duel_result_identical_minis():
-    bot = DummyBot()
+def test_duel_result_identical_minis(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
 
     units = bot.data["wcr"]["units"]
@@ -419,8 +417,8 @@ def test_duel_result_identical_minis():
 
 
 @pytest.mark.asyncio
-async def test_cmd_filter_public():
-    bot = DummyBot()
+async def test_cmd_filter_public(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -434,8 +432,8 @@ async def test_cmd_filter_public():
 
 
 @pytest.mark.asyncio
-async def test_cmd_name_public():
-    bot = DummyBot()
+async def test_cmd_name_public(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -447,8 +445,8 @@ async def test_cmd_name_public():
 
 
 @pytest.mark.asyncio
-async def test_cmd_duel_public():
-    bot = DummyBot()
+async def test_cmd_duel_public(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -471,8 +469,8 @@ async def test_cmd_duel_public():
 
 
 @pytest.mark.asyncio
-async def test_cmd_duel_no_damage_message():
-    bot = DummyBot()
+async def test_cmd_duel_no_damage_message(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -492,8 +490,8 @@ async def test_cmd_duel_no_damage_message():
 
 
 @pytest.mark.asyncio
-async def test_cmd_duel_identical_minis_tie():
-    bot = DummyBot()
+async def test_cmd_duel_identical_minis_tie(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 
@@ -513,8 +511,8 @@ async def test_cmd_duel_identical_minis_tie():
 
 
 @pytest.mark.asyncio
-async def test_cmd_duel_unknown_mini():
-    bot = DummyBot()
+async def test_cmd_duel_unknown_mini(wcr_data):
+    bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
     inter = DummyInteraction()
 

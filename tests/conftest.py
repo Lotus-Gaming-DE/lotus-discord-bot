@@ -4,6 +4,10 @@ import pytest
 import pytest_asyncio
 import discord
 import asyncio
+import json
+from pathlib import Path
+
+pytest_plugins = ["pytest_asyncio"]
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
@@ -76,6 +80,25 @@ async def assert_no_tasks():
     stray = [t for t in asyncio.all_tasks() if t is not current and not t.done()]
 
     assert not stray, f"Stray tasks detected: {stray}"
+
+
+@pytest_asyncio.fixture
+async def wcr_data(monkeypatch):
+    """Load WCR data from local JSON files and patch API fetcher."""
+
+    async def fake_fetch(base_url: str):
+        base = Path("data/wcr")
+        return {
+            "units": json.load(open(base / "units.json", encoding="utf-8")),
+            "categories": json.load(open(base / "categories.json", encoding="utf-8")),
+            "pictures": json.load(open(base / "pictures.json", encoding="utf-8")),
+            "stat_labels": json.load(open(base / "stat_labels.json", encoding="utf-8")),
+        }
+
+    monkeypatch.setattr("cogs.wcr.utils.fetch_wcr_data", fake_fetch)
+    from cogs.wcr.utils import load_wcr_data
+
+    return await load_wcr_data("http://test")
 
 
 @pytest_asyncio.fixture

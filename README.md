@@ -41,6 +41,8 @@ Die wichtigsten Variablen aus `.env`:
 bot_key=DISCORD_BOT_TOKEN
 server_id=DEINE_GUILD_ID
 LOG_LEVEL=INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+# Basis-URL der WCR-API
+WCR_API_URL=https://wcr-api.up.railway.app
 # Bei Zertifikatsproblemen kann die Überprüfung für die PTCGP-API deaktiviert werden
 PTCGP_SKIP_SSL_VERIFY=0
 ```
@@ -144,11 +146,8 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
 - **Quiz-Subsystem** nutzt einen `QuestionGenerator` (statisch & dynamisch), `QuestionStateManager` für Persistenz und einen Scheduler für automatische Fragen. Der nächste geplante Zeitpunkt wird gespeichert, sodass laufende Fenster nach einem Neustart fortgeführt werden können.
 - **Champion-System** speichert Punkte in SQLite und vergibt Rollen gemäß `data/champion/roles.json` (Rollen-ID und Schwelle pro Eintrag).
 - Beim Entladen des Champion-Cogs wird die Datenbankverbindung sauber geschlossen.
-- **WCR-Modul** verarbeitet die Daten unter `data/wcr/` und nutzt sie für Autocomplete sowie dynamische Fragen.  
-  - `units.json` enthält alle Minis samt Werten und mehrsprachigen Texten.  
-  - `categories.json` definiert Fraktionen, Typen, Geschwindigkeiten und Traits.  
-  - `stat_labels.json` übersetzt die Statistik-Bezeichnungen.
-  - `pictures.json` ordnet jedem Mini ein Icon zu.
+ - **WCR-Modul** bezieht seine Daten über die in ``WCR_API_URL`` angegebene API und nutzt sie für Autocomplete sowie dynamische Fragen.
+  - Die API stellt ``units``, ``categories``, ``pictures`` und ``stat_labels`` bereit.
   - Die Fragevorlagen liegen unter `data/quiz/templates/wcr.json`.
   - Beim Start erzeugt `_export_emojis` automatisch `data/emojis.json`; diese
     Datei enthält ein einfaches Mapping `{name: syntax}`. Die Emoji-Namen müssen
