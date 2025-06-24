@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 - Verbessertes Shutdown-Verhalten: ChampionCog schließt jetzt zuerst die Datenbank und stoppt danach alle Tasks.
+- WCR-Cog aufgeteilt: Namensauflösung und Embed-Aufbau sind nun in eigenen Modulen. Fehlerbehandlung und Tests wurden erweitert.
 - ChampionCog.update_user_score loggt jetzt Datenbankfehler und wirft einen
   ``RuntimeError`` bei Fehlschlagen des Datenbankzugriffs.
 - Neues JSON-Cache-System für WCR-Daten (``WCR_CACHE_TTL`` konfiguriert die

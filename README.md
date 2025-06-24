@@ -218,8 +218,9 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
     Bei ``0`` wird er bei jedem Start neu aufgebaut.
   - Beim Start erzeugt `_export_emojis` automatisch `data/emojis.json`; diese
     Datei enthält ein einfaches Mapping `{name: syntax}`. Die Emoji-Namen müssen
-    mit den Angaben in `data/wcr/faction_meta.json` übereinstimmen.
 - Alle Slash-Commands werden **guild-basiert** registriert und nur für die Haupt-Guild synchronisiert.
+### Troubleshooting
+Bei API-Fehlern prüfe die Variable `WCR_API_URL`. Setze gegebenenfalls `WCR_CACHE_TTL=0` oder lösche `data/pers/wcr_cache.json`, um den Cache zu erneuern.
 - Zur Vereinfachung der Registrierung stellt `utils.setup_helpers.register_cog_and_group` eine Hilfsfunktion bereit,
   die nach dem Hinzufügen der Gruppe automatisch `bot.tree.sync` für die Haupt-Guild ausführt.
   Tritt dabei ein Fehler auf, wird er geloggt und erneut geworfen, sodass ein missglückter Start sofort sichtbar ist.
