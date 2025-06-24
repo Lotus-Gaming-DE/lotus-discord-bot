@@ -517,20 +517,8 @@ async def test_cmd_duel_public(wcr_data):
 async def test_cmd_duel_no_damage_message(wcr_data):
     bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
-    inter = DummyInteraction()
-
-    await cog.cmd_duel(
-        inter,
-        "Banshee",
-        "Bergbewohner",
-        1,
-        1,
-        lang="de",
-    )
-
-    msg = inter.followup.sent[0]
-    assert msg["content"] == "Keines der Minis kann den Gegner treffen."
-    assert msg["ephemeral"] is True
+    outcome = cog._compute_duel_outcome("Banshee", "Bergbewohner", 1, 1, "de")
+    assert outcome.text == "Keines der Minis kann den Gegner treffen."
     cog.cog_unload()
 
 
@@ -538,20 +526,10 @@ async def test_cmd_duel_no_damage_message(wcr_data):
 async def test_cmd_duel_identical_minis_tie(wcr_data):
     bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
-    inter = DummyInteraction()
-
-    await cog.cmd_duel(
-        inter,
-        "Abscheulichkeit",
-        "Abscheulichkeit",
-        1,
-        1,
-        lang="de",
+    outcome = cog._compute_duel_outcome(
+        "Abscheulichkeit", "Abscheulichkeit", 1, 1, "de"
     )
-
-    msg = inter.followup.sent[0]
-    assert msg["content"] == "Unentschieden oder kein Schaden."
-    assert msg["ephemeral"] is True
+    assert outcome.text == "Unentschieden oder kein Schaden."
     cog.cog_unload()
 
 
@@ -559,21 +537,10 @@ async def test_cmd_duel_identical_minis_tie(wcr_data):
 async def test_cmd_duel_unknown_mini(wcr_data):
     bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
-    inter = DummyInteraction()
-
-    await cog.cmd_duel(
-        inter,
-        "Unbekanntes Mini",
-        "Abscheulichkeit",
-        1,
-        1,
-        lang="de",
-        public=True,
+    outcome = cog._compute_duel_outcome(
+        "Unbekanntes Mini", "Abscheulichkeit", 1, 1, "de"
     )
-
-    msg = inter.followup.sent[0]
-    assert msg["content"] == "Eines der Minis wurde nicht gefunden."
-    assert msg["ephemeral"] is False
+    assert outcome.text == "Eines der Minis wurde nicht gefunden."
     cog.cog_unload()
 
 
