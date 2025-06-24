@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import os
+import time
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,11 @@ from log_setup import get_logger
 logger = get_logger(__name__)
 
 BASE_PATH = Path("data/wcr")
+
+# Cache-Datei für API-Daten
+CACHE_FILE = Path("data/pers/wcr_cache.json")
+# Standard-TTL (in Sekunden) kann über ``WCR_CACHE_TTL`` angepasst werden
+CACHE_TTL = int(os.getenv("WCR_CACHE_TTL", "86400"))
 
 
 async def fetch_wcr_data(base_url: str) -> dict[str, Any]:
@@ -69,7 +75,24 @@ async def fetch_wcr_data(base_url: str) -> dict[str, Any]:
 
 
 async def load_wcr_data(base_url: str | None = None) -> dict[str, Any]:
-    """Lädt alle benötigten WCR-Daten über ``fetch_wcr_data``."""
+    """Lädt alle benötigten WCR-Daten.
+
+    Bei vorhandenem und gültigem Cache werden die Daten aus
+    :data:`CACHE_FILE` geladen. Andernfalls erfolgt ein API-Aufruf über
+    :func:`fetch_wcr_data` und das Ergebnis wird im Cache gespeichert.
+    """
+
+    # Zuerst Cache prüfen
+    if CACHE_FILE.exists():
+        age = time.time() - CACHE_FILE.stat().st_mtime
+        if age < CACHE_TTL:
+            try:
+                with open(CACHE_FILE, "r", encoding="utf-8") as f:
+                    cached = json.load(f)
+                logger.info("[WCRUtils] Daten aus Cache geladen.")
+                return cached
+            except Exception as exc:  # pragma: no cover - should not happen
+                logger.error("[WCRUtils] Fehler beim Lesen des Caches: %s", exc)
 
     base_url = base_url or os.getenv("WCR_API_URL")
     if not base_url:
@@ -102,10 +125,21 @@ async def load_wcr_data(base_url: str | None = None) -> dict[str, Any]:
         except Exception as exc:  # pragma: no cover - should not happen in tests
             logger.error("[WCRUtils] Fehler beim Laden von stat_labels.json: %s", exc)
 
-    return {
+    result = {
         "units": units_list,
         "locals": locals_,
         "categories": api_data.get("categories", {}),
         "stat_labels": stat_labels,
         "faction_combinations": api_data.get("faction_combinations", {}),
     }
+
+    # Cache speichern
+    try:
+        CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(result, f)
+        logger.info("[WCRUtils] Cache aktualisiert.")
+    except Exception as exc:  # pragma: no cover - should not happen
+        logger.error("[WCRUtils] Fehler beim Schreiben des Caches: %s", exc)
+
+    return result
