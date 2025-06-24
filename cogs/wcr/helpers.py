@@ -31,8 +31,11 @@ def build_category_lookup(categories: dict) -> dict:
 
 
 def get_text_data(unit_id: str, lang: str, languages: dict) -> tuple[str, str, list]:
-    """Return name, description and talents for a unit in ``lang``."""
-    texts = languages.get(lang, languages.get("de", {}))
+    """Return name, description and talents for a unit in ``lang``.
+
+    Falls ``lang`` nicht vorhanden ist, werden die englischen Daten verwendet.
+    """
+    texts = languages.get(lang) or languages.get("en", {})
     unit_text = next(
         (unit for unit in texts.get("units", []) if str(unit["id"]) == unit_id), {}
     )
@@ -75,8 +78,13 @@ def get_faction_data(faction_id: str, lang_lookup: dict) -> dict:
 def get_category_name(
     category: str, category_id: str, lang: str, lang_lookup: dict
 ) -> str:
-    """Gibt den lokalisierten Namen eines Kategorie-Eintrags zurück."""
-    item = lang_lookup.get(lang, {}).get(category, {}).get(str(category_id))
+    """Gibt den lokalisierten Namen eines Kategorie-Eintrags zurück.
+
+    Ist ``lang`` nicht verfügbar, wird auf Englisch zurückgegriffen.
+    """
+    item = lang_lookup.get(lang, {}).get(category, {}).get(
+        str(category_id)
+    ) or lang_lookup.get("en", {}).get(category, {}).get(str(category_id))
     if item:
         return item.get("name", "Unbekannt")
     return "Unbekannt"

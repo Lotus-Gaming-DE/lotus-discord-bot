@@ -156,6 +156,8 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
   - Bilder werden relativ zu ``WCR_IMAGE_BASE`` aufgel\u00f6st.
   - Die API stellt nur ``units`` und ``categories`` bereit. IDs sind dabei Strings.
   - Beim Abrufen dieser Daten wird ein Timeout von 10 Sekunden verwendet.
+  - Wenn deutsche Texte fehlen, greift das Modul automatisch auf die englischen
+    Daten zurück.
   - Die Fragevorlagen liegen unter `data/quiz/templates/wcr.json`.
   - Beim Start erzeugt `_export_emojis` automatisch `data/emojis.json`; diese
     Datei enthält ein einfaches Mapping `{name: syntax}`. Die Emoji-Namen müssen

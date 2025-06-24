@@ -165,6 +165,25 @@ def test_build_mini_embed_combines_factions(wcr_data):
     cog.cog_unload()
 
 
+def test_build_mini_embed_fallback_to_en(wcr_data):
+    wcr_data["stat_labels"].pop("de")
+    wcr_data["locals"].pop("de")
+    for items in wcr_data["categories"].values():
+        for item in items:
+            item["names"].pop("de", None)
+
+    bot = DummyBot(wcr_data)
+    cog = WCRCog(bot)
+    units = bot.data["wcr"]["units"]
+    if isinstance(units, dict) and "units" in units:
+        units = units["units"]
+    unit = next(u for u in units if u["id"] == "1")
+    embed, _ = cog.build_mini_embed(unit["id"], unit, "de")
+    assert "Abomination" in embed.title
+    assert any("Cost" in f.name for f in embed.fields)
+    cog.cog_unload()
+
+
 def test_category_lookups_created(wcr_data):
     bot = DummyBot(wcr_data)
     cog = WCRCog(bot)
