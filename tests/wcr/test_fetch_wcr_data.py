@@ -49,7 +49,9 @@ async def test_fetch_wcr_data_merges_faction_meta(monkeypatch):
         "stat_labels": {},
     }
 
-    monkeypatch.setattr(aiohttp, "ClientSession", lambda: DummySession(data_map))
+    monkeypatch.setattr(
+        aiohttp, "ClientSession", lambda *_, **__: DummySession(data_map)
+    )
 
     result = await fetch_wcr_data("http://api.test")
 
