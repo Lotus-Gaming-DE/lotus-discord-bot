@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import aiohttp
+import json
 
 from log_setup import get_logger
 
@@ -37,6 +38,24 @@ async def fetch_wcr_data(base_url: str) -> dict[str, Any]:
             except Exception as exc:
                 logger.error("[WCRUtils] Fehler beim Abrufen von %s: %s", ep, exc)
                 data[ep] = {}
+
+    # Fraktions-Metadaten aus lokaler Datei zusammenführen
+    meta_file = BASE_PATH / "faction_meta.json"
+    if meta_file.exists() and "categories" in data:
+        try:
+            with open(meta_file, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+        except Exception as exc:  # pragma: no cover - should not happen in tests
+            logger.error("[WCRUtils] Fehler beim Laden von faction_meta.json: %s", exc)
+            meta = {}
+
+        meta_map = {
+            item["id"]: {k: item[k] for k in ("icon", "color") if k in item}
+            for item in meta.get("factions", [])
+        }
+        for faction in data["categories"].get("factions", []):
+            faction.update(meta_map.get(faction.get("id"), {}))
+
     return data
 
 
