@@ -15,6 +15,11 @@ async def test_quiz_setup_registers_cog_and_commands(
     bot.data = {"quiz": {"questions": {"de": {}}, "languages": ["de"]}}
     bot.quiz_data = {}
 
+    async def fake_sync(*, guild=None):
+        pass
+
+    monkeypatch.setattr(bot.tree, "sync", fake_sync)
+
     await quiz.setup(bot)
 
     assert bot.get_cog("QuizCog") is not None

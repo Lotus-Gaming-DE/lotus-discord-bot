@@ -159,7 +159,8 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
     Datei enthält ein einfaches Mapping `{name: syntax}`. Die Emoji-Namen müssen
     mit den Angaben in `data/wcr/faction_meta.json` übereinstimmen.
 - Alle Slash-Commands werden **guild-basiert** registriert und nur für die Haupt-Guild synchronisiert.
-- Zur Vereinfachung der Registrierung stellt `utils.setup_helpers.register_cog_and_group` eine Hilfsfunktion bereit.
+- Zur Vereinfachung der Registrierung stellt `utils.setup_helpers.register_cog_and_group` eine Hilfsfunktion bereit,
+  die nach dem Hinzufügen der Gruppe automatisch `bot.tree.sync` für die Haupt-Guild ausführt.
 
 Persistente Daten liegen in `data/pers/` und sollten nicht ins Repository aufgenommen werden.
 

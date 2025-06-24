@@ -8,3 +8,4 @@ async def register_cog_and_group(
     """Fügt ein Cog hinzu und registriert eine Slash-Command-Gruppe für die Haupt-Guild."""
     await bot.add_cog(cog_cls(bot))
     bot.tree.add_command(slash_group, guild=bot.main_guild)
+    await bot.tree.sync(guild=bot.main_guild)
