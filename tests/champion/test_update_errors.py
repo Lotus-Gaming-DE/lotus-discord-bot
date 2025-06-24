@@ -3,10 +3,10 @@ import json
 import pytest
 import aiosqlite
 
-import cogs.champion.cog as champion_cog_mod
-from cogs.champion.cog import ChampionCog
-from cogs.champion.data import ChampionData
-import log_setup
+import lotus_bot.cogs.champion.cog as champion_cog_mod
+from lotus_bot.cogs.champion.cog import ChampionCog
+from lotus_bot.cogs.champion.data import ChampionData
+import lotus_bot.log_setup as log_setup
 
 
 class DummyBot:

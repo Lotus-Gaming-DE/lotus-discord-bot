@@ -2,3 +2,5 @@
 data/pers/
 logs/
 __pycache__/
+.env
+*.pyc

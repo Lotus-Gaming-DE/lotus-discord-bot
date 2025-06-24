@@ -1,7 +1,7 @@
 import pytest
-import cogs.champion.cog as champion_cog_mod
-import log_setup
-from cogs.champion.cog import ChampionCog
+import lotus_bot.cogs.champion.cog as champion_cog_mod
+import lotus_bot.log_setup as log_setup
+from lotus_bot.cogs.champion.cog import ChampionCog
 
 
 class DummyBot:

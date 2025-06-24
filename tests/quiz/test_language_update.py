@@ -1,8 +1,8 @@
 import pytest
 
-from cogs.quiz.question_generator import QuestionGenerator
-from cogs.quiz.quiz_config import QuizAreaConfig
-import cogs.quiz.slash_commands as slash_mod
+from lotus_bot.cogs.quiz.question_generator import QuestionGenerator
+from lotus_bot.cogs.quiz.quiz_config import QuizAreaConfig
+import lotus_bot.cogs.quiz.slash_commands as slash_mod
 
 
 class DummyProvider:

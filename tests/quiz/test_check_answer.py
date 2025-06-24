@@ -1,4 +1,4 @@
-from cogs.quiz.utils import check_answer
+from lotus_bot.cogs.quiz.utils import check_answer
 
 
 def test_exact_match():

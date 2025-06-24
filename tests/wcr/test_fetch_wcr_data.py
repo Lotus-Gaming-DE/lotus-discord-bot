@@ -4,7 +4,7 @@ from pathlib import Path
 import aiohttp
 import pytest
 
-from cogs.wcr.utils import fetch_wcr_data
+from lotus_bot.cogs.wcr.utils import fetch_wcr_data
 
 
 class DummyResponse:

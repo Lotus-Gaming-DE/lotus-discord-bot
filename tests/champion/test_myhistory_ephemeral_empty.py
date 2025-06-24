@@ -1,6 +1,6 @@
 import pytest
 
-from cogs.champion.slash_commands import myhistory
+from lotus_bot.cogs.champion.slash_commands import myhistory
 
 
 class DummyBot:

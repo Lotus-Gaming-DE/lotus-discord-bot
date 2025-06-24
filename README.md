@@ -32,9 +32,10 @@ Voraussetzung ist Python ≥3.11. Der Bot läuft vorzugsweise auf [Railway](http
 
 ```bash
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 pre-commit install
 cp .env.example .env  # Bot-Token und Server-ID eintragen
-python bot.py
+python -m lotus_bot
 ```
 
 Logdateien werden im Verzeichnis `logs/` als rotierendes JSON-File `bot.json` gespeichert.
@@ -232,7 +233,8 @@ Persistente Daten liegen in `data/pers/` und sollten nicht ins Repository aufgen
 ## Entwicklung
 
 ```bash
-pip install -r requirements.txt  # installiert auch pytest-asyncio
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
 pre-commit install
 pre-commit run --all-files
 pytest -q
@@ -249,7 +251,7 @@ Pull Requests sind willkommen! Bitte halte dich an den bestehenden Codestyle (PE
 
 **Frage:** *Kann ich den Bot auch auf meinem eigenen Server hosten?*
 
-**Antwort:** Ja. Trage in `.env` dein Bot-Token (`bot_key`) und die Server-ID (`server_id`) ein und starte `python bot.py`.
+**Antwort:** Ja. Trage in `.env` dein Bot-Token (`bot_key`) und die Server-ID (`server_id`) ein und starte `python -m lotus_bot`.
 
 **Frage:** *Wie richte ich ein Quiz nur für bestimmte Channels ein?*
 

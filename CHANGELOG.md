@@ -26,3 +26,6 @@
 - Logging nutzt jetzt ``structlog`` und schreibt JSON-Dateien unter ``logs/bot.json``.
 - Pre-commit Hooks mit ``black``, ``flake8``, ``ruff`` und mehr.
 - Neue GitHub-Action ``security.yml`` führt ``pip-audit`` aus.
+- Projektstruktur auf ``src``-Layout umgestellt; Imports und Tests angepasst.
+- Neues ``requirements-dev.txt`` und ``pip-audit`` in Pre-commit.
+- CI speichert Railway-Logs und führt einen Snyk-Scan aus.

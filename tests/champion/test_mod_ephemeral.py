@@ -1,6 +1,6 @@
 import pytest
 
-from cogs.champion.slash_commands import (
+from lotus_bot.cogs.champion.slash_commands import (
     give,
     history,
     remove,
