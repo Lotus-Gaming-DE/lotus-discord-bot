@@ -24,6 +24,11 @@ async def test_quiz_setup_uses_main_guild(monkeypatch, patch_logged_task, bot):
 
     monkeypatch.setattr(bot.tree, "add_command", fake_add)
 
+    async def fake_sync(*, guild=None):
+        pass
+
+    monkeypatch.setattr(bot.tree, "sync", fake_sync)
+
     await quiz.setup(bot)
 
     assert called == [(quiz_group, bot.main_guild)]
@@ -40,6 +45,11 @@ async def test_champion_setup_uses_main_guild(monkeypatch, bot, patch_logged_tas
         called.append((cmd, guild))
 
     monkeypatch.setattr(bot.tree, "add_command", fake_add)
+
+    async def fake_sync(*, guild=None):
+        pass
+
+    monkeypatch.setattr(bot.tree, "sync", fake_sync)
 
     await champion.setup(bot)
 
@@ -69,6 +79,11 @@ async def test_wcr_setup_uses_main_guild(monkeypatch, bot):
 
     monkeypatch.setattr(wcr, "register_cog_and_group", fake_register)
 
+    async def fake_sync(*, guild=None):
+        pass
+
+    monkeypatch.setattr(bot.tree, "sync", fake_sync)
+
     called = []
     await wcr.setup(bot)
 
@@ -83,6 +98,11 @@ async def test_ptcgp_setup_uses_main_guild(monkeypatch, bot):
         called.append((cmd, guild))
 
     monkeypatch.setattr(bot.tree, "add_command", fake_add)
+
+    async def fake_sync(*, guild=None):
+        pass
+
+    monkeypatch.setattr(bot.tree, "sync", fake_sync)
 
     await ptcgp.setup(bot)
 
