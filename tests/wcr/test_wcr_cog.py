@@ -3,6 +3,7 @@ import pytest
 import discord
 
 from cogs.wcr.cog import WCRCog
+from cogs.wcr import embed_builder
 from cogs.wcr.views import MiniSelectView
 from cogs.wcr.duel import DuelCalculator
 
@@ -147,7 +148,16 @@ def test_build_mini_embed_uses_emoji(wcr_data):
     if isinstance(units, dict) and "units" in units:
         units = units["units"]
     unit = next(u for u in units if u["id"] == "1")
-    embed, _ = cog.build_mini_embed(unit["id"], unit, "de")
+    embed, _ = embed_builder.build_mini_embed(
+        unit["id"],
+        unit,
+        "de",
+        cog.emojis,
+        cog.languages,
+        cog.lang_category_lookup,
+        cog.stat_labels,
+        cog.faction_combinations,
+    )
     assert isinstance(embed, discord.Embed)
     cog.cog_unload()
 
@@ -160,7 +170,16 @@ def test_build_mini_embed_combines_factions(wcr_data):
     if isinstance(units, dict) and "units" in units:
         units = units["units"]
     unit = next(u for u in units if u["id"] == "62")
-    embed, _ = cog.build_mini_embed(unit["id"], unit, "de")
+    embed, _ = embed_builder.build_mini_embed(
+        unit["id"],
+        unit,
+        "de",
+        cog.emojis,
+        cog.languages,
+        cog.lang_category_lookup,
+        cog.stat_labels,
+        cog.faction_combinations,
+    )
     assert embed.title.startswith("<:wcr_undead_horde:id>")
     cog.cog_unload()
 
@@ -178,7 +197,16 @@ def test_build_mini_embed_fallback_to_en(wcr_data):
     if isinstance(units, dict) and "units" in units:
         units = units["units"]
     unit = next(u for u in units if u["id"] == "1")
-    embed, _ = cog.build_mini_embed(unit["id"], unit, "de")
+    embed, _ = embed_builder.build_mini_embed(
+        unit["id"],
+        unit,
+        "de",
+        cog.emojis,
+        cog.languages,
+        cog.lang_category_lookup,
+        cog.stat_labels,
+        cog.faction_combinations,
+    )
     assert "Abomination" in embed.title
     assert any("Cost" in f.name for f in embed.fields)
     cog.cog_unload()
