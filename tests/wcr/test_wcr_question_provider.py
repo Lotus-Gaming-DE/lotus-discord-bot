@@ -2,8 +2,8 @@ import random
 import json
 
 
-from cogs.quiz.area_providers.wcr import WCRQuestionProvider
-from cogs.quiz.area_providers.base import DynamicQuestionProvider
+from lotusbot.cogs.quiz.area_providers.wcr import WCRQuestionProvider
+from lotusbot.cogs.quiz.area_providers.base import DynamicQuestionProvider
 
 
 class DummyBot:

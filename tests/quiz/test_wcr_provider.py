@@ -2,10 +2,10 @@ import json
 import random
 from pathlib import Path
 
-import log_setup
+from lotusbot import log_setup
 
-from cogs.quiz.area_providers.wcr import WCRQuestionProvider
-from cogs.quiz.utils import create_permutations_list
+from lotusbot.cogs.quiz.area_providers.wcr import WCRQuestionProvider
+from lotusbot.cogs.quiz.utils import create_permutations_list
 
 
 def create_bot(wcr_data):

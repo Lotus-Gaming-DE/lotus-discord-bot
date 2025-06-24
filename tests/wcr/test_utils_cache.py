@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from cogs.wcr import utils
+from lotusbot.cogs.wcr import utils
 
 
 @pytest.mark.asyncio

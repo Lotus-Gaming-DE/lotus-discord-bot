@@ -1,10 +1,10 @@
 import pytest
 
 
-from cogs import quiz
-from cogs.quiz.slash_commands import quiz_group
-import cogs.quiz.message_tracker as msg_mod
-import log_setup
+from lotusbot.cogs import quiz
+from lotusbot.cogs.quiz.slash_commands import quiz_group
+import lotusbot.cogs.quiz.message_tracker as msg_mod
+from lotusbot import log_setup
 
 
 @pytest.mark.asyncio

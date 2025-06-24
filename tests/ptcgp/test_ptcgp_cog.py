@@ -1,7 +1,7 @@
 import pytest
 
-from cogs.ptcgp.cog import PTCGPCog
-import cogs.ptcgp.api as api_mod
+from lotusbot.cogs.ptcgp.cog import PTCGPCog
+import lotusbot.cogs.ptcgp.api as api_mod
 
 
 class DummyBot:
@@ -50,11 +50,11 @@ async def test_update_command(monkeypatch, tmp_path):
         return [{"id": "1", "name": "Pika"}]
 
     monkeypatch.setattr(api_mod, "fetch_all_cards", fake_fetch)
-    import cogs.ptcgp.cog as cog_mod
+    import lotusbot.cogs.ptcgp.cog as cog_mod
 
     monkeypatch.setattr(cog_mod, "fetch_all_cards", fake_fetch)
 
-    from cogs.ptcgp.slash_commands import update
+    from lotusbot.cogs.ptcgp.slash_commands import update
 
     inter = DummyInteraction(bot)
     await update.callback(inter)
@@ -64,5 +64,5 @@ async def test_update_command(monkeypatch, tmp_path):
     counts = await cog.data.count_cards()
     assert counts == {"en": 1, "de": 1}
 
-    cog.cog_unload()
+    await cog.cog_unload()
     await cog.wait_closed()

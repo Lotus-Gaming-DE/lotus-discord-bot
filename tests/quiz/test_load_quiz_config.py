@@ -2,9 +2,9 @@ import json
 import datetime
 
 
-from bot import load_quiz_config
-from cogs.quiz.question_state import QuestionStateManager
-from cogs.quiz.question_generator import QuestionGenerator
+from lotusbot.bot import load_quiz_config
+from lotusbot.cogs.quiz.question_state import QuestionStateManager
+from lotusbot.cogs.quiz.question_generator import QuestionGenerator
 
 
 class DummyBot:
@@ -38,8 +38,8 @@ def test_load_quiz_config(tmp_path, monkeypatch):
 
     state_file = tmp_path / "state.json"
 
-    monkeypatch.setattr("bot.QUIZ_CONFIG_PATH", str(cfg_file))
-    monkeypatch.setattr("bot.QUESTION_STATE_PATH", str(state_file))
+    monkeypatch.setattr("lotusbot.bot.QUIZ_CONFIG_PATH", str(cfg_file))
+    monkeypatch.setattr("lotusbot.bot.QUESTION_STATE_PATH", str(state_file))
 
     bot = DummyBot()
     load_quiz_config(bot)
@@ -62,8 +62,8 @@ def test_single_state_manager(tmp_path, monkeypatch):
 
     state_file = tmp_path / "state.json"
 
-    monkeypatch.setattr("bot.QUIZ_CONFIG_PATH", str(cfg_file))
-    monkeypatch.setattr("bot.QUESTION_STATE_PATH", str(state_file))
+    monkeypatch.setattr("lotusbot.bot.QUIZ_CONFIG_PATH", str(cfg_file))
+    monkeypatch.setattr("lotusbot.bot.QUESTION_STATE_PATH", str(state_file))
 
     bot = DummyBot()
     load_quiz_config(bot)
@@ -80,10 +80,10 @@ def test_reload_updates_tracker(tmp_path, monkeypatch):
     cfg_file = tmp_path / "areas.json"
     state_file = tmp_path / "state.json"
 
-    monkeypatch.setattr("bot.QUIZ_CONFIG_PATH", str(cfg_file))
-    monkeypatch.setattr("bot.QUESTION_STATE_PATH", str(state_file))
+    monkeypatch.setattr("lotusbot.bot.QUIZ_CONFIG_PATH", str(cfg_file))
+    monkeypatch.setattr("lotusbot.bot.QUESTION_STATE_PATH", str(state_file))
 
-    from cogs.quiz.message_tracker import MessageTracker
+    from lotusbot.cogs.quiz.message_tracker import MessageTracker
 
     class DummyCog:
         def __init__(self, bot):

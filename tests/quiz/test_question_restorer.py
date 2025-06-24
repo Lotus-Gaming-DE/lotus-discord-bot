@@ -1,9 +1,9 @@
 import datetime
 import pytest
 
-import cogs.quiz.question_restorer as restorer_mod
-from cogs.quiz.question_state import QuestionInfo
-from cogs.quiz.quiz_config import QuizAreaConfig
+import lotusbot.cogs.quiz.question_restorer as restorer_mod
+from lotusbot.cogs.quiz.question_state import QuestionInfo
+from lotusbot.cogs.quiz.quiz_config import QuizAreaConfig
 
 
 class DummyBot:

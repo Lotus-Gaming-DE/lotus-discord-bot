@@ -2,7 +2,7 @@ import datetime
 import pytest
 
 
-from cogs.quiz.duel import DuelQuestionView, _DuelAnswerModal
+from lotusbot.cogs.quiz.duel import DuelQuestionView, _DuelAnswerModal
 import discord
 
 

@@ -2,12 +2,12 @@ import datetime
 import asyncio
 import pytest
 
-import cogs.quiz.cog as quiz_cog_mod
-import cogs.quiz.scheduler as scheduler_mod
-import cogs.quiz.message_tracker as msg_mod
-from cogs.quiz.quiz_config import QuizAreaConfig
-from cogs.quiz.question_state import QuestionStateManager
-import log_setup
+import lotusbot.cogs.quiz.cog as quiz_cog_mod
+import lotusbot.cogs.quiz.scheduler as scheduler_mod
+import lotusbot.cogs.quiz.message_tracker as msg_mod
+from lotusbot.cogs.quiz.quiz_config import QuizAreaConfig
+from lotusbot.cogs.quiz.question_state import QuestionStateManager
+from lotusbot import log_setup
 
 
 class DummyBot:

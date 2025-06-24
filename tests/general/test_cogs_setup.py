@@ -1,14 +1,14 @@
 import pytest
 
 
-from cogs import quiz, champion, wcr, ptcgp
-from cogs.quiz.slash_commands import quiz_group
-from cogs.champion.slash_commands import champion_group, syncroles
-from cogs.wcr.slash_commands import wcr_group
-from cogs.ptcgp.slash_commands import ptcgp_group
-import cogs.quiz.message_tracker as msg_mod
-import log_setup
-from cogs.wcr.utils import load_wcr_data
+from lotusbot.cogs import quiz, champion, wcr, ptcgp
+from lotusbot.cogs.quiz.slash_commands import quiz_group
+from lotusbot.cogs.champion.slash_commands import champion_group, syncroles
+from lotusbot.cogs.wcr.slash_commands import wcr_group
+from lotusbot.cogs.ptcgp.slash_commands import ptcgp_group
+import lotusbot.cogs.quiz.message_tracker as msg_mod
+from lotusbot import log_setup
+from lotusbot.cogs.wcr.utils import load_wcr_data
 
 
 @pytest.mark.asyncio
@@ -70,7 +70,7 @@ async def test_wcr_setup_uses_main_guild(monkeypatch, bot):
             "faction_combinations": {},
         }
 
-    monkeypatch.setattr("cogs.wcr.utils.load_wcr_data", fake_load)
+    monkeypatch.setattr("lotusbot.cogs.wcr.utils.load_wcr_data", fake_load)
     monkeypatch.setattr("tests.general.test_cogs_setup.load_wcr_data", fake_load)
     bot.data = {"wcr": await load_wcr_data(), "emojis": {}}
 
