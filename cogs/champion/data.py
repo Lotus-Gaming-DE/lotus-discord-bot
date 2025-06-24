@@ -75,7 +75,7 @@ class ChampionData:
         logger.info("[ChampionData] SQLite‐Datenbank initialisiert.")
 
     async def close(self) -> None:
-        """Close the database connection."""
+        """Schließt die Datenbankverbindung."""
         if self.db is not None:
             await self.db.close()
             self.db = None
@@ -185,7 +185,7 @@ class ChampionData:
         return rank, total
 
     async def delete_user(self, user_id: str) -> None:
-        """Remove all data for ``user_id`` from the database."""
+        """Entfernt alle Daten von ``user_id`` aus der Datenbank."""
         await self.init_db()
         async with self._lock:
             db = await self._get_db()
@@ -195,7 +195,7 @@ class ChampionData:
         logger.info(f"[ChampionData] Eintrag {user_id} entfernt.")
 
     async def get_all_user_ids(self) -> list[str]:
-        """Return a list of all user IDs stored in the points table."""
+        """Liefert eine Liste aller gespeicherten Nutzer-IDs."""
         await self.init_db()
         db = await self._get_db()
         cur = await db.execute("SELECT user_id FROM points")
@@ -203,14 +203,14 @@ class ChampionData:
         return [r[0] for r in rows]
 
     async def record_duel_result(self, user_id: str, result: str) -> None:
-        """Add a duel result entry for ``user_id``.
+        """Fügt einen Duell-Eintrag für ``user_id`` hinzu.
 
         Parameters
         ----------
         user_id:
-            ID of the user as string.
+            ID des Spielers als String.
         result:
-            One of ``"win"``, ``"loss"`` or ``"tie"``.
+            "win", "loss" oder "tie".
         """
         await self.init_db()
         async with self._lock:
@@ -225,7 +225,7 @@ class ChampionData:
             await db.commit()
 
     async def get_duel_stats(self, user_id: str) -> dict:
-        """Return win/loss/tie counts for ``user_id``."""
+        """Gibt Sieg‑, Niederlagen‑ und Unentschieden‑Zahlen zurück."""
         await self.init_db()
         db = await self._get_db()
         cur = await db.execute(
@@ -241,7 +241,7 @@ class ChampionData:
     async def get_duel_leaderboard(
         self, limit: int = 10
     ) -> list[tuple[str, int, int, int]]:
-        """Return a leaderboard sorted by number of wins."""
+        """Liefert ein Leaderboard nach Siegen sortiert."""
         await self.init_db()
         db = await self._get_db()
         cur = await db.execute(

@@ -23,7 +23,7 @@ champion_group = app_commands.Group(
 async def give(
     interaction: discord.Interaction, user: discord.Member, punkte: int, grund: str
 ):
-    """Give a user points."""
+    """Verleiht einem Nutzer Punkte."""
 
     logger.info(
         f"/champion give by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
@@ -48,7 +48,7 @@ async def give(
 async def remove(
     interaction: discord.Interaction, user: discord.Member, punkte: int, grund: str
 ):
-    """Remove points from a user."""
+    """Zieht einem Nutzer Punkte ab."""
 
     logger.info(
         f"/champion remove by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
@@ -75,7 +75,7 @@ async def remove(
 async def set_points(
     interaction: discord.Interaction, user: discord.Member, punkte: int, grund: str
 ):
-    """Set a user's score to an explicit value."""
+    """Setzt die Punktzahl eines Nutzers direkt."""
 
     logger.info(
         f"/champion set by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
@@ -98,7 +98,7 @@ async def set_points(
 @app_commands.default_permissions(manage_guild=True)
 @app_commands.describe(user="Der Nutzer, dessen Punkte zurückgesetzt werden")
 async def reset(interaction: discord.Interaction, user: discord.Member):
-    """Reset a user's score to zero."""
+    """Setzt die Punkte eines Nutzers auf null."""
 
     logger.info(f"/champion reset by {interaction.user} for {user}")
 
@@ -120,7 +120,7 @@ async def reset(interaction: discord.Interaction, user: discord.Member):
 @champion_group.command(name="score", description="Zeigt die Punktzahl eines Nutzers")
 @app_commands.describe(user="Der Nutzer, dessen Punkte angezeigt werden")
 async def score(interaction: discord.Interaction, user: discord.Member | None = None):
-    """Show the score for yourself or another member."""
+    """Zeigt deinen oder einen fremden Punktestand an."""
     logger.info(
         f"/champion score by {interaction.user} target={user or interaction.user}"
     )
@@ -143,7 +143,7 @@ async def score(interaction: discord.Interaction, user: discord.Member | None = 
     name="myhistory", description="Zeigt Deinen eigenen Punkteverlauf"
 )
 async def myhistory(interaction: discord.Interaction):
-    """Display the invoking user's score history."""
+    """Zeigt deinen eigenen Punkteverlauf."""
     logger.info(f"/champion myhistory by {interaction.user}")
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     user_id_str = str(interaction.user.id)
@@ -178,7 +178,7 @@ async def myhistory(interaction: discord.Interaction):
 @app_commands.default_permissions(manage_guild=True)
 @app_commands.describe(user="Der Spieler, dessen Historie angezeigt wird")
 async def history(interaction: discord.Interaction, user: discord.Member):
-    """Display another user's score history."""
+    """Zeigt den Punkteverlauf eines anderen Nutzers."""
     logger.info(f"/champion history by {interaction.user} target={user}")
 
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
@@ -213,7 +213,7 @@ async def history(interaction: discord.Interaction, user: discord.Member):
     description="Zeigt die Top 30 gruppiert nach Champion-Rolle als Tabelle",
 )
 async def leaderboard(interaction: discord.Interaction):
-    """Show the top scores grouped by champion role."""
+    """Zeigt die besten Punktestände nach Rolle gruppiert."""
     logger.info(f"/champion leaderboard requested by {interaction.user}")
     await interaction.response.defer(thinking=True)
 
@@ -285,7 +285,7 @@ async def leaderboard(interaction: discord.Interaction):
     name="roles", description="Listet alle Champion-Rollen und ihre Schwellen"
 )
 async def roles(interaction: discord.Interaction):
-    """List all champion roles with their thresholds."""
+    """Listet alle Champion-Rollen mit ihren Schwellen."""
     logger.info(f"/champion roles requested by {interaction.user}")
     cog: ChampionCog = interaction.client.get_cog("ChampionCog")
     lines = []
@@ -302,7 +302,7 @@ async def roles(interaction: discord.Interaction):
 )
 @app_commands.describe(user="Der Nutzer, dessen Rang angezeigt wird")
 async def rank(interaction: discord.Interaction, user: discord.Member | None = None):
-    """Show the leaderboard rank of a user."""
+    """Zeigt den Rang eines Nutzers in der Bestenliste."""
     logger.info(
         f"/champion rank by {interaction.user} target={user or interaction.user}"
     )
@@ -336,7 +336,7 @@ async def rank(interaction: discord.Interaction, user: discord.Member | None = N
 @moderator_only()
 @app_commands.default_permissions(manage_guild=True)
 async def clean(interaction: discord.Interaction):
-    """Remove users from the database who left the server."""
+    """Entfernt ehemalige Mitglieder aus der Datenbank."""
     logger.info(f"/champion clean requested by {interaction.user}")
     await interaction.response.defer(thinking=True)
 
@@ -371,7 +371,7 @@ async def clean(interaction: discord.Interaction):
 @moderator_only()
 @app_commands.default_permissions(manage_guild=True)
 async def syncroles(interaction: discord.Interaction):
-    """Sync champion roles for all users stored in the database."""
+    """Synchronisiert die Champion-Rollen aller gespeicherten Nutzer."""
     logger.info(f"/syncroles requested by {interaction.user}")
     await interaction.response.defer(thinking=True)
 
