@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 - Verbessertes Shutdown-Verhalten: ChampionCog schließt jetzt zuerst die Datenbank und stoppt danach alle Tasks.
+- Das ChampionCog-Arbeitertask fängt nun ``CancelledError`` ab und markiert
+  angefangene Queue-Einträge sauber als erledigt.
 - ChampionCog.update_user_score loggt jetzt Datenbankfehler und wirft einen
   ``RuntimeError`` bei Fehlschlagen des Datenbankzugriffs.
 - Neues JSON-Cache-System für WCR-Daten (``WCR_CACHE_TTL`` konfiguriert die

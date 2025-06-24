@@ -98,11 +98,21 @@ class ChampionCog(ManagedTaskCog):
             await self._apply_champion_role(user_id_str, total)
 
     async def _worker(self) -> None:
-        """Verarbeitet Punktänderungen aus der Warteschlange nacheinander."""
+        """Verarbeitet Punktänderungen nacheinander und beendet sich sauber.
+
+        Bei einem ``CancelledError`` wird die aktuelle Verarbeitung
+        abgebrochen, und die Task beendet sich, nachdem ein gegebenenfalls
+        entnommener Queue-Eintrag als erledigt markiert wurde.
+        """
         while True:
-            user_id_str, total = await self.update_queue.get()
+            try:
+                user_id_str, total = await self.update_queue.get()
+            except asyncio.CancelledError:
+                break
             try:
                 await self._apply_champion_role(user_id_str, total)
+            except asyncio.CancelledError:
+                break
             finally:
                 self.update_queue.task_done()
 

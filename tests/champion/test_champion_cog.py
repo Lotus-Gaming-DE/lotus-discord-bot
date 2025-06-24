@@ -269,3 +269,40 @@ async def test_queue_raises_when_full(monkeypatch, patch_logged_task, caplog):
 
     await cog.cog_unload()
     await cog.wait_closed()
+
+
+@pytest.mark.asyncio
+async def test_worker_exits_gracefully_when_cancelled(
+    monkeypatch, patch_logged_task, tmp_path
+):
+    patch_logged_task(champion_cog_mod, log_setup)
+    bot = DummyBot()
+
+    tasks = []
+
+    def schedule_task(coro, logger=None):
+        task = asyncio.create_task(coro)
+        tasks.append(task)
+        return task
+
+    monkeypatch.setattr(log_setup, "create_logged_task", schedule_task)
+
+    cog = ChampionCog(bot)
+    cog.data = ChampionData(str(tmp_path / "points.db"))
+
+    event = asyncio.Event()
+
+    async def fake_apply(user_id, score):
+        await event.wait()
+
+    monkeypatch.setattr(cog, "_apply_champion_role", fake_apply)
+
+    await cog.update_user_score(123, 1, "x")
+    await asyncio.sleep(0)
+    cog.worker_task.cancel()
+    event.set()
+    await asyncio.gather(*tasks, return_exceptions=True)
+    await cog.update_queue.join()
+    await cog.wait_closed()
+
+    assert cog.worker_task.done()
