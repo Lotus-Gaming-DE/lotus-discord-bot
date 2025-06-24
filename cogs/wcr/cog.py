@@ -18,16 +18,21 @@ class WCRCog(commands.Cog):
         """Cog providing Warcraft Rumble helper commands."""
         self.bot = bot
 
-        # === WICHTIG ===
-        # Statt bot.quiz_data[...] nutzen wir jetzt bot.data["wcr"][...],
-        # das bereits in bot.py im setup_hook gefüllt wird.
-        self.units = bot.data["wcr"]["units"]
+        wcr_data = bot.data.get("wcr") or {}
+
+        # Bei fehlenden Daten Warnung ausgeben, aber nicht abbrechen
+        if not wcr_data:
+            logger.warning(
+                "[WCRCog] WCR-Daten fehlen. Befehle funktionieren eventuell nicht"
+            )
+
+        self.units = wcr_data.get("units", [])
         if isinstance(self.units, dict) and "units" in self.units:
             self.units = self.units["units"]
-        self.languages = bot.data["wcr"]["locals"]
-        self.pictures = bot.data["wcr"]["pictures"]
-        self.categories = bot.data["wcr"].get("categories", {})
-        self.stat_labels = bot.data["wcr"].get("stat_labels", {})
+        self.languages = wcr_data.get("locals", {})
+        self.pictures = wcr_data.get("pictures", {})
+        self.categories = wcr_data.get("categories", {})
+        self.stat_labels = wcr_data.get("stat_labels", {})
 
         # Mapping for resolving unit names quickly
         # {lang: {normalized_name: id}}
