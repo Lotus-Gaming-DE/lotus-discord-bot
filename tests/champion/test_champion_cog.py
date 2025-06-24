@@ -241,6 +241,32 @@ async def test_worker_cancelled_on_unload(monkeypatch, patch_logged_task):
 
 
 @pytest.mark.asyncio
+async def test_worker_cancel_no_error(monkeypatch, patch_logged_task, caplog):
+    bot = DummyBot()
+
+    patch_logged_task(champion_cog_mod, log_setup)
+
+    tasks = []
+
+    def schedule_task(coro, logger=None):
+        task = asyncio.create_task(coro)
+        tasks.append(task)
+        return task
+
+    monkeypatch.setattr(log_setup, "create_logged_task", schedule_task)
+
+    cog = ChampionCog(bot)
+
+    with caplog.at_level(logging.ERROR):
+        cog.worker_task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+    await cog.wait_closed()
+
+    assert not any("Task raised an exception" in r.message for r in caplog.records)
+
+
+@pytest.mark.asyncio
 async def test_queue_raises_when_full(monkeypatch, patch_logged_task, caplog):
     patch_logged_task(champion_cog_mod, log_setup)
     bot = DummyBot()

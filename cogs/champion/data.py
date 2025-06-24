@@ -84,11 +84,11 @@ class ChampionData:
     async def get_total(self, user_id: str) -> int:
         await self.init_db()
         db = await self._get_db()
-        cur = await db.execute(
+        async with db.execute(
             "SELECT total FROM points WHERE user_id = ?",
             (user_id,),
-        )
-        row = await cur.fetchone()
+        ) as cur:
+            row = await cur.fetchone()
         return row[0] if row else 0
 
     async def add_delta(self, user_id: str, delta: int, reason: str) -> int:
@@ -103,29 +103,32 @@ class ChampionData:
             now = datetime.utcnow().isoformat()
 
             db = await self._get_db()
-            cur = await db.execute(
+            async with db.execute(
                 "SELECT total FROM points WHERE user_id = ?",
                 (user_id,),
-            )
-            row = await cur.fetchone()
+            ) as cur:
+                row = await cur.fetchone()
             current_total = row[0] if row else 0
 
             new_total = max(0, current_total + delta)
             if row:
-                await db.execute(
+                async with db.execute(
                     "UPDATE points SET total = ? WHERE user_id = ?",
                     (new_total, user_id),
-                )
+                ):
+                    pass
             else:
-                await db.execute(
+                async with db.execute(
                     "INSERT INTO points(user_id, total) VALUES (?, ?)",
                     (user_id, new_total),
-                )
+                ):
+                    pass
 
-            await db.execute(
+            async with db.execute(
                 "INSERT INTO history(user_id, delta, reason, date) VALUES (?, ?, ?, ?)",
                 (user_id, delta, reason, now),
-            )
+            ):
+                pass
 
             await db.commit()
 
@@ -138,7 +141,7 @@ class ChampionData:
     async def get_history(self, user_id: str, limit: int = 10) -> list[dict]:
         await self.init_db()
         db = await self._get_db()
-        cur = await db.execute(
+        async with db.execute(
             """
             SELECT delta, reason, date
               FROM history
@@ -147,8 +150,8 @@ class ChampionData:
              LIMIT ?
             """,
             (user_id, limit),
-        )
-        rows = await cur.fetchall()
+        ) as cur:
+            rows = await cur.fetchall()
 
         return [{"delta": r[0], "reason": r[1], "date": r[2]} for r in rows]
 
@@ -157,7 +160,7 @@ class ChampionData:
     ) -> list[tuple[str, int]]:
         await self.init_db()
         db = await self._get_db()
-        cur = await db.execute(
+        async with db.execute(
             """
             SELECT user_id, total
               FROM points
@@ -165,28 +168,28 @@ class ChampionData:
              LIMIT ? OFFSET ?
             """,
             (limit, offset),
-        )
-        rows = await cur.fetchall()
+        ) as cur:
+            rows = await cur.fetchall()
 
         return [(r[0], r[1]) for r in rows]
 
     async def get_rank(self, user_id: str) -> Optional[tuple[int, int]]:
         await self.init_db()
         db = await self._get_db()
-        cur = await db.execute(
+        async with db.execute(
             "SELECT total FROM points WHERE user_id = ?",
             (user_id,),
-        )
-        row = await cur.fetchone()
+        ) as cur:
+            row = await cur.fetchone()
         if not row:
             return None
         total = row[0]
 
-        cur = await db.execute(
+        async with db.execute(
             "SELECT COUNT(*) FROM points WHERE total > ?",
             (total,),
-        )
-        count_row = await cur.fetchone()
+        ) as cur:
+            count_row = await cur.fetchone()
         rank = count_row[0] + 1
 
         return rank, total
@@ -196,8 +199,10 @@ class ChampionData:
         await self.init_db()
         async with self._lock:
             db = await self._get_db()
-            await db.execute("DELETE FROM points WHERE user_id = ?", (user_id,))
-            await db.execute("DELETE FROM history WHERE user_id = ?", (user_id,))
+            async with db.execute("DELETE FROM points WHERE user_id = ?", (user_id,)):
+                pass
+            async with db.execute("DELETE FROM history WHERE user_id = ?", (user_id,)):
+                pass
             await db.commit()
         logger.info(f"[ChampionData] Eintrag {user_id} entfernt.")
 
@@ -205,8 +210,8 @@ class ChampionData:
         """Liefert eine Liste aller gespeicherten Nutzer-IDs."""
         await self.init_db()
         db = await self._get_db()
-        cur = await db.execute("SELECT user_id FROM points")
-        rows = await cur.fetchall()
+        async with db.execute("SELECT user_id FROM points") as cur:
+            rows = await cur.fetchall()
         return [r[0] for r in rows]
 
     async def record_duel_result(self, user_id: str, result: str) -> None:
@@ -225,21 +230,22 @@ class ChampionData:
                 raise ValueError("invalid result")
             now = datetime.utcnow().isoformat()
             db = await self._get_db()
-            await db.execute(
+            async with db.execute(
                 "INSERT INTO duel_history(user_id, result, date) VALUES (?, ?, ?)",
                 (user_id, result, now),
-            )
+            ):
+                pass
             await db.commit()
 
     async def get_duel_stats(self, user_id: str) -> dict:
         """Gibt Sieg‑, Niederlagen‑ und Unentschieden‑Zahlen zurück."""
         await self.init_db()
         db = await self._get_db()
-        cur = await db.execute(
+        async with db.execute(
             "SELECT result, COUNT(*) FROM duel_history WHERE user_id = ? GROUP BY result",
             (user_id,),
-        )
-        rows = await cur.fetchall()
+        ) as cur:
+            rows = await cur.fetchall()
         stats = {"win": 0, "loss": 0, "tie": 0}
         for res, cnt in rows:
             stats[res] = cnt
@@ -251,7 +257,7 @@ class ChampionData:
         """Liefert ein Leaderboard nach Siegen sortiert."""
         await self.init_db()
         db = await self._get_db()
-        cur = await db.execute(
+        async with db.execute(
             """
             SELECT user_id,
                    SUM(CASE WHEN result='win' THEN 1 ELSE 0 END) AS wins,
@@ -263,6 +269,6 @@ class ChampionData:
              LIMIT ?
             """,
             (limit,),
-        )
-        rows = await cur.fetchall()
+        ) as cur:
+            rows = await cur.fetchall()
         return [(r[0], r[1], r[2], r[3]) for r in rows]

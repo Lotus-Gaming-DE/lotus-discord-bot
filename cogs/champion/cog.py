@@ -24,10 +24,11 @@ class ChampionCog(ManagedTaskCog):
     def __init__(self, bot: commands.Bot) -> None:
         """Initialisiert das Cog und lädt die Rollenkonfiguration.
 
-        Der Pfad zur Punkte-Datenbank kann \u00fcber die Environment-Variable
-        ``CHAMPION_DB_PATH`` angepasst werden. Die Warteschlange für
-        Rollen-Updates fasst maximal ``1000`` Einträge. Ist sie voll, wird
-        beim nächsten Punkteeintrag ein ``RuntimeError`` ausgelöst.
+        Der Pfad zur Punkte-Datenbank kann über die Environment-Variable
+        ``CHAMPION_DB_PATH`` angepasst werden. Die Größe der Warteschlange
+        für Rollen-Updates wird über ``CHAMPION_QUEUE_SIZE`` bestimmt
+        (Standard ``1000``). Ist sie voll, wird beim nächsten Punkteeintrag
+        ein ``RuntimeError`` ausgelöst.
         """
         super().__init__()
         self.bot = bot
@@ -39,7 +40,10 @@ class ChampionCog(ManagedTaskCog):
 
         self.create_task(self.sync_all_roles())
 
-        self.update_queue: asyncio.Queue[tuple[str, int]] = asyncio.Queue(maxsize=1000)
+        queue_size = int(os.getenv("CHAMPION_QUEUE_SIZE", "1000"))
+        self.update_queue: asyncio.Queue[tuple[str, int]] = asyncio.Queue(
+            maxsize=queue_size
+        )
         self.worker_task = self.create_task(self._worker())
 
     def _load_roles_config(self) -> list[ChampionRole]:
@@ -99,12 +103,15 @@ class ChampionCog(ManagedTaskCog):
 
     async def _worker(self) -> None:
         """Verarbeitet Punktänderungen aus der Warteschlange nacheinander."""
-        while True:
-            user_id_str, total = await self.update_queue.get()
-            try:
-                await self._apply_champion_role(user_id_str, total)
-            finally:
-                self.update_queue.task_done()
+        try:
+            while True:
+                user_id_str, total = await self.update_queue.get()
+                try:
+                    await self._apply_champion_role(user_id_str, total)
+                finally:
+                    self.update_queue.task_done()
+        except asyncio.CancelledError:
+            pass
 
     async def _apply_champion_role(self, user_id_str: str, score: int) -> None:
         """Vergibt anhand der Punkte die passende Champion-Rolle.

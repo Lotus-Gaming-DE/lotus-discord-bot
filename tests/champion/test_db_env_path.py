@@ -24,3 +24,17 @@ async def test_env_db_path(monkeypatch, patch_logged_task, tmp_path):
 
     await cog.cog_unload()
     await cog.wait_closed()
+
+
+@pytest.mark.asyncio
+async def test_env_queue_size(monkeypatch, patch_logged_task):
+    monkeypatch.setenv("CHAMPION_QUEUE_SIZE", "5")
+    patch_logged_task(champion_cog_mod, log_setup)
+
+    bot = DummyBot()
+    cog = ChampionCog(bot)
+
+    assert cog.update_queue.maxsize == 5
+
+    await cog.cog_unload()
+    await cog.wait_closed()

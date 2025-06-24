@@ -53,6 +53,8 @@ WCR_CACHE_TTL=86400
 PTCGP_SKIP_SSL_VERIFY=0
 # Optional: Pfad zur Champion-Datenbank
 CHAMPION_DB_PATH=data/pers/champion/points.db
+# Optional: Größe der Champion-Warteschlange
+CHAMPION_QUEUE_SIZE=1000
 ```
 
 Ohne eine gesetzte `WCR_API_URL` wird das WCR-Modul beim Start deaktiviert.
@@ -166,7 +168,9 @@ Alle `/wcr`-Befehle besitzen zusätzlich den Parameter `public`, um die Antwort 
 
 Das Modul verwaltet Punkte und Rollen der Mitglieder. Die Datenbank liegt
 standardmäßig unter `data/pers/champion/points.db`. Über die Umgebungsvariable
-`CHAMPION_DB_PATH` kannst du einen eigenen Speicherort festlegen.
+`CHAMPION_DB_PATH` kannst du einen eigenen Speicherort festlegen. Mit
+`CHAMPION_QUEUE_SIZE` bestimmst du die Größe der Rollen-Warteschlange
+(Standard: `1000`).
 
 Die Datei `data/champion/roles.json` definiert alle Champion-Rollen:
 
@@ -197,8 +201,9 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
 - **Champion-System** speichert Punkte in SQLite (Pfad über `CHAMPION_DB_PATH` anpassbar) und vergibt Rollen gemäß `data/champion/roles.json` (Rollen-ID und Schwelle pro Eintrag). Fehlt eine definierte ID, wird keine gleichnamige Rolle verwendet und es erscheint ein Hinweis im Log.
 - Punktestände können nicht negativ werden; zu hohe Abzüge setzen sie automatisch auf 0.
 - Beim Entladen des Champion-Cogs wird die Datenbankverbindung sauber geschlossen.
-  - Die Warteschlange für Rollen-Updates fasst standardmäßig 1000 Einträge. Bei
-  Überschreitung wird nun ein ``RuntimeError`` ausgelöst.
+  - Die Warteschlange für Rollen-Updates fasst standardmäßig 1000 Einträge
+    (konfigurierbar über ``CHAMPION_QUEUE_SIZE``). Bei Überschreitung wird nun
+    ein ``RuntimeError`` ausgelöst.
 - **WCR-Modul** bezieht seine Daten über die in ``WCR_API_URL`` angegebene API und nutzt sie für Autocomplete sowie dynamische Fragen.
   - Bilder werden relativ zu ``WCR_IMAGE_BASE`` aufgel\u00f6st.
   - Die API stellt nur ``units`` und ``categories`` bereit. IDs sind dabei Strings.

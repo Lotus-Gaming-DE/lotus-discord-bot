@@ -10,6 +10,10 @@
   `DuelOutcome`-Dataclass.
 - ChampionData.add_delta begrenzt Punktestände auf mindestens 0 und protokolliert Vorher- und Nachher-Wert.
 - WCRCog fällt nun auf englische Texte zurück, wenn ``locals`` fehlen.
+- Neue Variable ``CHAMPION_QUEUE_SIZE`` legt die Größe der Update-Warteschlange
+  fest (Standard: 1000).
+- Der Worker des Champion-Cogs kann nun ohne Fehlermeldung abgebrochen werden.
+- Datenbankabfragen in ``ChampionData`` schließen ihre Cursor jetzt sauber.
 - Abhängigkeiten aktualisiert: ``discord.py`` 2.5.2, ``Unidecode`` 1.4.0,
   ``aiosqlite`` 0.21.0, ``python-dotenv`` 1.1.1, ``pytest-asyncio`` 1.0.0 und
   ``aiohttp`` 3.12.13.
