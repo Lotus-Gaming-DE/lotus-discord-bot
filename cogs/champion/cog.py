@@ -20,7 +20,7 @@ class ChampionRole:
 
 class ChampionCog(ManagedTaskCog):
     def __init__(self, bot: commands.Bot) -> None:
-        """Initialize the cog and load role configuration."""
+        """Initialisiert das Cog und lädt die Rollenkonfiguration."""
         super().__init__()
         self.bot = bot
 
@@ -35,7 +35,7 @@ class ChampionCog(ManagedTaskCog):
         self.worker_task = self.create_task(self._worker())
 
     def _load_roles_config(self) -> list[ChampionRole]:
-        """Return the role thresholds sorted descending."""
+        """Gibt die Rollenschwellen absteigend sortiert zurück."""
         role_entries = self.bot.data.get("champion", {}).get("roles", [])
         roles = [
             ChampionRole(
@@ -49,14 +49,14 @@ class ChampionCog(ManagedTaskCog):
         return roles
 
     def get_current_role(self, score: int) -> Optional[ChampionRole]:
-        """Return the highest role a user qualifies for."""
+        """Ermittelt die höchste Rolle, für die ein Nutzer genug Punkte hat."""
         for role in self.roles:
             if score >= role.threshold:
                 return role
         return None
 
     async def update_user_score(self, user_id: int, delta: int, reason: str) -> int:
-        """Apply a score change and update the member's role."""
+        """Wendet eine Punktänderung an und passt die Rolle des Mitglieds an."""
         user_id_str = str(user_id)
         new_total = await self.data.add_delta(user_id_str, delta, reason)
 
@@ -65,14 +65,14 @@ class ChampionCog(ManagedTaskCog):
         return new_total
 
     async def sync_all_roles(self) -> None:
-        """Synchronize champion roles for all users in the database."""
+        """Synchronisiert die Champion-Rollen aller gespeicherten Nutzer."""
         user_ids = await self.data.get_all_user_ids()
         for user_id_str in user_ids:
             total = await self.data.get_total(user_id_str)
             await self._apply_champion_role(user_id_str, total)
 
     async def _worker(self) -> None:
-        """Process score updates sequentially from the queue."""
+        """Verarbeitet Punktänderungen aus der Warteschlange nacheinander."""
         while True:
             user_id_str, total = await self.update_queue.get()
             try:
@@ -81,7 +81,7 @@ class ChampionCog(ManagedTaskCog):
                 self.update_queue.task_done()
 
     async def _apply_champion_role(self, user_id_str: str, score: int) -> None:
-        """Assign the correct champion role based on the score."""
+        """Vergibt anhand der Punkte die passende Champion-Rolle."""
         # Zugriff auf Guild NUR noch über self.bot.main_guild (Zentral, wie in bot.py gesetzt)
         guild = self.bot.main_guild
         if not isinstance(guild, discord.Guild):
@@ -157,7 +157,7 @@ class ChampionCog(ManagedTaskCog):
             )
 
     def cog_unload(self):
-        """Cancel Tasks und schließe die Datenbankverbindung."""
+        """Beendet Tasks und schließt die Datenbankverbindung."""
         super().cog_unload()
         # Datenbank sauber schließen, damit keine offenen Tasks bleiben
         self.create_task(self.data.close())
