@@ -56,7 +56,8 @@ Die statischen Dateien sind wie folgt organisiert:
 - `data/quiz/questions_*.json` enthalten den Fragepool.
 - `data/quiz/templates/` hält Textbausteine für dynamische Fragen.
 - `data/wcr/units.json` speichert alle Minis inklusive Werte und lokalisierter Texte.
-- `data/wcr/categories.json` definiert Fraktionen, Typen, Geschwindigkeiten und Traits.
+- `data/wcr/categories.json` definiert Fraktionen, Typen, Geschwindigkeiten und Traits (ohne Icons).
+- `data/wcr/faction_meta.json` enthält Zusatzdaten zu Fraktionen wie Icon und Farbe.
 - `data/wcr/stat_labels.json` bietet Übersetzungen der Statistikbezeichnungen.
 - `data/wcr/pictures.json` ordnet Einheiten zugehörige Icons zu.
 
@@ -151,7 +152,7 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
   - Die Fragevorlagen liegen unter `data/quiz/templates/wcr.json`.
   - Beim Start erzeugt `_export_emojis` automatisch `data/emojis.json`; diese
     Datei enthält ein einfaches Mapping `{name: syntax}`. Die Emoji-Namen müssen
-    mit den Angaben in `data/wcr/categories.json` übereinstimmen.
+    mit den Angaben in `data/wcr/faction_meta.json` übereinstimmen.
 - Alle Slash-Commands werden **guild-basiert** registriert und nur für die Haupt-Guild synchronisiert.
 - Zur Vereinfachung der Registrierung stellt `utils.setup_helpers.register_cog_and_group` eine Hilfsfunktion bereit.
 

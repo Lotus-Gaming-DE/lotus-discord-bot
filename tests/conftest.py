@@ -88,9 +88,18 @@ async def wcr_data(monkeypatch):
 
     async def fake_fetch(base_url: str):
         base = Path("data/wcr")
+        categories = json.load(open(base / "categories.json", encoding="utf-8"))
+        meta = json.load(open(base / "faction_meta.json", encoding="utf-8"))
+        meta_map = {
+            m["id"]: {k: m[k] for k in ("icon", "color") if k in m}
+            for m in meta.get("factions", [])
+        }
+        for faction in categories.get("factions", []):
+            faction.update(meta_map.get(faction.get("id"), {}))
+
         return {
             "units": json.load(open(base / "units.json", encoding="utf-8")),
-            "categories": json.load(open(base / "categories.json", encoding="utf-8")),
+            "categories": categories,
             "pictures": json.load(open(base / "pictures.json", encoding="utf-8")),
             "stat_labels": json.load(open(base / "stat_labels.json", encoding="utf-8")),
         }

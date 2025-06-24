@@ -2,8 +2,6 @@
   "factions": [
     {
       "id": 1,
-      "icon": "wcr_undead",
-      "color": "#6D4DBB",
       "names": {
         "de": "Untote",
         "en": "Undead"
@@ -11,8 +9,6 @@
     },
     {
       "id": 2,
-      "icon": "wcr_beast",
-      "color": "#B08F58",
       "names": {
         "de": "Bestie",
         "en": "Beast"
@@ -20,8 +16,6 @@
     },
     {
       "id": 3,
-      "icon": "wcr_alliance",
-      "color": "#3A5FD0",
       "names": {
         "de": "Allianz",
         "en": "Alliance"
@@ -29,8 +23,6 @@
     },
     {
       "id": 4,
-      "icon": "wcr_horde",
-      "color": "#BE4532",
       "names": {
         "de": "Horde",
         "en": "Horde"
@@ -38,8 +30,6 @@
     },
     {
       "id": 5,
-      "icon": "wcr_blackrock",
-      "color": "#486166",
       "names": {
         "de": "Schwarzfels",
         "en": "Blackrock"
@@ -47,8 +37,6 @@
     },
     {
       "id": 6,
-      "icon": "wcr_cenarion",
-      "color": "#359078",
       "names": {
         "de": "Cenarion",
         "en": "Cenarion"
