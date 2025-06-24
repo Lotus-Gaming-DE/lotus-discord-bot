@@ -89,4 +89,7 @@ class QuizCog(ManagedTaskCog):
         self.tracker.register_message(message)
 
     def cog_unload(self) -> None:
+        """Remove background tasks and clear ``bot.quiz_cog`` reference."""
         super().cog_unload()
+        if hasattr(self.bot, "quiz_cog"):
+            del self.bot.quiz_cog

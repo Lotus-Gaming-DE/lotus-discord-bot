@@ -37,13 +37,19 @@ def get_logger(name: str, **context) -> logging.LoggerAdapter:
     return logging.LoggerAdapter(base, context)
 
 
-def create_logged_task(coro, logger: logging.Logger):
-    """Create an asyncio task and log uncaught exceptions."""
+def create_logged_task(coro, logger: logging.Logger) -> asyncio.Task:
+    """Create an ``asyncio.Task`` and log uncaught exceptions.
+
+    The returned task ignores :class:`asyncio.CancelledError` when finished and
+    logs all other exceptions via ``logger.error``.
+    """
     task = asyncio.create_task(coro)
 
-    def _log_exception(t: asyncio.Task):
+    def _log_exception(t: asyncio.Task) -> None:
+        if t.cancelled():
+            return
         exc = t.exception()
-        if exc is not None:
+        if exc:
             logger.error("Task raised an exception", exc_info=exc)
 
     task.add_done_callback(_log_exception)
