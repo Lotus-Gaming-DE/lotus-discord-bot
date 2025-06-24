@@ -55,7 +55,6 @@ async def test_wcr_setup_uses_main_guild(monkeypatch, bot):
         return {
             "units": [],
             "locals": {"en": {"units": []}},
-            "pictures": {},
             "categories": {},
             "stat_labels": {},
         }

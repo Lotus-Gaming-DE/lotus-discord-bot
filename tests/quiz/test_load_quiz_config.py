@@ -17,7 +17,7 @@ class DummyBot:
                 },
                 "languages": ["de"],
             },
-            "wcr": {"units": [], "pictures": {}, "locals": {"de": {}, "en": {}}},
+            "wcr": {"units": [], "locals": {"de": {}, "en": {}}},
         }
 
 
