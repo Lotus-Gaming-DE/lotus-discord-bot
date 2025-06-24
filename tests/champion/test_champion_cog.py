@@ -96,7 +96,7 @@ async def test_update_user_score_saves_and_calls(
     await cog.update_queue.join()
     assert total == 5
     assert called == [("123", 5)]
-    cog.cog_unload()
+    await cog.cog_unload()
     await asyncio.gather(*tasks, return_exceptions=True)
     await cog.wait_closed()
 
@@ -130,7 +130,7 @@ async def test_updates_processed_in_order(monkeypatch, patch_logged_task, tmp_pa
     await cog.update_queue.join()
 
     assert order == [("123", 1), ("124", 2), ("125", 3)]
-    cog.cog_unload()
+    await cog.cog_unload()
     await asyncio.gather(*tasks, return_exceptions=True)
 
 
@@ -147,7 +147,7 @@ async def test_get_current_role(patch_logged_task):
     assert cog.get_current_role(55).name == "Gold"
     assert cog.get_current_role(25).name == "Silver"
     assert cog.get_current_role(10) is None
-    cog.cog_unload()
+    await cog.cog_unload()
 
 
 @pytest.mark.asyncio
@@ -169,8 +169,7 @@ async def test_apply_role_removes_when_below_threshold(monkeypatch, patch_logged
 
     assert member.removed == [silver]
     assert member.added == []
-    cog.cog_unload()
-    await cog.data.close()
+    await cog.cog_unload()
     await cog.wait_closed()
 
 
@@ -190,8 +189,7 @@ async def test_apply_role_prefers_get_member(monkeypatch, patch_logged_task):
 
     assert guild.get_calls == 1
     assert guild.fetch_calls == 0
-    cog.cog_unload()
-    await cog.data.close()
+    await cog.cog_unload()
 
 
 @pytest.mark.asyncio
@@ -214,8 +212,7 @@ async def test_apply_role_ignores_same_name_if_id_missing(
     await cog._apply_champion_role("123", 5)
 
     assert member.added == []
-    cog.cog_unload()
-    await cog.data.close()
+    await cog.cog_unload()
 
 
 @pytest.mark.asyncio
@@ -235,7 +232,7 @@ async def test_worker_cancelled_on_unload(monkeypatch, patch_logged_task):
 
     cog = ChampionCog(bot)
 
-    cog.cog_unload()
+    await cog.cog_unload()
     await asyncio.gather(*tasks, return_exceptions=True)
     await cog.wait_closed()
 
