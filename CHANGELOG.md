@@ -1,7 +1,8 @@
 # Changelog
 
 ## [Unreleased]
-- Verbessertes Shutdown-Verhalten: ChampionCog schließt jetzt zuerst die Datenbank und stoppt danach alle Tasks.
+- Verbessertes Shutdown-Verhalten: ChampionCog schließt die Datenbank, stoppt alle Tasks und wartet auf deren Abschluss.
+- Champion-Mod-Befehle verlangen nun positive Punktwerte.
 - WCR-Cog aufgeteilt: Namensauflösung und Embed-Aufbau sind nun in eigenen Modulen. Fehlerbehandlung und Tests wurden erweitert.
 - ChampionCog.update_user_score loggt jetzt Datenbankfehler und wirft einen
   ``RuntimeError`` bei Fehlschlagen des Datenbankzugriffs.

@@ -98,8 +98,6 @@ async def test_update_user_score_saves_and_calls(
     assert total == 5
     assert called == [("123", 5)]
     await cog.cog_unload()
-    await asyncio.gather(*tasks, return_exceptions=True)
-    await cog.wait_closed()
 
 
 @pytest.mark.asyncio
@@ -132,7 +130,6 @@ async def test_updates_processed_in_order(monkeypatch, patch_logged_task, tmp_pa
 
     assert order == [("123", 1), ("124", 2), ("125", 3)]
     await cog.cog_unload()
-    await asyncio.gather(*tasks, return_exceptions=True)
 
 
 @pytest.mark.asyncio
@@ -171,7 +168,6 @@ async def test_apply_role_removes_when_below_threshold(monkeypatch, patch_logged
     assert member.removed == [silver]
     assert member.added == []
     await cog.cog_unload()
-    await cog.wait_closed()
 
 
 @pytest.mark.asyncio
@@ -234,8 +230,6 @@ async def test_worker_cancelled_on_unload(monkeypatch, patch_logged_task):
     cog = ChampionCog(bot)
 
     await cog.cog_unload()
-    await asyncio.gather(*tasks, return_exceptions=True)
-    await cog.wait_closed()
 
     assert cog.worker_task.cancelled()
 
@@ -268,4 +262,3 @@ async def test_queue_raises_when_full(monkeypatch, patch_logged_task, caplog):
     assert any("update_queue voll" in r.message for r in caplog.records)
 
     await cog.cog_unload()
-    await cog.wait_closed()
