@@ -152,6 +152,7 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
 - **WCR-Modul** bezieht seine Daten über die in ``WCR_API_URL`` angegebene API und nutzt sie für Autocomplete sowie dynamische Fragen.
   - Bilder werden relativ zu ``WCR_IMAGE_BASE`` aufgel\u00f6st.
   - Die API stellt ``units``, ``categories``, ``pictures`` und ``stat_labels`` bereit.
+  - Beim Abrufen dieser Daten wird ein Timeout von 10 Sekunden verwendet.
   - Die Fragevorlagen liegen unter `data/quiz/templates/wcr.json`.
   - Beim Start erzeugt `_export_emojis` automatisch `data/emojis.json`; diese
     Datei enthält ein einfaches Mapping `{name: syntax}`. Die Emoji-Namen müssen
