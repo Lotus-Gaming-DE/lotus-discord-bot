@@ -161,7 +161,7 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
 - Alle Slash-Commands werden **guild-basiert** registriert und nur für die Haupt-Guild synchronisiert.
 - Zur Vereinfachung der Registrierung stellt `utils.setup_helpers.register_cog_and_group` eine Hilfsfunktion bereit,
   die nach dem Hinzufügen der Gruppe automatisch `bot.tree.sync` für die Haupt-Guild ausführt.
-
+  Tritt dabei ein Fehler auf, wird er geloggt und erneut geworfen, sodass ein missglückter Start sofort sichtbar ist.
 Persistente Daten liegen in `data/pers/` und sollten nicht ins Repository aufgenommen werden.
 
 ---

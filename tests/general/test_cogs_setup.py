@@ -106,3 +106,14 @@ async def test_ptcgp_setup_uses_main_guild(monkeypatch, bot):
     await ptcgp.setup(bot)
 
     assert called == [(ptcgp_group, bot.main_guild)]
+
+
+@pytest.mark.asyncio
+async def test_wcr_setup_raises_on_error(monkeypatch, bot):
+    async def fake_register(*args, **kwargs):
+        raise RuntimeError("fail")
+
+    monkeypatch.setattr(wcr, "register_cog_and_group", fake_register)
+
+    with pytest.raises(RuntimeError):
+        await wcr.setup(bot)

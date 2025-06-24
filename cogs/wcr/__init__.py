@@ -19,3 +19,4 @@ async def setup(bot: discord.ext.commands.Bot):
         logger.info("[WCRCog] Cog und Slash-Command-Gruppe erfolgreich registriert.")
     except Exception as e:
         logger.error(f"[WCRCog] Fehler beim Setup: {e}", exc_info=True)
+        raise
