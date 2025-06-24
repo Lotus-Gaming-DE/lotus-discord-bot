@@ -47,6 +47,7 @@ WCR_API_URL=https://wcr-api.up.railway.app
 # Basis-URL für Bilder (Standard: https://www.method.gg)
 WCR_IMAGE_BASE=https://www.method.gg
 # Maximales Alter des WCR-Caches in Sekunden (Standard: 86400)
+# Maximales Alter des WCR-Caches in Sekunden (0 schaltet den Cache ab)
 WCR_CACHE_TTL=86400
 # Bei Zertifikatsproblemen kann die Überprüfung für die PTCGP-API deaktiviert werden
 PTCGP_SKIP_SSL_VERIFY=0
@@ -136,6 +137,23 @@ Autocomplete und Fuzzy-Matching erleichtern die Eingabe.
 Der Parameter `lang` bestimmt ausschließlich die Ausgabesprache; die Namenssuche berücksichtigt alle unterstützten Sprachen.
 Alle `/wcr`-Befehle besitzen zusätzlich den Parameter `public`, um die Antwort öffentlich anzuzeigen.
 
+#### Beispiele
+
+```bash
+/wcr name Abscheulichkeit lang=de
+```
+*Embed mit Titel "Abscheulichkeit", Kosten 6 und weiteren Stat-Feldern.*
+
+```bash
+/wcr filter cost=6 lang=de
+```
+*Zeigt eine Auswahlliste mit 8 passenden Minis.*
+
+```bash
+/wcr duell Gargoyle "General Drakkisath" lang=de
+```
+*Beispielausgabe:* `Gargoyle würde General Drakkisath nach 10.9 Sekunden besiegen.`
+
 ### `/ptcgp`
 
 | Befehl          | Kurzbeschreibung                              |
@@ -190,8 +208,9 @@ Befehle mit dem Hinweis *Mod* sind nur für Nutzer mit dem Recht `Manage Server`
   - Fehlen die Lokalisierungsdaten komplett (``locals``), wird aus den
     ``units`` ein englischer Fallback erzeugt.
   - Die Fragevorlagen liegen unter `data/quiz/templates/wcr.json`.
-  - Geladene Daten werden in `data/pers/wcr_cache.json` zwischengespeichert.
-    Die Gültigkeitsdauer lässt sich über ``WCR_CACHE_TTL`` steuern.
+  - Geladene Daten werden dauerhaft in `data/pers/wcr_cache.json` zwischengespeichert.
+    Über ``WCR_CACHE_TTL`` legst du fest, wie lange dieser Cache gültig bleibt.
+    Bei ``0`` wird er bei jedem Start neu aufgebaut.
   - Beim Start erzeugt `_export_emojis` automatisch `data/emojis.json`; diese
     Datei enthält ein einfaches Mapping `{name: syntax}`. Die Emoji-Namen müssen
     mit den Angaben in `data/wcr/faction_meta.json` übereinstimmen.
@@ -234,6 +253,10 @@ Pull Requests sind willkommen! Bitte halte dich an den bestehenden Codestyle (PE
 **Frage:** *Wo passe ich Vorlagen für WCR-Fragen an?*
 
 **Antwort:** Die Texte für dynamische Fragen findest du in `data/quiz/templates/wcr.json`.
+
+**Frage:** *Wie kann ich die WCR-Daten manuell aktualisieren?*
+
+**Antwort:** Lösche die Datei `data/pers/wcr_cache.json` oder setze `WCR_CACHE_TTL=0` und starte den Bot neu.
 
 ---
 
