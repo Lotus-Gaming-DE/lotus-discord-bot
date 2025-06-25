@@ -100,7 +100,11 @@ class ChampionCog(ManagedTaskCog):
             await self._apply_champion_role(user_id_str, total)
 
     async def _worker(self) -> None:
-        """Verarbeitet Punktänderungen aus der Warteschlange nacheinander."""
+        """Apply queued score updates sequentially in the background."""
+
+        # This long running task processes the ``update_queue`` until the cog is
+        # unloaded. It ensures that role updates happen in order and catches
+        # ``CancelledError`` when the bot shuts down.
         try:
             while True:
                 user_id_str, total = await self.update_queue.get()

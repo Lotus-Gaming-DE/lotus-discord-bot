@@ -1,51 +1,53 @@
 # Lotus Discord Bot
 
-This project contains the source code for Lotus Gaming's community bot.
-It is developed using the [discord.py](https://discordpy.readthedocs.io/) library.
+Lotus Gaming's community bot built with
+[discord.py](https://discordpy.readthedocs.io/).
 
-## Quick start
+## Setup
 
-1. Install Python 3.11.
+1. Install Python **3.11**.
 2. Install the runtime dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-3. Install development tools:
+3. Install development tools and pre-commit hooks:
    ```bash
    pip install -r requirements-dev.txt
    pre-commit install
    ```
 4. Copy `.env.example` to `.env` and adjust the values.
-5. Run the bot:
-   ```bash
-   python -m lotus_bot
-   ```
+
+## Usage
+
+Run the bot locally:
+
+```bash
+python -m lotus_bot
+```
 
 ## Development
 
-All source code lives under `src/lotus_bot/` using the src layout.  Tests
-reside in the `tests/` directory and are executed with `pytest`.
-
-The project uses `pre-commit` to enforce formatting and linting
-(Black, Flake8, Ruff and pip-audit).  Security scans run automatically in
-CI using Snyk if the `SNYK_TOKEN` secret is configured.
-
-## Dependency management
-
-Dependabot checks the `requirements*.txt` files and GitHub Actions
-workflows daily. It opens pull requests which trigger the full CI
-pipeline—linting, tests and a security audit—ensuring updates are
-verified before merge.
+Source code lives under `src/lotus_bot/` while tests reside in `tests/`.
+Run the following commands before committing code:
 
 ```bash
 pre-commit run --all-files
-pytest -q
+pytest --cov=.
 ```
+
+`pre-commit` enforces formatting and linting (Black, Flake8, Ruff) and
+executes `pip-audit`. Security scans also run in CI via Snyk when
+`SNYK_TOKEN` is configured.
+
+Dependabot checks dependencies daily and opens pull requests that run the
+full CI pipeline.
 
 ## Deployment
 
-The bot runs on Railway. Logs are written to `logs/bot.json` in JSON
-format using structlog. Internal log messages are in English while all
-user-facing messages remain German. CI uploads the latest Railway logs
-as build artifacts.
-Secrets like `bot_key` and `server_id` are provided as Railway environment variables. The `.env.example` file lists all required values, which Railway injects into the runtime container.
+The bot is deployed on Railway. Logs are written to `logs/bot.json` in
+JSON format using structlog. Internal log messages are in English while
+user-facing messages are German. CI uploads the latest Railway logs as
+build artifacts.
+
+Environment variables such as `bot_key` and `server_id` are provided via
+Railway. The `.env.example` file lists all required values.
