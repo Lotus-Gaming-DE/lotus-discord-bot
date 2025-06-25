@@ -29,6 +29,7 @@
 - Projektstruktur auf ``src``-Layout umgestellt; Imports und Tests angepasst.
 - Neues ``requirements-dev.txt`` und ``pip-audit`` in Pre-commit.
 - CI speichert Railway-Logs und führt einen Snyk-Scan aus.
+- CI: Snyk-Workflow installiert Abhängigkeiten vor dem Scan.
 - Behoben: Formatierungsfehler in ``tests/quiz/test_duel.py``.
 - Behoben: Snyk-Workflow nutzt nun ``--file=requirements.txt``.
 - Behoben: Snyk-Workflow authentifiziert sich nun explizit.
