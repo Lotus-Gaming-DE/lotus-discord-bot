@@ -35,3 +35,4 @@
 - Behoben: Snyk-Workflow authentifiziert sich nun explizit.
 - Behoben: Snyk-Action nutzt nun Tag 0.4.0 im Security-Workflow.
 - Behoben: Manuelle Snyk-Authentifizierung entfernt, Token wird über die Setup-Action gesetzt.
+- Behoben: Snyk-Workflow ruft ``snyk auth`` mit dem Token auf.
