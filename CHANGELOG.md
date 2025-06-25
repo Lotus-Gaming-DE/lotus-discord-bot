@@ -16,8 +16,10 @@
 - Abhängigkeiten aktualisiert: ``discord.py`` 2.5.2, ``Unidecode`` 1.4.0,
   ``aiosqlite`` 0.21.0, ``python-dotenv`` 1.1.1, ``pytest-asyncio`` 1.0.0 und
   ``aiohttp`` 3.12.13.
- - ChampionCog besitzt nun eine begrenzte Update-Warteschlange (1000 Einträge);
-    beim Füllen wird nun ein ``RuntimeError`` ausgelöst.
+- ChampionCog besitzt nun eine begrenzte Update-Warteschlange (1000 Einträge);
+   beim Füllen wird nun ein ``RuntimeError`` ausgelöst.
+- Neue Datei ``.github/dependabot.yml`` automatisiert Updates der
+  Python-Abhängigkeiten und GitHub-Actions.
 
 - Bereinigt: `cogs/champion/__init__.py` verwendet nun `commands.Bot` und entfernt den Import von `discord`.
 - Dokumentation erweitert: Beispiele für `/wcr`-Befehle und Hinweise zum neuen WCR-Cache.

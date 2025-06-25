@@ -30,6 +30,12 @@ The project uses `pre-commit` to enforce formatting and linting
 (Black, Flake8, Ruff and pip-audit).  Security scans run automatically in
 CI using Snyk if the `SNYK_TOKEN` secret is configured.
 
+## Dependency management
+
+Dependabot checks the `requirements*.txt` files and GitHub Actions
+workflows weekly. It opens pull requests which trigger the full CI
+pipeline, ensuring updates are tested before merge.
+
 ```bash
 pre-commit run --all-files
 pytest -q
