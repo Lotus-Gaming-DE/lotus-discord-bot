@@ -19,3 +19,19 @@ jobs:
         run: pip install pip-audit
       - name: Run pip-audit
         run: pip-audit -r requirements.txt
+  snyk:
+    runs-on: ubuntu-latest
+    needs: pip-audit
+    steps:
+      - uses: actions/checkout@v3
+      - uses: snyk/actions/setup@v2
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Authenticate Snyk
+        run: snyk auth $SNYK_TOKEN
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Run Snyk
+        run: snyk test --file=requirements.txt
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}

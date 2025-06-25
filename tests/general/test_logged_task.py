@@ -2,7 +2,7 @@ import asyncio
 import logging
 import pytest
 
-import log_setup
+import lotus_bot.log_setup as log_setup
 
 
 @pytest.mark.asyncio

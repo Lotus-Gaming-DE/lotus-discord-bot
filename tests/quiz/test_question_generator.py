@@ -1,7 +1,7 @@
 import random
 import pytest
 
-from cogs.quiz.question_generator import QuestionGenerator
+from lotus_bot.cogs.quiz.question_generator import QuestionGenerator
 
 
 class DummyStateManager:

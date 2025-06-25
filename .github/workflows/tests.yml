@@ -40,7 +40,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-asyncio pytest-cov pre-commit pip-audit
+          pip install -r requirements-dev.txt
       - name: Check formatting
         run: pre-commit run --all-files --show-diff-on-failure
       - name: Run linter
@@ -48,6 +48,12 @@ jobs:
       - name: Run tests
         run: |
           pytest --cov=.
+      - name: Collect Railway logs
+        if: success()
+        run: |
+          railway logs --follow > logs/latest_railway.log &
+          sleep 30
+          pkill -f "railway logs" || true
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v4

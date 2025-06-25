@@ -1,7 +1,7 @@
 import pytest
 
-from cogs.quiz.stats import QuizStats
-from cogs.quiz.views import AnswerModal
+from lotus_bot.cogs.quiz.stats import QuizStats
+from lotus_bot.cogs.quiz.views import AnswerModal
 from collections import defaultdict
 
 

@@ -3,8 +3,13 @@ import discord
 import pytest
 
 
-from cogs.quiz.duel import QuizDuelGame, DuelInviteView, DuelConfig, DuelQuestionView
-from cogs.quiz.quiz_config import QuizAreaConfig
+from lotus_bot.cogs.quiz.duel import (
+    QuizDuelGame,
+    DuelInviteView,
+    DuelConfig,
+    DuelQuestionView,
+)
+from lotus_bot.cogs.quiz.quiz_config import QuizAreaConfig
 
 
 class DummyMember:
@@ -391,7 +396,7 @@ async def test_game_run_dynamic(monkeypatch):
             self.responses = self._data
             await self._finish()
 
-    monkeypatch.setattr("cogs.quiz.duel.DuelQuestionView", AutoView)
+    monkeypatch.setattr("lotus_bot.cogs.quiz.duel.DuelQuestionView", AutoView)
 
     calls = {"ask": 0, "proc": 0}
     orig_ask = QuizDuelGame._ask_question
@@ -472,7 +477,7 @@ async def test_game_run_dynamic_tiebreak(monkeypatch):
             self.responses = self._data
             await self._finish()
 
-    monkeypatch.setattr("cogs.quiz.duel.DuelQuestionView", AutoView)
+    monkeypatch.setattr("lotus_bot.cogs.quiz.duel.DuelQuestionView", AutoView)
 
     thread = DummyRunThread()
     game = QuizDuelGame(cog, thread, "area", challenger, opponent, 20, "dynamic", None)
@@ -569,7 +574,7 @@ async def test_game_run_fetches_user_when_cache_empty(monkeypatch):
     bot.quiz_data = {"area": QuizAreaConfig(question_generator=DummyQG())}
     cog = DummyCog(bot)
 
-    monkeypatch.setattr("cogs.quiz.duel.DuelQuestionView", AutoView)
+    monkeypatch.setattr("lotus_bot.cogs.quiz.duel.DuelQuestionView", AutoView)
 
     thread = DummyRunThread()
     game = QuizDuelGame(
@@ -723,7 +728,7 @@ async def test_slash_duel_blocks_active_player(monkeypatch):
 
     monkeypatch.setattr(bot, "get_cog", get_cog)
 
-    from cogs.quiz.slash_commands import duel as duel_cmd
+    from lotus_bot.cogs.quiz.slash_commands import duel as duel_cmd
 
     inter = SlashInteraction(bot, DummyMember(1), SlashChannel())
     await duel_cmd.callback(inter, 10, "box", 3)
@@ -755,7 +760,7 @@ async def test_slash_duel_rejects_even_best_of(monkeypatch):
 
     monkeypatch.setattr(bot, "get_cog", get_cog)
 
-    from cogs.quiz.slash_commands import duel as duel_cmd
+    from lotus_bot.cogs.quiz.slash_commands import duel as duel_cmd
 
     inter = SlashInteraction(bot, DummyMember(1), SlashChannel())
     await duel_cmd.callback(inter, 10, "box", 4)

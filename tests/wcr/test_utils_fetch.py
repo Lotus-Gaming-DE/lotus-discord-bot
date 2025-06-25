@@ -5,7 +5,7 @@ import logging
 import aiohttp
 import pytest
 
-from cogs.wcr.utils import fetch_wcr_data
+from lotus_bot.cogs.wcr.utils import fetch_wcr_data
 
 
 @pytest.mark.asyncio
@@ -47,7 +47,7 @@ async def test_fetch_concurrent(monkeypatch):
             return resp
 
     monkeypatch.setattr(
-        "cogs.wcr.utils.aiohttp.ClientSession",
+        "lotus_bot.cogs.wcr.utils.aiohttp.ClientSession",
         lambda *args, **kwargs: DummySession(*args, **kwargs),
     )
 
@@ -89,7 +89,7 @@ async def test_fetch_timeout(monkeypatch, caplog):
             return DummyResponse()
 
     monkeypatch.setattr(
-        "cogs.wcr.utils.aiohttp.ClientSession",
+        "lotus_bot.cogs.wcr.utils.aiohttp.ClientSession",
         lambda *args, **kwargs: DummySession(*args, **kwargs),
     )
 

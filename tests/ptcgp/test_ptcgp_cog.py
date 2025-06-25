@@ -1,7 +1,7 @@
 import pytest
 
-from cogs.ptcgp.cog import PTCGPCog
-import cogs.ptcgp.api as api_mod
+from lotus_bot.cogs.ptcgp.cog import PTCGPCog
+import lotus_bot.cogs.ptcgp.api as api_mod
 
 
 class DummyBot:
@@ -50,11 +50,11 @@ async def test_update_command(monkeypatch, tmp_path):
         return [{"id": "1", "name": "Pika"}]
 
     monkeypatch.setattr(api_mod, "fetch_all_cards", fake_fetch)
-    import cogs.ptcgp.cog as cog_mod
+    import lotus_bot.cogs.ptcgp.cog as cog_mod
 
     monkeypatch.setattr(cog_mod, "fetch_all_cards", fake_fetch)
 
-    from cogs.ptcgp.slash_commands import update
+    from lotus_bot.cogs.ptcgp.slash_commands import update
 
     inter = DummyInteraction(bot)
     await update.callback(inter)

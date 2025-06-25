@@ -1,6 +1,6 @@
 import pytest
 
-import cogs.ptcgp.api as api_mod
+import lotus_bot.cogs.ptcgp.api as api_mod
 
 
 class DummyResponse:

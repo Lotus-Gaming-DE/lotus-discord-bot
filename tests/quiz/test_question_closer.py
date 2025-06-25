@@ -2,9 +2,9 @@ import datetime
 import pytest
 import discord
 
-from cogs.quiz.question_closer import QuestionCloser
-from cogs.quiz.question_state import QuestionInfo
-from cogs.quiz.quiz_config import QuizAreaConfig
+from lotus_bot.cogs.quiz.question_closer import QuestionCloser
+from lotus_bot.cogs.quiz.question_state import QuestionInfo
+from lotus_bot.cogs.quiz.quiz_config import QuizAreaConfig
 
 
 class DummyState:
