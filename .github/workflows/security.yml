@@ -26,6 +26,8 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install dependencies
         run: pip install -r requirements.txt
+      - name: Generate SBOM
+        run: cyclonedx-bom -o sbom.xml
       - name: Run Snyk Test
         uses: snyk/actions/python@0.4.0
         if: ${{ secrets.SNYK_TOKEN != '' }}
@@ -34,3 +36,9 @@ jobs:
         with:
           command: test
           args: --file=requirements.txt
+      - name: Upload SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.xml
