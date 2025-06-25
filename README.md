@@ -1,9 +1,42 @@
-# Hi!
+# Lotus Discord Bot
 
-# this is a nice simple readme describing the project
+This project contains the source code for Lotus Gaming's community bot.
+It is developed using the [discord.py](https://discordpy.readthedocs.io/) library.
 
-Yay.
+## Quick start
 
-Security scans run automatically in CI using Snyk. The workflow passes the
-`SNYK_TOKEN` secret to the Snyk setup action; no manual authentication step is
-required.
+1. Install Python 3.11.
+2. Install the runtime dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Install development tools:
+   ```bash
+   pip install -r requirements-dev.txt
+   pre-commit install
+   ```
+4. Copy `.env.example` to `.env` and adjust the values.
+5. Run the bot:
+   ```bash
+   python -m lotus_bot
+   ```
+
+## Development
+
+All source code lives under `src/lotus_bot/` using the src layout.  Tests
+reside in the `tests/` directory and are executed with `pytest`.
+
+The project uses `pre-commit` to enforce formatting and linting
+(Black, Flake8, Ruff and pip-audit).  Security scans run automatically in
+CI using Snyk if the `SNYK_TOKEN` secret is configured.
+
+```bash
+pre-commit run --all-files
+pytest -q
+```
+
+## Deployment
+
+The bot runs on Railway. Logs are written to `logs/bot.json` in JSON
+format using structlog.  CI uploads the latest Railway logs as build
+artifacts.
