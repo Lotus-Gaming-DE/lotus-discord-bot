@@ -46,3 +46,4 @@ pytest -q
 The bot runs on Railway. Logs are written to `logs/bot.json` in JSON
 format using structlog.  CI uploads the latest Railway logs as build
 artifacts.
+Secrets like `bot_key` and `server_id` are provided as Railway environment variables. The `.env.example` file lists all required values, which Railway injects into the runtime container.
