@@ -3,6 +3,8 @@
 ## [Unreleased]
 - Verbessertes Shutdown-Verhalten: ChampionCog schließt die Datenbank, stoppt alle Tasks und wartet auf deren Abschluss.
 - Dependabot führt Updates jetzt täglich aus.
+- Dependabot-Pull-Requests lösen den vollständigen CI-Workflow mit Linting,
+  Tests und Sicherheitsprüfung aus.
 - Champion-Mod-Befehle verlangen nun positive Punktwerte.
 - Security-Workflow nutzt jetzt `snyk/actions/python@0.4.0` und prüft, ob `SNYK_TOKEN` gesetzt ist.
 - README beschreibt jetzt die Installation von Dev-Abhängigkeiten und das Starten des Bots per `python -m lotus_bot`.

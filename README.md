@@ -34,7 +34,8 @@ CI using Snyk if the `SNYK_TOKEN` secret is configured.
 
 Dependabot checks the `requirements*.txt` files and GitHub Actions
 workflows daily. It opens pull requests which trigger the full CI
-pipeline, ensuring updates are tested before merge.
+pipeline—linting, tests and a security audit—ensuring updates are
+verified before merge.
 
 ```bash
 pre-commit run --all-files

@@ -4,7 +4,12 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    labels:
+      - "dependencies"
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "daily"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 5
