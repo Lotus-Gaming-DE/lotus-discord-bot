@@ -3,7 +3,8 @@ name: Security Audit
 on:
   pull_request:
     paths:
-      - requirements.txt
+      - 'requirements*.txt'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 jobs:
@@ -15,6 +16,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+      - name: Cache pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-precommit-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Install pip-audit
         run: pip install pip-audit
       - name: Run pip-audit
@@ -24,6 +35,16 @@ jobs:
     needs: pip-audit
     steps:
       - uses: actions/checkout@v4
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+      - name: Cache pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-precommit-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Generate SBOM
@@ -42,3 +63,15 @@ jobs:
         with:
           name: sbom
           path: sbom.xml
+      - name: Collect Railway logs
+        if: success()
+        run: |
+          railway logs --follow > logs/latest_railway.log &
+          sleep 30
+          pkill -f "railway logs" || true
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs
+          path: logs/
