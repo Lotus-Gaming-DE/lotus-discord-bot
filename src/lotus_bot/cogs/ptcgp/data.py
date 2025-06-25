@@ -44,7 +44,7 @@ class PTCGPData:
         )
         await db.commit()
         self._init_done = True
-        logger.info("[PTCGPData] SQLite-Datenbank initialisiert.")
+        logger.info("[PTCGPData] SQLite database initialized.")
 
     async def close(self) -> None:
         if self.db is not None:
