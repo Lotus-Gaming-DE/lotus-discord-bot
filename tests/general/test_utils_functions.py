@@ -1,4 +1,4 @@
-from cogs.quiz.utils import (
+from lotus_bot.cogs.quiz.utils import (
     create_permutations,
     create_permutations_list,
     normalize_text,

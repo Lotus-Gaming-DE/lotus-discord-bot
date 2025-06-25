@@ -2,8 +2,8 @@ import datetime
 import pytest
 import discord
 
-from cogs.quiz.question_manager import QuestionManager
-from cogs.quiz.quiz_config import QuizAreaConfig
+from lotus_bot.cogs.quiz.question_manager import QuestionManager
+from lotus_bot.cogs.quiz.quiz_config import QuizAreaConfig
 
 
 class DummyGenerator:

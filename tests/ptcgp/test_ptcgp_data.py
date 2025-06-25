@@ -1,6 +1,6 @@
 import pytest
 
-from cogs.ptcgp.data import PTCGPData
+from lotus_bot.cogs.ptcgp.data import PTCGPData
 
 
 CARD_EN = {

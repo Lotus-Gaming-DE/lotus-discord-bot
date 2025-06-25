@@ -1,7 +1,7 @@
 import pytest
 
-from cogs.champion.slash_commands import champion_group
-from permissions import moderator_only
+from lotus_bot.cogs.champion.slash_commands import champion_group
+from lotus_bot.permissions import moderator_only
 
 
 class DummyPerms:

@@ -82,7 +82,7 @@ class SlashInteraction:
 
 @pytest.mark.asyncio
 async def test_duelstats_command():
-    from cogs.quiz.slash_commands import duelstats
+    from lotus_bot.cogs.quiz.slash_commands import duelstats
 
     bot = DummyBot()
     guild = DummyGuild()
@@ -96,7 +96,7 @@ async def test_duelstats_command():
 
 @pytest.mark.asyncio
 async def test_duelleaderboard_command():
-    from cogs.quiz.slash_commands import duelleaderboard
+    from lotus_bot.cogs.quiz.slash_commands import duelleaderboard
 
     bot = DummyBot()
     guild = DummyGuild()

@@ -1,7 +1,7 @@
 import pytest
 
 
-from cogs.champion.data import ChampionData
+from lotus_bot.cogs.champion.data import ChampionData
 
 
 @pytest.mark.asyncio

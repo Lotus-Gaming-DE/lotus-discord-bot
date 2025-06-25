@@ -1,4 +1,4 @@
-from cogs.wcr import resolver
+from lotus_bot.cogs.wcr import resolver
 
 
 def test_build_lookup_tables_contains_tokens(wcr_data):

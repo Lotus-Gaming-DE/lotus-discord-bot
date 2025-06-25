@@ -1,7 +1,7 @@
-from cogs.quiz.message_tracker import MessageTracker
-import cogs.quiz.message_tracker as msg_mod
+from lotus_bot.cogs.quiz.message_tracker import MessageTracker
+import lotus_bot.cogs.quiz.message_tracker as msg_mod
 import pytest
-from cogs.quiz.quiz_config import QuizAreaConfig
+from lotus_bot.cogs.quiz.quiz_config import QuizAreaConfig
 
 
 class DummyAuthor:

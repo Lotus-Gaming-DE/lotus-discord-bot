@@ -1,7 +1,7 @@
 import pytest
 
 
-from cogs.wcr import helpers
+from lotus_bot.cogs.wcr import helpers
 
 
 @pytest.fixture

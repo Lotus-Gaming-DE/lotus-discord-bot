@@ -1,7 +1,7 @@
 import json
 import os
 
-import log_setup
+import lotus_bot.log_setup as log_setup
 
 
 def test_setup_logging_writes_json(tmp_path):

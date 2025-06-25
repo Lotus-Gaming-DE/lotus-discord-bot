@@ -3,6 +3,8 @@
 ## [Unreleased]
 - Verbessertes Shutdown-Verhalten: ChampionCog schließt die Datenbank, stoppt alle Tasks und wartet auf deren Abschluss.
 - Champion-Mod-Befehle verlangen nun positive Punktwerte.
+- Security-Workflow nutzt jetzt `snyk/actions/python@0.4.0` und prüft, ob `SNYK_TOKEN` gesetzt ist.
+- README beschreibt jetzt die Installation von Dev-Abhängigkeiten und das Starten des Bots per `python -m lotus_bot`.
 - WCR-Cog aufgeteilt: Namensauflösung und Embed-Aufbau sind nun in eigenen Modulen. Fehlerbehandlung und Tests wurden erweitert.
 - ChampionCog.update_user_score loggt jetzt Datenbankfehler und wirft einen
   ``RuntimeError`` bei Fehlschlagen des Datenbankzugriffs.
@@ -26,3 +28,15 @@
 - Logging nutzt jetzt ``structlog`` und schreibt JSON-Dateien unter ``logs/bot.json``.
 - Pre-commit Hooks mit ``black``, ``flake8``, ``ruff`` und mehr.
 - Neue GitHub-Action ``security.yml`` führt ``pip-audit`` aus.
+- Projektstruktur auf ``src``-Layout umgestellt; Imports und Tests angepasst.
+- Neues ``requirements-dev.txt`` und ``pip-audit`` in Pre-commit.
+- CI speichert Railway-Logs und führt einen Snyk-Scan aus.
+- CI: Snyk-Workflow installiert Abhängigkeiten vor dem Scan.
+- Behoben: Formatierungsfehler in ``tests/quiz/test_duel.py``.
+- Behoben: Snyk-Workflow nutzt nun ``--file=requirements.txt``.
+- Behoben: Snyk-Workflow authentifiziert sich nun explizit.
+- Behoben: Snyk-Action nutzt nun Tag 0.4.0 im Security-Workflow.
+- Behoben: Manuelle Snyk-Authentifizierung entfernt, Token wird über die Setup-Action gesetzt.
+- Behoben: Snyk-Workflow ruft ``snyk auth`` mit dem Token auf.
+- Behoben: Entfernt erneut den ``snyk auth``-Schritt, da die Setup-Action den
+  Token automatisch verwendet.

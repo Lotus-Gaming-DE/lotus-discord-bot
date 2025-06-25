@@ -1,9 +1,9 @@
-import cogs.quiz.cog as quiz_cog_mod
-import cogs.quiz.message_tracker as msg_mod
-import cogs.quiz.slash_commands as slash_mod
-from cogs.quiz.quiz_config import QuizAreaConfig
+import lotus_bot.cogs.quiz.cog as quiz_cog_mod
+import lotus_bot.cogs.quiz.message_tracker as msg_mod
+import lotus_bot.cogs.quiz.slash_commands as slash_mod
+from lotus_bot.cogs.quiz.quiz_config import QuizAreaConfig
 import pytest
-import log_setup
+import lotus_bot.log_setup as log_setup
 
 
 class DummyBot:

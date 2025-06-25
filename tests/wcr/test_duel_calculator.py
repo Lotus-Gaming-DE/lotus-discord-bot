@@ -1,5 +1,5 @@
 import pytest
-from cogs.wcr.duel import DuelCalculator
+from lotus_bot.cogs.wcr.duel import DuelCalculator
 
 
 def test_scale_stat():

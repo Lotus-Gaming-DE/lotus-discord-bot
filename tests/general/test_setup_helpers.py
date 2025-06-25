@@ -2,7 +2,7 @@ import pytest
 from discord import app_commands
 from discord.ext import commands
 
-from utils.setup_helpers import register_cog_and_group
+from lotus_bot.utils.setup_helpers import register_cog_and_group
 
 
 class DummyCog(commands.Cog):
