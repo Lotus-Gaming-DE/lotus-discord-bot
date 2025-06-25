@@ -33,3 +33,4 @@
 - Behoben: Snyk-Workflow nutzt nun ``--file=requirements.txt``.
 - Behoben: Snyk-Workflow authentifiziert sich nun explizit.
 - Behoben: Snyk-Action nutzt nun Tag 0.4.0 im Security-Workflow.
+- Behoben: Manuelle Snyk-Authentifizierung entfernt, Token wird über die Setup-Action gesetzt.
