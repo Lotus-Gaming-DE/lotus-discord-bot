@@ -33,7 +33,7 @@ CI using Snyk if the `SNYK_TOKEN` secret is configured.
 ## Dependency management
 
 Dependabot checks the `requirements*.txt` files and GitHub Actions
-workflows weekly. It opens pull requests which trigger the full CI
+workflows daily. It opens pull requests which trigger the full CI
 pipeline, ensuring updates are tested before merge.
 
 ```bash
