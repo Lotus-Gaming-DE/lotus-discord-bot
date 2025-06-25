@@ -16,7 +16,7 @@ async def fetch_all_cards(language: str) -> list[dict]:
             url = f"https://api.tcgdex.dev/v2/tcg-pocket/{language}/cards?page={page}"
             async with session.get(url, ssl=False if ssl_disabled else None) as resp:
                 if resp.status != 200:
-                    raise RuntimeError(f"HTTP {resp.status} beim Laden von {url}")
+                    raise RuntimeError(f"HTTP {resp.status} while loading {url}")
                 data = await resp.json()
                 if isinstance(data, dict) and "data" in data:
                     items = data.get("data")
@@ -26,5 +26,5 @@ async def fetch_all_cards(language: str) -> list[dict]:
                     break
                 cards.extend(items)
                 page += 1
-    logger.info(f"[PTCGP API] Geladene Karten {language}: {len(cards)}")
+    logger.info(f"[PTCGP API] Loaded {len(cards)} cards for {language}")
     return cards
