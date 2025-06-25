@@ -459,7 +459,13 @@ class WCRCog(commands.Cog):
         level_b: int = 1,
         lang: str = "de",
     ) -> DuelOutcome:
-        """Berechne den Ergebnistext für ``/wcr duell``."""
+        """Berechne den Ergebnistext für ``/wcr duell``.
+
+        Dabei werden die beiden Minis auf die gewählten Level skaliert und ihre
+        Schadenswerte gegeneinander verglichen. Das Ergebnis enthält einen
+        deutschsprachigen Hinweis, welches Mini gewinnt oder ob kein Treffer
+        möglich ist.
+        """
 
         res_a = self.resolve_unit(mini_a, lang)
         res_b = self.resolve_unit(mini_b, lang)
@@ -483,10 +489,14 @@ class WCRCog(commands.Cog):
         dps_b, notes_b = calculator.compute_dps_details(data_b, stats_b, data_a)
 
         def _flight_issue(att: dict, def_: dict) -> bool:
+            """Return True if ``att`` cannot hit ``def_`` due to flying."""
+
             ta = [str(t) for t in att.get("trait_ids", [])]
             td = [str(t) for t in def_.get("trait_ids", [])]
             if att.get("type_id") == "2":
+                # Spells always hit flying targets
                 return False
+            # Trait 15 = Flying. Trait 11/15 allow hitting flying units
             return "15" in td and "11" not in ta and "15" not in ta
 
         issue_a = _flight_issue(data_a, data_b)

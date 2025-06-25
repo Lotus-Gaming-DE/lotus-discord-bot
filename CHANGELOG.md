@@ -44,4 +44,6 @@
 - Behoben: Manuelle Snyk-Authentifizierung entfernt, Token wird über die Setup-Action gesetzt.
 - Behoben: Snyk-Workflow ruft ``snyk auth`` mit dem Token auf.
 - Behoben: Entfernt erneut den ``snyk auth``-Schritt, da die Setup-Action den
-  Token automatisch verwendet.
+    Token automatisch verwendet.
+- README folgt nun der globalen Struktur und `.env.example` dokumentiert alle
+  benötigten Variablen.

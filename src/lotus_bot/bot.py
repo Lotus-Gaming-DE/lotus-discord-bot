@@ -65,6 +65,8 @@ def load_quiz_config(bot: commands.Bot):
         language = cfg.get("language", "de")
 
         dynamic_providers = {}
+        # Each area may define a ``get_provider`` function to generate
+        # additional questions at runtime. Import it dynamically if present.
         try:
             module = __import__(
                 f"cogs.quiz.area_providers.{area}", fromlist=["get_provider"]
