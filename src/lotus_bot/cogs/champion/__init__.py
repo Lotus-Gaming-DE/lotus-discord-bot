@@ -17,7 +17,7 @@ async def setup(bot: commands.Bot):
         bot.tree.add_command(syncroles, guild=bot.main_guild)
 
         logger.info(
-            "[ChampionCog] Cog und Slash-Command-Gruppe erfolgreich registriert."
+            "[ChampionCog] Cog and slash command group registered successfully."
         )
     except Exception as e:
-        logger.error(f"[ChampionCog] Fehler beim Setup: {e}", exc_info=True)
+        logger.error(f"[ChampionCog] Error during setup: {e}", exc_info=True)

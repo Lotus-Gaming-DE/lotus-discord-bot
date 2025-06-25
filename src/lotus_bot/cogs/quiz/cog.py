@@ -29,7 +29,7 @@ class QuizCog(ManagedTaskCog):
         self._track_task = self.create_task
 
         if not self.bot.quiz_data:
-            logger.warning("[QuizCog] Keine Quiz-Konfiguration geladen.")
+            logger.warning("[QuizCog] No quiz configuration loaded.")
 
         self.current_questions: dict[str, QuestionInfo] = {}
         self.answered_users: dict[str, set[int]] = defaultdict(set)

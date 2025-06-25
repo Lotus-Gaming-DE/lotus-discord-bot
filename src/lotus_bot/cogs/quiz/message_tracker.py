@@ -77,12 +77,12 @@ class MessageTracker:
 
                 self.channel_initialized[channel.id] = True
                 logger.info(
-                    f"[Tracker] Initialisiert: '{area}' (Channel {channel.id}) – Zähler: {self.message_counter[channel.id]} ({round(time.time()-start, 2)}s)"
+                    f"[Tracker] Initialized '{area}' (channel {channel.id}) – counter: {self.message_counter[channel.id]} ({round(time.time()-start, 2)}s)"
                 )
 
             except Exception as e:
                 logger.error(
-                    f"[Tracker] Fehler bei Initialisierung von '{area}' (Channel-ID {channel_id}): {e}",
+                    f"[Tracker] Error initializing '{area}' (channel ID {channel_id}): {e}",
                     exc_info=True,
                 )
 

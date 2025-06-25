@@ -72,7 +72,7 @@ class ChampionData:
             await db.commit()
             self._init_done = True
 
-        logger.info("[ChampionData] SQLite‐Datenbank initialisiert.")
+        logger.info("[ChampionData] SQLite database initialized.")
 
     async def close(self) -> None:
         """Schließt die Datenbankverbindung."""
@@ -130,8 +130,8 @@ class ChampionData:
             await db.commit()
 
         logger.info(
-            f"[ChampionData] {user_id} Punkte geändert um {delta} ({reason}). "
-            f"Vorher: {current_total}, jetzt: {new_total}."
+            f"[ChampionData] Updated {user_id} by {delta} ({reason}). "
+            f"Before: {current_total}, now: {new_total}."
         )
         return new_total
 
@@ -199,7 +199,7 @@ class ChampionData:
             await db.execute("DELETE FROM points WHERE user_id = ?", (user_id,))
             await db.execute("DELETE FROM history WHERE user_id = ?", (user_id,))
             await db.commit()
-        logger.info(f"[ChampionData] Eintrag {user_id} entfernt.")
+        logger.info(f"[ChampionData] Removed entry {user_id}.")
 
     async def get_all_user_ids(self) -> list[str]:
         """Liefert eine Liste aller gespeicherten Nutzer-IDs."""

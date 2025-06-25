@@ -22,17 +22,17 @@ class QuestionManager:
 
         if not cfg.active:
             logger.info(
-                f"[QuestionManager] Area '{area}' ist inaktiv – keine Frage stellen."
+                f"[QuestionManager] Area '{area}' inactive – skipping question."
             )
             return
 
         channel = self.bot.get_channel(cfg.channel_id)
         if not channel:
-            logger.warning(f"[QuestionManager] Channel für '{area}' nicht gefunden.")
+            logger.warning(f"[QuestionManager] Channel for '{area}' not found.")
             return
 
         if area in self.cog.current_questions:
-            logger.info(f"[QuestionManager] Frage für '{area}' läuft bereits.")
+            logger.info(f"[QuestionManager] Question for '{area}' already active.")
             return
 
         cid = channel.id
@@ -40,19 +40,19 @@ class QuestionManager:
         if not self.cog.tracker.is_initialized(cid):
             self.cog.tracker.set_initialized(cid)
             logger.info(
-                f"[QuestionManager] Channel '{channel.name}' ({area}) initialisiert – überspringe Aktivitätsprüfung."
+                f"[QuestionManager] Channel '{channel.name}' ({area}) initialized – skipping activity check."
             )
         else:
             threshold = cfg.activity_threshold
             if self.cog.tracker.get(cid) < threshold:
                 logger.info(
-                    f"[QuestionManager] Nachrichtenzähler für '{area}': {self.cog.tracker.get(cid)}/{threshold} – warte auf Aktivität."
+                    f"[QuestionManager] Message counter for '{area}': {self.cog.tracker.get(cid)}/{threshold} – waiting for activity."
                 )
                 self.cog.awaiting_activity[cid] = (area, end_time)
                 return
 
         logger.info(
-            f"[QuestionManager] Bedingungen erfüllt – sende Frage für '{area}'."
+            f"[QuestionManager] Conditions met – sending question for '{area}'."
         )
         await self.ask_question(area, end_time)
 
@@ -66,7 +66,7 @@ class QuestionManager:
         language = cfg.language
         question = await qg.generate(area, language=language)
         if not question:
-            logger.warning(f"[QuestionManager] Keine Frage generiert für '{area}'.")
+            logger.warning(f"[QuestionManager] No question generated for '{area}'.")
             return
 
         frage_text = question["frage"]

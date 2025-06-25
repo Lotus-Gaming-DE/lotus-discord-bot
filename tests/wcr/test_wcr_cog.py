@@ -581,6 +581,6 @@ def test_init_without_localization_fallback(wcr_data, caplog):
         cog = WCRCog(bot)
 
     events = [json.loads(r.getMessage()).get("event", "") for r in caplog.records]
-    assert "fallback" in events[0].lower()
+    assert "falling back" in events[0].lower()
     assert "en" in cog.languages
     cog.cog_unload()

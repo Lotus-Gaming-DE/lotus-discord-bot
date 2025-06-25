@@ -261,6 +261,6 @@ async def test_queue_raises_when_full(monkeypatch, patch_logged_task, caplog):
             await cog.update_user_score(3, 1, "c")
 
     events = [json.loads(r.getMessage()).get("event", "") for r in caplog.records]
-    assert any("update_queue voll" in e for e in events)
+    assert any("update_queue full" in e for e in events)
 
     await cog.cog_unload()

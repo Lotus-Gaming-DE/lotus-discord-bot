@@ -55,7 +55,7 @@ class WCRQuestionProvider(DynamicQuestionProvider):
                 questions.append(q)
 
         if not questions:
-            logger.warning("[WCRQuestionProvider] Keine gültige Frage generiert.")
+            logger.warning("[WCRQuestionProvider] No valid question generated.")
             return None
 
         question = random.choice(questions)

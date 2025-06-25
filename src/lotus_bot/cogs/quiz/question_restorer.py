@@ -38,7 +38,7 @@ class QuestionRestorer:
                     await self.state.clear_active_question(area)
             except Exception as e:
                 logger.error(
-                    f"[Restorer] Fehler beim Wiederherstellen von '{area}': {e}",
+                    f"[Restorer] Error restoring '{area}': {e}",
                     exc_info=True,
                 )
 
@@ -48,7 +48,7 @@ class QuestionRestorer:
         channel = await self.bot.fetch_channel(cfg.channel_id)
 
         if not channel:
-            logger.error(f"[Restorer] Channel für '{area}' nicht verfügbar.")
+            logger.error(f"[Restorer] Channel for '{area}' not available.")
             return
 
         try:
@@ -103,11 +103,9 @@ class QuestionRestorer:
             task = self._create_task(self.bot.quiz_cog.closer.auto_close(area, delay))
             self.tasks.append(task)
 
-            logger.info(
-                f"[Restorer] Frage in '{area}' wurde erfolgreich wiederhergestellt."
-            )
+            logger.info(f"[Restorer] Question in '{area}' was successfully restored.")
         except Exception as e:
-            logger.error(f"[Restorer] Fehler in '{area}': {e}", exc_info=True)
+            logger.error(f"[Restorer] Error in '{area}': {e}", exc_info=True)
             await self.state.clear_active_question(area)
 
     def cancel_all(self) -> None:

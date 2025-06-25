@@ -14,6 +14,6 @@ async def setup(bot: discord.ext.commands.Bot):
         from .slash_commands import ptcgp_group
 
         await register_cog_and_group(bot, PTCGPCog, ptcgp_group)
-        logger.info("[PTCGPCog] Cog und Slash-Command-Gruppe erfolgreich registriert.")
+        logger.info("[PTCGPCog] Cog and slash command group registered successfully.")
     except Exception as e:
-        logger.error(f"[PTCGPCog] Fehler beim Setup: {e}", exc_info=True)
+        logger.error(f"[PTCGPCog] Error during setup: {e}", exc_info=True)

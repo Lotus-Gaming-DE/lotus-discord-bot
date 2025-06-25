@@ -23,7 +23,7 @@ class QuizStats:
             with open(self.filepath, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:  # pragma: no cover - log error
-            logger.error(f"[QuizStats] Fehler beim Laden: {e}", exc_info=True)
+            logger.error(f"[QuizStats] Error loading: {e}", exc_info=True)
             return {}
 
     async def _save(self) -> None:
@@ -33,7 +33,7 @@ class QuizStats:
                 with open(self.filepath, "w", encoding="utf-8") as f:
                     json.dump(self.data, f, indent=4, ensure_ascii=False)
             except Exception as e:  # pragma: no cover - log error
-                logger.error(f"[QuizStats] Fehler beim Speichern: {e}", exc_info=True)
+                logger.error(f"[QuizStats] Error saving: {e}", exc_info=True)
 
     async def increment(self, user_id: int, delta: int = 1) -> int:
         uid = str(user_id)

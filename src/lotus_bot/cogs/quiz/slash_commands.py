@@ -340,7 +340,7 @@ async def answer(interaction: discord.Interaction):
         embed.set_footer(text="✋ Frage durch Mod beendet.")
         await msg.edit(embed=embed, view=None)
     except Exception as e:
-        logger.warning(f"[QuizCog] Fehler beim Mod-Beenden der Frage: {e}")
+        logger.warning(f"[QuizCog] Error while manually ending question: {e}")
 
     quiz_cog.current_questions.pop(area, None)
     await interaction.response.send_message(
@@ -489,4 +489,4 @@ async def reset(interaction: discord.Interaction):
 async def on_quiz_error(
     interaction: discord.Interaction, error: app_commands.AppCommandError
 ):
-    logger.exception(f"[QuizCommands] Fehler: {error}")
+    logger.exception(f"[QuizCommands] Error: {error}")
