@@ -35,7 +35,7 @@ async def test_update_user_score_db_error(
             await cog.update_user_score(1, 1, "test")
 
     events = [json.loads(r.getMessage()).get("event", "") for r in caplog.records]
-    assert any("DB-Fehler" in e for e in events)
+    assert any("DB error" in e for e in events)
 
     await cog.cog_unload()
     await cog.wait_closed()

@@ -46,10 +46,10 @@ class QuestionCloser:
                 )
             await msg.edit(embed=embed, view=None)
 
-            logger.info(f"[Closer] Frage in '{area}' geschlossen: {footer}")
+            logger.info(f"[Closer] Closed question in '{area}': {footer}")
         except Exception as e:
             logger.warning(
-                f"[Closer] Fehler beim Schließen der Frage in '{area}': {e}",
+                f"[Closer] Error closing question in '{area}': {e}",
                 exc_info=True,
             )
 

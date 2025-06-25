@@ -29,18 +29,14 @@ class WCRCog(commands.Cog):
 
         # Bei fehlenden Daten Warnung ausgeben, aber nicht abbrechen
         if not wcr_data:
-            logger.warning(
-                "[WCRCog] WCR-Daten fehlen. Befehle funktionieren eventuell nicht"
-            )
+            logger.warning("[WCRCog] WCR data missing. Commands may not work")
 
         self.units = wcr_data.get("units", [])
         if isinstance(self.units, dict) and "units" in self.units:
             self.units = self.units["units"]
         self.languages = wcr_data.get("locals", {})
         if not self.languages:
-            logger.warning(
-                "[WCRCog] Keine Lokalisierung gefunden, fallback auf Englisch."
-            )
+            logger.warning("[WCRCog] No localization found, falling back to English.")
             en_units = []
             for unit in self.units:
                 text = unit.get("texts", {}).get("en")
@@ -177,7 +173,7 @@ class WCRCog(commands.Cog):
     ):
         """Implementation for the ``/wcr filter`` command."""
         logger.info(
-            f"[WCR] /wcr filter von {interaction.user} - "
+            f"[WCR] /wcr filter by {interaction.user} - "
             f"cost={cost}, speed={speed}, faction={faction}, type={type}, trait={trait}, lang={lang}, public={public}"
         )
 
@@ -322,14 +318,14 @@ class WCRCog(commands.Cog):
     ):
         """Implementation for the ``/wcr name`` command."""
         logger.info(
-            f"[WCR] /wcr name von {interaction.user} - name={name}, lang={lang}, public={public}"
+            f"[WCR] /wcr name by {interaction.user} - name={name}, lang={lang}, public={public}"
         )
         await interaction.response.defer(ephemeral=not public)
 
         try:
             embed, logo_file = self.create_mini_embed(name, lang)
         except Exception as e:
-            logger.error(f"Fehler in create_mini_embed: {e}", exc_info=True)
+            logger.error(f"Error in create_mini_embed: {e}", exc_info=True)
             await interaction.followup.send(
                 "Ein Fehler ist aufgetreten.", ephemeral=not public
             )
@@ -359,7 +355,7 @@ class WCRCog(commands.Cog):
     ):
         """Implementation for ``/wcr duell``."""
         logger.info(
-            f"[WCR] /wcr duell von {interaction.user} - "
+            f"[WCR] /wcr duell by {interaction.user} - "
             f"mini_a={mini_a}, level_a={level_a}, "
             f"mini_b={mini_b}, level_b={level_b}, lang={lang}, public={public}"
         )
@@ -585,7 +581,7 @@ class WCRCog(commands.Cog):
                     await interaction.followup.send(embed=embed, ephemeral=not public)
         except Exception as e:
             logger.error(
-                f"Fehler beim Senden des Embeds für unit_id {unit_id}: {e}",
+                f"Error sending embed for unit_id {unit_id}: {e}",
                 exc_info=True,
             )
             await interaction.followup.send(

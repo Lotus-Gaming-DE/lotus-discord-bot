@@ -79,7 +79,7 @@ class ChampionCog(ManagedTaskCog):
             new_total = await self.data.add_delta(user_id_str, delta, reason)
         except aiosqlite.Error as exc:
             logger.error(
-                f"[ChampionCog] DB-Fehler beim Aktualisieren von {user_id_str}: {exc}",
+                f"[ChampionCog] DB error updating {user_id_str}: {exc}",
                 exc_info=True,
             )
             raise RuntimeError("Fehler beim Speichern der Punkte.") from exc
@@ -87,7 +87,7 @@ class ChampionCog(ManagedTaskCog):
         try:
             self.update_queue.put_nowait((user_id_str, new_total))
         except asyncio.QueueFull as exc:
-            logger.error("[ChampionCog] update_queue voll", exc_info=exc)
+            logger.error("[ChampionCog] update_queue full", exc_info=exc)
             raise RuntimeError("Update-Warteschlange ist voll.") from exc
 
         return new_total
@@ -120,7 +120,7 @@ class ChampionCog(ManagedTaskCog):
         # Zugriff auf Guild NUR noch über self.bot.main_guild (Zentral, wie in bot.py gesetzt)
         guild = self.bot.main_guild
         if not isinstance(guild, discord.Guild):
-            logger.warning("[ChampionCog] Guild nicht gefunden.")
+            logger.warning("[ChampionCog] Guild not found.")
             return
 
         member = guild.get_member(int(user_id_str))
@@ -129,12 +129,12 @@ class ChampionCog(ManagedTaskCog):
                 member = await guild.fetch_member(int(user_id_str))
         except discord.NotFound:
             logger.info(
-                f"[ChampionCog] Member {user_id_str} nicht gefunden (vermutlich nicht mehr im Server)."
+                f"[ChampionCog] Member {user_id_str} not found (likely left the server)."
             )
             return
         except discord.HTTPException as e:
             logger.error(
-                f"[ChampionCog] Fehler beim Laden von Member {user_id_str}: {e}",
+                f"[ChampionCog] Error loading member {user_id_str}: {e}",
                 exc_info=True,
             )
             return
@@ -149,7 +149,7 @@ class ChampionCog(ManagedTaskCog):
                 role_obj = guild.get_role(role.id)
                 if role_obj is None:
                     logger.warning(
-                        f"[ChampionCog] Rolle '{role.name}' mit ID {role.id} existiert nicht."
+                        f"[ChampionCog] Role '{role.name}' with ID {role.id} does not exist."
                     )
                 else:
                     roles_to_remove.append(role_obj)
@@ -159,11 +159,11 @@ class ChampionCog(ManagedTaskCog):
                 await member.remove_roles(*roles_to_remove)
             except discord.Forbidden:
                 logger.warning(
-                    f"[ChampionCog] Keine Berechtigung, Rollen von {member.display_name} zu entfernen."
+                    f"[ChampionCog] No permission to remove roles from {member.display_name}."
                 )
             except Exception as e:
                 logger.error(
-                    f"[ChampionCog] Fehler beim Entfernen von Rollen: {e}",
+                    f"[ChampionCog] Error removing roles: {e}",
                     exc_info=True,
                 )
 
@@ -173,21 +173,21 @@ class ChampionCog(ManagedTaskCog):
         target_role_obj = guild.get_role(target_role.id)
         if target_role_obj is None:
             logger.warning(
-                f"[ChampionCog] Rolle '{target_role.name}' mit ID {target_role.id} existiert nicht."
+                f"[ChampionCog] Role '{target_role.name}' with ID {target_role.id} does not exist."
             )
         else:
             try:
                 await member.add_roles(target_role_obj)
                 logger.info(
-                    f"[ChampionCog] Rolle '{target_role.name}' an {member.display_name} vergeben (Score {score})."
+                    f"[ChampionCog] Assigned role '{target_role.name}' to {member.display_name} (score {score})."
                 )
             except discord.Forbidden:
                 logger.warning(
-                    f"[ChampionCog] Keine Berechtigung, Rolle '{target_role.name}' hinzuzufügen."
+                    f"[ChampionCog] No permission to add role '{target_role.name}'."
                 )
             except Exception as e:
                 logger.error(
-                    f"[ChampionCog] Fehler beim Hinzufügen der Rolle: {e}",
+                    f"[ChampionCog] Error adding role: {e}",
                     exc_info=True,
                 )
 

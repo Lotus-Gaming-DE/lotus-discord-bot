@@ -12,8 +12,8 @@ logger = get_logger(__name__)
 
 async def setup(bot: commands.Bot):
     """Setzt das Quiz-Cog auf und registriert die Slash-Befehle."""
-    logger.info("[QuizInit] Initialisierung startet...")
+    logger.info("[QuizInit] Initialization starting...")
 
     await register_cog_and_group(bot, QuizCog, quiz_group)
 
-    logger.info("[QuizInit] Cog und Slash-Command-Gruppe erfolgreich registriert.")
+    logger.info("[QuizInit] Cog and slash command group registered successfully.")

@@ -38,7 +38,7 @@ class QuestionGenerator:
         wird, bis eine noch nicht gestellte Frage gefunden wurde.
         """
         if not area:
-            logger.warning("[QuestionGenerator] Keine Area angegeben.")
+            logger.warning("[QuestionGenerator] No area specified.")
             return None
 
         if area in self.dynamic_providers:
@@ -63,7 +63,7 @@ class QuestionGenerator:
 
             if not question and attempts >= max_attempts:
                 logger.info(
-                    f"[QuestionGenerator] Keine neue Frage nach {attempts} Versuchen. Kürze Historie."
+                    f"[QuestionGenerator] No new question after {attempts} attempts. Shortening history."
                 )
                 await self.state_manager.reset_asked_questions(area)
                 asked.clear()

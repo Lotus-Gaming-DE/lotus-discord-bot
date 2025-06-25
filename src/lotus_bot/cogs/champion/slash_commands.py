@@ -29,7 +29,7 @@ async def give(
     """Verleiht einem Nutzer Punkte."""
 
     logger.info(
-        f"/champion give by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
+        f"/champion give by {interaction.user} -> {user} ({punkte} points, reason: {grund})"
     )
 
     if punkte < 1:
@@ -63,7 +63,7 @@ async def remove(
     """Zieht einem Nutzer Punkte ab."""
 
     logger.info(
-        f"/champion remove by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
+        f"/champion remove by {interaction.user} -> {user} ({punkte} points, reason: {grund})"
     )
 
     if punkte < 1:
@@ -99,7 +99,7 @@ async def set_points(
     """Setzt die Punktzahl eines Nutzers direkt."""
 
     logger.info(
-        f"/champion set by {interaction.user} -> {user} ({punkte} Punkte, Grund: {grund})"
+        f"/champion set by {interaction.user} -> {user} ({punkte} points, reason: {grund})"
     )
 
     if punkte < 1:
@@ -274,7 +274,7 @@ async def leaderboard(interaction: discord.Interaction):
                 member = None
             except discord.HTTPException as e:
                 logger.warning(
-                    f"[ChampionCog] Fehler beim Laden von Member {user_id_str}: {e}",
+                    f"[ChampionCog] Error loading member {user_id_str}: {e}",
                     exc_info=True,
                 )
                 member = None
@@ -381,7 +381,7 @@ async def clean(interaction: discord.Interaction):
                 removed += 1
             except discord.HTTPException as e:
                 logger.warning(
-                    f"[ChampionCog] Fehler beim Prüfen von Member {user_id_str}: {e}",
+                    f"[ChampionCog] Error checking member {user_id_str}: {e}",
                     exc_info=True,
                 )
 

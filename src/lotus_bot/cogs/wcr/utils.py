@@ -42,12 +42,12 @@ async def fetch_wcr_data(base_url: str) -> dict[str, Any]:
                 async with session.get(url) as resp:
                     resp.raise_for_status()
                     payload = await resp.json()
-                logger.info("[WCRUtils] '%s' erfolgreich geladen.", ep)
+                logger.info("[WCRUtils] '%s' loaded successfully.", ep)
                 return ep, payload
             except asyncio.TimeoutError:
-                logger.error("[WCRUtils] Timeout beim Abrufen von %s", ep)
+                logger.error("[WCRUtils] Timeout while fetching %s", ep)
             except Exception as exc:  # pragma: no cover - unexpected errors
-                logger.error("[WCRUtils] Fehler beim Abrufen von %s: %s", ep, exc)
+                logger.error("[WCRUtils] Error fetching %s: %s", ep, exc)
             return ep, {}
 
         results = await asyncio.gather(*(fetch(ep) for ep in endpoints))
@@ -60,7 +60,7 @@ async def fetch_wcr_data(base_url: str) -> dict[str, Any]:
             with open(meta_file, "r", encoding="utf-8") as f:
                 meta = json.load(f)
         except Exception as exc:  # pragma: no cover - should not happen in tests
-            logger.error("[WCRUtils] Fehler beim Laden von faction_meta.json: %s", exc)
+            logger.error("[WCRUtils] Error loading faction_meta.json: %s", exc)
             meta = {}
 
         meta_map = {
@@ -89,14 +89,14 @@ async def load_wcr_data(base_url: str | None = None) -> dict[str, Any]:
             try:
                 with open(CACHE_FILE, "r", encoding="utf-8") as f:
                     cached = json.load(f)
-                logger.info("[WCRUtils] Daten aus Cache geladen.")
+                logger.info("[WCRUtils] Loaded data from cache.")
                 return cached
             except Exception as exc:  # pragma: no cover - should not happen
-                logger.error("[WCRUtils] Fehler beim Lesen des Caches: %s", exc)
+                logger.error("[WCRUtils] Error reading cache: %s", exc)
 
     base_url = base_url or os.getenv("WCR_API_URL")
     if not base_url:
-        logger.error("[WCRUtils] Basis-URL f\u00fcr die WCR-API fehlt.")
+        logger.error("[WCRUtils] Base URL for the WCR API is missing.")
         return {}
 
     api_data = await fetch_wcr_data(base_url)
@@ -123,7 +123,7 @@ async def load_wcr_data(base_url: str | None = None) -> dict[str, Any]:
             with open(stat_labels_file, "r", encoding="utf-8") as f:
                 stat_labels = json.load(f)
         except Exception as exc:  # pragma: no cover - should not happen in tests
-            logger.error("[WCRUtils] Fehler beim Laden von stat_labels.json: %s", exc)
+            logger.error("[WCRUtils] Error loading stat_labels.json: %s", exc)
 
     result = {
         "units": units_list,
@@ -138,8 +138,8 @@ async def load_wcr_data(base_url: str | None = None) -> dict[str, Any]:
         CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(CACHE_FILE, "w", encoding="utf-8") as f:
             json.dump(result, f)
-        logger.info("[WCRUtils] Cache aktualisiert.")
+        logger.info("[WCRUtils] Cache updated.")
     except Exception as exc:  # pragma: no cover - should not happen
-        logger.error("[WCRUtils] Fehler beim Schreiben des Caches: %s", exc)
+        logger.error("[WCRUtils] Error writing cache: %s", exc)
 
     return result

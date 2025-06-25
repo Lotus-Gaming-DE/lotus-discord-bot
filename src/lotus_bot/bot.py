@@ -48,14 +48,14 @@ def load_quiz_config(bot: commands.Bot):
 
     cfg_file = Path(QUIZ_CONFIG_PATH)
     if not cfg_file.exists():
-        logger.warning(f"[bot] Quiz-Konfigurationsdatei nicht gefunden: {cfg_file}")
+        logger.warning(f"[bot] Quiz configuration file not found: {cfg_file}")
         return
 
     try:
         with open(cfg_file, "r", encoding="utf-8") as f:
             areas = json.load(f)
     except Exception as e:
-        logger.error(f"[bot] Fehler beim Laden der Quiz-Konfiguration: {e}")
+        logger.error(f"[bot] Error loading quiz configuration: {e}")
         return
 
     state = QuestionStateManager(QUESTION_STATE_PATH)
@@ -71,7 +71,7 @@ def load_quiz_config(bot: commands.Bot):
             )
             dynamic_providers[area] = module.get_provider(bot, language=language)
         except Exception as e:
-            logger.info(f"[bot] Kein dynamischer Provider für '{area}': {e}")
+            logger.info(f"[bot] No dynamic provider for '{area}': {e}")
 
         generator = QuestionGenerator(
             bot.data.get("quiz", {}).get("questions", {}),
@@ -89,7 +89,7 @@ def load_quiz_config(bot: commands.Bot):
             question_generator=generator,
         )
 
-    logger.info(f"[bot] Quiz-Konfiguration geladen: {list(bot.quiz_data.keys())}")
+    logger.info(f"[bot] Quiz configuration loaded: {list(bot.quiz_data.keys())}")
 
     if hasattr(bot, "quiz_cog") and hasattr(bot.quiz_cog, "tracker"):
         bot.quiz_cog.tracker.update_mapping()
@@ -158,7 +158,7 @@ class MyBot(commands.Bot):
             },
         }
 
-        logger.info(f"[bot] Zentrale Daten geladen: {list(self.data.keys())}")
+        logger.info(f"[bot] Core data loaded: {list(self.data.keys())}")
 
         # Quiz-Konfiguration laden
         load_quiz_config(self)
@@ -184,14 +184,14 @@ class MyBot(commands.Bot):
         # Gespeicherte Emojis in zentrale Daten übernehmen
         if hasattr(self, "data"):
             self.data["emojis"] = self._load_emojis_from_file()
-        logger.info(f"Bot ist bereit! Eingeloggt als {self.user} (ID: {self.user.id})")
+        logger.info(f"Bot ready! Logged in as {self.user} (ID: {self.user.id})")
 
     async def _export_emojis(self):
         """Exportiert alle Server-Emojis in eine JSON-Datei und aktualisiert die bot-Daten."""
         emojis = {e.name: str(e) for e in self.emojis}
         with open("data/emojis.json", "w", encoding="utf-8") as f:
             json.dump(emojis, f, ensure_ascii=False, indent=2)
-        logger.info(f"{len(emojis)} Emojis exportiert.")
+        logger.info(f"{len(emojis)} emojis exported.")
         if hasattr(self, "data"):
             self.data["emojis"] = emojis
 
