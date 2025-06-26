@@ -1,0 +1,25 @@
+name: Fetch Railway Logs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch-logs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Railway CLI
+        run: npm install -g railway
+      - name: Login to Railway
+        run: railway login --token $RAILWAY_TOKEN
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Fetch logs
+        run: |
+          mkdir -p logs
+          railway logs --environment production --service bot --detach > logs/latest_railway.log
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: railway-latest-log
+          path: logs/latest_railway.log
