@@ -1,0 +1,4 @@
+[run]
+omit =
+    src/lotus_bot/cogs/*/slash_commands.py
+    scripts/*

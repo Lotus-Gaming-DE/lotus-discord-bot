@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 - Verbessertes Shutdown-Verhalten: ChampionCog schließt die Datenbank, stoppt alle Tasks und wartet auf deren Abschluss.
+- Guidelines-Dokument und CLI-Skript `fetch_wcr.py` hinzugefügt; Coverage-Konfiguration über `.coveragerc`.
+- Abhängigkeit `idna>=3.7` hinzugefügt, um Snyk-Warnung zu beheben.
 - Dependabot führt Updates jetzt täglich aus.
 - Dependabot-Pull-Requests lösen den vollständigen CI-Workflow mit Linting,
   Tests und Sicherheitsprüfung aus.

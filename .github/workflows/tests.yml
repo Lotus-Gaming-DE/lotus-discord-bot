@@ -47,7 +47,7 @@ jobs:
         run: echo "Linting handled by pre-commit"
       - name: Run tests
         run: |
-          pytest --cov=.
+          pytest --cov=. --cov-fail-under=90
       - name: Collect Railway logs
         if: success()
         run: |
