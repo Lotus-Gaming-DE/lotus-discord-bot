@@ -1,7 +1,7 @@
 # Codex Development Guidelines
 
-These rules apply across all repositories where Codex is the sole developer.  
-All configuration, implementation, testing, and documentation must be automated and handled entirely through GitHub.  
+These rules apply across all repositories where Codex is the sole developer.
+All configuration, implementation, testing, and documentation must be automated and handled entirely through GitHub.
 No local installations or manual steps are allowed. All deployments are handled via Railway.
 
 ---
@@ -11,20 +11,20 @@ No local installations or manual steps are allowed. All deployments are handled 
 Use this layout unless another language or framework makes it impractical:
 
 ```
-src/<project_name>/      # main application code  
-tests/                   # test suite  
-.github/                 # workflows, dependabot  
-data/                    # ignored by git  
-logs/                    # ignored by git  
-scripts/                 # CLI tools (Python, argparse, documented)  
-LICENSE                  # must be present  
-README.md                # must document: overview, setup, usage, tests, deployment  
-CHANGELOG.md             # required, "Keep a Changelog" format  
-requirements.txt         # required if Python is used  
-requirements-dev.txt     # required if Python is used  
-.pre-commit-config.yaml  # required if Python is used  
-.env.example             # required if environment variables are used  
-.gitignore               # required (must exclude logs/, data/, .env, __pycache__, *.pyc)  
+src/<project_name>/      # main application code
+tests/                   # test suite
+.github/                 # workflows, dependabot
+data/                    # ignored by git
+logs/                    # ignored by git
+scripts/                 # CLI tools (Python, argparse, documented)
+LICENSE                  # must be present
+README.md                # must document: overview, setup, usage, tests, deployment
+CHANGELOG.md             # required, "Keep a Changelog" format
+requirements.txt         # required if Python is used
+requirements-dev.txt     # required if Python is used
+.pre-commit-config.yaml  # required if Python is used
+.env.example             # required if environment variables are used
+.gitignore               # required (must exclude logs/, data/, .env, __pycache__, *.pyc)
 ```
 
 ### 🔧 CLI Scripts in `scripts/`
@@ -72,7 +72,7 @@ For **Python** projects:
   run: cyclonedx-py requirements -i requirements.txt -o sbom.xml
 ```
 
-> Alternative fallback (module-based):  
+> Alternative fallback (module-based):
 > `python -m cyclonedx_py requirements -i requirements.txt -o sbom.xml`
 
 For **Node.js** projects:
@@ -91,7 +91,7 @@ In both cases:
     path: sbom.*
 ```
 
-> Use `pip-audit` for quick vulnerability scans; use `cyclonedx-py` for full SBOM generation.  
+> Use `pip-audit` for quick vulnerability scans; use `cyclonedx-py` for full SBOM generation.
 > Do **not** use `cyclonedx-bom` CLI alias directly, as it may be deprecated or unavailable in GitHub environments.
 
 ### Snyk (Vulnerability Scanning)
@@ -176,7 +176,7 @@ Reject any commit that fails linting.
 ### `.env.example` Format
 
 - Must list **every** env var used in the codebase
-- If there are fixed options, name and describe them  
+- If there are fixed options, name and describe them
   - e.g., `DEBUG`, `INFO`, `ERROR` for logging
 - Include a placeholder value or comment
 - Group by area (e.g. "Discord", "Database")
@@ -199,18 +199,18 @@ updates:
       interval: "weekly"
 ```
 
-- Enable GitHub security alerts  
-- Automatically accept `patch` and `minor` updates that pass CI  
-- Hold all `major` updates for manual review  
-- Commit lockfiles and verify their content  
+- Enable GitHub security alerts
+- Automatically accept `patch` and `minor` updates that pass CI
+- Hold all `major` updates for manual review
+- Commit lockfiles and verify their content
 - Validate `requirements.txt` consistency by regenerating from `requirements.in` and diffing via CI
 
-⚠️ **Codex must never use `automerge` or `automerge-type` inside `dependabot.yml`**, as these fields are invalid and will break the workflow.  
+⚠️ **Codex must never use `automerge` or `automerge-type` inside `dependabot.yml`**, as these fields are invalid and will break the workflow.
 Auto-merge behavior must be configured via branch protection or GitHub Actions.
 
 ### Optional: Enable Auto-Merge via GitHub UI
 
-1. Go to `Settings > General > Pull Requests`  
+1. Go to `Settings > General > Pull Requests`
    → Enable **Allow auto-merge**
 2. Go to `Settings > Branches > Protection Rules` for `main`
    - Require status checks
@@ -325,7 +325,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-> ❗ **Do not include `NPM_TOKEN` unless the project is an npm package** intended to be published to [npmjs.com](https://www.npmjs.com/).  
+> ❗ **Do not include `NPM_TOKEN` unless the project is an npm package** intended to be published to [npmjs.com](https://www.npmjs.com/).
 > If unsure, leave it unset. Data extractors, bots, and Python projects do **not** require `NPM_TOKEN`.
 
 ---
@@ -361,13 +361,13 @@ For projects exposing APIs:
 
 ## 📌 Final Notes
 
-These rules are final and apply across all Codex-managed repositories.  
-No manual fixes or local steps are allowed.  
-All builds, tests, scans, and releases must run completely within GitHub and Railway pipelines.  
-Codex must ensure deterministic, DRY, and compliant implementations at all times.  
+These rules are final and apply across all Codex-managed repositories.
+No manual fixes or local steps are allowed.
+All builds, tests, scans, and releases must run completely within GitHub and Railway pipelines.
+Codex must ensure deterministic, DRY, and compliant implementations at all times.
 
-The `README.md` is generated by Codex and may be outdated.  
-Do **not** treat it as a rule source.  
+The `README.md` is generated by Codex and may be outdated.
+Do **not** treat it as a rule source.
 Instead, it must:
 - Describe the repo and functionality clearly
 - Reflect all scripts, env vars, APIs, and logic
