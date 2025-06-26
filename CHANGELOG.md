@@ -48,3 +48,4 @@
 - README folgt nun der globalen Struktur und `.env.example` dokumentiert alle
   benötigten Variablen.
 - CI: Skip Snyk test in forked PRs to prevent missing-secret auth errors.
+- Security-Workflow wird nun auch bei Push-Events ausgeführt und überspringt den Snyk-Test, wenn kein `SNYK_TOKEN` vorhanden ist.

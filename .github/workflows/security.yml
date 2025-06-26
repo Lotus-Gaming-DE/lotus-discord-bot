@@ -1,6 +1,10 @@
 name: Security Audit
 
 on:
+  push:
+    paths:
+      - 'requirements*.txt'
+      - '.github/workflows/**'
   pull_request:
     paths:
       - 'requirements*.txt'
@@ -50,10 +54,10 @@ jobs:
       - name: Generate SBOM
         run: cyclonedx-bom -o sbom.xml
       - name: Snyk Test
-        if: ${{ secrets.SNYK_TOKEN != '' && github.event.pull_request.head.repo.full_name == github.repository }}
-        run: snyk test
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository && env.SNYK_TOKEN != '' }}
+        run: snyk test
       - name: Upload SBOM
         if: always()
         uses: actions/upload-artifact@v4
