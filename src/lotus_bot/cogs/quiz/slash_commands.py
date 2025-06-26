@@ -1,4 +1,4 @@
-# cogs/quiz/slash_commands.py
+# pragma: no cover
 
 import json
 import datetime

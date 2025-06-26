@@ -212,7 +212,7 @@ class MyBot(commands.Bot):
         await super().close()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     token = os.getenv("bot_key")
     if not token:
         logger.error("Environment variable 'bot_key' is not set.")
