@@ -47,3 +47,4 @@
     Token automatisch verwendet.
 - README folgt nun der globalen Struktur und `.env.example` dokumentiert alle
   benötigten Variablen.
+- CI: Skip Snyk test in forked PRs to prevent missing-secret auth errors.

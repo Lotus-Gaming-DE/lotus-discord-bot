@@ -37,7 +37,9 @@ pytest --cov=.
 
 `pre-commit` enforces formatting and linting (Black, Flake8, Ruff) and
 executes `pip-audit`. Security scans also run in CI via Snyk when
-`SNYK_TOKEN` is configured.
+`SNYK_TOKEN` is configured. The Snyk step only runs for pull requests
+originating from this repository, preventing failures on forks where
+secrets are unavailable.
 
 Dependabot checks dependencies daily and opens pull requests that run the
 full CI pipeline.
