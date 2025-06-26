@@ -49,14 +49,11 @@ jobs:
         run: pip install -r requirements.txt
       - name: Generate SBOM
         run: cyclonedx-bom -o sbom.xml
-      - name: Run Snyk Test
-        uses: snyk/actions/python@0.4.0
-        if: ${{ secrets.SNYK_TOKEN != '' }}
+      - name: Snyk Test
+        if: ${{ secrets.SNYK_TOKEN != '' && github.event.pull_request.head.repo.full_name == github.repository }}
+        run: snyk test
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: test
-          args: --file=requirements.txt
       - name: Upload SBOM
         if: always()
         uses: actions/upload-artifact@v4
