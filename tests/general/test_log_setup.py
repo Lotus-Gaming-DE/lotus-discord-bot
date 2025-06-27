@@ -15,8 +15,7 @@ def test_setup_logging_writes_json(tmp_path):
     finally:
         os.chdir(old_cwd)
 
-    log_file = tmp_path / "logs" / "bot.json"
-    assert log_file.exists()
+    log_file = next((tmp_path / "logs").glob("runtime-*.json"))
     data = json.loads(log_file.read_text().splitlines()[-1])
     assert data["event"] == "hello"
     assert data["value"] == 1

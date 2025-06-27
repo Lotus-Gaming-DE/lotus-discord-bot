@@ -68,8 +68,12 @@ jobs:
           path: sbom.xml
       - name: Collect Railway logs
         if: success()
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE: ${{ secrets.RAILWAY_SERVICE }}
+          RAILWAY_PROJECT: ${{ secrets.RAILWAY_PROJECT }}
         run: |
-          railway logs --follow > logs/latest_railway.log &
+          npx railway logs --service "$RAILWAY_SERVICE" --project "$RAILWAY_PROJECT" --env production --json > logs/latest_railway.log &
           sleep 30
           pkill -f "railway logs" || true
       - name: Upload logs

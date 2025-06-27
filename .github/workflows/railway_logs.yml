@@ -9,15 +9,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Railway CLI
-        run: npm install -g railway
-      - name: Login to Railway
+        run: npx @railway/cli --version
+      - name: Stream logs
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway login --token $RAILWAY_TOKEN
-      - name: Stream logs
+          RAILWAY_SERVICE: ${{ secrets.RAILWAY_SERVICE }}
+          RAILWAY_PROJECT: ${{ secrets.RAILWAY_PROJECT }}
         run: |
           mkdir -p logs
-          railway logs --follow > logs/latest_railway.log
+          npx railway logs --service "$RAILWAY_SERVICE" --project "$RAILWAY_PROJECT" --env production --json > logs/latest_railway.log
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
