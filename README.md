@@ -50,7 +50,8 @@ CI pipeline.
 
 ## Deployment
 
-The bot is deployed on Railway. Logs are stored in `logs/bot.json` and CI uploads
+The bot is deployed on Railway. Logs are written to files named
+`logs/runtime-<YYYY-MM-DD-HH>.json` and CI uploads
 `logs/latest_railway.log` as an artifact. Internal log messages are in English
 while user-facing messages are in German.
 

@@ -1,9 +1,44 @@
 import logging
 import asyncio
 from pathlib import Path
-from logging.handlers import RotatingFileHandler
+import datetime
 
 import structlog
+
+
+class HourlyFileHandler(logging.Handler):
+    """Write logs to ``logs/runtime-<YYYY-MM-DD-HH>.json`` with hourly rotation."""
+
+    def __init__(self, logs_dir: Path) -> None:
+        super().__init__()
+        self.logs_dir = logs_dir
+        self.logs_dir.mkdir(exist_ok=True)
+        self.current_hour = self._hour()
+        self.file = open(self._path(), "a", encoding="utf-8")
+
+    def _hour(self) -> str:
+        return datetime.datetime.utcnow().strftime("%Y-%m-%d-%H")
+
+    def _path(self) -> Path:
+        return self.logs_dir / f"runtime-{self.current_hour}.json"
+
+    def emit(
+        self, record: logging.LogRecord
+    ) -> None:  # pragma: no cover - thin wrapper
+        hour = self._hour()
+        if hour != self.current_hour:
+            self.file.close()
+            self.current_hour = hour
+            self.file = open(self._path(), "a", encoding="utf-8")
+        msg = self.format(record)
+        self.file.write(msg + "\n")
+        self.file.flush()
+
+    def close(self) -> None:  # pragma: no cover - cleanup
+        if not self.file.closed:
+            self.file.close()
+        super().close()
+
 
 _configured = False
 
@@ -28,9 +63,7 @@ def setup_logging(log_level: str = "INFO"):
 
     handlers = [
         logging.StreamHandler(),
-        RotatingFileHandler(
-            logs_dir / "bot.json", maxBytes=1_000_000, backupCount=3, encoding="utf-8"
-        ),
+        HourlyFileHandler(logs_dir),
     ]
 
     logging.basicConfig(
