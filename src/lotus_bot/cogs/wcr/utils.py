@@ -107,13 +107,34 @@ async def load_wcr_data(base_url: str | None = None) -> dict[str, Any]:
     locals_ = units.get("locals", {})
     if not locals_:
         for unit in units_list:
-            texts = unit.get("texts", {})
-            for lang, info in texts.items():
+            for lang, name in (unit.get("names") or {}).items():
                 lang_data = locals_.setdefault(lang, {})
                 lang_units = lang_data.setdefault("units", [])
-                entry = {"id": unit.get("id")}
-                entry.update(info)
+                desc = unit.get("details", {}).get("advanced_info", "")
+                talents = [
+                    {
+                        "name": t.get("name", {}).get(lang, ""),
+                        "description": t.get("description", {}).get(lang, ""),
+                    }
+                    for t in unit.get("details", {}).get("talents", [])
+                ]
+                entry = {
+                    "id": unit.get("id"),
+                    "name": name,
+                    "description": desc,
+                    "talents": talents,
+                }
                 lang_units.append(entry)
+
+        for unit in units_list:
+            stats = {}
+            for k, v in unit.get("details", {}).get("stats", {}).items():
+                key = k.lower().replace(" ", "_").replace("%", "percent")
+                try:
+                    stats[key] = float(str(v).replace(",", ""))
+                except ValueError:
+                    stats[key] = v
+            unit["stats"] = stats
 
     # Stat-Labels lokal laden
     stat_labels_file = BASE_PATH / "stat_labels.json"
