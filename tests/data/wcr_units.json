@@ -1,0 +1,201 @@
+[
+  {
+    "id": "abomination",
+    "names": {
+      "en": "Abomination"
+    },
+    "faction_ids": [
+      "undead"
+    ],
+    "type_id": "troop",
+    "cost": 6,
+    "image": "/images/rumble/minis/300/abomination.png",
+    "damage": 170,
+    "health": 3400,
+    "dps": 68.0,
+    "speed_id": "slow",
+    "trait_ids": [
+      "hook",
+      "tank",
+      "melee",
+      "aoe"
+    ],
+    "details": {
+      "core_trait": {
+        "attack_id": "aoe",
+        "type_id": "melee"
+      },
+      "stats": {
+        "Area Damage": "170",
+        "Health": "3,400",
+        "DPS": "68",
+        "Attack Speed": "2.5",
+        "Speed": "Slow"
+      },
+      "traits": [
+        "tank",
+        "hook"
+      ],
+      "talents": [
+        {
+          "name": {
+            "en": "Noxious Presence"
+          },
+          "description": {
+            "en": "Poison nearby enemies every 3 seconds."
+          }
+        },
+        {
+          "name": {
+            "en": "Cannonball"
+          },
+          "description": {
+            "en": "On deploy and at 50% health, stun nearby enemies for 5 seconds."
+          }
+        },
+        {
+          "name": {
+            "en": "Fresh Meat"
+          },
+          "description": {
+            "en": "After hooking a target, deal double damage on the next attack."
+          }
+        }
+      ],
+      "advanced_info": "Melee cleave\nArc 140 degrees\nHook\n5-second cooldown\nMinimum range 3\nMaximum acquire range 9\nTargets the lowest max health Ranged enemy in range\nNoxious Presence talent\nApplies 1 stack of Poison every 3 seconds on a radius of 4\nDoes not hit flying minis\nCannonball talent\nStun radius 3.5\n5-second baseline, 0.75 seconds level modifier, 1.25 seconds minimum duration\nStun will proc whenever Abomination enters below 50% health, so it can happen again if the Abomination is healed to above 50%"
+    }
+  },
+  {
+    "id": "ancient-of-war",
+    "names": {
+      "en": "Ancient of War"
+    },
+    "faction_ids": [
+      "cenarion"
+    ],
+    "type_id": "troop",
+    "cost": 0,
+    "image": "/images/rumble/minis/300/ancient-of-war.png",
+    "damage": 60,
+    "health": 850,
+    "dps": 0.0,
+    "speed_id": "slow",
+    "trait_ids": [
+      "surge",
+      "tank",
+      "armored",
+      "melee",
+      "one-target"
+    ],
+    "details": {
+      "core_trait": {
+        "attack_id": "one-target",
+        "type_id": "melee"
+      },
+      "stats": {
+        "Health": "850",
+        "Attack Speed": "2.1",
+        "Speed": "Slow",
+        "Damage": "60"
+      },
+      "traits": [
+        "tank",
+        "armored",
+        "surge"
+      ],
+      "talents": [
+        {
+          "name": {
+            "en": "Sapling"
+          },
+          "description": {
+            "en": "If played for 4 Gold or less, gain 100% Attack Speed."
+          }
+        },
+        {
+          "name": {
+            "en": "Behemoth"
+          },
+          "description": {
+            "en": "Gain Siege damage."
+          }
+        },
+        {
+          "name": {
+            "en": "Lightning Rod"
+          },
+          "description": {
+            "en": "If played for 5 Gold or more, redirect enemy Spell and Unbound deploys to Ancient of War's current location."
+          }
+        }
+      ],
+      "advanced_info": "Surge Health and damage scaling\nLinear scaling per gold spent\nMultiplier per gold spent 0.23999\nFor example, a level 1 Ancient of War has 850 health when played for 1 gold, 1054 (+204) health when played for 2 gold, and 1258 (+204 more again) health when played for 3 gold"
+    }
+  },
+  {
+    "id": "angry-chickens",
+    "names": {
+      "en": "Angry Chickens"
+    },
+    "faction_ids": [
+      "beast"
+    ],
+    "type_id": "troop",
+    "cost": 2,
+    "image": "/images/rumble/minis/300/angry-chickens.png",
+    "damage": 50,
+    "health": 25,
+    "dps": 50.0,
+    "speed_id": "med-fast",
+    "trait_ids": [
+      "cycle",
+      "fast",
+      "melee",
+      "squad"
+    ],
+    "details": {
+      "core_trait": {
+        "attack_id": "squad",
+        "type_id": "melee"
+      },
+      "stats": {
+        "Health": "25",
+        "DPS": "50",
+        "Attack Speed": "1",
+        "Speed": "Med-Fast",
+        "Damage": "50"
+      },
+      "traits": [
+        "cycle",
+        "fast"
+      ],
+      "talents": [
+        {
+          "name": {
+            "en": "Snackrifice"
+          },
+          "description": {
+            "en": "Nearby Beast allies can consume a Chicken to heal themselves."
+          }
+        },
+        {
+          "name": {
+            "en": "Walking Crate"
+          },
+          "description": {
+            "en": "Deploy in a protective crate. When destroyed, Chickens emerge."
+          }
+        },
+        {
+          "name": {
+            "en": "Furious Fowl"
+          },
+          "description": {
+            "en": "Gain Fury."
+          }
+        }
+      ],
+      "advanced_info": "Snackrifice talent\nEating a Chicken heals a Beast mini for 500\nWalking Crate talent\nMovement speed 2 (slow)\nSingle-target melee attack that deals 60 siege damage every second\nTargeting based on having to turn as little as possible\n210 health"
+    }
+  }
+]

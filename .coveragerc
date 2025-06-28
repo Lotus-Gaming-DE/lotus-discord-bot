@@ -2,3 +2,4 @@
 omit =
     src/lotus_bot/cogs/*/slash_commands.py
     scripts/*
+    src/lotus_bot/cogs/wcr/*
