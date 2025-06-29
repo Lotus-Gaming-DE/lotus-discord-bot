@@ -57,3 +57,7 @@ while user-facing messages are in German.
 
 All environment variables are documented in `.env.example` and supplied via
 Railway.
+
+CI jobs access Railway via the CLI. They expect `RAILWAY_TOKEN` to be defined as
+ a secret and the variables `RAILWAY_PROJECT` and `RAILWAY_SERVICE` to be
+ available at the repository or organisation level.

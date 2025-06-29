@@ -10,6 +10,8 @@
   Tests und Sicherheitsprüfung aus.
 - Champion-Mod-Befehle verlangen nun positive Punktwerte.
 - Security-Workflow nutzt jetzt `snyk/actions/python@0.4.0` und prüft, ob `SNYK_TOKEN` gesetzt ist.
+- GitHub-Workflows beziehen `RAILWAY_PROJECT` und `RAILWAY_SERVICE` nun über
+  Repository-Variablen statt Secrets.
 - README beschreibt jetzt die Installation von Dev-Abhängigkeiten und das Starten des Bots per `python -m lotus_bot`.
 - WCR-Cog aufgeteilt: Namensauflösung und Embed-Aufbau sind nun in eigenen Modulen. Fehlerbehandlung und Tests wurden erweitert.
 - ChampionCog.update_user_score loggt jetzt Datenbankfehler und wirft einen
