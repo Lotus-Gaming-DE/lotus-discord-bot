@@ -1,25 +1,32 @@
-name: Fetch Railway Logs
-
+name: Update-Runtime-Logs
 on:
   workflow_dispatch:
 
 jobs:
-  fetch-logs:
+  fetch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Install Railway CLI
-        run: npx @railway/cli --version
-      - name: Stream logs
+        run: npm install -g @railway/cli@3.14.0
+
+      - name: Pull latest 100 runtime logs
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
-          RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT }}
         run: |
-          mkdir -p logs
-          npx railway logs --service "$RAILWAY_SERVICE" --project "$RAILWAY_PROJECT" --env production --json > logs/latest_railway.log
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: railway-latest-log
-          path: logs/latest_railway.log
+          npx railway logs \
+          mkdir -p logs/railway
+          railway logs \
+            --project  ${{ vars.RAILWAY_PROJECT }} \
+            --service  ${{ vars.RAILWAY_SERVICE }} \
+            --json --limit 100 > logs/railway/latest_logs.json
+          echo "Wrote $(jq length logs/railway/latest_logs.json) lines to logs/railway/latest_logs.json"
+
+      - name: Commit & push new log file
+        run: |
+          git config user.name  "CI Bot"
+          git config user.email "ci@example.com"
+          git add logs/railway/latest_logs.json
+          git commit -m "chore(logs): update latest runtime logs" || echo "No changes"
+          git push
