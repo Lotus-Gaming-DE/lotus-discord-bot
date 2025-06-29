@@ -1,8 +1,13 @@
 # Ignoriere persistente Daten (liegen im Railway Volume)
 data/pers/
-logs/
+
+# erst allgemeine Log-Muster …
+logs/*
 __pycache__/
 .env
 *.pyc
+
+# … dann gezielt zurückholen
+!logs/
 !logs/railway/
 !logs/railway/latest_logs.json
