@@ -1,13 +1,14 @@
-# Ignoriere persistente Daten (liegen im Railway Volume)
+# persistent data kept outside Git
 data/pers/
 
-# erst allgemeine Log-Muster …
+# ignore everything under logs …
 logs/*
-__pycache__/
-.env
-*.pyc
 
-# … dann gezielt zurückholen
+# … but PUT BACK the railway sub-folder + the JSON file
 !logs/
 !logs/railway/
 !logs/railway/latest_logs.json
+
+__pycache__/
+.env
+*.pyc
