@@ -15,7 +15,8 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          npx railway logs \
+          mkdir -p logs/railway
+          railway logs \
             --project  ${{ vars.RAILWAY_PROJECT }} \
             --service  ${{ vars.RAILWAY_SERVICE }} \
             --json --limit 100 > logs/railway/latest_logs.json
