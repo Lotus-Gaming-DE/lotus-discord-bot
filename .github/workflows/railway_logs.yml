@@ -13,13 +13,27 @@ jobs:
 
       - name: Pull latest 100 runtime logs
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_TOKEN:   ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT }}
+          RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
         run: |
           mkdir -p logs/railway
-          railway --project ${{ vars.RAILWAY_PROJECT }} logs \
-            --service ${{ vars.RAILWAY_SERVICE }} \
-            --json --limit 100 > logs/railway/latest_logs.json
+          # einmalig (idempotent) Projekt verlinken
+          railway link --project "$RAILWAY_PROJECT" --yes || true
+          # Logs ohne --project-Flag abrufen
+          railway logs \
+            --service "$RAILWAY_SERVICE" \
+            --json --limit 100 \
+            > logs/railway/latest_logs.json
           echo "Wrote $(wc -l < logs/railway/latest_logs.json) lines to logs/railway/latest_logs.json"
+
+      - name: Commit & push new log file
+        run: |
+          git config user.name  "CI Bot"
+          git config user.email "ci@example.com"
+          git add logs/railway/latest_logs.json
+          git commit -m "chore(logs): update latest runtime logs" || echo "No changes"
+          git push
 
       - name: Upload logs
         uses: actions/upload-artifact@v4
