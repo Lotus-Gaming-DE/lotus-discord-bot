@@ -70,8 +70,8 @@ jobs:
         if: success()
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_SERVICE: ${{ secrets.RAILWAY_SERVICE }}
-          RAILWAY_PROJECT: ${{ secrets.RAILWAY_PROJECT }}
+          RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
+          RAILWAY_PROJECT: ${{ vars.RAILWAY_PROJECT }}
         run: |
           npx railway logs --service "$RAILWAY_SERVICE" --project "$RAILWAY_PROJECT" --env production --json > logs/latest_railway.log &
           sleep 30
