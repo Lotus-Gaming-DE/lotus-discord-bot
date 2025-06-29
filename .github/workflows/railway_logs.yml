@@ -16,12 +16,10 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           mkdir -p logs/railway
-          npx railway logs \
-            --project  ${{ vars.RAILWAY_PROJECT }} \
-            --service  ${{ vars.RAILWAY_SERVICE }} \
-            --env production \
+          railway --project ${{ vars.RAILWAY_PROJECT }} logs \
+            --service ${{ vars.RAILWAY_SERVICE }} \
             --json --limit 100 > logs/railway/latest_logs.json
-          echo "Wrote $(jq length logs/railway/latest_logs.json) lines to logs/railway/latest_logs.json"
+          echo "Wrote $(wc -l < logs/railway/latest_logs.json) lines to logs/railway/latest_logs.json"
 
       - name: Upload logs
         uses: actions/upload-artifact@v4
