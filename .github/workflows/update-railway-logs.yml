@@ -1,0 +1,30 @@
+name: Update-Runtime-Logs
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli@3.14.0
+
+      - name: Pull latest 100 runtime logs
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          npx railway logs \
+            --project  ${{ vars.RAILWAY_PROJECT }} \
+            --service  ${{ vars.RAILWAY_SERVICE }} \
+            --json --limit 100 > logs/railway/latest_logs.json
+          echo "Wrote $(jq length logs/railway/latest_logs.json) lines to logs/railway/latest_logs.json"
+
+      - name: Commit & push new log file
+        run: |
+          git config user.name  "CI Bot"
+          git config user.email "ci@example.com"
+          git add logs/railway/latest_logs.json
+          git commit -m "chore(logs): update latest runtime logs" || echo "No changes"
+          git push
