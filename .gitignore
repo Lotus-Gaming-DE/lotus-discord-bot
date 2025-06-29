@@ -1,14 +1,13 @@
 # persistent data kept outside Git
 data/pers/
 
+__pycache__/
+.env
+*.pyc
+
 # ignore everything under logs …
 logs/*
 
 # … but PUT BACK the railway sub-folder + the JSON file
-!logs/
 !logs/railway/
 !logs/railway/latest_logs.json
-
-__pycache__/
-.env
-*.pyc
