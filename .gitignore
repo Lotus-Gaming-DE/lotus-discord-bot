@@ -4,3 +4,5 @@ logs/
 __pycache__/
 .env
 *.pyc
+!logs/railway/
+!logs/railway/latest_logs.json
