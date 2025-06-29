@@ -18,14 +18,15 @@ jobs:
           RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
         run: |
           mkdir -p logs/railway
-          # einmalig (idempotent) Projekt verlinken
-          railway link --project "$RAILWAY_PROJECT" --yes || true
-          # Logs ohne --project-Flag abrufen
-          railway logs \
-            --service "$RAILWAY_SERVICE" \
-            --json --limit 100 \
-            > logs/railway/latest_logs.json
-          echo "Wrote $(wc -l < logs/railway/latest_logs.json) lines to logs/railway/latest_logs.json"
+      
+          # 1) Projekt in dieses Verzeichnis linken (idempotent)
+          railway link -p "$RAILWAY_PROJECT" --yes || true
+      
+          # 2) Logs holen (ohne --project, ohne --limit)
+          railway logs --service "$RAILWAY_SERVICE" --json \
+            | head -n 100 > logs/railway/latest_logs.json
+      
+          echo "Wrote $(wc -l < logs/railway/latest_logs.json) lines"
 
       - name: Commit & push new log file
         run: |
