@@ -62,7 +62,7 @@ jobs:
         run: snyk test
       - name: Upload SBOM
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sbom
           path: sbom.xml
@@ -78,7 +78,7 @@ jobs:
           pkill -f "railway logs" || true
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: logs
           path: logs/
