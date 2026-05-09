@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 
-import discord
 from discord.ext import commands
 
 from lotus_bot.log_setup import get_logger
@@ -114,8 +113,11 @@ class WoWCog(ManagedTaskCog):
             if not old or member.level <= old.level:
                 continue
             for level in sorted(MILESTONE_LEVELS):
-                if old.level < level <= member.level and not await self.data.milestone_exists(
-                    member.character_key, level
+                if (
+                    old.level < level <= member.level
+                    and not await self.data.milestone_exists(
+                        member.character_key, level
+                    )
                 ):
                     milestones.append(Milestone(member=member, level=level))
         return milestones

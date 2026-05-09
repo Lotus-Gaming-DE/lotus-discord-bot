@@ -18,14 +18,14 @@ jobs:
           RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
         run: |
           mkdir -p logs/railway
-      
+
           # link once; -p is the correct short flag
           railway link -p "$RAILWAY_PROJECT" --yes || true   # fixes --project error
-      
+
           # CLI no longer supports --limit → pipe through head
           railway logs --service "$RAILWAY_SERVICE" --json \
             | head -n 100 > logs/railway/latest_logs.json
-      
+
           echo "Wrote $(wc -l < logs/railway/latest_logs.json) lines"
 
       - name: Commit & push new log file

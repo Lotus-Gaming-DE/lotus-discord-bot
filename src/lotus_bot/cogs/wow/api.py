@@ -29,7 +29,9 @@ async def fetch_access_token() -> str:
         ) as resp:
             if resp.status != 200:
                 text = await resp.text()
-                raise RuntimeError(f"Battle.net token request failed: HTTP {resp.status} {text}")
+                raise RuntimeError(
+                    f"Battle.net token request failed: HTTP {resp.status} {text}"
+                )
             data = await resp.json()
 
     token = data.get("access_token")
@@ -55,7 +57,9 @@ async def fetch_guild_roster(
         async with session.get(url, headers=headers, params=params) as resp:
             if resp.status != 200:
                 text = await resp.text()
-                raise RuntimeError(f"Guild roster request failed: HTTP {resp.status} {text}")
+                raise RuntimeError(
+                    f"Guild roster request failed: HTTP {resp.status} {text}"
+                )
             data = await resp.json()
 
     members = data.get("members", [])

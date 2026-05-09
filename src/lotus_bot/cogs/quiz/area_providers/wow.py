@@ -87,11 +87,11 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         description = self._text(pick.get("description"))
         return {
             "frage": template.format(description=description),
-            "antwort": self._answer_aliases(pick.get("name"), pick.get("answers", {}).get("name")),
-            "category": "Talente",
-            "id": self._make_id(
-                f"wow:talent_description:{self.language}:{pick['id']}"
+            "antwort": self._answer_aliases(
+                pick.get("name"), pick.get("answers", {}).get("name")
             ),
+            "category": "Talente",
+            "id": self._make_id(f"wow:talent_description:{self.language}:{pick['id']}"),
         }
 
     def generate_ability_class(self):
