@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 
+import discord
 from discord.ext import commands
 
 from lotus_bot.log_setup import get_logger
@@ -93,6 +94,8 @@ class WoWCog(ManagedTaskCog):
                     await self.data.record_milestone(
                         milestone.member.character_key, milestone.level
                     )
+                if posted < len(milestones):
+                    persist = False
 
             if persist:
                 await self.data.replace_snapshot(current)
@@ -134,7 +137,22 @@ class WoWCog(ManagedTaskCog):
 
         posted = 0
         for milestone in milestones:
-            await channel.send(self.format_milestone(milestone))
+            try:
+                await channel.send(self.format_milestone(milestone))
+            except discord.Forbidden:
+                logger.warning(
+                    "[WoWCog] Missing access to announcement channel %s.",
+                    channel_id,
+                )
+                break
+            except discord.HTTPException as exc:
+                logger.warning(
+                    "[WoWCog] Could not post milestone to channel %s: %s",
+                    channel_id,
+                    exc,
+                    exc_info=True,
+                )
+                break
             posted += 1
         return posted
 

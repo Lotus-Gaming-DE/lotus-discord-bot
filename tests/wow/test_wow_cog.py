@@ -1,4 +1,5 @@
 import pytest
+import discord
 
 from lotus_bot.cogs.wow.cog import WoWCog
 from lotus_bot.cogs.wow.data import RosterMember, WoWData
@@ -12,6 +13,12 @@ class DummyChannel:
 
     async def send(self, msg):
         self.sent.append(msg)
+
+
+class ForbiddenChannel:
+    async def send(self, msg):
+        response = type("Response", (), {"status": 403, "reason": "Forbidden"})()
+        raise discord.Forbidden(response, {"message": "Missing Access", "code": 50001})
 
 
 class DummyBot:
@@ -98,5 +105,25 @@ async def test_scan_dry_run_does_not_post_or_persist(tmp_path, patch_logged_task
     assert len(result.milestones) == 1
     assert result.posted == 0
     assert channel.sent == []
+    snapshot = await cog.data.get_snapshot()
+    assert snapshot["id:1"].level == 49
+
+
+@pytest.mark.asyncio
+async def test_scan_missing_access_does_not_crash_or_persist(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task, channel=ForbiddenChannel())
+    await cog.set_announcement_channel(123)
+    await cog.data.replace_snapshot([member(level=49)])
+
+    async def fake_roster():
+        return [member(level=50)]
+
+    cog.fetch_roster = fake_roster
+    result = await cog.scan(post=True, persist=True)
+
+    assert len(result.milestones) == 1
+    assert result.posted == 0
     snapshot = await cog.data.get_snapshot()
     assert snapshot["id:1"].level == 49
