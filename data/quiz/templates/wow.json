@@ -1,0 +1,14 @@
+{
+  "de": {
+    "talent_tree": "Zu welchem Talentbaum gehört das Talent '{talent_name}'?",
+    "talent_description": "\"{description}\" - Welches Talent ist gesucht?",
+    "ability_class": "Welche Klasse besitzt die Fähigkeit '{ability_name}'?",
+    "dungeon_level": "Welcher Levelbereich wird für '{dungeon_name}' empfohlen?"
+  },
+  "en": {
+    "talent_tree": "Which talent tree contains the talent '{talent_name}'?",
+    "talent_description": "\"{description}\" - Which talent is being asked for?",
+    "ability_class": "Which class has the ability '{ability_name}'?",
+    "dungeon_level": "Which level range is recommended for '{dungeon_name}'?"
+  }
+}

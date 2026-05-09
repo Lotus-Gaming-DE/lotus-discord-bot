@@ -28,6 +28,8 @@ async def test_setup_hook_clears_global_commands(monkeypatch, bot):
     monkeypatch.setattr("lotus_bot.cogs.quiz.setup", nop)
     monkeypatch.setattr("lotus_bot.cogs.wcr.setup", nop)
     monkeypatch.setattr("lotus_bot.cogs.champion.setup", nop)
+    monkeypatch.setattr("lotus_bot.cogs.ptcgp.setup", nop)
+    monkeypatch.setattr("lotus_bot.cogs.wow.setup", nop)
     monkeypatch.setattr("lotus_bot.bot.Path.glob", lambda self, pattern: [])
     monkeypatch.setattr(bot, "_load_emojis_from_file", lambda: {})
 

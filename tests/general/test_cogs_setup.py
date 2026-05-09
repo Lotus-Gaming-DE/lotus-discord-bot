@@ -1,11 +1,12 @@
 import pytest
 
 
-from lotus_bot.cogs import quiz, champion, wcr, ptcgp
+from lotus_bot.cogs import quiz, champion, wcr, ptcgp, wow
 from lotus_bot.cogs.quiz.slash_commands import quiz_group
 from lotus_bot.cogs.champion.slash_commands import champion_group, syncroles
 from lotus_bot.cogs.wcr.slash_commands import wcr_group
 from lotus_bot.cogs.ptcgp.slash_commands import ptcgp_group
+from lotus_bot.cogs.wow.slash_commands import wow_group
 import lotus_bot.cogs.quiz.message_tracker as msg_mod
 import lotus_bot.log_setup as log_setup
 from lotus_bot.cogs.wcr.utils import load_wcr_data
@@ -107,6 +108,26 @@ async def test_ptcgp_setup_uses_main_guild(monkeypatch, bot):
     await ptcgp.setup(bot)
 
     assert called == [(ptcgp_group, bot.main_guild)]
+
+
+@pytest.mark.asyncio
+async def test_wow_setup_uses_main_guild(monkeypatch, bot, patch_logged_task):
+    patch_logged_task(log_setup)
+    called = []
+
+    def fake_add(cmd, *, guild=None):
+        called.append((cmd, guild))
+
+    monkeypatch.setattr(bot.tree, "add_command", fake_add)
+
+    async def fake_sync(*, guild=None):
+        pass
+
+    monkeypatch.setattr(bot.tree, "sync", fake_sync)
+
+    await wow.setup(bot)
+
+    assert called == [(wow_group, bot.main_guild)]
 
 
 @pytest.mark.asyncio

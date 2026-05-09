@@ -28,6 +28,7 @@ intents.guilds = True
 
 QUIZ_CONFIG_PATH = "data/pers/quiz/areas.json"
 QUESTION_STATE_PATH = "data/pers/quiz/question_state.json"
+WOW_DATA_PATH = Path("data/wow/classic_hc")
 
 
 def load_json(path: str | Path) -> dict:
@@ -42,6 +43,22 @@ def load_json(path: str | Path) -> dict:
         return json.load(f)
 
 
+def load_wow_data(base_path: str | Path = WOW_DATA_PATH) -> dict:
+    """Load curated WoW Classic Hardcore quiz data from JSON files."""
+    base = Path(base_path)
+    data = {}
+    if not base.exists():
+        logger.warning(f"[bot] WoW data directory not found: {base}")
+        return data
+
+    for file in base.glob("*.json"):
+        try:
+            data[file.stem] = load_json(file)
+        except Exception as e:
+            logger.error(f"[bot] Error loading WoW data file {file}: {e}")
+    return data
+
+
 def load_quiz_config(bot: commands.Bot):
     """Lädt Quiz-Areas aus ``QUIZ_CONFIG_PATH`` und bereitet sie vor."""
     bot.quiz_data = {}
@@ -49,14 +66,23 @@ def load_quiz_config(bot: commands.Bot):
     cfg_file = Path(QUIZ_CONFIG_PATH)
     if not cfg_file.exists():
         logger.warning(f"[bot] Quiz configuration file not found: {cfg_file}")
-        return
+        areas = {}
+    else:
+        try:
+            with open(cfg_file, "r", encoding="utf-8") as f:
+                areas = json.load(f)
+        except Exception as e:
+            logger.error(f"[bot] Error loading quiz configuration: {e}")
+            areas = {}
 
-    try:
-        with open(cfg_file, "r", encoding="utf-8") as f:
-            areas = json.load(f)
-    except Exception as e:
-        logger.error(f"[bot] Error loading quiz configuration: {e}")
-        return
+    if bot.data.get("wow") and "wow" not in areas:
+        areas["wow"] = {
+            "channel_id": None,
+            "window_timer": 30,
+            "language": "de",
+            "active": False,
+            "activity_threshold": 10,
+        }
 
     state = QuestionStateManager(QUESTION_STATE_PATH)
 
@@ -69,7 +95,8 @@ def load_quiz_config(bot: commands.Bot):
         # additional questions at runtime. Import it dynamically if present.
         try:
             module = __import__(
-                f"cogs.quiz.area_providers.{area}", fromlist=["get_provider"]
+                f"lotus_bot.cogs.quiz.area_providers.{area}",
+                fromlist=["get_provider"],
             )
             dynamic_providers[area] = module.get_provider(bot, language=language)
         except Exception as e:
@@ -143,6 +170,9 @@ class MyBot(commands.Bot):
         # WCR-Daten zentral laden
         wcr_data = await load_wcr_data()
 
+        # Kuratierte WoW Classic Hardcore Daten laden
+        wow_data = load_wow_data()
+
         # Champion-Rollen laden
         champion_roles = load_json("data/champion/roles.json")
 
@@ -155,6 +185,7 @@ class MyBot(commands.Bot):
                 "templates": quiz_templates,
             },
             "wcr": wcr_data,
+            "wow": wow_data,
             "champion": {
                 "roles": champion_roles,
             },
@@ -166,12 +197,13 @@ class MyBot(commands.Bot):
         load_quiz_config(self)
 
         # Cogs importieren & registrieren
-        from lotus_bot.cogs import quiz, wcr, champion, ptcgp
+        from lotus_bot.cogs import quiz, wcr, champion, ptcgp, wow
 
         await quiz.setup(self)
         await wcr.setup(self)
         await champion.setup(self)
         await ptcgp.setup(self)
+        await wow.setup(self)
 
         await self.tree.sync(guild=self.main_guild)
 

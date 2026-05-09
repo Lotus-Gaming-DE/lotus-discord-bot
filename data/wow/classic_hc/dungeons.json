@@ -1,0 +1,36 @@
+[
+  {
+    "id": "dungeon.ragefire_chasm",
+    "type": "dungeon",
+    "version": "classic_era",
+    "hardcore_valid": true,
+    "name": {
+      "de": "Flammenschlund",
+      "en": "Ragefire Chasm"
+    },
+    "level_range": "13-18",
+    "answers": {
+      "level_range": ["13-18", "13 bis 18", "13 to 18"]
+    },
+    "source": "wowhead_classic",
+    "hc_risk": "medium",
+    "hc_note": "Früher Dungeon mit engen Pulls und wenig Platz für Fehler."
+  },
+  {
+    "id": "dungeon.wailing_caverns",
+    "type": "dungeon",
+    "version": "classic_era",
+    "hardcore_valid": true,
+    "name": {
+      "de": "Die Höhlen des Wehklagens",
+      "en": "Wailing Caverns"
+    },
+    "level_range": "17-24",
+    "answers": {
+      "level_range": ["17-24", "17 bis 24", "17 to 24"]
+    },
+    "source": "wowhead_classic",
+    "hc_risk": "high",
+    "hc_note": "Lange Wege und unübersichtliche Pulls machen den Dungeon in Hardcore riskant."
+  }
+]
