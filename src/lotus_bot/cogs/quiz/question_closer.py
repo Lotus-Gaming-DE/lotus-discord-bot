@@ -40,6 +40,13 @@ class QuestionCloser:
             embed.add_field(
                 name="Richtige Antwort", value=", ".join(qinfo.answers), inline=False
             )
+            if qinfo.source_url:
+                label = qinfo.source_label or "Quelle"
+                embed.add_field(
+                    name="Quelle",
+                    value=f"[{label}]({qinfo.source_url})",
+                    inline=False,
+                )
             if winner and correct_answer is not None:
                 embed.add_field(
                     name="Eingegebene Antwort", value=correct_answer, inline=False

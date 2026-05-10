@@ -47,6 +47,18 @@ class DummyBot:
         self.views.append(view)
 
 
+class MultiChannelBot(DummyBot):
+    def __init__(self, public_channel=None, officer_channel=None):
+        super().__init__(channel=public_channel)
+        self.public_channel = public_channel
+        self.officer_channel = officer_channel
+
+    def get_channel(self, channel_id):
+        if channel_id == wow_cog_mod.DEFAULT_CLAIM_REVIEW_CHANNEL_ID:
+            return self.officer_channel
+        return self.public_channel
+
+
 class DummyPermissions:
     def __init__(self, manage_guild=False):
         self.manage_guild = manage_guild
@@ -77,17 +89,25 @@ class DummyReviewInteraction:
         self.response = DummyReviewResponse()
 
 
-def member(key="id:1", name="Lyxendra", level=1):
+def member(
+    key="id:1",
+    name="Lyxendra",
+    level=1,
+    class_id=4,
+    race_id=8,
+    is_ghost=False,
+):
     return RosterMember(
         character_key=key,
         character_id=1,
         name=name,
         realm_slug="soulseeker",
         level=level,
-        class_id=4,
-        race_id=8,
+        class_id=class_id,
+        race_id=race_id,
         faction="HORDE",
         guild_rank=1,
+        is_ghost=is_ghost,
     )
 
 
@@ -119,7 +139,7 @@ async def test_level_increase_crossing_milestones(tmp_path, patch_logged_task):
     cog = await create_cog(tmp_path, patch_logged_task)
     previous = {"id:1": member(level=49)}
     milestones = await cog._detect_milestones(previous, [member(level=52)])
-    assert [m.level for m in milestones] == [50, 51, 52]
+    assert [m.level for m in milestones] == [50]
 
 
 @pytest.mark.asyncio
@@ -156,6 +176,177 @@ async def test_scan_dry_run_does_not_post_or_persist(tmp_path, patch_logged_task
     assert channel.sent == []
     snapshot = await cog.data.get_snapshot()
     assert snapshot["id:1"].level == 49
+
+
+@pytest.mark.asyncio
+async def test_activity_detects_new_character(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    activity = await cog._detect_activity({}, [member(name="Voidok", level=23)])
+
+    assert [m.name for m in activity.new_members] == ["Voidok"]
+    assert activity.milestones == []
+    assert activity.public_count == 1
+
+
+@pytest.mark.asyncio
+async def test_level_31_no_longer_announces(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    previous = {"id:1": member(level=30)}
+
+    milestones = await cog._detect_milestones(previous, [member(level=31)])
+
+    assert milestones == []
+
+
+@pytest.mark.asyncio
+async def test_digest_posts_one_message_for_multiple_events(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    channel = DummyChannel()
+    cog = await create_cog(tmp_path, patch_logged_task, channel=channel)
+    await cog.set_announcement_channel(123)
+    await cog.data.replace_snapshot([member(level=49)])
+
+    async def fake_roster():
+        return [
+            member(level=50),
+            member(key="id:2", name="Voidok", level=23, class_id=1, race_id=8),
+        ]
+
+    monkeypatch.setattr(wow_cog_mod.random, "choice", lambda seq: seq[0])
+    cog.fetch_roster = fake_roster
+    result = await cog.scan(post=True, persist=True)
+
+    assert result.posted == 1
+    assert len(channel.sent) == 1
+    msg = channel.sent[0][0]
+    assert "Schaut mal" in msg
+    assert "Wir begrüßen" in msg
+    assert "Troll Krieger Voidok" in msg
+    assert "Level **50**" in msg
+    assert "Wir gratulieren" in msg
+
+
+@pytest.mark.asyncio
+async def test_digest_mentions_claimed_character(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    channel = DummyChannel()
+    cog = await create_cog(tmp_path, patch_logged_task, channel=channel)
+    claimed = member(level=39, class_id=1, race_id=8)
+    await cog.data.replace_snapshot([claimed])
+    await cog.data.create_claim(claimed, 42)
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[wow_cog_mod.Milestone(member(level=40, class_id=1, race_id=8), 40)],
+        deaths=[],
+        officer_notes=[],
+    )
+    monkeypatch.setattr(wow_cog_mod.random, "choice", lambda seq: seq[0])
+
+    msg = await cog.format_activity_digest(activity)
+
+    assert "<@42> hat mit **Troll Krieger Lyxendra** Level **40** erreicht." in msg
+
+
+@pytest.mark.asyncio
+async def test_disappeared_dead_profile_creates_public_death(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    previous = {"id:1": member(name="Voidok", level=37)}
+
+    async def fake_profile(*args, **kwargs):
+        return {"is_ghost": True}
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", fake_profile)
+    activity = await cog._detect_activity(previous, [])
+
+    assert [d.member.name for d in activity.deaths] == ["Voidok"]
+    assert activity.deaths[0].confirmed is True
+    assert activity.officer_notes == []
+    assert "Level **37** gestorben" in cog._format_death_line(activity.deaths[0])
+
+
+@pytest.mark.asyncio
+async def test_disappeared_alive_profile_creates_officer_note(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    previous = {"id:1": member(name="Voidok")}
+
+    async def fake_profile(*args, **kwargs):
+        return {"is_ghost": False}
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", fake_profile)
+    activity = await cog._detect_activity(previous, [])
+
+    assert activity.deaths == []
+    assert "nicht mehr Teil" in activity.officer_notes[0].message
+
+
+@pytest.mark.asyncio
+async def test_disappeared_unknown_profile_creates_presumed_death(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    previous = {"id:1": member(name="Voidok", level=42)}
+
+    async def fake_profile(*args, **kwargs):
+        raise wow_cog_mod.WoWAPIError("not found", status=404)
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", fake_profile)
+    activity = await cog._detect_activity(previous, [])
+
+    assert activity.officer_notes == []
+    assert [d.member.name for d in activity.deaths] == ["Voidok"]
+    assert activity.deaths[0].confirmed is False
+    death_line = cog._format_death_line(activity.deaths[0])
+    assert "Level **42**" in death_line
+    assert "nicht mehr auffindbar" in death_line
+
+
+@pytest.mark.asyncio
+async def test_public_death_from_roster_ghost_is_deduplicated(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    previous = {"id:1": member(is_ghost=False)}
+    current = [member(is_ghost=True)]
+
+    activity = await cog._detect_activity(previous, current)
+    assert len(activity.deaths) == 1
+    await cog._record_public_events(activity)
+
+    activity = await cog._detect_activity(previous, current)
+    assert activity.deaths == []
+
+
+@pytest.mark.asyncio
+async def test_only_officer_notes_persist_without_public_channel(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    officer = DummyChannel()
+    bot = MultiChannelBot(public_channel=None, officer_channel=officer)
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(bot)
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+    await cog.data.replace_snapshot([member(name="Voidok")])
+
+    async def fake_roster():
+        return []
+
+    async def fake_profile(*args, **kwargs):
+        return {"is_ghost": False}
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", fake_profile)
+    cog.fetch_roster = fake_roster
+    result = await cog.scan(post=True, persist=True)
+
+    assert result.posted == 0
+    assert "nicht mehr Teil" in officer.sent[0][0]
+    assert await cog.data.member_count() == 0
 
 
 @pytest.mark.asyncio

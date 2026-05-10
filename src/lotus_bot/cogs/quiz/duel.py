@@ -440,7 +440,10 @@ class QuizDuelGame:
 
             state_manager = qg.state_manager
 
-            questions = provider.generate_all_types()
+            try:
+                questions = provider.generate_all_types(context="duel")
+            except TypeError:
+                questions = provider.generate_all_types()
             questions = state_manager.filter_unasked_questions(self.area, questions)
             logger.debug(
                 f"[QuizDuelGame] dynamic questions generated: {len(questions)}"
@@ -497,7 +500,10 @@ class QuizDuelGame:
             f"QuizDuelGame started between {self.challenger} and {self.opponent} mode=box rounds={total_rounds}"
         )
         for rnd in range(1, total_rounds + 1):
-            question = qg.generate(self.area)
+            try:
+                question = qg.generate(self.area, context="duel")
+            except TypeError:
+                question = qg.generate(self.area)
             if inspect.isawaitable(question):
                 question = await question
             if not question:

@@ -46,7 +46,7 @@ class WCRQuestionProvider(DynamicQuestionProvider):
         digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
         return int(digest, 16)
 
-    def generate(self):
+    def generate(self, context: str = "scheduled"):
         questions = []
         for name in self.question_generators:
             func = getattr(self, name)
@@ -62,9 +62,9 @@ class WCRQuestionProvider(DynamicQuestionProvider):
         logger.info(f"[WCRQuestionProvider] Generated: {question['frage']}")
         return question
 
-    def generate_all_types(self) -> list[dict]:
+    def generate_all_types(self, context: str = "scheduled") -> list[dict]:
         """Generate one question for every available type."""
-        return super().generate_all_types()
+        return super().generate_all_types(context=context)
 
     def generate_type_1(self):
         talents = []

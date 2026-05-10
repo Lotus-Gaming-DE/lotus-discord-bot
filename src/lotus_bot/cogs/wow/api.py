@@ -13,6 +13,12 @@ DEFAULT_NAMESPACE = "profile-classic1x-eu"
 DEFAULT_LOCALE = "de_DE"
 
 
+class WoWAPIError(RuntimeError):
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
+
+
 async def fetch_access_token() -> str:
     """Fetch a Battle.net client credentials token."""
     client_id = os.getenv("BLIZZARD_CLIENT_ID")
@@ -67,3 +73,33 @@ async def fetch_guild_roster(
         logger.warning("[WoW API] Guild roster response did not contain a member list.")
         return []
     return members
+
+
+async def fetch_character_profile(
+    realm_slug: str,
+    character_name: str,
+    *,
+    namespace: str = DEFAULT_NAMESPACE,
+    locale: str = DEFAULT_LOCALE,
+) -> dict[str, Any]:
+    """Fetch a WoW Classic character profile.
+
+    Classic profile endpoints can be flaky. Callers should treat failures as an
+    unknown state instead of blocking roster processing.
+    """
+    token = await fetch_access_token()
+    url = f"{API_BASE}/profile/wow/character/{realm_slug}/{character_name.lower()}"
+    headers = {"Authorization": f"Bearer {token}"}
+    params = {"namespace": namespace, "locale": locale}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers, params=params) as resp:
+            if resp.status != 200:
+                text = await resp.text()
+                raise WoWAPIError(
+                    f"Character profile request failed: HTTP {resp.status} {text}",
+                    status=resp.status,
+                )
+            data = await resp.json()
+
+    return data if isinstance(data, dict) else {}

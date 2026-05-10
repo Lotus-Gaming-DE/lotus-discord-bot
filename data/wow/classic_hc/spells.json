@@ -1,0 +1,141 @@
+[
+  {
+    "id": "spell.13845",
+    "wowhead_id": 13845,
+    "category_id": "talent",
+    "name": {"de": "Pr\u00e4zision", "en": "Precision"},
+    "description": {"de": "Erh\u00f6ht Eure Trefferchance mit Nahkampfwaffen um 5%.", "en": "Increases your chance to hit with melee weapons by 5%."},
+    "source_url": "https://www.wowhead.com/classic/spell=13845/precision",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/spell=13845/pr%C3%A4zision",
+      "en": "https://www.wowhead.com/classic/spell=13845/precision"
+    }
+  },
+  {
+    "id": "spell.12472",
+    "wowhead_id": 12472,
+    "category_id": "talent",
+    "name": {"de": "K\u00e4lteeinbruch", "en": "Cold Snap"},
+    "description": {"de": "Setzt bei Aktivierung die Abklingzeit aller Frostzauber zur\u00fcck.", "en": "When activated, this spell finishes the cooldown on all of your Frost spells."},
+    "cooldown": {"de": "10 Minuten", "en": "10 minutes"},
+    "source_url": "https://www.wowhead.com/classic/spell=12472/cold-snap",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/spell=12472/k%C3%A4lteeinbruch",
+      "en": "https://www.wowhead.com/classic/spell=12472/cold-snap"
+    }
+  },
+  {
+    "id": "spell.12296",
+    "wowhead_id": 12296,
+    "category_id": "talent",
+    "name": {"de": "Wutkontrolle", "en": "Anger Management"},
+    "description": {"de": "Erh\u00f6ht die Zeit, bis Eure Wut au\u00dferhalb des Kampfes verf\u00e4llt, um 30%.", "en": "Increases the time required for your rage to decay while out of combat by 30%."},
+    "source_url": "https://www.wowhead.com/classic/spell=12296/anger-management",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/spell=12296/wutkontrolle",
+      "en": "https://www.wowhead.com/classic/spell=12296/anger-management"
+    }
+  },
+  {
+    "id": "spell.15336",
+    "wowhead_id": 15336,
+    "category_id": "talent",
+    "name": {"de": "Willensentzug", "en": "Spirit Tap"},
+    "description": {"de": "Kann nach einem ehren- oder erfahrungsgew\u00e4hrenden Todessto\u00df Euren Willensbonus und die Manaregeneration erh\u00f6hen.", "en": "Can grant bonus Spirit and mana regeneration after killing a target that yields experience."},
+    "source_url": "https://www.wowhead.com/classic/spell=15336/spirit-tap",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/spell=15336/willensentzug",
+      "en": "https://www.wowhead.com/classic/spell=15336/spirit-tap"
+    }
+  },
+  {
+    "id": "spell.1856",
+    "wowhead_id": 1856,
+    "category_id": "class_ability",
+    "name": {"de": "Verschwinden", "en": "Vanish"},
+    "description": {"de": "L\u00e4sst den Schurken verschwinden, versetzt ihn kurz in verbesserte Verstohlenheit und entfernt bewegungseinschr\u00e4nkende Effekte.", "en": "Allows the rogue to vanish from sight, entering improved stealth briefly and breaking movement impairing effects."},
+    "required_level": 22,
+    "cooldown": {"de": "5 Minuten", "en": "5 minutes"},
+    "source_url": "https://www.wowhead.com/classic/spell=1856/vanish",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/spell=1856/verschwinden",
+      "en": "https://www.wowhead.com/classic/spell=1856/vanish"
+    }
+  },
+  {
+    "id": "spell.1953",
+    "wowhead_id": 1953,
+    "category_id": "class_ability",
+    "name": {"de": "Blinzeln", "en": "Blink"},
+    "description": {"de": "Teleportiert den Zaubernden 20 Meter nach vorne, sofern nichts im Weg ist, und befreit von Bet\u00e4ubungs- und Fesseleffekten.", "en": "Teleports the caster 20 yards forward if nothing is in the way and frees the caster from stuns and bonds."},
+    "required_level": 20,
+    "cooldown": {"de": "15 Sekunden", "en": "15 seconds"},
+    "source_url": "https://www.wowhead.com/classic/spell=1953/blink",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/spell=1953/blinzeln",
+      "en": "https://www.wowhead.com/classic/spell=1953/blink"
+    }
+  },
+  {
+    "id": "spell.5384",
+    "wowhead_id": 5384,
+    "category_id": "class_ability",
+    "name": {"de": "Totstellen", "en": "Feign Death"},
+    "description": {"de": "Stellt Euch tot, wodurch Gegner Euch m\u00f6glicherweise ignorieren. H\u00e4lt bis zu 6 Minuten an.", "en": "Feigns death, which may trick enemies into ignoring you. Lasts up to 6 minutes."},
+    "required_level": 30,
+    "cooldown": {"de": "30 Sekunden", "en": "30 seconds"},
+    "source_url": "https://www.wowhead.com/classic/spell=5384/feign-death",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/spell=5384/totstellen",
+      "en": "https://www.wowhead.com/classic/spell=5384/feign-death"
+    }
+  },
+  {
+    "id": "spell.20589",
+    "wowhead_id": 20589,
+    "category_id": "racial_trait",
+    "name": {"de": "Entfesselungsk\u00fcnstler", "en": "Escape Artist"},
+    "description": {"de": "Entkommt Bewegungsunf\u00e4higkeits- oder Bewegungseinschr\u00e4nkungseffekten.", "en": "Escape the effects of any immobilization or movement speed reduction effect."},
+    "source_url": "https://www.wowhead.com/classic/spell=20589/escape-artist",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/spell=20589/entfesselungsk%C3%BCnstler",
+      "en": "https://www.wowhead.com/classic/spell=20589/escape-artist"
+    }
+  },
+  {
+    "id": "spell.20594",
+    "wowhead_id": 20594,
+    "category_id": "racial_trait",
+    "name": {"de": "Steingestalt", "en": "Stoneform"},
+    "description": {"de": "Macht Euch kurz immun gegen Blutungs-, Gift- und Krankheitseffekte und erh\u00f6ht Eure R\u00fcstung.", "en": "Grants immunity to bleed, poison, and disease effects and increases armor briefly."},
+    "source_url": "https://www.wowhead.com/classic/spell=20594/stoneform",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/spell=20594/steingestalt",
+      "en": "https://www.wowhead.com/classic/spell=20594/stoneform"
+    }
+  },
+  {
+    "id": "spell.2259",
+    "wowhead_id": 2259,
+    "category_id": "profession",
+    "name": {"de": "Alchemie", "en": "Alchemy"},
+    "description": {"de": "Erm\u00f6glicht das Herstellen von Tr\u00e4nken, Elixieren, Fl\u00e4schchen und Transmutationen.", "en": "Allows the creation of potions, elixirs, flasks, and transmutes."},
+    "source_url": "https://www.wowhead.com/classic/spell=2259/alchemy",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/spell=2259/alchemie",
+      "en": "https://www.wowhead.com/classic/spell=2259/alchemy"
+    }
+  },
+  {
+    "id": "spell.17556",
+    "wowhead_id": 17556,
+    "category_id": "profession",
+    "name": {"de": "Erheblicher Heiltrank", "en": "Major Healing Potion"},
+    "description": {"de": "Stellt einen erheblichen Heiltrank her.", "en": "Creates a Major Healing Potion."},
+    "source_url": "https://www.wowhead.com/classic/spell=17556/major-healing-potion",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/spell=17556/erheblicher-heiltrank",
+      "en": "https://www.wowhead.com/classic/spell=17556/major-healing-potion"
+    }
+  }
+]

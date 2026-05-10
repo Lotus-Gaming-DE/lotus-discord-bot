@@ -1,0 +1,6 @@
+[
+  {"id": "rogue.combat", "class_id": "rogue", "name": {"de": "Kampf", "en": "Combat"}},
+  {"id": "mage.frost", "class_id": "mage", "name": {"de": "Frost", "en": "Frost"}},
+  {"id": "warrior.arms", "class_id": "warrior", "name": {"de": "Waffen", "en": "Arms"}},
+  {"id": "priest.shadow", "class_id": "priest", "name": {"de": "Schatten", "en": "Shadow"}}
+]

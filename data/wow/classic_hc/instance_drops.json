@@ -1,0 +1,11 @@
+[
+  {
+    "id": "drop.maraudon.blade_of_eternal_darkness",
+    "instance_id": "instance.maraudon",
+    "item_id": "item.17780",
+    "source_name": {"de": "Prinzessin Theradras", "en": "Princess Theradras"},
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  }
+]

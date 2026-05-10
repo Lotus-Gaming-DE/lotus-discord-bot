@@ -17,6 +17,9 @@ async def test_set_active_question(tmp_path):
         end_time=datetime.datetime.utcnow(),
         answers=["a"],
         frage="foo",
+        source_url="https://www.wowhead.com/classic/spell=1856/vanish",
+        source_label="Wowhead - Vanish",
+        difficulty="medium",
     )
     await manager.set_active_question("area1", question)
 

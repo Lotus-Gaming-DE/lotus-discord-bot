@@ -21,6 +21,7 @@ class RosterMember:
     race_id: int | None
     faction: str
     guild_rank: int | None
+    is_ghost: bool = False
 
 
 @dataclass
@@ -75,6 +76,7 @@ class WoWData:
                 race_id INTEGER,
                 faction TEXT,
                 guild_rank INTEGER,
+                is_ghost INTEGER NOT NULL DEFAULT 0,
                 updated_at TEXT NOT NULL
             )
             """
@@ -86,6 +88,14 @@ class WoWData:
                 level INTEGER NOT NULL,
                 announced_at TEXT NOT NULL,
                 PRIMARY KEY(character_key, level)
+            )
+            """
+        )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS death_events (
+                character_key TEXT PRIMARY KEY,
+                recorded_at TEXT NOT NULL
             )
             """
         )
@@ -104,9 +114,19 @@ class WoWData:
             )
             """
         )
+        await self._ensure_column(
+            "roster_snapshot", "is_ghost", "INTEGER NOT NULL DEFAULT 0"
+        )
         await db.commit()
         self._init_done = True
         logger.info("[WoWData] SQLite database initialized.")
+
+    async def _ensure_column(self, table: str, column: str, definition: str) -> None:
+        db = await self._get_db()
+        cur = await db.execute(f"PRAGMA table_info({table})")
+        columns = {row[1] for row in await cur.fetchall()}
+        if column not in columns:
+            await db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
     async def close(self) -> None:
         if self.db is not None:
@@ -139,7 +159,7 @@ class WoWData:
         cur = await db.execute(
             """
             SELECT character_key, character_id, name, realm_slug, level, class_id,
-                   race_id, faction, guild_rank
+                   race_id, faction, guild_rank, is_ghost
               FROM roster_snapshot
             """
         )
@@ -155,6 +175,7 @@ class WoWData:
                 race_id=row[6],
                 faction=row[7] or "",
                 guild_rank=row[8],
+                is_ghost=bool(row[9]),
             )
             for row in rows
         }
@@ -169,8 +190,8 @@ class WoWData:
                 """
                 INSERT INTO roster_snapshot(
                     character_key, character_id, name, realm_slug, level, class_id,
-                    race_id, faction, guild_rank, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    race_id, faction, guild_rank, is_ghost, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     member.character_key,
@@ -182,6 +203,7 @@ class WoWData:
                     member.race_id,
                     member.faction,
                     member.guild_rank,
+                    int(member.is_ghost),
                     now,
                 ),
             )
@@ -208,6 +230,27 @@ class WoWData:
         )
         await db.commit()
 
+    async def death_exists(self, character_key: str) -> bool:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            "SELECT 1 FROM death_events WHERE character_key = ?",
+            (character_key,),
+        )
+        return await cur.fetchone() is not None
+
+    async def record_death(self, character_key: str) -> None:
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute(
+            """
+            INSERT OR IGNORE INTO death_events(character_key, recorded_at)
+            VALUES (?, ?)
+            """,
+            (character_key, datetime.utcnow().isoformat()),
+        )
+        await db.commit()
+
     async def member_count(self) -> int:
         await self.init_db()
         db = await self._get_db()
@@ -227,7 +270,7 @@ class WoWData:
         cur = await db.execute(
             """
             SELECT character_key, character_id, name, realm_slug, level, class_id,
-                   race_id, faction, guild_rank
+                   race_id, faction, guild_rank, is_ghost
               FROM roster_snapshot
              WHERE lower(name) = lower(?)
              LIMIT 1
@@ -247,6 +290,7 @@ class WoWData:
             race_id=row[6],
             faction=row[7] or "",
             guild_rank=row[8],
+            is_ghost=bool(row[9]),
         )
 
     async def get_claim(self, character_key: str) -> CharacterClaim | None:
@@ -431,6 +475,7 @@ def parse_roster_member(raw: dict[str, Any]) -> RosterMember | None:
         return None
 
     character_id = character.get("id")
+    is_ghost = bool(character.get("is_ghost") or raw.get("is_ghost"))
     character_key = (
         f"id:{character_id}"
         if character_id is not None
@@ -447,4 +492,5 @@ def parse_roster_member(raw: dict[str, Any]) -> RosterMember | None:
         race_id=(character.get("playable_race") or {}).get("id"),
         faction=(character.get("faction") or {}).get("type") or "",
         guild_rank=raw.get("rank"),
+        is_ghost=is_ghost,
     )

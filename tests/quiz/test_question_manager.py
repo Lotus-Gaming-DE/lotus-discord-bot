@@ -9,7 +9,14 @@ from lotus_bot.cogs.quiz.quiz_config import QuizAreaConfig
 class DummyGenerator:
     def __init__(self, question=None, use_default=True):
         if question is None and use_default:
-            self.question = {"frage": "f", "antwort": "a", "category": "c"}
+            self.question = {
+                "frage": "f",
+                "antwort": "a",
+                "category": "c",
+                "difficulty": "easy",
+                "source_url": "https://www.wowhead.com/classic/spell=1856/vanish",
+                "source_label": "Wowhead - Verschwinden",
+            }
         else:
             self.question = question
 
@@ -93,6 +100,8 @@ async def test_ask_question_posts_and_tracks(monkeypatch):
     await manager.ask_question("area", end_time)
 
     assert cog.current_questions["area"].message_id == 42
+    assert cog.current_questions["area"].difficulty == "easy"
+    assert cog.current_questions["area"].source_label == "Wowhead - Verschwinden"
     assert cog.tracker.reset_called
     assert cog.state.recorded
     assert channel.sent

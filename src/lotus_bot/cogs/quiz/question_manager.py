@@ -1,12 +1,13 @@
 # cogs/quiz/question_manager.py
 
 import datetime
+
 import discord
 
 from lotus_bot.log_setup import get_logger
 
-from .views import AnswerButtonView
 from .question_state import QuestionInfo
+from .views import AnswerButtonView
 
 
 class QuestionManager:
@@ -22,7 +23,7 @@ class QuestionManager:
 
         if not cfg.active:
             logger.info(
-                f"[QuestionManager] Area '{area}' inactive – skipping question."
+                f"[QuestionManager] Area '{area}' inactive - skipping question."
             )
             return
 
@@ -40,19 +41,19 @@ class QuestionManager:
         if not self.cog.tracker.is_initialized(cid):
             self.cog.tracker.set_initialized(cid)
             logger.info(
-                f"[QuestionManager] Channel '{channel.name}' ({area}) initialized – skipping activity check."
+                f"[QuestionManager] Channel '{channel.name}' ({area}) initialized - skipping activity check."
             )
         else:
             threshold = cfg.activity_threshold
             if self.cog.tracker.get(cid) < threshold:
                 logger.info(
-                    f"[QuestionManager] Message counter for '{area}': {self.cog.tracker.get(cid)}/{threshold} – waiting for activity."
+                    f"[QuestionManager] Message counter for '{area}': {self.cog.tracker.get(cid)}/{threshold} - waiting for activity."
                 )
                 self.cog.awaiting_activity[cid] = (area, end_time)
                 return
 
         logger.info(
-            f"[QuestionManager] Conditions met – sending question for '{area}'."
+            f"[QuestionManager] Conditions met - sending question for '{area}'."
         )
         await self.ask_question(area, end_time)
 
@@ -82,8 +83,11 @@ class QuestionManager:
             color=discord.Color.blue(),
         )
         embed.add_field(
-            name="Kategorie", value=question.get("category", "–"), inline=False
+            name="Kategorie", value=question.get("category", "-"), inline=False
         )
+        difficulty = question.get("difficulty")
+        if difficulty:
+            embed.add_field(name="Schwierigkeit", value=difficulty, inline=False)
         embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
 
         view = AnswerButtonView(area, correct_answers, self.cog)
@@ -100,7 +104,10 @@ class QuestionManager:
             end_time=end_time,
             answers=correct_answers,
             frage=frage_text,
-            category=question.get("category", "–"),
+            category=question.get("category", "-"),
+            source_url=question.get("source_url"),
+            source_label=question.get("source_label"),
+            difficulty=question.get("difficulty"),
         )
         self.cog.current_questions[area] = qinfo
         self.cog.answered_users[area].clear()

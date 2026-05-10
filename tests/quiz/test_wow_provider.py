@@ -1,38 +1,25 @@
-from lotus_bot.bot import load_wow_data
+from lotus_bot.bot import load_json, load_wow_data
 from lotus_bot.cogs.quiz.area_providers.wow import WoWQuestionProvider
 
 
 class DummyBot:
-    def __init__(self):
+    def __init__(self, wow_data=None):
         self.data = {
-            "wow": load_wow_data("data/wow/classic_hc"),
-            "quiz": {
-                "templates": {
-                    "wow": {
-                        "de": {
-                            "talent_tree": "{talent_name}",
-                            "talent_description": "{description}",
-                            "ability_class": "{ability_name}",
-                            "dungeon_level": "{dungeon_name}",
-                        },
-                        "en": {
-                            "talent_tree": "{talent_name}",
-                            "talent_description": "{description}",
-                            "ability_class": "{ability_name}",
-                            "dungeon_level": "{dungeon_name}",
-                        },
-                    }
-                }
-            },
+            "wow": wow_data or load_wow_data("data/wow/classic_hc"),
+            "quiz": {"templates": {"wow": load_json("data/quiz/templates/wow.json")}},
         }
 
 
-def test_wow_provider_generates_all_types():
+def test_wow_provider_generates_broad_question_catalog():
     provider = WoWQuestionProvider(DummyBot(), language="de")
-    questions = provider.generate_all_types()
+    questions = provider.generate_all_types(context="scheduled")
+    duel_questions = provider.generate_all_types(context="duel")
 
-    assert len(questions) == 4
+    assert len(questions) >= 12
+    assert len(duel_questions) > len(questions)
     assert all("frage" in q and "antwort" in q and "id" in q for q in questions)
+    assert all(q.get("difficulty") in {"easy", "medium", "hard"} for q in questions)
+    assert all(q.get("difficulty") != "easy" for q in questions)
 
 
 def test_wow_provider_uses_question_language_and_bilingual_answers(monkeypatch):
@@ -41,7 +28,8 @@ def test_wow_provider_uses_question_language_and_bilingual_answers(monkeypatch):
 
     question = provider.generate_talent_tree()
 
-    assert "Riposte" in question["frage"]
+    assert "Präzision" in question["frage"]
+    assert "Schurke" in question["frage"]
     assert "kampf" in question["antwort"]
     assert "combat" in question["antwort"]
 
@@ -54,3 +42,126 @@ def test_wow_provider_ids_are_stable(monkeypatch):
     second = provider.generate_talent_tree()["id"]
 
     assert first == second
+
+
+def test_talent_description_disambiguates_class_and_tree(monkeypatch):
+    provider = WoWQuestionProvider(DummyBot(), language="de")
+    monkeypatch.setattr("random.choice", lambda records: records[0])
+
+    question = provider.generate_talent_description()
+
+    assert "Schurke" in question["frage"]
+    assert "Kampf" in question["frage"]
+    assert "präzision" in question["antwort"]
+    assert question["source_url"].startswith("https://www.wowhead.com/classic/de/")
+
+
+def test_missing_required_level_does_not_generate_broken_question(monkeypatch):
+    data = load_wow_data("data/wow/classic_hc")
+    data["spells"] = [
+        spell
+        for spell in data["spells"]
+        if spell["id"] != data["abilities"][0]["spell_id"]
+    ]
+    provider = WoWQuestionProvider(DummyBot(data), language="de")
+    monkeypatch.setattr("random.choice", lambda records: records[0])
+
+    question = provider.generate_ability_required_level()
+
+    assert question is not None
+    assert "Ab welchem Level" in question["frage"]
+
+
+def test_missing_german_description_is_skipped(monkeypatch):
+    data = load_wow_data("data/wow/classic_hc")
+    for spell in data["spells"]:
+        if spell["id"] == data["talents"][0]["spell_id"]:
+            spell["description"].pop("de", None)
+    provider = WoWQuestionProvider(DummyBot(data), language="de")
+    monkeypatch.setattr("random.choice", lambda records: records[0])
+
+    question = provider.generate_talent_description()
+
+    assert question is None
+
+
+def test_item_subclass_question_requires_subclass(monkeypatch):
+    data = load_wow_data("data/wow/classic_hc")
+    for item in data["items"]:
+        item.pop("item_subclass", None)
+    provider = WoWQuestionProvider(DummyBot(data), language="de")
+    monkeypatch.setattr("random.choice", lambda records: records[0])
+
+    assert provider.generate_item_subclass() is None
+
+
+def test_filters_exclude_battlegrounds_and_quest_items(monkeypatch):
+    data = load_wow_data("data/wow/classic_hc")
+    for zone in data["zones"]:
+        if zone["type"] == "battleground":
+            zone["hardcore_enabled"] = False
+    data["items"][1]["is_quest_item"] = True
+    provider = WoWQuestionProvider(DummyBot(data), language="de")
+    monkeypatch.setattr("random.choice", lambda records: records[-1])
+
+    zone_question = provider.generate_zone_type()
+    drop_question = provider.generate_drop_instance()
+
+    assert "Warsongschlucht" not in zone_question["frage"]
+    assert drop_question is None
+
+
+def test_easy_questions_are_duel_only():
+    provider = WoWQuestionProvider(DummyBot(), language="de")
+
+    scheduled = provider.generate_all_types(context="scheduled")
+    duel = provider.generate_all_types(context="duel")
+
+    assert not any(q["frage"].startswith("Zu welcher Fraktion") for q in scheduled)
+    assert any(q["frage"].startswith("Zu welcher Fraktion") for q in duel)
+
+
+def test_removed_patterns_are_not_generated():
+    provider = WoWQuestionProvider(DummyBot(), language="de")
+    questions = provider.generate_all_types(context="duel")
+    texts = [q["frage"] for q in questions]
+
+    assert not any("auf Englisch" in text for text in texts)
+    assert not any("hat Rang" in text for text in texts)
+    assert not any("Abklingzeit" in text for text in texts)
+    assert not any("Welche Item-Qualität" in text for text in texts)
+
+
+def test_race_class_can_generate_negative_answer(monkeypatch):
+    provider = WoWQuestionProvider(DummyBot(), language="de")
+
+    def choose_last(records):
+        return records[-1]
+
+    monkeypatch.setattr("random.choice", choose_last)
+
+    question = provider.generate_race_class_allowed()
+
+    assert "nein" in question["antwort"]
+
+
+def test_drop_question_uses_item_subclass(monkeypatch):
+    provider = WoWQuestionProvider(DummyBot(), language="de")
+    monkeypatch.setattr("random.choice", lambda records: records[0])
+
+    question = provider.generate_drop_instance()
+
+    assert "Dolch" in question["frage"]
+
+
+def test_level_fit_questions_use_yes_no(monkeypatch):
+    provider = WoWQuestionProvider(DummyBot(), language="de")
+
+    monkeypatch.setattr("random.choice", lambda records: records[0])
+    monkeypatch.setattr("random.randint", lambda low, high: low)
+
+    zone_question = provider.generate_zone_level_fit()
+    instance_question = provider.generate_instance_level_fit()
+
+    assert "ja" in zone_question["antwort"]
+    assert "ja" in instance_question["antwort"]

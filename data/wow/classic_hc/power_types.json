@@ -1,0 +1,5 @@
+[
+  {"id": "mana", "name": {"de": "Mana", "en": "Mana"}},
+  {"id": "rage", "name": {"de": "Wut", "en": "Rage"}},
+  {"id": "energy", "name": {"de": "Energie", "en": "Energy"}}
+]

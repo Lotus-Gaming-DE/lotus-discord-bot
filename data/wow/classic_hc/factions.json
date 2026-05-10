@@ -1,0 +1,6 @@
+[
+  {"id": "alliance", "name": {"de": "Allianz", "en": "Alliance"}},
+  {"id": "horde", "name": {"de": "Horde", "en": "Horde"}},
+  {"id": "contested", "name": {"de": "Umk\u00e4mpft", "en": "Contested"}},
+  {"id": "sanctuary", "name": {"de": "Sanktuario", "en": "Sanctuary"}}
+]

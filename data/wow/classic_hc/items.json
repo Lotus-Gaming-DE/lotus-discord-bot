@@ -1,0 +1,55 @@
+[
+  {
+    "id": "item.13446",
+    "wowhead_id": 13446,
+    "name": {"de": "Erheblicher Heiltrank", "en": "Major Healing Potion"},
+    "quality": "common",
+    "item_level": 55,
+    "required_level": 45,
+    "slot": "consumable",
+    "inventory_type": "consumable",
+    "item_class": "consumable",
+    "item_subclass": "potion",
+    "is_quest_item": false,
+    "source_url": "https://www.wowhead.com/classic/item=13446/major-healing-potion",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=13446/erheblicher-heiltrank",
+      "en": "https://www.wowhead.com/classic/item=13446/major-healing-potion"
+    }
+  },
+  {
+    "id": "item.17780",
+    "wowhead_id": 17780,
+    "name": {"de": "Klinge der ewigen Dunkelheit", "en": "Blade of Eternal Darkness"},
+    "quality": "rare",
+    "item_level": 54,
+    "required_level": 49,
+    "slot": "main_hand",
+    "inventory_type": "main_hand",
+    "item_class": "weapon",
+    "item_subclass": "dagger",
+    "is_quest_item": false,
+    "source_url": "https://www.wowhead.com/classic/item=17780/blade-of-eternal-darkness",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=17780/klinge-der-ewigen-dunkelheit",
+      "en": "https://www.wowhead.com/classic/item=17780/blade-of-eternal-darkness"
+    }
+  },
+  {
+    "id": "item.17783",
+    "wowhead_id": 17783,
+    "name": {"de": "Talisman der Bindungssplitter", "en": "Talisman of Binding Shard"},
+    "quality": "legendary",
+    "item_level": 80,
+    "slot": "neck",
+    "inventory_type": "neck",
+    "item_class": "armor",
+    "item_subclass": "miscellaneous",
+    "is_quest_item": false,
+    "source_url": "https://www.wowhead.com/classic/item=17783/talisman-of-binding-shard",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=17783/talisman-der-bindungssplitter",
+      "en": "https://www.wowhead.com/classic/item=17783/talisman-of-binding-shard"
+    }
+  }
+]

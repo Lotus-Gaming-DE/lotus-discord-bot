@@ -1,0 +1,6 @@
+[
+  {"id": "racial_trait", "name": {"de": "Volksf\u00e4higkeit", "en": "Racial Trait"}},
+  {"id": "class_ability", "name": {"de": "Klassenf\u00e4higkeit", "en": "Class Ability"}},
+  {"id": "talent", "name": {"de": "Talent", "en": "Talent"}},
+  {"id": "profession", "name": {"de": "Beruf", "en": "Profession"}}
+]

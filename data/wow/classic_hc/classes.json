@@ -1,0 +1,65 @@
+[
+  {
+    "id": "warrior",
+    "blizzard_id": 1,
+    "name": {"de": "Krieger", "en": "Warrior"},
+    "gender_name": {"de": {"male": "Krieger", "female": "Kriegerin"}, "en": {"male": "Warrior", "female": "Warrior"}},
+    "power_type_id": "rage"
+  },
+  {
+    "id": "paladin",
+    "blizzard_id": 2,
+    "name": {"de": "Paladin", "en": "Paladin"},
+    "gender_name": {"de": {"male": "Paladin", "female": "Paladin"}, "en": {"male": "Paladin", "female": "Paladin"}},
+    "power_type_id": "mana"
+  },
+  {
+    "id": "hunter",
+    "blizzard_id": 3,
+    "name": {"de": "J\u00e4ger", "en": "Hunter"},
+    "gender_name": {"de": {"male": "J\u00e4ger", "female": "J\u00e4gerin"}, "en": {"male": "Hunter", "female": "Hunter"}},
+    "power_type_id": "mana"
+  },
+  {
+    "id": "rogue",
+    "blizzard_id": 4,
+    "name": {"de": "Schurke", "en": "Rogue"},
+    "gender_name": {"de": {"male": "Schurke", "female": "Schurkin"}, "en": {"male": "Rogue", "female": "Rogue"}},
+    "power_type_id": "energy"
+  },
+  {
+    "id": "priest",
+    "blizzard_id": 5,
+    "name": {"de": "Priester", "en": "Priest"},
+    "gender_name": {"de": {"male": "Priester", "female": "Priesterin"}, "en": {"male": "Priest", "female": "Priest"}},
+    "power_type_id": "mana"
+  },
+  {
+    "id": "shaman",
+    "blizzard_id": 7,
+    "name": {"de": "Schamane", "en": "Shaman"},
+    "gender_name": {"de": {"male": "Schamane", "female": "Schamanin"}, "en": {"male": "Shaman", "female": "Shaman"}},
+    "power_type_id": "mana"
+  },
+  {
+    "id": "mage",
+    "blizzard_id": 8,
+    "name": {"de": "Magier", "en": "Mage"},
+    "gender_name": {"de": {"male": "Magier", "female": "Magierin"}, "en": {"male": "Mage", "female": "Mage"}},
+    "power_type_id": "mana"
+  },
+  {
+    "id": "warlock",
+    "blizzard_id": 9,
+    "name": {"de": "Hexenmeister", "en": "Warlock"},
+    "gender_name": {"de": {"male": "Hexenmeister", "female": "Hexenmeisterin"}, "en": {"male": "Warlock", "female": "Warlock"}},
+    "power_type_id": "mana"
+  },
+  {
+    "id": "druid",
+    "blizzard_id": 11,
+    "name": {"de": "Druide", "en": "Druid"},
+    "gender_name": {"de": {"male": "Druide", "female": "Druidin"}, "en": {"male": "Druid", "female": "Druid"}},
+    "power_type_id": "mana"
+  }
+]

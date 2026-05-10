@@ -1,36 +1,48 @@
 [
   {
-    "id": "dungeon.ragefire_chasm",
+    "id": "instance.maraudon",
+    "zone_id": "zone.2100",
+    "wowhead_id": 2100,
     "type": "dungeon",
-    "version": "classic_era",
-    "hardcore_valid": true,
-    "name": {
-      "de": "Flammenschlund",
-      "en": "Ragefire Chasm"
-    },
-    "level_range": "13-18",
-    "answers": {
-      "level_range": ["13-18", "13 bis 18", "13 to 18"]
-    },
-    "source": "wowhead_classic",
-    "hc_risk": "medium",
-    "hc_note": "Früher Dungeon mit engen Pulls und wenig Platz für Fehler."
+    "name": {"de": "Maraudon", "en": "Maraudon"},
+    "level_range": "45-52",
+    "minimum_level": 30,
+    "territory_id": "contested",
+    "player_count": 5,
+    "location_zone_id": "zone.405",
+    "location_text": {"de": "Desolace", "en": "Desolace"},
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=2100/maraudon",
+    "answers": {"level_range": ["45-52", "45 bis 52", "45 to 52"], "name": ["Maraudon"]}
   },
   {
-    "id": "dungeon.wailing_caverns",
+    "id": "instance.ragefire_chasm",
+    "zone_id": "zone.2437",
+    "wowhead_id": 2437,
     "type": "dungeon",
-    "version": "classic_era",
-    "hardcore_valid": true,
-    "name": {
-      "de": "Die Höhlen des Wehklagens",
-      "en": "Wailing Caverns"
-    },
-    "level_range": "17-24",
-    "answers": {
-      "level_range": ["17-24", "17 bis 24", "17 to 24"]
-    },
-    "source": "wowhead_classic",
-    "hc_risk": "high",
-    "hc_note": "Lange Wege und unübersichtliche Pulls machen den Dungeon in Hardcore riskant."
+    "name": {"de": "Der Flammenschlund", "en": "Ragefire Chasm"},
+    "level_range": "13-18",
+    "minimum_level": 8,
+    "territory_id": "horde",
+    "player_count": 5,
+    "location_text": {"de": "Orgrimmar", "en": "Orgrimmar"},
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/zone=2437/ragefire-chasm",
+    "answers": {"level_range": ["13-18", "13 bis 18", "13 to 18"], "name": ["Der Flammenschlund", "Flammenschlund", "Ragefire Chasm", "RFC"]}
+  },
+  {
+    "id": "instance.zulgurub",
+    "zone_id": "zone.1977",
+    "wowhead_id": 1977,
+    "type": "raid",
+    "name": {"de": "Zul'Gurub", "en": "Zul'Gurub"},
+    "level_range": "60",
+    "minimum_level": 50,
+    "territory_id": "contested",
+    "player_count": 20,
+    "location_text": {"de": "Schlingendorntal", "en": "Stranglethorn Vale"},
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=1977/zulgurub",
+    "answers": {"level_range": ["60", "Level 60", "Stufe 60"], "name": ["Zul'Gurub", "ZG"]}
   }
 ]

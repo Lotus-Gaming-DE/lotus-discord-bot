@@ -4,7 +4,7 @@ from typing import Dict, Any
 from lotus_bot.log_setup import get_logger
 
 from .question_state import QuestionStateManager
-from .area_providers.base import DynamicQuestionProvider
+from .area_providers.base import DynamicQuestionProvider, question_matches_context
 
 logger = get_logger(__name__)
 
@@ -31,6 +31,7 @@ class QuestionGenerator:
         area: str | None = None,
         language: str = "de",
         max_attempts: int = 20,
+        context: str = "scheduled",
     ) -> Dict[str, Any] | None:
         """Generate a new question for ``area`` in the given ``language``.
 
@@ -48,10 +49,12 @@ class QuestionGenerator:
             asked = set(self.state_manager.get_asked_questions(area))
 
             while attempts < max_attempts:
-                q = provider.generate()
+                q = self._provider_generate(provider, context)
                 attempts += 1
                 if not q:
                     break
+                if not question_matches_context(q, context):
+                    continue
                 qid = q.get("id")
                 if qid in asked:
                     logger.debug(
@@ -67,19 +70,20 @@ class QuestionGenerator:
                 )
                 await self.state_manager.reset_asked_questions(area)
                 asked.clear()
-                q = provider.generate()
+                q = self._provider_generate(provider, context)
                 if q:
                     question = q
 
             if question:
                 questions = [question]
             else:
-                questions = provider.generate_all_types()
+                questions = self._provider_generate_all_types(provider, context)
             logger.debug(
                 f"[QuestionGenerator] Dynamische Frage für '{area}': {len(questions)}"
             )
         else:
             questions = self.questions_by_area.get(language, {}).get(area, [])
+            questions = [q for q in questions if question_matches_context(q, context)]
             logger.debug(
                 f"[QuestionGenerator] Statische Fragen für '{area}': {len(questions)}"
             )
@@ -104,3 +108,20 @@ class QuestionGenerator:
             f"[QuestionGenerator] Neue Frage für '{area}': {question.get('frage')}"
         )
         return question
+
+    def _provider_generate(
+        self, provider: DynamicQuestionProvider, context: str
+    ) -> Dict[str, Any] | None:
+        try:
+            return provider.generate(context=context)
+        except TypeError:
+            return provider.generate()
+
+    def _provider_generate_all_types(
+        self, provider: DynamicQuestionProvider, context: str
+    ) -> list[Dict[str, Any]]:
+        try:
+            return provider.generate_all_types(context=context)
+        except TypeError:
+            questions = provider.generate_all_types()
+            return [q for q in questions if question_matches_context(q, context)]

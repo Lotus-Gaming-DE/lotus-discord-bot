@@ -337,6 +337,13 @@ async def answer(interaction: discord.Interaction):
         answers = question_data.answers
         answer_text = ", ".join(str(a) for a in answers)
         embed.add_field(name="Richtige Antwort", value=answer_text, inline=False)
+        if question_data.source_url:
+            label = question_data.source_label or "Quelle"
+            embed.add_field(
+                name="Quelle",
+                value=f"[{label}]({question_data.source_url})",
+                inline=False,
+            )
         embed.set_footer(text="✋ Frage durch Mod beendet.")
         await msg.edit(embed=embed, view=None)
     except Exception as e:

@@ -114,3 +114,49 @@ async def test_generate_dynamic_fallback(monkeypatch):
     assert q["id"] == 2
     assert gen.dynamic_providers["area"].calls == 1
     assert gen.dynamic_providers["area"].fallback_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_generate_filters_easy_questions_from_scheduled(monkeypatch):
+    questions = {
+        "de": {
+            "area1": [
+                {"id": 1, "frage": "easy", "antwort": "a1", "difficulty": "easy"},
+                {"id": 2, "frage": "medium", "antwort": "a2"},
+            ]
+        }
+    }
+    gen = QuestionGenerator(questions, DummyStateManager(), {})
+    monkeypatch.setattr(random, "choice", lambda seq: seq[0])
+
+    scheduled = await gen.generate("area1", context="scheduled")
+
+    assert scheduled["id"] == 2
+
+
+@pytest.mark.asyncio
+async def test_generate_allows_easy_questions_in_duel(monkeypatch):
+    questions = {
+        "de": {
+            "area1": [
+                {"id": 1, "frage": "easy", "antwort": "a1", "difficulty": "easy"},
+                {"id": 2, "frage": "medium", "antwort": "a2"},
+            ]
+        }
+    }
+    gen = QuestionGenerator(questions, DummyStateManager(), {})
+    monkeypatch.setattr(random, "choice", lambda seq: seq[0])
+
+    duel = await gen.generate("area1", context="duel")
+
+    assert duel["id"] == 1
+
+
+@pytest.mark.asyncio
+async def test_generate_keeps_legacy_questions_without_difficulty(monkeypatch):
+    gen = create_generator()
+    monkeypatch.setattr(random, "choice", lambda seq: seq[0])
+
+    q = await gen.generate("area1", context="scheduled")
+
+    assert q["id"] == 1

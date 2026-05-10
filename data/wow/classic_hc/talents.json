@@ -1,85 +1,40 @@
 [
   {
-    "id": "rogue.riposte",
-    "type": "talent",
-    "version": "classic_era",
-    "hardcore_valid": true,
-    "class": {
-      "de": "Schurke",
-      "en": "Rogue"
-    },
-    "tree": {
-      "de": "Kampf",
-      "en": "Combat"
-    },
-    "name": {
-      "de": "Riposte",
-      "en": "Riposte"
-    },
-    "description": {
-      "de": "Ein Angriff, der aktiv wird, nachdem Ihr den Angriff eines Gegners pariert habt.",
-      "en": "An attack that becomes active after parrying an opponent's attack."
-    },
-    "answers": {
-      "name": ["Riposte"],
-      "tree": ["Kampf", "Combat"]
-    },
-    "source": "wowhead_classic",
-    "hc_note": "Riposte ist beim Leveln beliebt, weil es Schaden und Kontrolle verbindet."
-  },
-  {
     "id": "rogue.precision",
-    "type": "talent",
-    "version": "classic_era",
+    "spell_id": "spell.13845",
+    "class_id": "rogue",
+    "tree_id": "rogue.combat",
+    "rank": 5,
     "hardcore_valid": true,
-    "class": {
-      "de": "Schurke",
-      "en": "Rogue"
-    },
-    "tree": {
-      "de": "Kampf",
-      "en": "Combat"
-    },
-    "name": {
-      "de": "Präzision",
-      "en": "Precision"
-    },
-    "description": {
-      "de": "Erhöht Eure Chance, mit Waffen zu treffen.",
-      "en": "Increases your chance to hit with weapons."
-    },
-    "answers": {
-      "name": ["Präzision", "Precision"],
-      "tree": ["Kampf", "Combat"]
-    },
-    "source": "wowhead_classic"
+    "answers": {"name": ["Pr\u00e4zision", "Precision"], "tree": ["Kampf", "Combat"]},
+    "hc_note": "Trefferchance ist beim Leveln und in Dungeons sp\u00fcrbar, weil verfehlte Angriffe in Hardcore schnell gef\u00e4hrlich werden."
   },
   {
-    "id": "mage.ice_block",
-    "type": "talent",
-    "version": "classic_era",
+    "id": "mage.cold_snap",
+    "spell_id": "spell.12472",
+    "class_id": "mage",
+    "tree_id": "mage.frost",
     "hardcore_valid": true,
-    "class": {
-      "de": "Magier",
-      "en": "Mage"
-    },
-    "tree": {
-      "de": "Frost",
-      "en": "Frost"
-    },
-    "name": {
-      "de": "Eisblock",
-      "en": "Ice Block"
-    },
-    "description": {
-      "de": "Ihr werdet von Eis umschlossen und seid kurzzeitig gegen Angriffe und Zauber immun.",
-      "en": "You become encased in ice, briefly immune to attacks and spells."
-    },
-    "answers": {
-      "name": ["Eisblock", "Ice Block"],
-      "tree": ["Frost"]
-    },
-    "source": "wowhead_classic",
-    "hc_note": "Eisblock ist einer der stärksten defensiven Notfallknöpfe in Hardcore."
+    "answers": {"name": ["K\u00e4lteeinbruch", "Cold Snap"], "tree": ["Frost"]},
+    "hc_note": "Sehr stark als Notfallknopf, weil Frost-Cooldowns erneut verf\u00fcgbar werden k\u00f6nnen."
+  },
+  {
+    "id": "warrior.anger_management",
+    "spell_id": "spell.12296",
+    "class_id": "warrior",
+    "tree_id": "warrior.arms",
+    "hardcore_valid": true,
+    "answers": {"name": ["Wutkontrolle", "Anger Management"], "tree": ["Waffen", "Arms"]},
+    "hc_note": "Beim Leveln angenehm, weil Krieger zwischen Pulls weniger Tempo verlieren."
+  },
+  {
+    "id": "priest.spirit_tap",
+    "spell_id": "spell.15336",
+    "class_id": "priest",
+    "tree_id": "priest.shadow",
+    "rank": 5,
+    "hardcore_valid": true,
+    "answers": {"name": ["Willensentzug", "Spirit Tap"], "tree": ["Schatten", "Shadow"]},
+    "hc_note": "Ein klassisches Leveling-Talent, weil weniger Trinkpausen das Risiko langer Sessions senkt."
   }
 ]

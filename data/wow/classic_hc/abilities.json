@@ -1,47 +1,5 @@
 [
-  {
-    "id": "rogue.vanish",
-    "type": "ability",
-    "version": "classic_era",
-    "hardcore_valid": true,
-    "class": {
-      "de": "Schurke",
-      "en": "Rogue"
-    },
-    "name": {
-      "de": "Verschwinden",
-      "en": "Vanish"
-    },
-    "description": {
-      "de": "Lässt den Schurken aus dem Kampf verschwinden und in Verstohlenheit gehen.",
-      "en": "Allows the rogue to vanish from combat and enter stealth."
-    },
-    "answers": {
-      "class": ["Schurke", "Schurkin", "Rogue"]
-    },
-    "source": "wowhead_classic",
-    "hc_note": "Verschwinden ist ein zentraler Notfallknopf beim Hardcore-Leveln."
-  },
-  {
-    "id": "mage.blink",
-    "type": "ability",
-    "version": "classic_era",
-    "hardcore_valid": true,
-    "class": {
-      "de": "Magier",
-      "en": "Mage"
-    },
-    "name": {
-      "de": "Blinzeln",
-      "en": "Blink"
-    },
-    "description": {
-      "de": "Teleportiert den Magier ein kurzes Stück nach vorne.",
-      "en": "Teleports the mage forward a short distance."
-    },
-    "answers": {
-      "class": ["Magier", "Mage"]
-    },
-    "source": "wowhead_classic"
-  }
+  {"id": "rogue.vanish", "spell_id": "spell.1856", "class_id": "rogue", "hardcore_valid": true, "answers": {"class": ["Schurke", "Schurkin", "Rogue"], "name": ["Verschwinden", "Vanish"]}},
+  {"id": "mage.blink", "spell_id": "spell.1953", "class_id": "mage", "hardcore_valid": true, "answers": {"class": ["Magier", "Mage"], "name": ["Blinzeln", "Blink"]}},
+  {"id": "hunter.feign_death", "spell_id": "spell.5384", "class_id": "hunter", "hardcore_valid": true, "answers": {"class": ["J\u00e4ger", "Hunter"], "name": ["Totstellen", "Feign Death", "FD"]}}
 ]

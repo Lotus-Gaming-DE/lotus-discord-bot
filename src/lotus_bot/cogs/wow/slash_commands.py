@@ -54,7 +54,11 @@ async def status(interaction: discord.Interaction):
 
     info = await cog.status()
     channel_id = info.get("channel_id")
+    officer_channel_id = info.get("officer_channel_id")
     channel_text = f"<#{channel_id}>" if channel_id else "nicht konfiguriert"
+    officer_channel_text = (
+        f"<#{officer_channel_id}>" if officer_channel_id else "nicht konfiguriert"
+    )
     last_scan = info.get("last_scan_at") or "noch nie"
     interval_hours = int(info["poll_interval"]) // 3600
     await interaction.response.send_message(
@@ -63,6 +67,7 @@ async def status(interaction: discord.Interaction):
                 f"Guild: **{info['guild']}**",
                 f"Realm: **{info['realm']}**",
                 f"Channel: {channel_text}",
+                f"Offi-Channel: {officer_channel_text}",
                 f"Letzter Scan: {last_scan}",
                 f"Mitglieder im Snapshot: {info['member_count']}",
                 f"Polling: alle {interval_hours} Stunden",

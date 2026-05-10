@@ -1,0 +1,11 @@
+[
+  {
+    "id": "alchemy.major_healing_potion",
+    "profession_id": "alchemy",
+    "spell_id": "spell.17556",
+    "learned_from": "recipe",
+    "required_skill": 275,
+    "creates_item_id": "item.13446",
+    "hardcore_valid": true
+  }
+]

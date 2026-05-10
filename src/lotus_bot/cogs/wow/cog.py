@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import random
 from dataclasses import dataclass
 
 import discord
@@ -9,7 +10,13 @@ from discord.ext import commands
 from lotus_bot.log_setup import get_logger
 from lotus_bot.utils.managed_cog import ManagedTaskCog
 
-from .api import DEFAULT_LOCALE, DEFAULT_NAMESPACE, fetch_guild_roster
+from .api import (
+    DEFAULT_LOCALE,
+    DEFAULT_NAMESPACE,
+    WoWAPIError,
+    fetch_character_profile,
+    fetch_guild_roster,
+)
 from .data import CharacterClaim, RosterMember, WoWData, parse_roster_member
 
 logger = get_logger(__name__)
@@ -19,7 +26,53 @@ DEFAULT_GUILD_SLUG = "black-lotus"
 DEFAULT_GUILD_NAME = "Black Lotus"
 DEFAULT_POLL_INTERVAL = 3 * 60 * 60
 DEFAULT_CLAIM_REVIEW_CHANNEL_ID = 1184115540822855772
-MILESTONE_LEVELS = {30, 40, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60}
+MILESTONE_LEVELS = {30, 40, 50, 60}
+
+CLASS_NAMES_DE = {
+    1: "Krieger",
+    2: "Paladin",
+    3: "Jäger",
+    4: "Schurke",
+    5: "Priester",
+    7: "Schamane",
+    8: "Magier",
+    9: "Hexenmeister",
+    11: "Druide",
+}
+RACE_NAMES_DE = {
+    1: "Mensch",
+    2: "Orc",
+    3: "Zwerg",
+    4: "Nachtelf",
+    5: "Untoter",
+    6: "Tauren",
+    7: "Gnom",
+    8: "Troll",
+}
+DIGEST_OPENERS = [
+    "Schaut mal, was sich bei uns bewegt hat:",
+    "Bei Black Lotus gibt es Neuigkeiten:",
+    "Aus der Gilde gibt es frische Meldungen:",
+    "Heute hat sich bei Black Lotus wieder etwas getan:",
+    "Ein kurzer Blick ins Gildenleben:",
+    "Unsere Hardcore-Reise geht weiter:",
+    "Neue Bewegung bei Black Lotus:",
+    "Aus Soulseeker gibt es Neues:",
+    "Die Gilde war wieder fleißig:",
+    "Hier kommt das aktuelle Black-Lotus-Update:",
+]
+DIGEST_CLOSERS = [
+    "Wir gratulieren ganz herzlich!",
+    "Stark gemacht, weiter so!",
+    "Black Lotus gratuliert!",
+    "Auf viele weitere sichere Level!",
+    "Möge der nächste Pull gnädig sein.",
+    "Sehr schön, wir feiern mit!",
+    "Weiterhin sichere Wege da draußen!",
+    "Das sieht nach Fortschritt aus.",
+    "Wir freuen uns mit euch!",
+    "Sauber, Black Lotus!",
+]
 
 
 @dataclass
@@ -29,9 +82,36 @@ class Milestone:
 
 
 @dataclass
+class DeathEvent:
+    member: RosterMember
+    confirmed: bool = True
+
+
+@dataclass
+class OfficerNote:
+    member: RosterMember
+    message: str
+
+
+@dataclass
+class ActivityDiff:
+    new_members: list[RosterMember]
+    milestones: list[Milestone]
+    deaths: list[DeathEvent]
+    officer_notes: list[OfficerNote]
+
+    @property
+    def public_count(self) -> int:
+        return len(self.new_members) + len(self.milestones) + len(self.deaths)
+
+
+@dataclass
 class ScanResult:
     member_count: int
     milestones: list[Milestone]
+    new_members: list[RosterMember] | None = None
+    deaths: list[DeathEvent] | None = None
+    officer_notes: list[OfficerNote] | None = None
     posted: int = 0
 
 
@@ -97,29 +177,57 @@ class WoWCog(ManagedTaskCog):
         return [member for member in members if member is not None]
 
     async def scan(self, *, post: bool = True, persist: bool = True) -> ScanResult:
-        """Fetch the roster, detect milestones, optionally post and persist them."""
+        """Fetch the roster, detect activity, optionally post and persist it."""
         async with self._scan_lock:
             previous = await self.data.get_snapshot()
             current = await self.fetch_roster()
-            milestones = await self._detect_milestones(previous, current)
+            activity = await self._detect_activity(previous, current)
             posted = 0
 
-            if post and milestones:
-                posted = await self._post_milestones(milestones)
-                for milestone in milestones[:posted]:
-                    await self.data.record_milestone(
-                        milestone.member.character_key, milestone.level
-                    )
-                if posted < len(milestones):
+            if post and activity.public_count:
+                posted = await self._post_activity_digest(activity)
+                if posted:
+                    await self._record_public_events(activity)
+                else:
                     persist = False
+
+            if post and activity.officer_notes:
+                await self._post_officer_notes(activity.officer_notes)
 
             if persist:
                 await self.data.replace_snapshot(current)
                 await self.data.mark_scanned()
 
             return ScanResult(
-                member_count=len(current), milestones=milestones, posted=posted
+                member_count=len(current),
+                milestones=activity.milestones,
+                new_members=activity.new_members,
+                deaths=activity.deaths,
+                officer_notes=activity.officer_notes,
+                posted=posted,
             )
+
+    async def _detect_activity(
+        self,
+        previous: dict[str, RosterMember],
+        current: list[RosterMember],
+    ) -> ActivityDiff:
+        current_by_key = {member.character_key: member for member in current}
+        new_members = [
+            member for member in current if member.character_key not in previous
+        ]
+        milestones = await self._detect_milestones(previous, current)
+        deaths = await self._detect_roster_deaths(previous, current)
+        missing_deaths, officer_notes = await self._inspect_missing_members(
+            previous, current_by_key
+        )
+        deaths.extend(missing_deaths)
+        return ActivityDiff(
+            new_members=new_members,
+            milestones=milestones,
+            deaths=deaths,
+            officer_notes=officer_notes,
+        )
 
     async def _detect_milestones(
         self,
@@ -141,7 +249,82 @@ class WoWCog(ManagedTaskCog):
                     milestones.append(Milestone(member=member, level=level))
         return milestones
 
-    async def _post_milestones(self, milestones: list[Milestone]) -> int:
+    async def _detect_roster_deaths(
+        self,
+        previous: dict[str, RosterMember],
+        current: list[RosterMember],
+    ) -> list[DeathEvent]:
+        deaths: list[DeathEvent] = []
+        for member in current:
+            old = previous.get(member.character_key)
+            if (
+                member.is_ghost
+                and (old is None or not old.is_ghost)
+                and not await self.data.death_exists(member.character_key)
+            ):
+                deaths.append(DeathEvent(member))
+        return deaths
+
+    async def _inspect_missing_members(
+        self,
+        previous: dict[str, RosterMember],
+        current_by_key: dict[str, RosterMember],
+    ) -> tuple[list[DeathEvent], list[OfficerNote]]:
+        deaths: list[DeathEvent] = []
+        notes: list[OfficerNote] = []
+        for member in previous.values():
+            if member.character_key in current_by_key:
+                continue
+            if await self.data.death_exists(member.character_key):
+                continue
+            state = await self._profile_life_state(member)
+            if state == "dead":
+                deaths.append(DeathEvent(member, confirmed=True))
+            elif state == "alive":
+                notes.append(
+                    OfficerNote(
+                        member,
+                        f"{member.name} ist nicht mehr Teil von {self.guild_name}.",
+                    )
+                )
+            else:
+                deaths.append(DeathEvent(member, confirmed=False))
+        return deaths, notes
+
+    async def _profile_life_state(self, member: RosterMember) -> str:
+        try:
+            profile = await fetch_character_profile(
+                member.realm_slug,
+                member.name,
+                namespace=self.namespace,
+                locale=self.locale,
+            )
+        except WoWAPIError as exc:
+            logger.info(
+                "[WoWCog] Could not inspect missing character %s: %s",
+                member.name,
+                exc,
+            )
+            return "unknown"
+        except Exception as exc:
+            logger.info(
+                "[WoWCog] Profile inspection failed for %s: %s",
+                member.name,
+                exc,
+                exc_info=True,
+            )
+            return "unknown"
+        return "dead" if self._profile_is_dead(profile) else "alive"
+
+    def _profile_is_dead(self, profile: dict) -> bool:
+        return bool(
+            profile.get("is_ghost")
+            or profile.get("is_dead")
+            or profile.get("dead")
+            or profile.get("ghost")
+        )
+
+    async def _post_activity_digest(self, activity: ActivityDiff) -> int:
         channel_id = await self.get_announcement_channel_id()
         if channel_id is None:
             logger.warning("[WoWCog] No announcement channel configured.")
@@ -151,32 +334,114 @@ class WoWCog(ManagedTaskCog):
             logger.warning("[WoWCog] Announcement channel %s not found.", channel_id)
             return 0
 
+        try:
+            await channel.send(await self.format_activity_digest(activity))
+        except discord.Forbidden:
+            logger.warning(
+                "[WoWCog] Missing access to announcement channel %s.",
+                channel_id,
+            )
+            return 0
+        except discord.HTTPException as exc:
+            logger.warning(
+                "[WoWCog] Could not post activity digest to channel %s: %s",
+                channel_id,
+                exc,
+                exc_info=True,
+            )
+            return 0
+        return 1
+
+    async def _post_milestones(self, milestones: list[Milestone]) -> int:
+        activity = ActivityDiff(
+            new_members=[], milestones=milestones, deaths=[], officer_notes=[]
+        )
+        return await self._post_activity_digest(activity)
+
+    async def _post_officer_notes(self, notes: list[OfficerNote]) -> int:
+        channel_id = await self.get_claim_review_channel_id()
+        channel = self.bot.get_channel(channel_id)
+        if not channel:
+            logger.warning("[WoWCog] Claim review channel %s not found.", channel_id)
+            return 0
         posted = 0
-        for milestone in milestones:
+        for note in notes:
             try:
-                await channel.send(self.format_milestone(milestone))
-            except discord.Forbidden:
+                await channel.send(f"⚠️ {note.message}")
+            except (discord.Forbidden, discord.HTTPException) as exc:
                 logger.warning(
-                    "[WoWCog] Missing access to announcement channel %s.",
-                    channel_id,
-                )
-                break
-            except discord.HTTPException as exc:
-                logger.warning(
-                    "[WoWCog] Could not post milestone to channel %s: %s",
+                    "[WoWCog] Could not post officer note to channel %s: %s",
                     channel_id,
                     exc,
-                    exc_info=True,
                 )
                 break
             posted += 1
         return posted
 
+    async def _record_public_events(self, activity: ActivityDiff) -> None:
+        for milestone in activity.milestones:
+            await self.data.record_milestone(
+                milestone.member.character_key, milestone.level
+            )
+        for death in activity.deaths:
+            await self.data.record_death(death.member.character_key)
+
     def format_milestone(self, milestone: Milestone) -> str:
+        return self._format_milestone_line(milestone, None)
+
+    async def format_activity_digest(self, activity: ActivityDiff) -> str:
+        lines = [random.choice(DIGEST_OPENERS), ""]
+        for member in activity.new_members:
+            lines.append(f"- {self._format_new_member_line(member)}")
+        for milestone in activity.milestones:
+            claim = await self.data.get_claim(milestone.member.character_key)
+            lines.append(f"- {self._format_milestone_line(milestone, claim)}")
+        for death in activity.deaths:
+            lines.append(f"- {self._format_death_line(death)}")
+        lines.extend(["", random.choice(DIGEST_CLOSERS)])
+        return "\n".join(lines)
+
+    def _format_new_member_line(self, member: RosterMember) -> str:
         return (
-            f"{milestone.member.name} hat Level {milestone.level} erreicht. "
-            f"{self.guild_name} gratuliert herzlich!"
+            "Wir begrüßen ganz herzlich den neuen Char "
+            f"**{self._display_character(member)}** bei uns in der Gilde!"
         )
+
+    def _format_milestone_line(
+        self, milestone: Milestone, claim: CharacterClaim | None
+    ) -> str:
+        character = self._display_character(milestone.member)
+        if claim:
+            return (
+                f"<@{claim.discord_user_id}> hat mit **{character}** "
+                f"Level **{milestone.level}** erreicht."
+            )
+        return f"**{character}** ist auf Level **{milestone.level}** aufgestiegen."
+
+    def _format_death_line(self, death: DeathEvent) -> str:
+        character = self._display_character(death.member)
+        level = death.member.level
+        if not death.confirmed:
+            return (
+                f"**{character}** ist auf Level **{level}** aus dem Roster "
+                "verschwunden und nicht mehr auffindbar. Wir gehen davon aus, "
+                "dass die Hardcore-Reise geendet hat."
+            )
+        return (
+            f"**{character}** ist auf Level **{level}** gestorben. "
+            "Wir trinken einen Heiltrank auf den Mut."
+        )
+
+    def _display_character(self, member: RosterMember) -> str:
+        parts = []
+        race = RACE_NAMES_DE.get(member.race_id)
+        class_name = CLASS_NAMES_DE.get(member.class_id)
+        if race:
+            parts.append(race)
+        if class_name:
+            parts.append(class_name)
+        parts.append(member.name)
+        return " ".join(parts)
 
     async def claim_character(
         self, discord_user_id: int, char_name: str
@@ -266,6 +531,7 @@ class WoWCog(ManagedTaskCog):
             "guild": self.guild_name,
             "realm": self.realm_slug,
             "channel_id": channel_id,
+            "officer_channel_id": await self.get_claim_review_channel_id(),
             "last_scan_at": await self.data.last_scan_at(),
             "member_count": await self.data.member_count(),
             "poll_interval": self.poll_interval,

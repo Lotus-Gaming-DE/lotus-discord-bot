@@ -1,0 +1,32 @@
+[
+  {
+    "id": "zone.47",
+    "wowhead_id": 47,
+    "name": {"de": "Hinterland", "en": "The Hinterlands"},
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "contested",
+    "level_range": "40-50",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=47/hinterland"
+  },
+  {
+    "id": "zone.1657",
+    "wowhead_id": 1657,
+    "name": {"de": "Darnassus", "en": "Darnassus"},
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "city",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=1657/darnassus"
+  },
+  {
+    "id": "zone.3277",
+    "wowhead_id": 3277,
+    "name": {"de": "Warsongschlucht", "en": "Warsong Gulch"},
+    "territory_id": "contested",
+    "type": "battleground",
+    "hardcore_enabled": false,
+    "source_url": "https://www.wowhead.com/classic/de/zone=3277/warsongschlucht"
+  }
+]

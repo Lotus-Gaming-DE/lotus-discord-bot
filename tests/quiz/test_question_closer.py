@@ -79,6 +79,8 @@ async def test_close_question_adds_user_answer():
         end_time=datetime.datetime.utcnow(),
         answers=["yes"],
         frage="f",
+        source_url="https://www.wowhead.com/classic/spell=1856/vanish",
+        source_label="Wowhead - Verschwinden",
     )
     bot.quiz_cog.current_questions["area"] = qinfo
 
@@ -95,6 +97,10 @@ async def test_close_question_adds_user_answer():
     embed = message.edited["embed"]
     fields = {f.name: f.value for f in embed.fields}
     assert fields.get("Richtige Antwort") == "yes"
+    assert (
+        fields.get("Quelle")
+        == "[Wowhead - Verschwinden](https://www.wowhead.com/classic/spell=1856/vanish)"
+    )
     assert fields.get("Eingegebene Antwort") == "ja"
     assert embed.footer.text.startswith("✅ Tester")
     assert state.cleared == ["area"]

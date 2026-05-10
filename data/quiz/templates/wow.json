@@ -1,14 +1,46 @@
 {
   "de": {
-    "talent_tree": "Zu welchem Talentbaum gehört das Talent '{talent_name}'?",
-    "talent_description": "\"{description}\" - Welches Talent ist gesucht?",
+    "race_faction": "Zu welcher Fraktion gehört das Volk '{race_name}'?",
+    "racial_trait_description": "\"{description}\" - Welche Rasse besitzt diese Volksfähigkeit?",
+    "race_class_allowed": "Kann ein {race_name} in WoW Classic die Klasse {class_name} spielen?",
+    "class_power_type": "Welche Ressource nutzt die Klasse '{class_name}' hauptsächlich?",
+    "talent_tree": "Zu welchem Talentbaum gehört das {class_name}-Talent '{talent_name}'?",
+    "talent_class": "Welche Klasse besitzt das Talent '{talent_name}'?",
+    "talent_description": "\"{description}\" - Welches {class_name}-Talent aus dem Baum {tree_name} ist gesucht?",
     "ability_class": "Welche Klasse besitzt die Fähigkeit '{ability_name}'?",
-    "dungeon_level": "Welcher Levelbereich wird für '{dungeon_name}' empfohlen?"
+    "ability_required_level": "Ab welchem Level kann ein {class_name} '{ability_name}' benutzen?",
+    "ability_description": "\"{description}\" - Welche Fähigkeit der Klasse {class_name} ist gesucht?",
+    "zone_continent": "Auf welchem Kontinent befindet sich das Gebiet '{zone_name}'?",
+    "zone_level_fit": "Ich bin Level {level} und im Gebiet '{zone_name}' unterwegs. Passt das Gebiet ungefähr zu meinem Level?",
+    "zone_type": "Ist '{zone_name}' eine Stadt, Outdoor-Zone, Instanz oder ein Schlachtfeld?",
+    "instance_level_fit": "Ich bin Level {level} und möchte in '{instance_name}'. Passt diese Instanz ungefähr zu meinem Level?",
+    "instance_players": "Für wie viele Spieler ist '{instance_name}' vorgesehen?",
+    "instance_location": "Wo befindet sich '{instance_name}'?",
+    "drop_instance": "In welchem Dungeon oder Raid droppt der Item-Typ {item_type} '{item_name}'?",
+    "drop_source": "Welcher Boss oder welche Quelle droppt '{item_name}' in {instance_name}?",
+    "item_subclass": "Welcher Item-Typ oder Subtyp ist '{item_name}'?",
+    "item_required_level": "Ab welchem Level kann '{item_name}' getragen oder benutzt werden?"
   },
   "en": {
-    "talent_tree": "Which talent tree contains the talent '{talent_name}'?",
-    "talent_description": "\"{description}\" - Which talent is being asked for?",
+    "race_faction": "Which faction does the race '{race_name}' belong to?",
+    "racial_trait_description": "\"{description}\" - Which race has this racial trait?",
+    "race_class_allowed": "Can a {race_name} play the class {class_name} in WoW Classic?",
+    "class_power_type": "Which primary resource does the class '{class_name}' use?",
+    "talent_tree": "Which talent tree contains the {class_name} talent '{talent_name}'?",
+    "talent_class": "Which class has the talent '{talent_name}'?",
+    "talent_description": "\"{description}\" - Which {class_name} talent from the {tree_name} tree is being asked for?",
     "ability_class": "Which class has the ability '{ability_name}'?",
-    "dungeon_level": "Which level range is recommended for '{dungeon_name}'?"
+    "ability_required_level": "At what level can a {class_name} use '{ability_name}'?",
+    "ability_description": "\"{description}\" - Which {class_name} ability is being asked for?",
+    "zone_continent": "On which continent is the zone '{zone_name}' located?",
+    "zone_level_fit": "I am level {level} and questing in '{zone_name}'. Does this zone roughly fit my level?",
+    "zone_type": "Is '{zone_name}' a city, outdoor zone, instance, or battleground?",
+    "instance_level_fit": "I am level {level} and want to run '{instance_name}'. Does this instance roughly fit my level?",
+    "instance_players": "How many players is '{instance_name}' intended for?",
+    "instance_location": "Where is '{instance_name}' located?",
+    "drop_instance": "In which dungeon or raid does the {item_type} '{item_name}' drop?",
+    "drop_source": "Which boss or source drops '{item_name}' in {instance_name}?",
+    "item_subclass": "What item type or subtype is '{item_name}'?",
+    "item_required_level": "At what level can '{item_name}' be equipped or used?"
   }
 }

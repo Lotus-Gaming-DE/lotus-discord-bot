@@ -1,0 +1,5 @@
+[
+  {"id": "alchemy", "spell_id": "spell.2259", "name": {"de": "Alchemie", "en": "Alchemy"}, "type": "primary"},
+  {"id": "blacksmithing", "name": {"de": "Schmiedekunst", "en": "Blacksmithing"}, "type": "primary"},
+  {"id": "cooking", "name": {"de": "Kochkunst", "en": "Cooking"}, "type": "secondary"}
+]

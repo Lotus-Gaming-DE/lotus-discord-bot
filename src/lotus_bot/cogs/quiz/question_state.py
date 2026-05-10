@@ -1,9 +1,9 @@
 # cogs/quiz/question_state.py
 
+import asyncio
+import datetime
 import json
 import os
-import datetime
-import asyncio
 from dataclasses import dataclass
 from typing import Optional
 
@@ -20,7 +20,10 @@ class QuestionInfo:
     end_time: datetime.datetime
     answers: list[str]
     frage: str
-    category: str = "–"
+    category: str = "-"
+    source_url: str | None = None
+    source_label: str | None = None
+    difficulty: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -29,6 +32,9 @@ class QuestionInfo:
             "answers": self.answers,
             "frage": self.frage,
             "category": self.category,
+            "source_url": self.source_url,
+            "source_label": self.source_label,
+            "difficulty": self.difficulty,
         }
 
     @classmethod
@@ -38,7 +44,10 @@ class QuestionInfo:
             end_time=datetime.datetime.fromisoformat(data["end_time"]),
             answers=list(data.get("answers", [])),
             frage=data.get("frage", ""),
-            category=data.get("category", "–"),
+            category=data.get("category", "-"),
+            source_url=data.get("source_url"),
+            source_label=data.get("source_label"),
+            difficulty=data.get("difficulty"),
         )
 
 
@@ -79,8 +88,6 @@ class QuestionStateManager:
                     exc_info=True,
                 )
 
-    # ── Aktive Fragen ─────────────────────────────────────────────
-
     async def set_active_question(self, area: str, question: QuestionInfo) -> None:
         """Remember the currently active question for an area."""
         self.state["active"][area] = question.to_dict()
@@ -98,8 +105,6 @@ class QuestionStateManager:
             self.state["active"].pop(area, None)
             logger.info(f"[QuestionState] Active question in '{area}' removed.")
             await self._save_state()
-
-    # ── Historie ───────────────────────────────────────────────────
 
     async def mark_question_as_asked(self, area: str, question_id: int) -> None:
         """Add ``question_id`` to the history of ``area``."""
@@ -121,16 +126,10 @@ class QuestionStateManager:
         logger.info(f"[QuestionState] History for '{area}' reset.")
         await self._save_state()
 
-    # ── Fragefilterung ────────────────────────────────────────────
-
     def filter_unasked_questions(self, area: str, questions: list[dict]) -> list[dict]:
-        """
-        Gibt nur Fragen zurück, die noch nicht gestellt wurden (basierend auf ID).
-        """
+        """Return questions not yet asked in ``area`` based on ID."""
         asked_ids = set(self.get_asked_questions(area))
         return [q for q in questions if q.get("id") not in asked_ids]
-
-    # ── Scheduler-Daten ──────────────────────────────────────────
 
     async def set_schedule(
         self, area: str, post_time: datetime.datetime, window_end: datetime.datetime
@@ -167,5 +166,5 @@ class QuestionStateManager:
         """Remove stored schedule info for ``area``."""
         if area in self.state.get("schedules", {}):
             self.state["schedules"].pop(area, None)
-            logger.debug(f"[QuestionState] Schedule f\u00fcr '{area}' gel\u00f6scht.")
+            logger.debug(f"[QuestionState] Schedule für '{area}' gelöscht.")
             await self._save_state()
