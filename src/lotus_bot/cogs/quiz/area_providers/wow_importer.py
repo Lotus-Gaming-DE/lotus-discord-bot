@@ -32,7 +32,6 @@ ALL_TABLES = (
     "power_types",
     "profession_recipes",
     "professions",
-    "race_classes",
     "races",
     "racial_traits",
     "spell_categories",
@@ -94,6 +93,17 @@ RACE_IDS = {
     8: "troll",
 }
 
+RACE_CLASS_IDS = {
+    "human": ["mage", "paladin", "priest", "rogue", "warlock", "warrior"],
+    "orc": ["hunter", "rogue", "shaman", "warlock", "warrior"],
+    "dwarf": ["hunter", "paladin", "priest", "rogue", "warrior"],
+    "night_elf": ["druid", "hunter", "priest", "rogue", "warrior"],
+    "undead": ["mage", "priest", "rogue", "warlock", "warrior"],
+    "tauren": ["druid", "hunter", "shaman", "warrior"],
+    "gnome": ["mage", "rogue", "warlock", "warrior"],
+    "troll": ["hunter", "mage", "priest", "rogue", "shaman", "warrior"],
+}
+
 CLASS_SLUGS = {
     "warrior": "warrior",
     "paladin": "paladin",
@@ -135,6 +145,32 @@ PROFESSIONS = {
     "cooking": {"type": "secondary", "de": "Kochkunst", "en": "Cooking"},
     "first-aid": {"type": "secondary", "de": "Erste Hilfe", "en": "First Aid"},
     "fishing": {"type": "secondary", "de": "Angeln", "en": "Fishing"},
+}
+
+PROFESSION_SKILLLINE_IDS = {
+    "alchemy": 171,
+    "blacksmithing": 164,
+    "cooking": 185,
+    "enchanting": 333,
+    "engineering": 202,
+    "first-aid": 129,
+    "fishing": 356,
+    "herbalism": 182,
+    "leatherworking": 165,
+    "mining": 186,
+    "skinning": 393,
+    "tailoring": 197,
+}
+
+RECIPE_PROFESSION_IDS = {
+    "alchemy",
+    "blacksmithing",
+    "cooking",
+    "enchanting",
+    "engineering",
+    "leatherworking",
+    "mining",
+    "tailoring",
 }
 
 ZONE_LIST_URLS = {
@@ -226,6 +262,9 @@ SLOT_BY_ID = {
     28: "relic",
 }
 
+ARMOR_SLOT_IDS = {1, 3, 5, 6, 7, 8, 9, 10, 16, 20, 23}
+WEAPON_SLOT_IDS = {13, 15, 17, 21, 22, 26}
+
 TERRITORY_BY_LABEL = {
     "allianz": "alliance",
     "alliance": "alliance",
@@ -273,7 +312,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 async def run_import(args: argparse.Namespace) -> ImportResult:
-    current = load_wow_data(args.data_path)
+    current = load_managed_tables(Path(args.data_path))
+    strip_legacy_source_urls(current)
     fetcher = WowheadFetcher(
         cache_path=Path(getattr(args, "cache_path", DEFAULT_CACHE_PATH)),
         use_cache=not getattr(args, "no_cache", False),
@@ -312,8 +352,9 @@ async def run_import(args: argparse.Namespace) -> ImportResult:
             )
         result = _combine_results(slice_result, result)
 
+    strip_legacy_source_urls(result.data)
+    assert_valid_wow_data(result.data)
     if args.write:
-        assert_valid_wow_data(result.data)
         write_tables(result.data, Path(args.data_path), ALL_TABLES)
         assert_valid_wow_data(load_wow_data(args.data_path))
 
@@ -430,10 +471,14 @@ async def _fetch_text(session: aiohttp.ClientSession, url: str) -> str:
 def import_base(current: dict[str, list[dict[str, Any]]]) -> ImportResult:
     data = copy.deepcopy(current)
     result = ImportResult(data=data)
+    races = []
+    for race in data.get("races", []):
+        updated_race = copy.deepcopy(race)
+        updated_race["class_ids"] = RACE_CLASS_IDS.get(updated_race.get("id"), [])
+        races.append(updated_race)
     records = {
         "classes": data.get("classes", []),
-        "races": data.get("races", []),
-        "race_classes": data.get("race_classes", []),
+        "races": races,
         "factions": data.get("factions", []),
         "power_types": data.get("power_types", []),
         "spell_categories": [
@@ -445,7 +490,7 @@ def import_base(current: dict[str, list[dict[str, Any]]]) -> ImportResult:
         added, updated = merge_records(data.setdefault(table, []), rows)
         result.added[table] = added
         result.updated[table] = updated
-    assert_valid_wow_data(data)
+    strip_legacy_source_urls(data)
     return result
 
 
@@ -476,7 +521,7 @@ def import_zones(
     added, updated = merge_records(data.setdefault("zones", []), zones)
     result.added["zones"] = added
     result.updated["zones"] = updated
-    assert_valid_wow_data(data)
+    strip_legacy_source_urls(data)
     return result
 
 
@@ -619,7 +664,7 @@ def import_spells(
         added, updated = merge_records(data.setdefault(table, []), rows)
         result.added[table] = added
         result.updated[table] = updated
-    assert_valid_wow_data(data)
+    strip_legacy_source_urls(data)
     return result
 
 
@@ -641,19 +686,24 @@ def import_professions(
     ]
     spells: list[dict[str, Any]] = []
     items: list[dict[str, Any]] = []
-    recipes: list[dict[str, Any]] = []
+    recipes_by_spell: dict[str, dict[str, Any]] = {}
 
-    for profession_id in PROFESSIONS:
+    for profession_id in sorted(RECIPE_PROFESSION_IDS):
         path = f"/spells/professions/{profession_id}"
         localized = pages[path]
         de_rows = extract_spell_rows(localized["de"])
         en_rows = {row["id"]: row for row in extract_spell_rows(localized["en"])}
         de_spell_data = extract_gatherer_spell_data(localized["de"])
         en_spell_data = extract_gatherer_spell_data(localized["en"])
+        de_item_data = extract_gatherer_item_data(localized["de"])
+        en_item_data = extract_gatherer_item_data(localized["en"])
         for row in de_rows:
             if not _is_classic_era_spell(row):
                 continue
             if "creates" not in row:
+                continue
+            recipe_profession_id = _profession_from_skillline(row)
+            if recipe_profession_id != profession_id:
                 continue
             en_row = en_rows.get(row["id"], {})
             spell = normalize_spell(
@@ -663,36 +713,58 @@ def import_professions(
                 de_spell_data.get(row["id"], {}),
                 en_spell_data.get(row["id"], {}),
             )
-            item = normalize_created_item(row, en_row)
+            item_id = int((row.get("creates") or [0])[0])
+            item = normalize_created_item(
+                row,
+                en_row,
+                de_item_data.get(item_id, {}),
+                en_item_data.get(item_id, {}),
+                recipe_profession_id,
+            )
+            recipe = {
+                "id": f"{recipe_profession_id}.{slugify(str(en_row.get('name') or row.get('name')))}",
+                "profession_id": recipe_profession_id,
+                "skillline_id": PROFESSION_SKILLLINE_IDS[recipe_profession_id],
+                "spell_id": spell["id"],
+                "creates_item_id": item["id"],
+                "required_skill": int(row.get("learnedat") or 0),
+                "learned_from": _learned_from(row),
+                "hardcore_valid": True,
+                "source_urls": spell["source_urls"],
+            }
+            existing = recipes_by_spell.get(spell["id"])
+            if existing and existing["profession_id"] != recipe_profession_id:
+                result.warnings.append(
+                    f"Skipped ambiguous recipe {spell['id']} for "
+                    f"{existing['profession_id']} and {recipe_profession_id}."
+                )
+                recipes_by_spell.pop(spell["id"], None)
+                continue
             spells.append(spell)
             items.append(item)
-            recipes.append(
-                {
-                    "id": f"{profession_id}.{slugify(str(en_row.get('name') or row.get('name')))}",
-                    "profession_id": profession_id,
-                    "spell_id": spell["id"],
-                    "creates_item_id": item["id"],
-                    "required_skill": int(row.get("learnedat") or 0),
-                    "learned_from": _learned_from(row),
-                    "hardcore_valid": True,
-                    "source_urls": spell["source_urls"],
-                }
-            )
-            if limit_records and len(recipes) >= limit_records:
+            recipes_by_spell[spell["id"]] = recipe
+            if limit_records and len(recipes_by_spell) >= limit_records:
                 break
-        if limit_records and len(recipes) >= limit_records:
+        if limit_records and len(recipes_by_spell) >= limit_records:
             break
+
+    recipes = sorted(recipes_by_spell.values(), key=lambda row: row["id"])
 
     for table, rows in {
         "professions": professions,
         "spells": spells,
         "items": items,
-        "profession_recipes": recipes,
     }.items():
         added, updated = merge_records(data.setdefault(table, []), rows)
         result.added[table] = added
         result.updated[table] = updated
-    assert_valid_wow_data(data)
+    old_recipes = data.get("profession_recipes", [])
+    data["profession_recipes"] = recipes
+    result.added["profession_recipes"] = len(
+        {row["id"] for row in recipes} - {row["id"] for row in old_recipes}
+    )
+    result.updated["profession_recipes"] = len(recipes)
+    strip_legacy_source_urls(data)
     return result
 
 
@@ -716,7 +788,7 @@ def import_instances(
             changes.added[table] = changes.added.get(table, 0) + added
             changes.updated[table] = changes.updated.get(table, 0) + updated
 
-    assert_valid_wow_data(data)
+    strip_legacy_source_urls(data)
     return changes
 
 
@@ -752,7 +824,6 @@ def parse_instance_page(
                     de_info.get("Anzahl an Spielern") or en_info.get("Players")
                 ),
                 "hardcore_enabled": instance_type in {"dungeon", "raid"},
-                "source_url": _zone_url(wowhead_id, "de"),
                 "source_urls": {
                     "de": _zone_url(wowhead_id, "de"),
                     "en": _zone_url(wowhead_id, "en"),
@@ -877,10 +948,25 @@ def extract_spell_rows(page: str) -> list[dict[str, Any]]:
 
 
 def extract_gatherer_spell_data(page: str) -> dict[int, dict[str, Any]]:
-    match = re.search(r"WH\.Gatherer\.addData\(6,\s*4,\s*(\{.*?\})\);", page, re.S)
-    if not match:
+    return extract_gatherer_data(page, 6)
+
+
+def extract_gatherer_item_data(page: str) -> dict[int, dict[str, Any]]:
+    return extract_gatherer_data(page, 3)
+
+
+def extract_gatherer_data(page: str, type_id: int) -> dict[int, dict[str, Any]]:
+    marker = f"WH.Gatherer.addData({type_id},"
+    start = page.find(marker)
+    if start == -1:
         return {}
-    data = json.loads(_jsonish_to_json(match.group(1)))
+    object_start = page.find("{", start)
+    if object_start == -1:
+        return {}
+    object_end = _matching_json_object_end(page, object_start)
+    if object_end == -1:
+        return {}
+    data = json.loads(_jsonish_to_json(page[object_start : object_end + 1]))
     return {int(key): value for key, value in data.items()}
 
 
@@ -914,7 +1000,6 @@ def normalize_zone(
         "territory_id": _territory_from_wowhead(de_row.get("territory")),
         "type": "outdoor_zone",
         "hardcore_enabled": True,
-        "source_url": _zone_url(wowhead_id, "de"),
         "source_urls": {
             "de": _zone_url(wowhead_id, "de"),
             "en": _zone_url(wowhead_id, "en"),
@@ -956,7 +1041,6 @@ def normalize_spell(
         "category_id": category_id,
         "name": name,
         "description": description,
-        "source_url": _spell_url(wowhead_id, "en"),
         "source_urls": {
             "de": _spell_url(wowhead_id, "de"),
             "en": _spell_url(wowhead_id, "en"),
@@ -971,28 +1055,55 @@ def normalize_spell(
 
 
 def normalize_created_item(
-    de_row: dict[str, Any], en_row: dict[str, Any]
+    de_row: dict[str, Any],
+    en_row: dict[str, Any],
+    de_item_data: dict[str, Any] | None = None,
+    en_item_data: dict[str, Any] | None = None,
+    profession_id: str | None = None,
 ) -> dict[str, Any]:
     creates = de_row.get("creates") or []
     item_id = int(creates[0])
-    quality = int(de_row.get("quality", 1))
-    return {
+    de_item_data = de_item_data or {}
+    en_item_data = en_item_data or {}
+    quality = int(de_item_data.get("quality") or de_row.get("quality", 1))
+    equip = _first_mapping(de_item_data.get("jsonequip"), en_item_data.get("jsonequip"))
+    slot_id = _int_or_zero(
+        equip.get("slotbak") or de_row.get("slotbak") or de_row.get("slot")
+    )
+    item_class, item_subclass = _created_item_type(
+        de_row, en_row, de_item_data, en_item_data, profession_id, slot_id
+    )
+    item = {
         "id": f"item.{item_id}",
         "wowhead_id": item_id,
         "name": {
-            "de": str(de_row.get("name") or ""),
-            "en": str(en_row.get("name") or de_row.get("name") or ""),
+            "de": str(de_item_data.get("name_dede") or de_row.get("name") or ""),
+            "en": str(
+                en_item_data.get("name_enus")
+                or en_row.get("name")
+                or de_row.get("name")
+                or ""
+            ),
         },
         "quality": QUALITY_BY_ID.get(quality, "common"),
-        "item_class": "consumable" if quality <= 1 else "miscellaneous",
-        "item_subclass": "miscellaneous",
+        "item_class": item_class,
+        "item_subclass": item_subclass,
         "is_quest_item": False,
-        "source_url": _item_url(item_id, "en"),
         "source_urls": {
             "de": _item_url(item_id, "de"),
             "en": _item_url(item_id, "en"),
         },
     }
+    if slot_id:
+        item["slot"] = SLOT_BY_ID.get(slot_id, "miscellaneous")
+        item["inventory_type"] = SLOT_BY_ID.get(slot_id, "miscellaneous")
+    required_level = _int_or_zero(equip.get("reqlevel"))
+    if required_level:
+        item["required_level"] = required_level
+    item_level = _int_or_zero(de_item_data.get("level") or en_item_data.get("level"))
+    if item_level:
+        item["item_level"] = item_level
+    return item
 
 
 def normalize_item(de_drop: dict[str, Any], en_drop: dict[str, Any]) -> dict[str, Any]:
@@ -1015,7 +1126,6 @@ def normalize_item(de_drop: dict[str, Any], en_drop: dict[str, Any]) -> dict[str
             subclass_id, "miscellaneous"
         ),
         "is_quest_item": _is_quest_item(de_drop),
-        "source_url": _item_url(item_id, "en"),
         "source_urls": {
             "de": _item_url(item_id, "de"),
             "en": _item_url(item_id, "en"),
@@ -1091,6 +1201,10 @@ def write_tables(
     tables: tuple[str, ...] = ALL_TABLES,
 ) -> None:
     base_path.mkdir(parents=True, exist_ok=True)
+    strip_legacy_source_urls(data)
+    legacy_race_classes = base_path / "race_classes.json"
+    if legacy_race_classes.exists():
+        legacy_race_classes.unlink()
     for table in tables:
         path = base_path / f"{table}.json"
         with open(path, "w", encoding="utf-8") as handle:
@@ -1100,6 +1214,15 @@ def write_tables(
 
 def load_managed_tables(base_path: Path) -> dict[str, list[dict[str, Any]]]:
     return {table: load_json(base_path / f"{table}.json") for table in ALL_TABLES}
+
+
+def strip_legacy_source_urls(data: dict[str, list[dict[str, Any]]]) -> None:
+    for records in data.values():
+        if not isinstance(records, list):
+            continue
+        for record in records:
+            if isinstance(record, dict):
+                record.pop("source_url", None)
 
 
 def print_report(result: ImportResult, *, wrote: bool) -> None:
@@ -1143,6 +1266,31 @@ def _matching_json_array_end(text: str, start: int) -> int:
     return -1
 
 
+def _matching_json_object_end(text: str, start: int) -> int:
+    depth = 0
+    in_string = False
+    escape = False
+    for pos in range(start, len(text)):
+        char = text[pos]
+        if in_string:
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return pos
+    return -1
+
+
 def _clean_text(value: str) -> str:
     text = re.sub(r"\[/?[^\]]+\]", "", value)
     text = re.sub(r"<[^>]+>", "", text)
@@ -1167,7 +1315,10 @@ def spell_list_paths() -> list[str]:
 
 
 def profession_list_paths() -> list[str]:
-    return [f"/spells/professions/{profession_id}" for profession_id in PROFESSIONS]
+    return [
+        f"/spells/professions/{profession_id}"
+        for profession_id in sorted(RECIPE_PROFESSION_IDS)
+    ]
 
 
 def _tree_name(localized: dict[str, str], tree_slug: str) -> dict[str, str]:
@@ -1220,6 +1371,136 @@ def _learned_from(row: dict[str, Any]) -> str:
     if 6 in sources:
         return "trainer"
     return "recipe"
+
+
+def _profession_from_skillline(row: dict[str, Any]) -> str | None:
+    skills = {int(skill) for skill in row.get("skill", []) if str(skill).isdigit()}
+    matches = [
+        profession_id
+        for profession_id, skillline_id in PROFESSION_SKILLLINE_IDS.items()
+        if profession_id in RECIPE_PROFESSION_IDS and skillline_id in skills
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
+def _created_item_type(
+    de_row: dict[str, Any],
+    en_row: dict[str, Any],
+    de_item_data: dict[str, Any],
+    en_item_data: dict[str, Any],
+    profession_id: str | None,
+    slot_id: int,
+) -> tuple[str, str]:
+    item_class_id = _int_or_none_value(
+        de_item_data.get("classs"),
+        en_item_data.get("classs"),
+        de_row.get("classs"),
+        en_row.get("classs"),
+    )
+    subclass_id = _int_or_none_value(
+        de_item_data.get("subclass"),
+        en_item_data.get("subclass"),
+        de_row.get("subclass"),
+        en_row.get("subclass"),
+    )
+    if item_class_id is not None and subclass_id is not None:
+        return (
+            ITEM_CLASS_BY_ID.get(item_class_id, "miscellaneous"),
+            ITEM_SUBCLASS_BY_CLASS.get(item_class_id, {}).get(
+                subclass_id, "miscellaneous"
+            ),
+        )
+
+    name = " ".join(
+        str(value or "")
+        for value in (
+            de_item_data.get("name_dede"),
+            en_item_data.get("name_enus"),
+            de_row.get("name"),
+            en_row.get("name"),
+        )
+    ).casefold()
+    if slot_id in ARMOR_SLOT_IDS:
+        return "armor", _crafted_armor_subclass(profession_id, name, slot_id)
+    if slot_id in WEAPON_SLOT_IDS:
+        return "weapon", _crafted_weapon_subclass(name)
+    if profession_id == "alchemy":
+        return "consumable", _alchemy_subclass(name)
+    if profession_id == "cooking":
+        return "consumable", "food_drink"
+    if profession_id == "enchanting":
+        return "trade_goods", "enchanting"
+    if profession_id in {"blacksmithing", "engineering", "mining"}:
+        return "trade_goods", profession_id
+    return "miscellaneous", "miscellaneous"
+
+
+def _crafted_armor_subclass(profession_id: str | None, name: str, slot_id: int) -> str:
+    if slot_id == 16:
+        return "cloak"
+    if slot_id == 23:
+        return "off_hand"
+    if profession_id == "tailoring":
+        return "cloth"
+    if profession_id == "leatherworking":
+        if any(token in name for token in ("mail", "chain", "kette", "schuppen")):
+            return "mail"
+        return "leather"
+    if profession_id == "blacksmithing":
+        if "plate" in name or "platte" in name:
+            return "plate"
+        return "mail"
+    return "miscellaneous"
+
+
+def _crafted_weapon_subclass(name: str) -> str:
+    keywords = {
+        "dagger": ("dagger", "dolch"),
+        "axe": ("axe", "axt"),
+        "mace": ("mace", "streitkolben", "hammer"),
+        "sword": ("sword", "schwert", "klinge"),
+        "staff": ("staff", "stab"),
+        "gun": ("gun", "gewehr"),
+    }
+    for subclass, tokens in keywords.items():
+        if any(token in name for token in tokens):
+            return subclass
+    return "miscellaneous"
+
+
+def _alchemy_subclass(name: str) -> str:
+    if "elixir" in name or "elixier" in name:
+        return "elixir"
+    if "flask" in name or "fläschchen" in name or "flaschchen" in name:
+        return "flask"
+    if "potion" in name or "trank" in name:
+        return "potion"
+    return "consumable"
+
+
+def _first_mapping(*values: Any) -> dict[str, Any]:
+    for value in values:
+        if isinstance(value, dict):
+            return value
+    return {}
+
+
+def _int_or_zero(value: Any) -> int:
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _int_or_none_value(*values: Any) -> int | None:
+    for value in values:
+        if value is None:
+            continue
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            continue
+    return None
 
 
 def _territory_from_wowhead(value: Any) -> str:

@@ -6,7 +6,14 @@
     "name": {
       "de": "Zwerg",
       "en": "Dwarf"
-    }
+    },
+    "class_ids": [
+      "hunter",
+      "paladin",
+      "priest",
+      "rogue",
+      "warrior"
+    ]
   },
   {
     "id": "gnome",
@@ -15,7 +22,13 @@
     "name": {
       "de": "Gnom",
       "en": "Gnome"
-    }
+    },
+    "class_ids": [
+      "mage",
+      "rogue",
+      "warlock",
+      "warrior"
+    ]
   },
   {
     "id": "human",
@@ -24,7 +37,15 @@
     "name": {
       "de": "Mensch",
       "en": "Human"
-    }
+    },
+    "class_ids": [
+      "mage",
+      "paladin",
+      "priest",
+      "rogue",
+      "warlock",
+      "warrior"
+    ]
   },
   {
     "id": "night_elf",
@@ -33,7 +54,14 @@
     "name": {
       "de": "Nachtelf",
       "en": "Night Elf"
-    }
+    },
+    "class_ids": [
+      "druid",
+      "hunter",
+      "priest",
+      "rogue",
+      "warrior"
+    ]
   },
   {
     "id": "orc",
@@ -42,7 +70,14 @@
     "name": {
       "de": "Orc",
       "en": "Orc"
-    }
+    },
+    "class_ids": [
+      "hunter",
+      "rogue",
+      "shaman",
+      "warlock",
+      "warrior"
+    ]
   },
   {
     "id": "tauren",
@@ -51,7 +86,13 @@
     "name": {
       "de": "Taure",
       "en": "Tauren"
-    }
+    },
+    "class_ids": [
+      "druid",
+      "hunter",
+      "shaman",
+      "warrior"
+    ]
   },
   {
     "id": "troll",
@@ -60,7 +101,15 @@
     "name": {
       "de": "Troll",
       "en": "Troll"
-    }
+    },
+    "class_ids": [
+      "hunter",
+      "mage",
+      "priest",
+      "rogue",
+      "shaman",
+      "warrior"
+    ]
   },
   {
     "id": "undead",
@@ -69,6 +118,13 @@
     "name": {
       "de": "Untoter",
       "en": "Undead"
-    }
+    },
+    "class_ids": [
+      "mage",
+      "priest",
+      "rogue",
+      "warlock",
+      "warrior"
+    ]
   }
 ]

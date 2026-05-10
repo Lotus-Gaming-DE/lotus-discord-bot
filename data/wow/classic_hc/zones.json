@@ -10,7 +10,6 @@
     "territory_id": "contested",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=1",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=1",
       "en": "https://www.wowhead.com/classic/zone=1"
@@ -28,7 +27,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=10",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=10",
       "en": "https://www.wowhead.com/classic/zone=10"
@@ -46,7 +44,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=11",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=11",
       "en": "https://www.wowhead.com/classic/zone=11"
@@ -64,7 +61,6 @@
     "territory_id": "contested",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=12",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=12",
       "en": "https://www.wowhead.com/classic/zone=12"
@@ -82,7 +78,6 @@
     "territory_id": "horde",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=130",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=130",
       "en": "https://www.wowhead.com/classic/zone=130"
@@ -100,7 +95,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=1377",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=1377",
       "en": "https://www.wowhead.com/classic/zone=1377"
@@ -118,7 +112,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=139",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=139",
       "en": "https://www.wowhead.com/classic/zone=139"
@@ -136,7 +129,6 @@
     "territory_id": "horde",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=14",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=14",
       "en": "https://www.wowhead.com/classic/zone=14"
@@ -154,7 +146,6 @@
     "territory_id": "contested",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=141",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=141",
       "en": "https://www.wowhead.com/classic/zone=141"
@@ -172,7 +163,6 @@
     "territory_id": "contested",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=148",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=148",
       "en": "https://www.wowhead.com/classic/zone=148"
@@ -190,7 +180,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=15",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=15",
       "en": "https://www.wowhead.com/classic/zone=15"
@@ -208,7 +197,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=16",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=16",
       "en": "https://www.wowhead.com/classic/zone=16"
@@ -226,7 +214,6 @@
     "territory_id": "alliance",
     "type": "city",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=1657/darnassus",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=1657",
       "en": "https://www.wowhead.com/classic/zone=1657"
@@ -247,7 +234,6 @@
     "territory_id": "horde",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=17",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=17",
       "en": "https://www.wowhead.com/classic/zone=17"
@@ -265,7 +251,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=1941",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=1941",
       "en": "https://www.wowhead.com/classic/zone=1941"
@@ -286,7 +271,6 @@
     "territory_id": "horde",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=215",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=215",
       "en": "https://www.wowhead.com/classic/zone=215"
@@ -304,7 +288,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=2159",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=2159",
       "en": "https://www.wowhead.com/classic/zone=2159"
@@ -325,7 +308,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=25",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=25",
       "en": "https://www.wowhead.com/classic/zone=25"
@@ -346,7 +328,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=267",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=267",
       "en": "https://www.wowhead.com/classic/zone=267"
@@ -364,7 +345,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=28",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=28",
       "en": "https://www.wowhead.com/classic/zone=28"
@@ -382,7 +362,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=3",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=3",
       "en": "https://www.wowhead.com/classic/zone=3"
@@ -399,7 +378,6 @@
     "territory_id": "contested",
     "type": "battleground",
     "hardcore_enabled": false,
-    "source_url": "https://www.wowhead.com/classic/de/zone=3277/warsongschlucht",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=3277",
       "en": "https://www.wowhead.com/classic/zone=3277"
@@ -416,7 +394,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=33",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=33",
       "en": "https://www.wowhead.com/classic/zone=33"
@@ -434,7 +411,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=331",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=331",
       "en": "https://www.wowhead.com/classic/zone=331"
@@ -452,7 +428,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=357",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=357",
       "en": "https://www.wowhead.com/classic/zone=357"
@@ -470,7 +445,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=36",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=36",
       "en": "https://www.wowhead.com/classic/zone=36"
@@ -488,7 +462,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=361",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=361",
       "en": "https://www.wowhead.com/classic/zone=361"
@@ -506,7 +479,6 @@
     "territory_id": "contested",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=38",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=38",
       "en": "https://www.wowhead.com/classic/zone=38"
@@ -524,7 +496,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=4",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=4",
       "en": "https://www.wowhead.com/classic/zone=4"
@@ -542,7 +513,6 @@
     "territory_id": "contested",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=40",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=40",
       "en": "https://www.wowhead.com/classic/zone=40"
@@ -560,7 +530,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=400",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=400",
       "en": "https://www.wowhead.com/classic/zone=400"
@@ -578,7 +547,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=405",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=405",
       "en": "https://www.wowhead.com/classic/zone=405"
@@ -596,7 +564,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=406",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=406",
       "en": "https://www.wowhead.com/classic/zone=406"
@@ -614,7 +581,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=41",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=41",
       "en": "https://www.wowhead.com/classic/zone=41"
@@ -632,7 +598,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=44",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=44",
       "en": "https://www.wowhead.com/classic/zone=44"
@@ -650,7 +615,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=440",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=440",
       "en": "https://www.wowhead.com/classic/zone=440"
@@ -668,7 +632,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=45",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=45",
       "en": "https://www.wowhead.com/classic/zone=45"
@@ -686,7 +649,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=457",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=457",
       "en": "https://www.wowhead.com/classic/zone=457"
@@ -707,7 +669,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=46",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=46",
       "en": "https://www.wowhead.com/classic/zone=46"
@@ -725,7 +686,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=47",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=47",
       "en": "https://www.wowhead.com/classic/zone=47"
@@ -743,7 +703,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=490",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=490",
       "en": "https://www.wowhead.com/classic/zone=490"
@@ -761,7 +720,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=493",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=493",
       "en": "https://www.wowhead.com/classic/zone=493"
@@ -779,7 +737,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=51",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=51",
       "en": "https://www.wowhead.com/classic/zone=51"
@@ -797,7 +754,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=618",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=618",
       "en": "https://www.wowhead.com/classic/zone=618"
@@ -815,7 +771,6 @@
     "territory_id": "alliance",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=8",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=8",
       "en": "https://www.wowhead.com/classic/zone=8"
@@ -833,7 +788,6 @@
     "territory_id": "horde",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=85",
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=85",
       "en": "https://www.wowhead.com/classic/zone=85"

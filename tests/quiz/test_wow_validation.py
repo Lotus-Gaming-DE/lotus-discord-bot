@@ -90,10 +90,40 @@ def test_rejects_hardcore_enabled_battleground():
 
 def test_assert_valid_wow_data_raises_readable_error():
     data = copy.deepcopy(load_wow_data("data/wow/classic_hc"))
-    data["race_classes"][0]["class_id"] = "bard"
+    data["races"][0]["class_ids"].append("bard")
 
     with pytest.raises(ValueError, match="Invalid WoW Classic HC data"):
         assert_valid_wow_data(data)
+
+
+def test_rejects_legacy_source_url():
+    data = copy.deepcopy(load_wow_data("data/wow/classic_hc"))
+    data["spells"][0]["source_url"] = "https://example.invalid"
+
+    errors = validate_wow_data(data)
+
+    assert any("source_url is deprecated" in str(error) for error in errors)
+
+
+def test_rejects_duplicate_recipe_spell_professions():
+    data = copy.deepcopy(load_wow_data("data/wow/classic_hc"))
+    recipe = copy.deepcopy(data["profession_recipes"][0])
+    recipe["id"] = "duplicate.recipe"
+    recipe["profession_id"] = "cooking"
+    data["profession_recipes"].append(recipe)
+
+    errors = validate_wow_data(data)
+
+    assert any("spell_id already assigned" in str(error) for error in errors)
+
+
+def test_rejects_first_aid_recipes():
+    data = copy.deepcopy(load_wow_data("data/wow/classic_hc"))
+    data["profession_recipes"][0]["profession_id"] = "first-aid"
+
+    errors = validate_wow_data(data)
+
+    assert any("first-aid recipes are disabled" in str(error) for error in errors)
 
 
 def test_rejects_talent_tree_class_mismatch():

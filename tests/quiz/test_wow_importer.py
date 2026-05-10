@@ -75,13 +75,27 @@ SPELL_EN_PAGE = """
 """
 
 PROFESSION_DE_PAGE = """
+<script>WH.Gatherer.addData(3, 4, {"118":{"name_dede":"Schwacher Heiltrank","quality":1}});</script>
 <script>WH.Gatherer.addData(6, 4, {"2330":{"name_dede":"Schwacher Heiltrank","description_dede":"Stellt einen schwachen Heiltrank her."}});</script>
 <script>var listviewspells = [{cat:11,colors:[1,55,75,95],creates:[118,1,1],id:2330,learnedat:1,level:0,name:"Schwacher Heiltrank",quality:1,skill:[171],source:[6]}];</script>
 """
 
 PROFESSION_EN_PAGE = """
+<script>WH.Gatherer.addData(3, 4, {"118":{"name_enus":"Minor Healing Potion","quality":1}});</script>
 <script>WH.Gatherer.addData(6, 4, {"2330":{"name_enus":"Minor Healing Potion","description_enus":"Creates a Minor Healing Potion."}});</script>
 <script>var listviewspells = [{cat:11,colors:[1,55,75,95],creates:[118,1,1],id:2330,learnedat:1,level:0,name:"Minor Healing Potion",quality:1,skill:[171],source:[6]}];</script>
+"""
+
+WRONG_PROFESSION_DE_PAGE = """
+<script>WH.Gatherer.addData(3, 4, {"8201":{"name_dede":"Große Voodoomaske","quality":2,"jsonequip":{"slotbak":1,"reqlevel":43}}});</script>
+<script>WH.Gatherer.addData(6, 4, {"10531":{"name_dede":"Große Voodoomaske","description_dede":"Stellt eine Große Voodoomaske her."}});</script>
+<script>var listviewspells = [{cat:11,creates:[8201,1,1],id:10531,learnedat:220,level:0,name:"Große Voodoomaske",quality:2,skill:[165],source:[2]}];</script>
+"""
+
+WRONG_PROFESSION_EN_PAGE = """
+<script>WH.Gatherer.addData(3, 4, {"8201":{"name_enus":"Big Voodoo Mask","quality":2,"jsonequip":{"slotbak":1,"reqlevel":43}}});</script>
+<script>WH.Gatherer.addData(6, 4, {"10531":{"name_enus":"Big Voodoo Mask","description_enus":"Creates a Big Voodoo Mask."}});</script>
+<script>var listviewspells = [{cat:11,creates:[8201,1,1],id:10531,learnedat:220,level:0,name:"Big Voodoo Mask",quality:2,skill:[165],source:[2]}];</script>
 """
 
 
@@ -99,7 +113,6 @@ def test_parse_instance_page_normalizes_instance_drop_and_item():
             "territory_id": "contested",
             "player_count": 5,
             "hardcore_enabled": True,
-            "source_url": "https://www.wowhead.com/classic/de/zone=9999",
             "source_urls": {
                 "de": "https://www.wowhead.com/classic/de/zone=9999",
                 "en": "https://www.wowhead.com/classic/zone=9999",
@@ -207,6 +220,37 @@ def test_import_professions_normalizes_recipe_spell_and_created_item():
     assert recipe["creates_item_id"] == "item.118"
     assert recipe["required_skill"] == 1
     assert recipe["learned_from"] == "trainer"
+    assert recipe["skillline_id"] == 171
+
+
+def test_import_professions_uses_skillline_not_page_path():
+    data = copy.deepcopy(load_wow_data("data/wow/classic_hc"))
+    empty_page = "<script>var listviewspells = [];</script>"
+    pages = {
+        path: {"de": empty_page, "en": empty_page}
+        for path in wow_importer.profession_list_paths()
+    }
+    pages["/spells/professions/first-aid"] = {
+        "de": WRONG_PROFESSION_DE_PAGE,
+        "en": WRONG_PROFESSION_EN_PAGE,
+    }
+    pages["/spells/professions/leatherworking"] = {
+        "de": WRONG_PROFESSION_DE_PAGE,
+        "en": WRONG_PROFESSION_EN_PAGE,
+    }
+
+    result = import_professions(data, pages)
+
+    recipes = [
+        row
+        for row in result.data["profession_recipes"]
+        if row["spell_id"] == "spell.10531"
+    ]
+    assert [recipe["profession_id"] for recipe in recipes] == ["leatherworking"]
+    item = next(row for row in result.data["items"] if row["id"] == "item.8201")
+    assert item["item_class"] == "armor"
+    assert item["item_subclass"] == "leather"
+    assert item["slot"] == "head"
 
 
 def test_merge_records_updates_by_id_without_replacing_unrelated_records():
@@ -248,14 +292,14 @@ def test_import_instances_returns_valid_merged_data():
 @pytest.mark.asyncio
 async def test_run_import_preview_does_not_write(monkeypatch, tmp_path):
     data = copy.deepcopy(load_wow_data("data/wow/classic_hc"))
-    (tmp_path / "items.json").write_text(json.dumps(data["items"]), encoding="utf-8")
+    for table, records in data.items():
+        (tmp_path / f"{table}.json").write_text(json.dumps(records), encoding="utf-8")
 
     monkeypatch.setattr(
         wow_importer.WowheadFetcher,
         "fetch_instance_pages",
         lambda self, ids: _async_result({9999: {"de": DE_PAGE, "en": EN_PAGE}}),
     )
-    monkeypatch.setattr(wow_importer, "load_wow_data", lambda path: copy.deepcopy(data))
 
     args = argparse.Namespace(
         slice="instances",

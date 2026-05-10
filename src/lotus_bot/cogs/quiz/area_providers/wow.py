@@ -164,7 +164,7 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         urls = record.get("source_urls")
         if isinstance(urls, dict):
             return urls.get(self.language) or urls.get("de") or urls.get("en")
-        return record.get("source_url")
+        return None
 
     def _source_label(self, record: dict[str, Any]) -> str:
         name = self._text(record.get("name"))
@@ -358,8 +358,9 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         races = self._quiz_records("races")
         classes = self._quiz_records("classes")
         allowed = {
-            (combo.get("race_id"), combo.get("class_id"))
-            for combo in self._records("race_classes")
+            (race.get("id"), class_id)
+            for race in races
+            for class_id in race.get("class_ids", [])
         }
         if not races or not classes or not allowed:
             return None

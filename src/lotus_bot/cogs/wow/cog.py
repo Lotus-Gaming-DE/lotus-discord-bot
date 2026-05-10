@@ -550,6 +550,13 @@ class WoWCog(ManagedTaskCog):
         profession = self._get_static_record("professions", profession_id)
         return self._localized_text(profession.get("name")) or profession_id
 
+    def _crafting_professions(self) -> list[dict]:
+        return [
+            profession
+            for profession in self._wow_records("professions")
+            if profession.get("id") != "first-aid"
+        ]
+
     def _get_static_record(self, table: str, record_id: str | None) -> dict:
         if not record_id:
             return {}
@@ -560,7 +567,7 @@ class WoWCog(ManagedTaskCog):
 
     def resolve_profession_id(self, value: str) -> str | None:
         needle = _norm(value)
-        for profession in self._wow_records("professions"):
+        for profession in self._crafting_professions():
             names = [
                 profession.get("id", ""),
                 self._localized_text(profession.get("name"), "de"),
@@ -573,7 +580,7 @@ class WoWCog(ManagedTaskCog):
     def profession_choices(self, current: str = "") -> list[tuple[str, str]]:
         needle = _norm(current)
         choices = []
-        for profession in self._wow_records("professions"):
+        for profession in self._crafting_professions():
             name = self._localized_text(profession.get("name"))
             profession_id = profession.get("id")
             if not profession_id or not name:
@@ -644,6 +651,7 @@ class WoWCog(ManagedTaskCog):
             for recipe in self._wow_records("profession_recipes")
             if recipe.get("creates_item_id") == item.get("id")
             and recipe.get("hardcore_valid")
+            and recipe.get("profession_id") != "first-aid"
         ]
         if not recipes:
             return CraftingSearchResult("recipe_not_found", item=item)

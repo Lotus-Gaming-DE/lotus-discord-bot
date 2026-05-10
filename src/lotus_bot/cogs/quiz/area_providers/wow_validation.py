@@ -18,7 +18,6 @@ REQUIRED_TABLES = {
     "power_types",
     "profession_recipes",
     "professions",
-    "race_classes",
     "races",
     "racial_traits",
     "spell_categories",
@@ -70,12 +69,12 @@ REQUIRED_FIELDS = {
         "spell_id",
         "creates_item_id",
         "required_skill",
+        "skillline_id",
         "learned_from",
         "hardcore_valid",
     },
     "professions": {"id", "name", "type"},
-    "race_classes": {"id", "race_id", "class_id"},
-    "races": {"id", "blizzard_id", "faction_id", "name"},
+    "races": {"id", "blizzard_id", "faction_id", "name", "class_ids"},
     "racial_traits": {"id", "race_id", "spell_id", "hardcore_valid"},
     "spell_categories": {"id", "name"},
     "spells": {"id", "wowhead_id", "category_id", "name", "description", "source_urls"},
@@ -110,7 +109,6 @@ REFERENCE_FIELDS = {
         "creates_item_id": "items",
     },
     "professions": {"spell_id": "spells"},
-    "race_classes": {"race_id": "races", "class_id": "classes"},
     "races": {"faction_id": "factions"},
     "racial_traits": {"race_id": "races", "spell_id": "spells"},
     "spells": {"category_id": "spell_categories"},
@@ -217,6 +215,10 @@ def _validate_records(
             _validate_localized_field(
                 table, record_id, "source_urls", record["source_urls"], errors
             )
+        if "source_url" in record:
+            errors.append(
+                WoWValidationError(table, record_id, "source_url is deprecated")
+            )
 
     return ids
 
@@ -306,6 +308,31 @@ def _validate_semantic_consistency(
         for record in data.get("talent_trees", [])
         if isinstance(record, dict)
     }
+    class_ids = {
+        record.get("id")
+        for record in data.get("classes", [])
+        if isinstance(record, dict)
+    }
+
+    for race in data.get("races", []):
+        if not isinstance(race, dict):
+            continue
+        record_id = str(race.get("id") or "")
+        class_list = race.get("class_ids")
+        if not isinstance(class_list, list) or not class_list:
+            errors.append(
+                WoWValidationError("races", record_id, "class_ids must be a list")
+            )
+            continue
+        for class_id in class_list:
+            if class_id not in class_ids:
+                errors.append(
+                    WoWValidationError(
+                        "races",
+                        record_id,
+                        f"class_ids references unknown classes id '{class_id}'",
+                    )
+                )
 
     for talent in data.get("talents", []):
         if not isinstance(talent, dict):
@@ -336,6 +363,31 @@ def _validate_semantic_consistency(
                     "spell is not a class ability",
                 )
             )
+
+    recipe_spell_owners: dict[str, str] = {}
+    for recipe in data.get("profession_recipes", []):
+        if not isinstance(recipe, dict):
+            continue
+        record_id = str(recipe.get("id") or "")
+        if recipe.get("profession_id") == "first-aid":
+            errors.append(
+                WoWValidationError(
+                    "profession_recipes", record_id, "first-aid recipes are disabled"
+                )
+            )
+        spell_id = recipe.get("spell_id")
+        profession_id = str(recipe.get("profession_id") or "")
+        previous = recipe_spell_owners.get(spell_id)
+        if previous and previous != profession_id:
+            errors.append(
+                WoWValidationError(
+                    "profession_recipes",
+                    record_id,
+                    f"spell_id already assigned to profession '{previous}'",
+                )
+            )
+        elif spell_id:
+            recipe_spell_owners[spell_id] = profession_id
 
     for trait in data.get("racial_traits", []):
         if not isinstance(trait, dict):
