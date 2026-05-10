@@ -59,6 +59,88 @@ async def profession_autocomplete(
     ]
 
 
+def _match_choice_text(name: str, current: str) -> bool:
+    return not current or current.casefold() in name.casefold()
+
+
+async def roster_char_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[app_commands.Choice[str]]:
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        return []
+    snapshot = await cog.data.get_snapshot()
+    names = sorted({member.name for member in snapshot.values()}, key=str.casefold)
+    return [
+        app_commands.Choice(name=name[:100], value=name)
+        for name in names
+        if _match_choice_text(name, current)
+    ][:25]
+
+
+async def user_claim_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[app_commands.Choice[str]]:
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        return []
+    claims = await cog.data.claims_for_user(interaction.user.id)
+    return [
+        app_commands.Choice(name=claim.character_name[:100], value=claim.character_name)
+        for claim in claims
+        if _match_choice_text(claim.character_name, current)
+    ][:25]
+
+
+async def all_claims_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[app_commands.Choice[str]]:
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        return []
+    claims = await cog.data.list_claims("all")
+    return [
+        app_commands.Choice(name=claim.character_name[:100], value=claim.character_name)
+        for claim in claims
+        if _match_choice_text(claim.character_name, current)
+    ][:25]
+
+
+async def claim_char_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[app_commands.Choice[str]]:
+    if _is_mod(interaction):
+        return await all_claims_autocomplete(interaction, current)
+    return await user_claim_autocomplete(interaction, current)
+
+
+async def recipes_profession_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[app_commands.Choice[str]]:
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        return []
+    char = getattr(interaction.namespace, "char", None)
+    if not char:
+        return []
+    claim = await cog.data.get_claim_by_name(char)
+    if not claim:
+        return []
+    if not _is_mod(interaction) and claim.discord_user_id != interaction.user.id:
+        return []
+    profiles = await cog.data.professions_for_character(claim.character_key)
+    choices = []
+    for profile in profiles:
+        name = cog._profession_name(profile.profession_id)
+        if _match_choice_text(name, current) or _match_choice_text(
+            profile.profession_id, current
+        ):
+            choices.append(
+                app_commands.Choice(name=name[:100], value=profile.profession_id)
+            )
+    return choices[:25]
+
+
 async def known_recipe_autocomplete(
     interaction: discord.Interaction, current: str
 ) -> list[app_commands.Choice[str]]:
@@ -70,6 +152,8 @@ async def known_recipe_autocomplete(
         return []
     claim = await cog.data.get_claim_by_name(char)
     if not claim:
+        return []
+    if not _is_mod(interaction) and claim.discord_user_id != interaction.user.id:
         return []
     needle = current.casefold()
     choices = []
@@ -164,6 +248,7 @@ async def scan(interaction: discord.Interaction, post: bool = True):
 
 @wow_group.command(name="claim", description="Claimt einen Black-Lotus-Charakter")
 @app_commands.describe(char="Name des Charakters im Black-Lotus-Roster")
+@app_commands.autocomplete(char=roster_char_autocomplete)
 async def claim(interaction: discord.Interaction, char: str):
     logger.info(f"/wow claim by {interaction.user} char={char}")
     cog: WoWCog | None = interaction.client.get_cog("WoWCog")
@@ -213,6 +298,7 @@ async def claim(interaction: discord.Interaction, char: str):
     name="claim-release", description="Gibt deinen eigenen WoW-Claim frei"
 )
 @app_commands.describe(char="Name des geclaimten Charakters")
+@app_commands.autocomplete(char=user_claim_autocomplete)
 async def claim_release(interaction: discord.Interaction, char: str):
     logger.info(f"/wow claim-release by {interaction.user} char={char}")
     cog: WoWCog | None = interaction.client.get_cog("WoWCog")
@@ -238,6 +324,7 @@ async def claim_release(interaction: discord.Interaction, char: str):
 @moderator_only()
 @app_commands.default_permissions(manage_guild=True)
 @app_commands.describe(char="Name des geclaimten Charakters")
+@app_commands.autocomplete(char=all_claims_autocomplete)
 async def claim_remove(interaction: discord.Interaction, char: str):
     logger.info(f"/wow claim-remove by {interaction.user} char={char}")
     cog: WoWCog | None = interaction.client.get_cog("WoWCog")
@@ -331,7 +418,9 @@ crafting_group = app_commands.Group(
     skill="Berufsskill 1-300",
     specialization="Optionale Spezialisierung",
 )
-@app_commands.autocomplete(profession=profession_autocomplete)
+@app_commands.autocomplete(
+    char=claim_char_autocomplete, profession=profession_autocomplete
+)
 async def crafting_set(
     interaction: discord.Interaction,
     char: str,
@@ -389,7 +478,9 @@ async def crafting_set(
     char="Name des geclaimten Charakters",
     profession="Beruf",
 )
-@app_commands.autocomplete(profession=profession_autocomplete)
+@app_commands.autocomplete(
+    char=claim_char_autocomplete, profession=profession_autocomplete
+)
 async def crafting_remove(
     interaction: discord.Interaction,
     char: str,
@@ -502,7 +593,9 @@ async def crafting_list(
     profession="Optionaler Beruf-Filter",
     search="Optionaler Suchbegriff fuer Rezept oder Item",
 )
-@app_commands.autocomplete(profession=profession_autocomplete)
+@app_commands.autocomplete(
+    char=claim_char_autocomplete, profession=recipes_profession_autocomplete
+)
 async def crafting_recipes(
     interaction: discord.Interaction,
     char: str,
@@ -572,7 +665,7 @@ async def crafting_recipes(
         cog,
         interaction.user.id,
         result.claim,
-        result.profession,
+        result.profile,
         recipes,
     )
     await interaction.response.send_message(
@@ -584,6 +677,7 @@ async def crafting_recipes(
 
 @crafting_group.command(name="learned", description="Zeigt gepflegte Spezialrezepte")
 @app_commands.describe(char="Name des geclaimten Charakters")
+@app_commands.autocomplete(char=claim_char_autocomplete)
 async def crafting_learned(interaction: discord.Interaction, char: str):
     cog: WoWCog | None = interaction.client.get_cog("WoWCog")
     if cog is None:
@@ -628,7 +722,9 @@ async def crafting_learned(interaction: discord.Interaction, char: str):
     char="Name des geclaimten Charakters",
     recipe="Rezeptname oder gespeicherte Spell-ID",
 )
-@app_commands.autocomplete(recipe=known_recipe_autocomplete)
+@app_commands.autocomplete(
+    char=claim_char_autocomplete, recipe=known_recipe_autocomplete
+)
 async def crafting_recipe_remove(
     interaction: discord.Interaction,
     char: str,

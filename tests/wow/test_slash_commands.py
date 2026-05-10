@@ -5,9 +5,11 @@ from lotus_bot.cogs.wow.data import (
     RosterMember,
 )
 from lotus_bot.cogs.wow.slash_commands import (
+    all_claims_autocomplete,
     claim,
     claim_release,
     claim_remove,
+    claim_char_autocomplete,
     claims_list,
     claims_mine,
     crafting_learned,
@@ -18,9 +20,12 @@ from lotus_bot.cogs.wow.slash_commands import (
     crafting_remove,
     crafting_search,
     crafting_set,
+    recipes_profession_autocomplete,
+    roster_char_autocomplete,
     scan,
     setup,
     status,
+    user_claim_autocomplete,
 )
 import pytest
 
@@ -99,6 +104,14 @@ class DummyCog:
             recipe.get("spell_id"), "Testrezept"
         )
 
+    def _spell_for_recipe(self, recipe):
+        return {"name": {"de": "Swiftnesstrank herstellen"}}
+
+    def _localized_text(self, value, language="de"):
+        if isinstance(value, dict):
+            return value.get(language) or value.get("de") or value.get("en") or ""
+        return value or ""
+
     def resolve_profession_id(self, profession):
         if profession in (None, "alchemy", "Alchemie"):
             return "alchemy"
@@ -125,9 +138,9 @@ def roster_member(name="Lyxendra"):
     )
 
 
-def character_claim(name="Lyxendra", user_id=42, status="unverified"):
+def character_claim(name="Lyxendra", user_id=42, status="unverified", key="id:1"):
     return CharacterClaim(
-        character_key="id:1",
+        character_key=key,
         character_name=name,
         realm_slug="soulseeker",
         discord_user_id=user_id,
@@ -139,9 +152,11 @@ def character_claim(name="Lyxendra", user_id=42, status="unverified"):
     )
 
 
-def character_profession(name="Lyxendra", user_id=42, profession_id="alchemy"):
+def character_profession(
+    name="Lyxendra", user_id=42, profession_id="alchemy", key="id:1"
+):
     return CharacterProfession(
-        character_key="id:1",
+        character_key=key,
         character_name=name,
         realm_slug="soulseeker",
         discord_user_id=user_id,
@@ -167,9 +182,18 @@ def known_recipe(name="Lyxendra", user_id=42, spell_id="spell.2335"):
 class DummyData:
     def __init__(self):
         self.member = roster_member()
+        self.snapshot = {
+            "id:1": roster_member("Voidok"),
+            "id:2": roster_member("Voljin"),
+            "id:3": roster_member("Lyxendra"),
+        }
         self.claim = None
+        self.claims = []
         self.professions = []
         self.removed = []
+
+    async def get_snapshot(self):
+        return self.snapshot
 
     async def find_roster_member_by_name(self, char):
         if char.lower() == self.member.name.lower():
@@ -186,6 +210,9 @@ class DummyData:
         return self.claim
 
     async def get_claim_by_name(self, char):
+        for existing_claim in self.claims:
+            if char.lower() == existing_claim.character_name.lower():
+                return existing_claim
         if self.claim and char.lower() == self.claim.character_name.lower():
             return self.claim
         return None
@@ -195,11 +222,23 @@ class DummyData:
         self.claim = None
 
     async def claims_for_user(self, user_id):
+        if self.claims:
+            return [
+                existing_claim
+                for existing_claim in self.claims
+                if existing_claim.discord_user_id == user_id
+            ]
         return (
             [self.claim] if self.claim and self.claim.discord_user_id == user_id else []
         )
 
     async def list_claims(self, status="all"):
+        if self.claims:
+            return [
+                existing_claim
+                for existing_claim in self.claims
+                if status == "all" or existing_claim.status == status
+            ]
         if not self.claim:
             return []
         if status != "all" and self.claim.status != status:
@@ -221,6 +260,13 @@ class DummyData:
                 if profession.profession_id == profession_id
             ]
         return self.professions
+
+    async def professions_for_character(self, character_key):
+        return [
+            profession
+            for profession in self.professions
+            if profession.character_key == character_key
+        ]
 
 
 class DummyBot:
@@ -350,6 +396,58 @@ async def test_claim_command_reports_taken_character():
     await claim.callback(inter, "Lyxendra")
 
     assert "bereits geclaimed" in inter.response.messages[0][0]
+
+
+async def test_roster_char_autocomplete_shows_claimed_and_unclaimed_matches():
+    cog = DummyCog()
+    cog.data.claims = [character_claim(name="Voidok", user_id=99)]
+    inter = DummyInteraction(cog)
+
+    choices = await roster_char_autocomplete(inter, "Vo")
+
+    assert [choice.value for choice in choices] == ["Voidok", "Voljin"]
+
+
+async def test_user_claim_autocomplete_only_shows_own_claims():
+    cog = DummyCog()
+    cog.data.claims = [
+        character_claim(name="Voidok", user_id=42),
+        character_claim(name="Voljin", user_id=99),
+    ]
+    inter = DummyInteraction(cog)
+
+    choices = await user_claim_autocomplete(inter, "Vo")
+
+    assert [choice.value for choice in choices] == ["Voidok"]
+
+
+async def test_all_claims_autocomplete_shows_all_claims_for_mod_context():
+    cog = DummyCog()
+    cog.data.claims = [
+        character_claim(name="Voidok", user_id=42),
+        character_claim(name="Voljin", user_id=99),
+    ]
+    inter = DummyInteraction(cog, manage_guild=True)
+
+    choices = await all_claims_autocomplete(inter, "Vo")
+
+    assert [choice.value for choice in choices] == ["Voidok", "Voljin"]
+
+
+async def test_claim_char_autocomplete_uses_mod_scope():
+    cog = DummyCog()
+    cog.data.claims = [
+        character_claim(name="Voidok", user_id=42),
+        character_claim(name="Voljin", user_id=99),
+    ]
+
+    user_choices = await claim_char_autocomplete(DummyInteraction(cog), "Vo")
+    mod_choices = await claim_char_autocomplete(
+        DummyInteraction(cog, manage_guild=True), "Vo"
+    )
+
+    assert [choice.value for choice in user_choices] == ["Voidok"]
+    assert [choice.value for choice in mod_choices] == ["Voidok", "Voljin"]
 
 
 async def test_claims_mine_shows_user_claims():
@@ -504,6 +602,62 @@ async def test_crafting_recipes_asks_for_profession_selection():
     assert "Bitte Beruf" in msg
     assert kwargs.get("view") is not None
     assert kwargs.get("ephemeral")
+
+
+async def test_crafting_recipes_with_open_recipes_creates_selection_view():
+    cog = DummyCog()
+    cog.recipe_selection_result = type(
+        "Result",
+        (),
+        {
+            "status": "ok",
+            "claim": character_claim(name="Voidok"),
+            "profile": character_profession(name="Voidok"),
+            "profiles": None,
+            "recipes": [
+                {
+                    "id": "recipe.swiftness_potion",
+                    "spell_id": "spell.2335",
+                    "required_skill": 60,
+                }
+            ],
+        },
+    )()
+    inter = DummyInteraction(cog)
+    await crafting_recipes.callback(inter, "Voidok", "alchemy", None)
+
+    msg, kwargs = inter.response.messages[0]
+    assert "Voidok" in msg
+    assert kwargs.get("view") is not None
+    assert kwargs.get("ephemeral")
+
+
+async def test_recipes_profession_autocomplete_shows_professions_for_selected_char():
+    cog = DummyCog()
+    cog.data.claims = [character_claim(name="Voidok", user_id=42)]
+    cog.data.professions = [
+        character_profession(name="Voidok", profession_id="alchemy", key="id:1"),
+        character_profession(name="Voidok", profession_id="blacksmithing", key="id:1"),
+        character_profession(name="Voljin", profession_id="tailoring", key="id:2"),
+    ]
+    inter = DummyInteraction(cog)
+    inter.namespace.char = "Voidok"
+
+    choices = await recipes_profession_autocomplete(inter, "")
+
+    assert [choice.value for choice in choices] == ["alchemy", "blacksmithing"]
+
+
+async def test_recipes_profession_autocomplete_rejects_foreign_claim():
+    cog = DummyCog()
+    cog.data.claims = [character_claim(name="Voljin", user_id=99)]
+    cog.data.professions = [
+        character_profession(name="Voljin", profession_id="alchemy")
+    ]
+    inter = DummyInteraction(cog)
+    inter.namespace.char = "Voljin"
+
+    assert await recipes_profession_autocomplete(inter, "") == []
 
 
 async def test_crafting_learned_shows_known_recipes():
