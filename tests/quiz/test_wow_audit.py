@@ -25,9 +25,7 @@ def test_audit_detects_fallback_spell_description():
 
 def test_audit_detects_drops_without_source_name():
     data = {
-        "instance_drops": [
-            {"id": "drop.unknown", "source_name": {"de": "", "en": ""}}
-        ]
+        "instance_drops": [{"id": "drop.unknown", "source_name": {"de": "", "en": ""}}]
     }
 
     report = audit_wow_data(data)
@@ -53,11 +51,7 @@ def test_audit_detects_miscellaneous_item_types():
 
 
 def test_audit_detects_hc_zones_without_level_range():
-    data = {
-        "zones": [
-            {"id": "zone.city", "hardcore_enabled": True, "level_range": ""}
-        ]
-    }
+    data = {"zones": [{"id": "zone.city", "hardcore_enabled": True, "level_range": ""}]}
 
     report = audit_wow_data(data)
 
@@ -65,11 +59,7 @@ def test_audit_detects_hc_zones_without_level_range():
 
 
 def test_audit_detects_uncertain_recipe_source():
-    data = {
-        "profession_recipes": [
-            {"id": "recipe.unknown", "learned_from": "unknown"}
-        ]
-    }
+    data = {"profession_recipes": [{"id": "recipe.unknown", "learned_from": "unknown"}]}
 
     report = audit_wow_data(data)
 

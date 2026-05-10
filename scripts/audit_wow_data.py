@@ -8,18 +8,13 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from lotus_bot.bot import load_wow_data
-from lotus_bot.cogs.quiz.area_providers.wow_audit import (  # noqa: E402
-    apply_wow_qa,
-    audit_wow_data,
-    write_wow_qa_data,
-)
-
 
 DEFAULT_DATA_PATH = ROOT / "data" / "wow" / "classic_hc"
 
 
 def main() -> None:
+    load_wow_data, audit_wow_data, apply_wow_qa, write_wow_qa_data = _load_wow_tools()
+
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("--data-path", default=str(DEFAULT_DATA_PATH))
     parser.add_argument("--write", action="store_true")
@@ -37,6 +32,17 @@ def main() -> None:
         print("WoW QA preview. Use --write to persist metadata.")
 
     _print_report(report)
+
+
+def _load_wow_tools():
+    from lotus_bot.bot import load_wow_data
+    from lotus_bot.cogs.quiz.area_providers.wow_audit import (
+        apply_wow_qa,
+        audit_wow_data,
+        write_wow_qa_data,
+    )
+
+    return load_wow_data, audit_wow_data, apply_wow_qa, write_wow_qa_data
 
 
 def _print_report(report: dict) -> None:

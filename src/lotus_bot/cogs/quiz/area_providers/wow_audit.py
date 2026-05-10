@@ -60,14 +60,10 @@ def audit_wow_data(data: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "summary": {
-            table: dict(flags)
-            for table, flags in sorted(findings.items())
-            if flags
+            table: dict(flags) for table, flags in sorted(findings.items()) if flags
         },
         "examples": {
-            table: dict(flags)
-            for table, flags in sorted(examples.items())
-            if flags
+            table: dict(flags) for table, flags in sorted(examples.items()) if flags
         },
     }
 
