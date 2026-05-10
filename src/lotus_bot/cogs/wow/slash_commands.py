@@ -4,8 +4,8 @@ from discord import app_commands
 from lotus_bot.log_setup import get_logger
 from lotus_bot.permissions import moderator_only
 
-from .cog import WoWCog
-from .data import CharacterClaim, CharacterProfession
+from .cog import CraftingProfessionSelectView, CraftingRecipeSelectionView, WoWCog
+from .data import CharacterClaim, CharacterKnownRecipe, CharacterProfession
 
 logger = get_logger(__name__)
 
@@ -41,6 +41,12 @@ def _format_profession_line(
     )
 
 
+def _format_known_recipe_line(recipe: CharacterKnownRecipe, cog: WoWCog) -> str:
+    static = cog._recipe_by_spell_id(recipe.spell_id)
+    recipe_name = cog._recipe_name(static) if static else recipe.spell_id
+    return f"- **{recipe_name}** ({cog._profession_name(recipe.profession_id)})"
+
+
 async def profession_autocomplete(
     interaction: discord.Interaction, current: str
 ) -> list[app_commands.Choice[str]]:
@@ -51,6 +57,28 @@ async def profession_autocomplete(
         app_commands.Choice(name=name, value=value)
         for name, value in cog.profession_choices(current)
     ]
+
+
+async def known_recipe_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[app_commands.Choice[str]]:
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        return []
+    char = getattr(interaction.namespace, "char", None)
+    if not char:
+        return []
+    claim = await cog.data.get_claim_by_name(char)
+    if not claim:
+        return []
+    needle = current.casefold()
+    choices = []
+    for recipe in await cog.data.known_recipes_for_character(claim.character_key):
+        static = cog._recipe_by_spell_id(recipe.spell_id)
+        name = cog._recipe_name(static) if static else recipe.spell_id
+        if not needle or needle in name.casefold():
+            choices.append(app_commands.Choice(name=name[:100], value=recipe.spell_id))
+    return choices[:25]
 
 
 @wow_group.command(name="setup", description="Konfiguriert den WoW-Ankündigungschannel")
@@ -317,7 +345,7 @@ async def crafting_set(
     cog: WoWCog | None = interaction.client.get_cog("WoWCog")
     if cog is None:
         await interaction.response.send_message(
-            "âŒ WoW-System nicht verfÃ¼gbar.", ephemeral=True
+            "WoW-System nicht verfuegbar.", ephemeral=True
         )
         return
 
@@ -331,27 +359,27 @@ async def crafting_set(
     )
     if result.reason == "unknown_profession":
         await interaction.response.send_message(
-            f"âŒ Beruf **{profession}** ist unbekannt.", ephemeral=True
+            f"Beruf **{profession}** ist unbekannt.", ephemeral=True
         )
         return
     if result.reason == "not_claimed":
         await interaction.response.send_message(
-            f"âŒ **{char}** ist nicht geclaimed.", ephemeral=True
+            f"**{char}** ist nicht geclaimed.", ephemeral=True
         )
         return
     if result.reason == "forbidden":
         await interaction.response.send_message(
-            f"âŒ Du darfst **{char}** nicht bearbeiten.", ephemeral=True
+            f"Du darfst **{char}** nicht bearbeiten.", ephemeral=True
         )
         return
     if result.reason == "invalid_skill":
         await interaction.response.send_message(
-            "âŒ Skill muss zwischen 1 und 300 liegen.", ephemeral=True
+            "Skill muss zwischen 1 und 300 liegen.", ephemeral=True
         )
         return
 
     await interaction.response.send_message(
-        f"âœ… Gespeichert: {cog.format_profession(result.profession)}",
+        f"Gespeichert: {cog.format_profession(result.profession)}",
         ephemeral=True,
     )
 
@@ -373,7 +401,7 @@ async def crafting_remove(
     cog: WoWCog | None = interaction.client.get_cog("WoWCog")
     if cog is None:
         await interaction.response.send_message(
-            "âŒ WoW-System nicht verfÃ¼gbar.", ephemeral=True
+            "WoW-System nicht verfuegbar.", ephemeral=True
         )
         return
 
@@ -385,28 +413,28 @@ async def crafting_remove(
     )
     if result.reason == "unknown_profession":
         await interaction.response.send_message(
-            f"âŒ Beruf **{profession}** ist unbekannt.", ephemeral=True
+            f"Beruf **{profession}** ist unbekannt.", ephemeral=True
         )
         return
     if result.reason == "not_claimed":
         await interaction.response.send_message(
-            f"âŒ **{char}** ist nicht geclaimed.", ephemeral=True
+            f"**{char}** ist nicht geclaimed.", ephemeral=True
         )
         return
     if result.reason == "forbidden":
         await interaction.response.send_message(
-            f"âŒ Du darfst **{char}** nicht bearbeiten.", ephemeral=True
+            f"Du darfst **{char}** nicht bearbeiten.", ephemeral=True
         )
         return
     if result.reason == "not_set":
         await interaction.response.send_message(
-            f"â„¹ï¸ FÃ¼r **{char}** ist dieser Beruf nicht gepflegt.",
+            f"Fuer **{char}** ist dieser Beruf nicht gepflegt.",
             ephemeral=True,
         )
         return
 
     await interaction.response.send_message(
-        f"âœ… Beruf fÃ¼r **{result.claim.character_name}** entfernt.",
+        f"Beruf fuer **{result.claim.character_name}** entfernt.",
         ephemeral=True,
     )
 
@@ -416,7 +444,7 @@ async def crafting_mine(interaction: discord.Interaction):
     cog: WoWCog | None = interaction.client.get_cog("WoWCog")
     if cog is None:
         await interaction.response.send_message(
-            "âŒ WoW-System nicht verfÃ¼gbar.", ephemeral=True
+            "WoW-System nicht verfuegbar.", ephemeral=True
         )
         return
 
@@ -443,14 +471,14 @@ async def crafting_list(
     cog: WoWCog | None = interaction.client.get_cog("WoWCog")
     if cog is None:
         await interaction.response.send_message(
-            "âŒ WoW-System nicht verfÃ¼gbar.", ephemeral=True
+            "WoW-System nicht verfuegbar.", ephemeral=True
         )
         return
 
     profession_id = cog.resolve_profession_id(profession) if profession else None
     if profession and not profession_id:
         await interaction.response.send_message(
-            f"âŒ Beruf **{profession}** ist unbekannt.", ephemeral=True
+            f"Beruf **{profession}** ist unbekannt.", ephemeral=True
         )
         return
     profiles = await cog.data.list_professions(profession_id)
@@ -468,13 +496,186 @@ async def crafting_list(
     )
 
 
-@crafting_group.command(name="search", description="Sucht Crafter fÃ¼r ein Item")
+@crafting_group.command(name="recipes", description="Pflegt Spezialrezepte eines Chars")
+@app_commands.describe(
+    char="Name des geclaimten Charakters",
+    profession="Optionaler Beruf-Filter",
+    search="Optionaler Suchbegriff fuer Rezept oder Item",
+)
+@app_commands.autocomplete(profession=profession_autocomplete)
+async def crafting_recipes(
+    interaction: discord.Interaction,
+    char: str,
+    profession: str | None = None,
+    search: str | None = None,
+):
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "WoW-System nicht verfuegbar.", ephemeral=True
+        )
+        return
+
+    result = await cog.prepare_recipe_selection(
+        interaction.user.id,
+        char,
+        profession,
+        search,
+        is_mod=_is_mod(interaction),
+    )
+    if result.status == "unknown_profession":
+        await interaction.response.send_message(
+            f"Beruf **{profession}** ist unbekannt.", ephemeral=True
+        )
+        return
+    if result.status == "not_claimed":
+        await interaction.response.send_message(
+            f"**{char}** ist nicht geclaimed.", ephemeral=True
+        )
+        return
+    if result.status == "forbidden":
+        await interaction.response.send_message(
+            f"Du darfst **{char}** nicht bearbeiten.", ephemeral=True
+        )
+        return
+    if result.status == "no_professions":
+        await interaction.response.send_message(
+            f"Fuer **{char}** sind noch keine Berufe gepflegt.", ephemeral=True
+        )
+        return
+    if result.status == "profession_not_set":
+        await interaction.response.send_message(
+            f"Fuer **{char}** ist dieser Beruf nicht gepflegt.", ephemeral=True
+        )
+        return
+    if result.status == "choose_profession":
+        view = CraftingProfessionSelectView(
+            cog, interaction.user.id, result.claim, result.profiles, search
+        )
+        await interaction.response.send_message(
+            f"Bitte Beruf fuer **{result.claim.character_name}** auswaehlen.",
+            view=view,
+            ephemeral=True,
+        )
+        return
+
+    recipes = result.recipes or []
+    if not recipes:
+        await interaction.response.send_message(
+            f"Fuer **{result.claim.character_name}** gibt es aktuell keine "
+            "offenen Spezialrezepte.",
+            ephemeral=True,
+        )
+        return
+
+    view = CraftingRecipeSelectionView(
+        cog,
+        interaction.user.id,
+        result.claim,
+        result.profession,
+        recipes,
+    )
+    await interaction.response.send_message(
+        view.content(),
+        view=view,
+        ephemeral=True,
+    )
+
+
+@crafting_group.command(name="learned", description="Zeigt gepflegte Spezialrezepte")
+@app_commands.describe(char="Name des geclaimten Charakters")
+async def crafting_learned(interaction: discord.Interaction, char: str):
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "WoW-System nicht verfuegbar.", ephemeral=True
+        )
+        return
+
+    result = await cog.known_recipes_for_character(
+        interaction.user.id,
+        char,
+        is_mod=_is_mod(interaction),
+    )
+    if result.status == "not_claimed":
+        await interaction.response.send_message(
+            f"**{char}** ist nicht geclaimed.", ephemeral=True
+        )
+        return
+    if result.status == "forbidden":
+        await interaction.response.send_message(
+            f"Du darfst **{char}** nicht ansehen.", ephemeral=True
+        )
+        return
+
+    recipes = result.recipes or []
+    if not recipes:
+        await interaction.response.send_message(
+            f"Fuer **{result.claim.character_name}** sind keine Spezialrezepte gepflegt.",
+            ephemeral=True,
+        )
+        return
+    await interaction.response.send_message(
+        "\n".join(_format_known_recipe_line(recipe, cog) for recipe in recipes),
+        ephemeral=True,
+    )
+
+
+@crafting_group.command(
+    name="recipe-remove", description="Entfernt ein gepflegtes Spezialrezept"
+)
+@app_commands.describe(
+    char="Name des geclaimten Charakters",
+    recipe="Rezeptname oder gespeicherte Spell-ID",
+)
+@app_commands.autocomplete(recipe=known_recipe_autocomplete)
+async def crafting_recipe_remove(
+    interaction: discord.Interaction,
+    char: str,
+    recipe: str,
+):
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "WoW-System nicht verfuegbar.", ephemeral=True
+        )
+        return
+
+    result = await cog.remove_known_recipe(
+        interaction.user.id,
+        char,
+        recipe,
+        is_mod=_is_mod(interaction),
+    )
+    if result.status == "not_claimed":
+        await interaction.response.send_message(
+            f"**{char}** ist nicht geclaimed.", ephemeral=True
+        )
+        return
+    if result.status == "forbidden":
+        await interaction.response.send_message(
+            f"Du darfst **{char}** nicht bearbeiten.", ephemeral=True
+        )
+        return
+    if result.status == "recipe_not_found":
+        await interaction.response.send_message(
+            f"**{recipe}** ist fuer **{char}** nicht gepflegt.", ephemeral=True
+        )
+        return
+
+    await interaction.response.send_message(
+        f"Spezialrezept fuer **{result.claim.character_name}** entfernt.",
+        ephemeral=True,
+    )
+
+
+@crafting_group.command(name="search", description="Sucht Crafter fuer ein Item")
 @app_commands.describe(item="Deutscher oder englischer Itemname")
 async def crafting_search(interaction: discord.Interaction, item: str):
     cog: WoWCog | None = interaction.client.get_cog("WoWCog")
     if cog is None:
         await interaction.response.send_message(
-            "âŒ WoW-System nicht verfÃ¼gbar.", ephemeral=True
+            "WoW-System nicht verfuegbar.", ephemeral=True
         )
         return
 

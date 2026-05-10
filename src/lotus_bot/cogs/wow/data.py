@@ -49,6 +49,17 @@ class CharacterProfession:
     updated_at: str
 
 
+@dataclass
+class CharacterKnownRecipe:
+    character_key: str
+    character_name: str
+    realm_slug: str
+    discord_user_id: int
+    spell_id: str
+    profession_id: str
+    learned_at: str
+
+
 class WoWData:
     """SQLite storage for WoW guild settings, snapshots, and milestones."""
 
@@ -135,6 +146,17 @@ class WoWData:
                 specialization TEXT,
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY(character_key, profession_id)
+            )
+            """
+        )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS character_known_recipes (
+                character_key TEXT NOT NULL,
+                spell_id TEXT NOT NULL,
+                profession_id TEXT NOT NULL,
+                learned_at TEXT NOT NULL,
+                PRIMARY KEY(character_key, spell_id)
             )
             """
         )
@@ -592,6 +614,25 @@ class WoWData:
         rows = await cur.fetchall()
         return [_profession_from_row(row) for row in rows]
 
+    async def professions_for_character(
+        self, character_key: str
+    ) -> list[CharacterProfession]:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT c.character_key, c.character_name, c.realm_slug, c.discord_user_id,
+                   p.profession_id, p.skill_level, p.specialization, p.updated_at
+              FROM character_professions p
+              JOIN character_claims c ON c.character_key = p.character_key
+             WHERE p.character_key = ?
+             ORDER BY p.profession_id
+            """,
+            (character_key,),
+        )
+        rows = await cur.fetchall()
+        return [_profession_from_row(row) for row in rows]
+
     async def find_crafters(
         self, profession_id: str, minimum_skill: int
     ) -> list[CharacterProfession]:
@@ -607,6 +648,100 @@ class WoWData:
              ORDER BY p.skill_level DESC, lower(c.character_name)
             """,
             (profession_id, minimum_skill),
+        )
+        rows = await cur.fetchall()
+        return [_profession_from_row(row) for row in rows]
+
+    async def add_known_recipes(
+        self,
+        character_key: str,
+        profession_id: str,
+        spell_ids: list[str],
+    ) -> int:
+        if not spell_ids:
+            return 0
+        await self.init_db()
+        db = await self._get_db()
+        now = datetime.utcnow().isoformat()
+        before = db.total_changes
+        await db.executemany(
+            """
+            INSERT OR IGNORE INTO character_known_recipes(
+                character_key, spell_id, profession_id, learned_at
+            ) VALUES (?, ?, ?, ?)
+            """,
+            [(character_key, spell_id, profession_id, now) for spell_id in spell_ids],
+        )
+        await db.commit()
+        return db.total_changes - before
+
+    async def remove_known_recipe(self, character_key: str, spell_id: str) -> bool:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            DELETE FROM character_known_recipes
+             WHERE character_key = ? AND spell_id = ?
+            """,
+            (character_key, spell_id),
+        )
+        await db.commit()
+        return cur.rowcount > 0
+
+    async def known_recipe_spell_ids(self, character_key: str) -> set[str]:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT spell_id
+              FROM character_known_recipes
+             WHERE character_key = ?
+            """,
+            (character_key,),
+        )
+        rows = await cur.fetchall()
+        return {str(row[0]) for row in rows}
+
+    async def known_recipes_for_character(
+        self, character_key: str
+    ) -> list[CharacterKnownRecipe]:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT c.character_key, c.character_name, c.realm_slug, c.discord_user_id,
+                   r.spell_id, r.profession_id, r.learned_at
+              FROM character_known_recipes r
+              JOIN character_claims c ON c.character_key = r.character_key
+             WHERE r.character_key = ?
+             ORDER BY r.profession_id, r.spell_id
+            """,
+            (character_key,),
+        )
+        rows = await cur.fetchall()
+        return [_known_recipe_from_row(row) for row in rows]
+
+    async def find_crafters_with_known_recipe(
+        self,
+        profession_id: str,
+        minimum_skill: int,
+        spell_id: str,
+    ) -> list[CharacterProfession]:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT c.character_key, c.character_name, c.realm_slug, c.discord_user_id,
+                   p.profession_id, p.skill_level, p.specialization, p.updated_at
+              FROM character_professions p
+              JOIN character_claims c ON c.character_key = p.character_key
+              JOIN character_known_recipes r
+                ON r.character_key = p.character_key
+               AND r.spell_id = ?
+             WHERE p.profession_id = ? AND p.skill_level >= ?
+             ORDER BY p.skill_level DESC, lower(c.character_name)
+            """,
+            (spell_id, profession_id, minimum_skill),
         )
         rows = await cur.fetchall()
         return [_profession_from_row(row) for row in rows]
@@ -636,6 +771,18 @@ def _profession_from_row(row: tuple[Any, ...]) -> CharacterProfession:
         skill_level=row[5],
         specialization=row[6],
         updated_at=row[7],
+    )
+
+
+def _known_recipe_from_row(row: tuple[Any, ...]) -> CharacterKnownRecipe:
+    return CharacterKnownRecipe(
+        character_key=row[0],
+        character_name=row[1],
+        realm_slug=row[2],
+        discord_user_id=row[3],
+        spell_id=row[4],
+        profession_id=row[5],
+        learned_at=row[6],
     )
 
 

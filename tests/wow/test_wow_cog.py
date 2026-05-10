@@ -135,10 +135,27 @@ def crafting_data():
                 "name": {"de": "Schwacher Manatrank", "en": "Minor Mana Potion"},
             },
         ],
+        "spells": [
+            {
+                "id": "spell.2330",
+                "name": {
+                    "de": "Schwacher Heiltrank herstellen",
+                    "en": "Minor Healing Potion",
+                },
+            },
+            {
+                "id": "spell.2335",
+                "name": {
+                    "de": "Swiftnesstrank herstellen",
+                    "en": "Swiftness Potion",
+                },
+            },
+        ],
         "profession_recipes": [
             {
                 "id": "recipe.minor_healing_potion",
                 "profession_id": "alchemy",
+                "spell_id": "spell.2330",
                 "creates_item_id": "item.118",
                 "required_skill": 1,
                 "learned_from": "trainer",
@@ -147,6 +164,7 @@ def crafting_data():
             {
                 "id": "recipe.swiftness_potion",
                 "profession_id": "alchemy",
+                "spell_id": "spell.2335",
                 "creates_item_id": "item.2459",
                 "required_skill": 60,
                 "learned_from": "recipe",
@@ -548,8 +566,68 @@ async def test_crafting_search_reports_manual_recipe_and_ambiguity(
     ambiguous = await cog.search_crafting("Schwacher")
 
     assert manual.status == "manual_recipe"
-    assert "kein Trainerrezept" in cog.format_crafting_search_result(manual)
+    assert "Spezialrezept" in cog.format_crafting_search_result(manual)
     assert ambiguous.status == "ambiguous_item"
+
+
+@pytest.mark.asyncio
+async def test_crafting_search_finds_saved_manual_recipe(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    await cog.data.replace_snapshot([member(name="Voidok")])
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    await cog.data.set_character_profession(claim, "alchemy", 75)
+    await cog.data.add_known_recipes(claim.character_key, "alchemy", ["spell.2335"])
+
+    result = await cog.search_crafting("Swiftnesstrank")
+
+    assert result.status == "ok"
+    assert result.manual_recipe is True
+    assert result.crafters[0].character_name == "Voidok"
+    assert "Spezialrezept gepflegt" in cog.format_crafting_search_result(result)
+
+
+@pytest.mark.asyncio
+async def test_recipe_selection_filters_known_and_low_skill(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    await cog.data.replace_snapshot([member(name="Voidok")])
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    await cog.data.set_character_profession(claim, "alchemy", 50)
+
+    low_skill = await cog.prepare_recipe_selection(42, "Voidok", "alchemy", None)
+    assert low_skill.status == "ok"
+    assert low_skill.recipes == []
+
+    await cog.data.set_character_profession(claim, "alchemy", 75)
+    available = await cog.prepare_recipe_selection(42, "Voidok", "alchemy", None)
+    assert [recipe["spell_id"] for recipe in available.recipes] == ["spell.2335"]
+
+    saved = await cog.save_known_recipes(claim, "alchemy", ["spell.2335"])
+    assert saved == 1
+    available = await cog.prepare_recipe_selection(42, "Voidok", "alchemy", None)
+    assert available.recipes == []
+
+
+@pytest.mark.asyncio
+async def test_recipe_selection_view_saves_multiple_recipes(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    profile = await cog.data.set_character_profession(claim, "alchemy", 75)
+    recipe = crafting_data()["profession_recipes"][1]
+    view = wow_cog_mod.CraftingRecipeSelectionView(cog, 42, claim, profile, [recipe])
+    view.selected_spell_ids = {"spell.2335"}
+
+    interaction = DummyReviewInteraction(DummyUser(42))
+    await view.children[-1].callback(interaction)
+
+    assert await cog.data.known_recipe_spell_ids(claim.character_key) == {"spell.2335"}
+    assert "1 Rezepte" in interaction.response.edits[0]["content"]
 
 
 @pytest.mark.asyncio

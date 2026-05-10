@@ -161,3 +161,52 @@ async def test_character_profession_hidden_after_claim_remove(tmp_path):
     assert await data.list_professions() == []
     assert await data.find_crafters("alchemy", 1) == []
     await data.close()
+
+
+async def test_known_recipe_lifecycle_and_duplicate_blocking(tmp_path):
+    data = WoWData(str(tmp_path / "wow.db"))
+    member = roster_member()
+    await data.replace_snapshot([member])
+    claim, _ = await data.create_claim(member, 42)
+    await data.set_character_profession(claim, "alchemy", 250)
+
+    assert await data.add_known_recipes(member.character_key, "alchemy", ["spell.2335"])
+    assert (
+        await data.add_known_recipes(member.character_key, "alchemy", ["spell.2335"])
+    ) == 0
+    assert await data.known_recipe_spell_ids(member.character_key) == {"spell.2335"}
+
+    recipes = await data.known_recipes_for_character(member.character_key)
+    assert len(recipes) == 1
+    assert recipes[0].spell_id == "spell.2335"
+    assert recipes[0].profession_id == "alchemy"
+
+    crafters = await data.find_crafters_with_known_recipe("alchemy", 200, "spell.2335")
+    assert crafters[0].character_name == "Lyxendra"
+
+    assert await data.remove_known_recipe(member.character_key, "spell.2335")
+    assert not await data.remove_known_recipe(member.character_key, "spell.2335")
+    await data.close()
+
+
+async def test_known_recipe_empty_insert_is_noop(tmp_path):
+    data = WoWData(str(tmp_path / "wow.db"))
+
+    assert await data.add_known_recipes("id:missing", "alchemy", []) == 0
+    assert await data.last_scan_at() is None
+    await data.close()
+
+
+async def test_known_recipes_survive_claim_remove_but_are_hidden(tmp_path):
+    data = WoWData(str(tmp_path / "wow.db"))
+    member = roster_member()
+    await data.replace_snapshot([member])
+    claim, _ = await data.create_claim(member, 42)
+    await data.set_character_profession(claim, "alchemy", 250)
+    await data.add_known_recipes(member.character_key, "alchemy", ["spell.2335"])
+
+    await data.remove_claim(member.character_key)
+
+    assert await data.known_recipe_spell_ids(member.character_key) == {"spell.2335"}
+    assert await data.find_crafters_with_known_recipe("alchemy", 1, "spell.2335") == []
+    await data.close()

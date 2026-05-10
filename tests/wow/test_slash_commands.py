@@ -1,12 +1,20 @@
-from lotus_bot.cogs.wow.data import CharacterClaim, CharacterProfession, RosterMember
+from lotus_bot.cogs.wow.data import (
+    CharacterClaim,
+    CharacterKnownRecipe,
+    CharacterProfession,
+    RosterMember,
+)
 from lotus_bot.cogs.wow.slash_commands import (
     claim,
     claim_release,
     claim_remove,
     claims_list,
     claims_mine,
+    crafting_learned,
     crafting_list,
     crafting_mine,
+    crafting_recipe_remove,
+    crafting_recipes,
     crafting_remove,
     crafting_search,
     crafting_set,
@@ -29,6 +37,9 @@ class DummyCog:
         self.crafting_set_result = None
         self.crafting_remove_result = None
         self.crafting_search_result = None
+        self.recipe_selection_result = None
+        self.known_recipes_result = None
+        self.remove_known_recipe_result = None
         self.data = DummyData()
 
     async def set_announcement_channel(self, channel_id):
@@ -66,8 +77,27 @@ class DummyCog:
     async def search_crafting(self, item):
         return self.crafting_search_result
 
+    async def prepare_recipe_selection(
+        self, user_id, char, profession, search, *, is_mod=False
+    ):
+        return self.recipe_selection_result
+
+    async def known_recipes_for_character(self, user_id, char, *, is_mod=False):
+        return self.known_recipes_result
+
+    async def remove_known_recipe(self, user_id, char, recipe, *, is_mod=False):
+        return self.remove_known_recipe_result
+
     def _profession_name(self, profession_id):
         return {"alchemy": "Alchemie"}.get(profession_id, profession_id)
+
+    def _recipe_by_spell_id(self, spell_id):
+        return {"spell_id": spell_id, "id": "recipe.test"}
+
+    def _recipe_name(self, recipe):
+        return {"spell.2335": "Swiftnesstrank"}.get(
+            recipe.get("spell_id"), "Testrezept"
+        )
 
     def resolve_profession_id(self, profession):
         if profession in (None, "alchemy", "Alchemie"):
@@ -119,6 +149,18 @@ def character_profession(name="Lyxendra", user_id=42, profession_id="alchemy"):
         skill_level=250,
         specialization="Elixiere",
         updated_at="now",
+    )
+
+
+def known_recipe(name="Lyxendra", user_id=42, spell_id="spell.2335"):
+    return CharacterKnownRecipe(
+        character_key="id:1",
+        character_name=name,
+        realm_slug="soulseeker",
+        discord_user_id=user_id,
+        spell_id=spell_id,
+        profession_id="alchemy",
+        learned_at="now",
     )
 
 
@@ -224,6 +266,7 @@ class DummyInteraction:
                 "__str__": lambda self: "tester",
             },
         )()
+        self.namespace = type("Namespace", (), {})()
 
 
 class DummyChannel:
@@ -415,6 +458,83 @@ async def test_crafting_list_filters_profiles():
     msg, kwargs = inter.response.messages[0]
     assert "<@99>" in msg
     assert kwargs.get("ephemeral")
+
+
+async def test_crafting_recipes_reports_no_open_recipes():
+    cog = DummyCog()
+    cog.recipe_selection_result = type(
+        "Result",
+        (),
+        {
+            "status": "ok",
+            "claim": character_claim(name="Voidok"),
+            "profile": character_profession(name="Voidok"),
+            "profiles": None,
+            "recipes": [],
+        },
+    )()
+    inter = DummyInteraction(cog)
+    await crafting_recipes.callback(inter, "Voidok", "alchemy", None)
+
+    msg, kwargs = inter.response.messages[0]
+    assert "keine offenen Spezialrezepte" in msg
+    assert kwargs.get("ephemeral")
+
+
+async def test_crafting_recipes_asks_for_profession_selection():
+    cog = DummyCog()
+    cog.recipe_selection_result = type(
+        "Result",
+        (),
+        {
+            "status": "choose_profession",
+            "claim": character_claim(name="Voidok"),
+            "profiles": [
+                character_profession(name="Voidok", profession_id="alchemy"),
+                character_profession(name="Voidok", profession_id="blacksmithing"),
+            ],
+            "profile": None,
+            "recipes": None,
+        },
+    )()
+    inter = DummyInteraction(cog)
+    await crafting_recipes.callback(inter, "Voidok", None, None)
+
+    msg, kwargs = inter.response.messages[0]
+    assert "Bitte Beruf" in msg
+    assert kwargs.get("view") is not None
+    assert kwargs.get("ephemeral")
+
+
+async def test_crafting_learned_shows_known_recipes():
+    cog = DummyCog()
+    cog.known_recipes_result = type(
+        "Result",
+        (),
+        {
+            "status": "ok",
+            "claim": character_claim(name="Voidok"),
+            "recipes": [known_recipe(name="Voidok")],
+        },
+    )()
+    inter = DummyInteraction(cog)
+    await crafting_learned.callback(inter, "Voidok")
+
+    assert "Swiftnesstrank" in inter.response.messages[0][0]
+
+
+async def test_crafting_recipe_remove_removes_recipe_as_mod():
+    cog = DummyCog()
+    cog.remove_known_recipe_result = type(
+        "Result",
+        (),
+        {"status": "removed", "claim": character_claim(name="Voidok")},
+    )()
+    inter = DummyInteraction(cog, manage_guild=True)
+    await crafting_recipe_remove.callback(inter, "Voidok", "spell.2335")
+
+    assert "Spezialrezept" in inter.response.messages[0][0]
+    assert "entfernt" in inter.response.messages[0][0]
 
 
 async def test_crafting_search_reports_result():

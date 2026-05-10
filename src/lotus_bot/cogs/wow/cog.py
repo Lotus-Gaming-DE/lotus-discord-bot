@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import random
 from dataclasses import dataclass
-
 import discord
 from discord.ext import commands
 
@@ -19,6 +18,7 @@ from .api import (
 )
 from .data import (
     CharacterClaim,
+    CharacterKnownRecipe,
     CharacterProfession,
     RosterMember,
     WoWData,
@@ -146,6 +146,16 @@ class CraftingSearchResult:
     crafters: list[CharacterProfession] | None = None
     required_skill: int = 0
     profession_id: str | None = None
+    manual_recipe: bool = False
+
+
+@dataclass
+class RecipeSelectionResult:
+    status: str
+    claim: CharacterClaim | None = None
+    profiles: list[CharacterProfession] | None = None
+    profile: CharacterProfession | None = None
+    recipes: list[dict] | None = None
 
 
 class WoWCog(ManagedTaskCog):
@@ -565,6 +575,34 @@ class WoWCog(ManagedTaskCog):
                 return record
         return {}
 
+    def _spell_for_recipe(self, recipe: dict) -> dict:
+        return self._get_static_record("spells", recipe.get("spell_id"))
+
+    def _item_for_recipe(self, recipe: dict) -> dict:
+        return self._get_static_record("items", recipe.get("creates_item_id"))
+
+    def _recipe_name(self, recipe: dict) -> str:
+        spell = self._spell_for_recipe(recipe)
+        item = self._item_for_recipe(recipe)
+        return (
+            self._localized_text(item.get("name"))
+            or self._localized_text(spell.get("name"))
+            or str(recipe.get("id") or recipe.get("spell_id") or "")
+        )
+
+    def _recipe_search_text(self, recipe: dict) -> str:
+        spell = self._spell_for_recipe(recipe)
+        item = self._item_for_recipe(recipe)
+        parts = [
+            recipe.get("id", ""),
+            recipe.get("spell_id", ""),
+            self._localized_text(spell.get("name"), "de"),
+            self._localized_text(spell.get("name"), "en"),
+            self._localized_text(item.get("name"), "de"),
+            self._localized_text(item.get("name"), "en"),
+        ]
+        return " ".join(_norm(part) for part in parts if part)
+
     def resolve_profession_id(self, value: str) -> str | None:
         needle = _norm(value)
         for profession in self._crafting_professions():
@@ -638,6 +676,174 @@ class WoWCog(ManagedTaskCog):
             None, claim=claim, reason="removed" if removed else "not_set"
         )
 
+    async def prepare_recipe_selection(
+        self,
+        discord_user_id: int,
+        char_name: str,
+        profession_value: str | None,
+        search: str | None,
+        *,
+        is_mod: bool = False,
+    ) -> RecipeSelectionResult:
+        claim = await self.data.get_claim_by_name(char_name)
+        if not claim:
+            return RecipeSelectionResult("not_claimed")
+        if not is_mod and claim.discord_user_id != discord_user_id:
+            return RecipeSelectionResult("forbidden", claim=claim)
+
+        profiles = await self.data.professions_for_character(claim.character_key)
+        if not profiles:
+            return RecipeSelectionResult("no_professions", claim=claim, profiles=[])
+
+        if profession_value:
+            profession_id = self.resolve_profession_id(profession_value)
+            if not profession_id:
+                return RecipeSelectionResult("unknown_profession", claim=claim)
+            profile = next(
+                (
+                    profile
+                    for profile in profiles
+                    if profile.profession_id == profession_id
+                ),
+                None,
+            )
+            if not profile:
+                return RecipeSelectionResult("profession_not_set", claim=claim)
+            return await self._recipe_selection_for_profile(claim, profile, search)
+
+        if len(profiles) == 1:
+            return await self._recipe_selection_for_profile(claim, profiles[0], search)
+        return RecipeSelectionResult(
+            "choose_profession", claim=claim, profiles=profiles
+        )
+
+    async def _recipe_selection_for_profile(
+        self,
+        claim: CharacterClaim,
+        profile: CharacterProfession,
+        search: str | None,
+    ) -> RecipeSelectionResult:
+        known_spell_ids = await self.data.known_recipe_spell_ids(claim.character_key)
+        recipes = self._available_manual_recipes(profile, known_spell_ids, search)
+        return RecipeSelectionResult(
+            "ok",
+            claim=claim,
+            profile=profile,
+            recipes=recipes,
+        )
+
+    def _available_manual_recipes(
+        self,
+        profile: CharacterProfession,
+        known_spell_ids: set[str],
+        search: str | None,
+    ) -> list[dict]:
+        needle = _norm(search or "")
+        recipes = []
+        for recipe in self._wow_records("profession_recipes"):
+            if recipe.get("profession_id") != profile.profession_id:
+                continue
+            if recipe.get("learned_from") == "trainer":
+                continue
+            if not recipe.get("hardcore_valid"):
+                continue
+            if int(recipe.get("required_skill") or 0) > profile.skill_level:
+                continue
+            if recipe.get("spell_id") in known_spell_ids:
+                continue
+            if needle and needle not in self._recipe_search_text(recipe):
+                continue
+            recipes.append(recipe)
+        return sorted(
+            recipes,
+            key=lambda recipe: (
+                int(recipe.get("required_skill") or 0),
+                self._recipe_name(recipe).casefold(),
+            ),
+        )
+
+    async def save_known_recipes(
+        self,
+        claim: CharacterClaim,
+        profession_id: str,
+        spell_ids: list[str],
+    ) -> int:
+        valid_spell_ids = {
+            recipe.get("spell_id")
+            for recipe in self._wow_records("profession_recipes")
+            if recipe.get("profession_id") == profession_id
+            and recipe.get("learned_from") != "trainer"
+            and recipe.get("hardcore_valid")
+        }
+        accepted = [spell_id for spell_id in spell_ids if spell_id in valid_spell_ids]
+        return await self.data.add_known_recipes(
+            claim.character_key, profession_id, accepted
+        )
+
+    async def known_recipes_for_character(
+        self,
+        discord_user_id: int,
+        char_name: str,
+        *,
+        is_mod: bool = False,
+    ) -> RecipeSelectionResult:
+        claim = await self.data.get_claim_by_name(char_name)
+        if not claim:
+            return RecipeSelectionResult("not_claimed")
+        if not is_mod and claim.discord_user_id != discord_user_id:
+            return RecipeSelectionResult("forbidden", claim=claim)
+        records = await self.data.known_recipes_for_character(claim.character_key)
+        return RecipeSelectionResult("ok", claim=claim, recipes=list(records))
+
+    async def remove_known_recipe(
+        self,
+        discord_user_id: int,
+        char_name: str,
+        recipe_value: str,
+        *,
+        is_mod: bool = False,
+    ) -> RecipeSelectionResult:
+        claim = await self.data.get_claim_by_name(char_name)
+        if not claim:
+            return RecipeSelectionResult("not_claimed")
+        if not is_mod and claim.discord_user_id != discord_user_id:
+            return RecipeSelectionResult("forbidden", claim=claim)
+        recipe = await self.resolve_known_recipe(claim.character_key, recipe_value)
+        if not recipe:
+            return RecipeSelectionResult("recipe_not_found", claim=claim)
+        removed = await self.data.remove_known_recipe(
+            claim.character_key, recipe.spell_id
+        )
+        return RecipeSelectionResult(
+            "removed" if removed else "recipe_not_found", claim=claim
+        )
+
+    async def resolve_known_recipe(
+        self, character_key: str, recipe_value: str
+    ) -> CharacterKnownRecipe | None:
+        needle = _norm(recipe_value)
+        for recipe in await self.data.known_recipes_for_character(character_key):
+            static = self._recipe_by_spell_id(recipe.spell_id)
+            names = [
+                recipe.spell_id,
+                self._recipe_name(static) if static else "",
+                self._localized_text(self._spell_for_recipe(static).get("name"), "de")
+                if static
+                else "",
+                self._localized_text(self._spell_for_recipe(static).get("name"), "en")
+                if static
+                else "",
+            ]
+            if needle in {_norm(name) for name in names if name}:
+                return recipe
+        return None
+
+    def _recipe_by_spell_id(self, spell_id: str | None) -> dict:
+        for recipe in self._wow_records("profession_recipes"):
+            if recipe.get("spell_id") == spell_id:
+                return recipe
+        return {}
+
     async def search_crafting(self, item_name: str) -> CraftingSearchResult:
         matches = self._match_items(item_name)
         if not matches:
@@ -659,24 +865,42 @@ class WoWCog(ManagedTaskCog):
         trainer_recipes = [
             recipe for recipe in recipes if recipe.get("learned_from") == "trainer"
         ]
-        if not trainer_recipes:
-            return CraftingSearchResult("manual_recipe", item=item, recipe=recipes[0])
-
+        manual_recipes = [
+            recipe for recipe in recipes if recipe.get("learned_from") != "trainer"
+        ]
         recipe = min(
             trainer_recipes,
             key=lambda record: int(record.get("required_skill") or 0),
+            default=None,
         )
+        manual_recipe = False
+        if recipe is None and manual_recipes:
+            recipe = min(
+                manual_recipes,
+                key=lambda record: int(record.get("required_skill") or 0),
+            )
+            manual_recipe = True
+        if recipe is None:
+            return CraftingSearchResult("recipe_not_found", item=item)
+
         profession_id = recipe.get("profession_id")
         required_skill = int(recipe.get("required_skill") or 1)
-        crafters = await self.data.find_crafters(profession_id, required_skill)
+        if manual_recipe:
+            crafters = await self.data.find_crafters_with_known_recipe(
+                profession_id, required_skill, str(recipe.get("spell_id"))
+            )
+        else:
+            crafters = await self.data.find_crafters(profession_id, required_skill)
         if not crafters:
+            status = "manual_recipe" if manual_recipe else "no_crafter"
             return CraftingSearchResult(
-                "no_crafter",
+                status,
                 item=item,
                 recipe=recipe,
                 required_skill=required_skill,
                 profession_id=profession_id,
                 crafters=[],
+                manual_recipe=manual_recipe,
             )
         return CraftingSearchResult(
             "ok",
@@ -685,6 +909,7 @@ class WoWCog(ManagedTaskCog):
             crafters=crafters,
             required_skill=required_skill,
             profession_id=profession_id,
+            manual_recipe=manual_recipe,
         )
 
     def _match_items(self, item_name: str) -> list[dict]:
@@ -715,7 +940,7 @@ class WoWCog(ManagedTaskCog):
 
     def format_crafting_search_result(self, result: CraftingSearchResult) -> str:
         if result.status == "item_not_found":
-            return "❌ Dieses Item wurde in den WoW-Daten nicht gefunden."
+            return "Dieses Item wurde in den WoW-Daten nicht gefunden."
         if result.status == "ambiguous_item":
             names = [
                 f"- {self._localized_text(item.get('name'))}"
@@ -724,29 +949,30 @@ class WoWCog(ManagedTaskCog):
             return "Mehrere Items gefunden. Bitte genauer suchen:\n" + "\n".join(names)
         item_name = self._localized_text((result.item or {}).get("name"))
         if result.status == "recipe_not_found":
-            return f"❌ Für **{item_name}** wurde kein Crafting-Rezept gefunden."
+            return f"Für **{item_name}** wurde kein Crafting-Rezept gefunden."
         if result.status == "manual_recipe":
             return (
-                f"ℹ️ **{item_name}** hat ein Rezept, aber es ist kein Trainerrezept. "
-                "V1 kennt gefundene/gekaufte Rezepte noch nicht als gelernt."
+                f"**{item_name}** ist ein Spezialrezept. "
+                "Aktuell hat es noch niemand gepflegt."
             )
         profession_name = self._profession_name(result.profession_id or "")
         if result.status == "no_crafter":
             return (
-                f"❌ **{item_name}** benötigt {profession_name} "
+                f"**{item_name}** benötigt {profession_name} "
                 f"{result.required_skill}. Kein geclaimter Crafter passt aktuell."
             )
         lines = [
-            f"**{item_name}** kann vermutlich gecraftet werden von:",
+            f"**{item_name}** kann gecraftet werden von:",
             "",
         ]
         for crafter in result.crafters or []:
             specialization = (
                 f" ({crafter.specialization})" if crafter.specialization else ""
             )
+            recipe_note = " - Spezialrezept gepflegt" if result.manual_recipe else ""
             lines.append(
                 f"- <@{crafter.discord_user_id}> mit **{crafter.character_name}** "
-                f"({profession_name} {crafter.skill_level}{specialization})"
+                f"({profession_name} {crafter.skill_level}{specialization}){recipe_note}"
             )
         return "\n".join(lines)
 
@@ -780,6 +1006,253 @@ class WoWCog(ManagedTaskCog):
     def cog_unload(self) -> None:
         super().cog_unload()
         self.create_task(self.data.close())
+
+
+class CraftingProfessionSelect(discord.ui.Select):
+    def __init__(
+        self,
+        cog: WoWCog,
+        owner_user_id: int,
+        claim: CharacterClaim,
+        profiles: list[CharacterProfession],
+        search: str | None,
+    ) -> None:
+        self.cog = cog
+        self.owner_user_id = owner_user_id
+        self.claim = claim
+        self.profiles = profiles
+        self.search = search
+        options = [
+            discord.SelectOption(
+                label=cog._profession_name(profile.profession_id),
+                value=profile.profession_id,
+                description=f"Skill {profile.skill_level}",
+            )
+            for profile in profiles[:25]
+        ]
+        super().__init__(
+            placeholder="Beruf auswählen",
+            min_values=1,
+            max_values=1,
+            options=options,
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        profile = next(
+            (
+                profile
+                for profile in self.profiles
+                if profile.profession_id == self.values[0]
+            ),
+            None,
+        )
+        if profile is None:
+            await interaction.response.send_message(
+                "Dieser Beruf ist nicht mehr verfügbar.", ephemeral=True
+            )
+            return
+        result = await self.cog._recipe_selection_for_profile(
+            self.claim, profile, self.search
+        )
+        if not result.recipes:
+            await interaction.response.edit_message(
+                content=(
+                    f"Für **{self.claim.character_name}** gibt es aktuell keine "
+                    f"offenen Spezialrezepte für "
+                    f"{self.cog._profession_name(profile.profession_id)}."
+                ),
+                view=None,
+            )
+            return
+        view = CraftingRecipeSelectionView(
+            self.cog,
+            self.owner_user_id,
+            self.claim,
+            profile,
+            result.recipes,
+        )
+        await interaction.response.edit_message(content=view.content(), view=view)
+
+
+class CraftingProfessionSelectView(discord.ui.View):
+    def __init__(
+        self,
+        cog: WoWCog,
+        owner_user_id: int,
+        claim: CharacterClaim,
+        profiles: list[CharacterProfession],
+        search: str | None,
+    ) -> None:
+        super().__init__(timeout=300)
+        self.owner_user_id = owner_user_id
+        self.add_item(
+            CraftingProfessionSelect(cog, owner_user_id, claim, profiles, search)
+        )
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.owner_user_id:
+            return True
+        await interaction.response.send_message(
+            "Diese Auswahl gehört nicht dir.", ephemeral=True
+        )
+        return False
+
+
+class CraftingRecipeSelect(discord.ui.Select):
+    def __init__(self, parent: "CraftingRecipeSelectionView") -> None:
+        self.parent_view = parent
+        options = [
+            discord.SelectOption(
+                label=parent.option_label(recipe),
+                value=str(recipe.get("spell_id")),
+                description=parent.option_description(recipe),
+                default=str(recipe.get("spell_id")) in parent.selected_spell_ids,
+            )
+            for recipe in parent.current_page_recipes()
+        ]
+        super().__init__(
+            placeholder="Gelernte Rezepte auswählen",
+            min_values=0,
+            max_values=len(options),
+            options=options,
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        current_spell_ids = {
+            str(recipe.get("spell_id"))
+            for recipe in self.parent_view.current_page_recipes()
+        }
+        self.parent_view.selected_spell_ids -= current_spell_ids
+        self.parent_view.selected_spell_ids.update(self.values)
+        self.parent_view.refresh_items()
+        await interaction.response.edit_message(
+            content=self.parent_view.content(),
+            view=self.parent_view,
+        )
+
+
+class CraftingRecipeSelectionView(discord.ui.View):
+    page_size = 25
+
+    def __init__(
+        self,
+        cog: WoWCog,
+        owner_user_id: int,
+        claim: CharacterClaim,
+        profile: CharacterProfession,
+        recipes: list[dict],
+    ) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.owner_user_id = owner_user_id
+        self.claim = claim
+        self.profile = profile
+        self.recipes = recipes
+        self.page = 0
+        self.selected_spell_ids: set[str] = set()
+        self.refresh_items()
+
+    @property
+    def max_page(self) -> int:
+        return max(0, (len(self.recipes) - 1) // self.page_size)
+
+    def current_page_recipes(self) -> list[dict]:
+        start = self.page * self.page_size
+        return self.recipes[start : start + self.page_size]
+
+    def option_label(self, recipe: dict) -> str:
+        label = self.cog._recipe_name(recipe)
+        return label[:100] or str(recipe.get("spell_id"))[:100]
+
+    def option_description(self, recipe: dict) -> str:
+        skill = int(recipe.get("required_skill") or 0)
+        spell = self.cog._spell_for_recipe(recipe)
+        spell_name = self.cog._localized_text(spell.get("name"))
+        text = f"Skill {skill}"
+        if spell_name and spell_name != self.option_label(recipe):
+            text = f"{text} - {spell_name}"
+        return text[:100]
+
+    def content(self) -> str:
+        return _recipe_selection_content(
+            self.cog,
+            self.claim,
+            self.profile,
+            self.recipes,
+            self.page,
+            self.selected_spell_ids,
+        )
+
+    def refresh_items(self) -> None:
+        self.clear_items()
+        self.add_item(CraftingRecipeSelect(self))
+        self.previous_page.disabled = self.page <= 0
+        self.next_page.disabled = self.page >= self.max_page
+        self.add_item(self.previous_page)
+        self.add_item(self.next_page)
+        self.add_item(self.save)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.owner_user_id:
+            return True
+        await interaction.response.send_message(
+            "Diese Auswahl gehört nicht dir.", ephemeral=True
+        )
+        return False
+
+    @discord.ui.button(label="Zurück", style=discord.ButtonStyle.secondary)
+    async def previous_page(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        self.page = max(0, self.page - 1)
+        self.refresh_items()
+        await interaction.response.edit_message(content=self.content(), view=self)
+
+    @discord.ui.button(label="Weiter", style=discord.ButtonStyle.secondary)
+    async def next_page(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        self.page = min(self.max_page, self.page + 1)
+        self.refresh_items()
+        await interaction.response.edit_message(content=self.content(), view=self)
+
+    @discord.ui.button(label="Speichern", style=discord.ButtonStyle.success)
+    async def save(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        if not self.selected_spell_ids:
+            await interaction.response.send_message(
+                "Bitte wähle mindestens ein Rezept aus.", ephemeral=True
+            )
+            return
+        saved = await self.cog.save_known_recipes(
+            self.claim,
+            self.profile.profession_id,
+            sorted(self.selected_spell_ids),
+        )
+        await interaction.response.edit_message(
+            content=(
+                f"{saved} Rezepte für **{self.claim.character_name}** gespeichert."
+            ),
+            view=None,
+        )
+
+
+def _recipe_selection_content(
+    cog: WoWCog,
+    claim: CharacterClaim,
+    profile: CharacterProfession,
+    recipes: list[dict],
+    page: int = 0,
+    selected: set[str] | None = None,
+) -> str:
+    selected_count = len(selected or set())
+    return (
+        f"**{claim.character_name}** - "
+        f"{cog._profession_name(profile.profession_id)} {profile.skill_level}\n"
+        f"Offene Spezialrezepte: {len(recipes)} | Seite {page + 1} | "
+        f"ausgewählt: {selected_count}"
+    )
 
 
 class ClaimReviewView(discord.ui.View):
