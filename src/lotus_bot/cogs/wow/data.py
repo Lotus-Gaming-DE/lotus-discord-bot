@@ -23,6 +23,19 @@ class RosterMember:
     guild_rank: int | None
 
 
+@dataclass
+class CharacterClaim:
+    character_key: str
+    character_name: str
+    realm_slug: str
+    discord_user_id: int
+    status: str
+    claimed_at: str
+    verified_at: str | None
+    verified_by: int | None
+    review_message_id: int | None
+
+
 class WoWData:
     """SQLite storage for WoW guild settings, snapshots, and milestones."""
 
@@ -73,6 +86,21 @@ class WoWData:
                 level INTEGER NOT NULL,
                 announced_at TEXT NOT NULL,
                 PRIMARY KEY(character_key, level)
+            )
+            """
+        )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS character_claims (
+                character_key TEXT PRIMARY KEY,
+                character_name TEXT NOT NULL,
+                realm_slug TEXT NOT NULL,
+                discord_user_id INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                claimed_at TEXT NOT NULL,
+                verified_at TEXT,
+                verified_by INTEGER,
+                review_message_id INTEGER
             )
             """
         )
@@ -192,6 +220,205 @@ class WoWData:
 
     async def mark_scanned(self) -> None:
         await self.set_setting("last_scan_at", datetime.utcnow().isoformat())
+
+    async def find_roster_member_by_name(self, name: str) -> RosterMember | None:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT character_key, character_id, name, realm_slug, level, class_id,
+                   race_id, faction, guild_rank
+              FROM roster_snapshot
+             WHERE lower(name) = lower(?)
+             LIMIT 1
+            """,
+            (name.strip(),),
+        )
+        row = await cur.fetchone()
+        if not row:
+            return None
+        return RosterMember(
+            character_key=row[0],
+            character_id=row[1],
+            name=row[2],
+            realm_slug=row[3],
+            level=row[4],
+            class_id=row[5],
+            race_id=row[6],
+            faction=row[7] or "",
+            guild_rank=row[8],
+        )
+
+    async def get_claim(self, character_key: str) -> CharacterClaim | None:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT character_key, character_name, realm_slug, discord_user_id, status,
+                   claimed_at, verified_at, verified_by, review_message_id
+              FROM character_claims
+             WHERE character_key = ?
+            """,
+            (character_key,),
+        )
+        row = await cur.fetchone()
+        return _claim_from_row(row) if row else None
+
+    async def get_claim_by_name(self, name: str) -> CharacterClaim | None:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT character_key, character_name, realm_slug, discord_user_id, status,
+                   claimed_at, verified_at, verified_by, review_message_id
+              FROM character_claims
+             WHERE lower(character_name) = lower(?)
+             LIMIT 1
+            """,
+            (name.strip(),),
+        )
+        row = await cur.fetchone()
+        return _claim_from_row(row) if row else None
+
+    async def create_claim(
+        self, member: RosterMember, discord_user_id: int
+    ) -> tuple[CharacterClaim, bool]:
+        await self.init_db()
+        existing = await self.get_claim(member.character_key)
+        if existing:
+            return existing, False
+
+        db = await self._get_db()
+        now = datetime.utcnow().isoformat()
+        await db.execute(
+            """
+            INSERT INTO character_claims(
+                character_key, character_name, realm_slug, discord_user_id, status,
+                claimed_at, verified_at, verified_by, review_message_id
+            ) VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL)
+            """,
+            (
+                member.character_key,
+                member.name,
+                member.realm_slug,
+                discord_user_id,
+                "unverified",
+                now,
+            ),
+        )
+        await db.commit()
+        claim = await self.get_claim(member.character_key)
+        if claim is None:  # pragma: no cover - defensive
+            raise RuntimeError("Claim creation failed")
+        return claim, True
+
+    async def set_claim_review_message(
+        self, character_key: str, review_message_id: int
+    ) -> None:
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute(
+            """
+            UPDATE character_claims
+               SET review_message_id = ?
+             WHERE character_key = ?
+            """,
+            (review_message_id, character_key),
+        )
+        await db.commit()
+
+    async def verify_claim(self, character_key: str, reviewer_id: int) -> None:
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute(
+            """
+            UPDATE character_claims
+               SET status = 'verified', verified_at = ?, verified_by = ?
+             WHERE character_key = ?
+            """,
+            (datetime.utcnow().isoformat(), reviewer_id, character_key),
+        )
+        await db.commit()
+
+    async def get_claim_by_review_message(
+        self, review_message_id: int
+    ) -> CharacterClaim | None:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT character_key, character_name, realm_slug, discord_user_id, status,
+                   claimed_at, verified_at, verified_by, review_message_id
+              FROM character_claims
+             WHERE review_message_id = ?
+            """,
+            (review_message_id,),
+        )
+        row = await cur.fetchone()
+        return _claim_from_row(row) if row else None
+
+    async def remove_claim(self, character_key: str) -> None:
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute(
+            "DELETE FROM character_claims WHERE character_key = ?",
+            (character_key,),
+        )
+        await db.commit()
+
+    async def release_claim(self, character_key: str, discord_user_id: int) -> bool:
+        claim = await self.get_claim(character_key)
+        if not claim or claim.discord_user_id != discord_user_id:
+            return False
+        await self.remove_claim(character_key)
+        return True
+
+    async def claims_for_user(self, discord_user_id: int) -> list[CharacterClaim]:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT character_key, character_name, realm_slug, discord_user_id, status,
+                   claimed_at, verified_at, verified_by, review_message_id
+              FROM character_claims
+             WHERE discord_user_id = ?
+             ORDER BY lower(character_name)
+            """,
+            (discord_user_id,),
+        )
+        rows = await cur.fetchall()
+        return [_claim_from_row(row) for row in rows]
+
+    async def list_claims(self, status: str = "all") -> list[CharacterClaim]:
+        await self.init_db()
+        db = await self._get_db()
+        query = """
+            SELECT character_key, character_name, realm_slug, discord_user_id, status,
+                   claimed_at, verified_at, verified_by, review_message_id
+              FROM character_claims
+        """
+        params: tuple[str, ...] = ()
+        if status != "all":
+            query += " WHERE status = ?"
+            params = (status,)
+        query += " ORDER BY lower(character_name)"
+        cur = await db.execute(query, params)
+        rows = await cur.fetchall()
+        return [_claim_from_row(row) for row in rows]
+
+
+def _claim_from_row(row: tuple[Any, ...]) -> CharacterClaim:
+    return CharacterClaim(
+        character_key=row[0],
+        character_name=row[1],
+        realm_slug=row[2],
+        discord_user_id=row[3],
+        status=row[4],
+        claimed_at=row[5],
+        verified_at=row[6],
+        verified_by=row[7],
+        review_message_id=row[8],
+    )
 
 
 def parse_roster_member(raw: dict[str, Any]) -> RosterMember | None:

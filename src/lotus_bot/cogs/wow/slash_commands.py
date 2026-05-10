@@ -5,6 +5,7 @@ from lotus_bot.log_setup import get_logger
 from lotus_bot.permissions import moderator_only
 
 from .cog import WoWCog
+from .data import CharacterClaim
 
 logger = get_logger(__name__)
 
@@ -12,6 +13,15 @@ wow_group = app_commands.Group(
     name="wow",
     description="WoW Classic Hardcore Befehle",
 )
+
+
+def _format_claim_status(status: str) -> str:
+    return "bestätigt" if status == "verified" else "ungeprüft"
+
+
+def _format_claim_line(claim: CharacterClaim, *, include_user: bool = False) -> str:
+    user = f" - <@{claim.discord_user_id}>" if include_user else ""
+    return f"**{claim.character_name}** ({_format_claim_status(claim.status)}){user}"
 
 
 @wow_group.command(name="setup", description="Konfiguriert den WoW-Ankündigungschannel")
@@ -87,4 +97,159 @@ async def scan(interaction: discord.Interaction, post: bool = True):
     await interaction.followup.send(
         f"{mode}: {result.member_count} Mitglieder geprüft, "
         f"{len(result.milestones)} Meilensteine gefunden, {result.posted} gepostet."
+    )
+
+
+@wow_group.command(name="claim", description="Claimt einen Black-Lotus-Charakter")
+@app_commands.describe(char="Name des Charakters im Black-Lotus-Roster")
+async def claim(interaction: discord.Interaction, char: str):
+    logger.info(f"/wow claim by {interaction.user} char={char}")
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    result = await cog.claim_character(interaction.user.id, char)
+    if result.reason == "not_found":
+        await interaction.response.send_message(
+            f"❌ **{char}** wurde im aktuellen Black-Lotus-Roster nicht gefunden.",
+            ephemeral=True,
+        )
+        return
+    if result.claim is None:
+        await interaction.response.send_message(
+            "❌ Claim konnte nicht erstellt werden.", ephemeral=True
+        )
+        return
+    if result.reason == "taken":
+        await interaction.response.send_message(
+            f"❌ **{result.claim.character_name}** ist bereits geclaimed.",
+            ephemeral=True,
+        )
+        return
+    if result.reason == "already_own":
+        await interaction.response.send_message(
+            f"ℹ️ Du hast **{result.claim.character_name}** bereits geclaimed "
+            f"({_format_claim_status(result.claim.status)}).",
+            ephemeral=True,
+        )
+        return
+
+    warning = (
+        "" if result.review_posted else "\n⚠️ Offi-Review konnte nicht gepostet werden."
+    )
+    await interaction.response.send_message(
+        f"✅ Du hast **{result.claim.character_name}** geclaimed "
+        f"({_format_claim_status(result.claim.status)}).{warning}",
+        ephemeral=True,
+    )
+
+
+@wow_group.command(
+    name="claim-release", description="Gibt deinen eigenen WoW-Claim frei"
+)
+@app_commands.describe(char="Name des geclaimten Charakters")
+async def claim_release(interaction: discord.Interaction, char: str):
+    logger.info(f"/wow claim-release by {interaction.user} char={char}")
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    existing = await cog.data.get_claim_by_name(char)
+    if not existing or existing.discord_user_id != interaction.user.id:
+        await interaction.response.send_message(
+            f"❌ Du hast **{char}** nicht geclaimed.", ephemeral=True
+        )
+        return
+    await cog.data.remove_claim(existing.character_key)
+    await interaction.response.send_message(
+        f"✅ Claim für **{existing.character_name}** wurde freigegeben.", ephemeral=True
+    )
+
+
+@wow_group.command(name="claim-remove", description="Entfernt einen WoW-Claim")
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+@app_commands.describe(char="Name des geclaimten Charakters")
+async def claim_remove(interaction: discord.Interaction, char: str):
+    logger.info(f"/wow claim-remove by {interaction.user} char={char}")
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    existing = await cog.data.get_claim_by_name(char)
+    if not existing:
+        await interaction.response.send_message(
+            f"ℹ️ **{char}** ist aktuell nicht geclaimed.", ephemeral=True
+        )
+        return
+    await cog.data.remove_claim(existing.character_key)
+    await interaction.response.send_message(
+        f"✅ Claim für **{existing.character_name}** wurde entfernt.", ephemeral=True
+    )
+
+
+claims_group = app_commands.Group(
+    name="claims",
+    description="WoW Character Claims",
+    parent=wow_group,
+)
+
+
+@claims_group.command(name="mine", description="Zeigt deine geclaimten WoW-Charaktere")
+async def claims_mine(interaction: discord.Interaction):
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    claims = await cog.data.claims_for_user(interaction.user.id)
+    if not claims:
+        await interaction.response.send_message(
+            "Du hast noch keine WoW-Charaktere geclaimed.", ephemeral=True
+        )
+        return
+    await interaction.response.send_message(
+        "\n".join(_format_claim_line(claim) for claim in claims),
+        ephemeral=True,
+    )
+
+
+@claims_group.command(name="list", description="Listet WoW Character Claims")
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+@app_commands.choices(
+    status=[
+        app_commands.Choice(name="all", value="all"),
+        app_commands.Choice(name="unverified", value="unverified"),
+        app_commands.Choice(name="verified", value="verified"),
+    ]
+)
+async def claims_list(interaction: discord.Interaction, status: str = "all"):
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    claims = await cog.data.list_claims(status)
+    if not claims:
+        await interaction.response.send_message(
+            "Keine Claims gefunden.", ephemeral=True
+        )
+        return
+    await interaction.response.send_message(
+        "\n".join(_format_claim_line(claim, include_user=True) for claim in claims),
+        ephemeral=True,
     )

@@ -1,7 +1,25 @@
-from lotus_bot.cogs.wow.data import parse_roster_member
+import pytest
+
+from lotus_bot.cogs.wow.data import RosterMember, WoWData, parse_roster_member
+
+pytestmark = pytest.mark.asyncio
 
 
-def test_parse_roster_member_with_character_id():
+def roster_member(name="Lyxendra", key="id:123"):
+    return RosterMember(
+        character_key=key,
+        character_id=123,
+        name=name,
+        realm_slug="soulseeker",
+        level=44,
+        class_id=4,
+        race_id=8,
+        faction="HORDE",
+        guild_rank=1,
+    )
+
+
+async def test_parse_roster_member_with_character_id():
     member = parse_roster_member(
         {
             "character": {
@@ -26,7 +44,7 @@ def test_parse_roster_member_with_character_id():
     assert member.guild_rank == 1
 
 
-def test_parse_roster_member_fallback_key():
+async def test_parse_roster_member_fallback_key():
     member = parse_roster_member(
         {
             "character": {
@@ -40,5 +58,53 @@ def test_parse_roster_member_fallback_key():
     assert member.character_key == "realm:soulseeker:name:noid"
 
 
-def test_parse_roster_member_rejects_incomplete_entry():
+async def test_parse_roster_member_rejects_incomplete_entry():
     assert parse_roster_member({"character": {"name": "NoRealm", "level": 1}}) is None
+
+
+async def test_claim_lifecycle_and_case_insensitive_lookup(tmp_path):
+    data = WoWData(str(tmp_path / "wow.db"))
+    member = roster_member()
+    await data.replace_snapshot([member])
+
+    found = await data.find_roster_member_by_name("lyxendra")
+    assert found == member
+
+    claim, created = await data.create_claim(member, 42)
+    assert created is True
+    assert claim.character_name == "Lyxendra"
+    assert claim.status == "unverified"
+
+    same_claim, created = await data.create_claim(member, 43)
+    assert created is False
+    assert same_claim.discord_user_id == 42
+
+    await data.verify_claim(member.character_key, 99)
+    verified = await data.get_claim(member.character_key)
+    assert verified.status == "verified"
+    assert verified.verified_by == 99
+
+    assert await data.release_claim(member.character_key, 43) is False
+    assert await data.release_claim(member.character_key, 42) is True
+    assert await data.get_claim(member.character_key) is None
+    await data.close()
+
+
+async def test_claim_listing_and_review_message_lookup(tmp_path):
+    data = WoWData(str(tmp_path / "wow.db"))
+    member = roster_member()
+    await data.replace_snapshot([member])
+    claim, _ = await data.create_claim(member, 42)
+    await data.set_claim_review_message(claim.character_key, 555)
+
+    by_message = await data.get_claim_by_review_message(555)
+    assert by_message.character_key == claim.character_key
+    by_name = await data.get_claim_by_name("lyxendra")
+    assert by_name == by_message
+    assert await data.claims_for_user(42) == [by_message]
+    assert await data.list_claims("unverified") == [by_message]
+    assert await data.list_claims("verified") == []
+
+    await data.remove_claim(claim.character_key)
+    assert await data.list_claims() == []
+    await data.close()
