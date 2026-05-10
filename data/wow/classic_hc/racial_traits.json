@@ -1,4 +1,206 @@
 [
-  {"id": "gnome.escape_artist", "race_id": "gnome", "spell_id": "spell.20589", "hardcore_valid": true},
-  {"id": "dwarf.stoneform", "race_id": "dwarf", "spell_id": "spell.20594", "hardcore_valid": true}
+  {
+    "id": "dwarf.find_treasure",
+    "race_id": "dwarf",
+    "spell_id": "spell.2481",
+    "hardcore_valid": true
+  },
+  {
+    "id": "dwarf.frost_resistance",
+    "race_id": "dwarf",
+    "spell_id": "spell.20596",
+    "hardcore_valid": true
+  },
+  {
+    "id": "dwarf.gun_specialization",
+    "race_id": "dwarf",
+    "spell_id": "spell.20595",
+    "hardcore_valid": true
+  },
+  {
+    "id": "dwarf.stoneform",
+    "race_id": "dwarf",
+    "spell_id": "spell.20594",
+    "hardcore_valid": true
+  },
+  {
+    "id": "gnome.arcane_resistance",
+    "race_id": "gnome",
+    "spell_id": "spell.20592",
+    "hardcore_valid": true
+  },
+  {
+    "id": "gnome.engineering_specialization",
+    "race_id": "gnome",
+    "spell_id": "spell.20593",
+    "hardcore_valid": true
+  },
+  {
+    "id": "gnome.escape_artist",
+    "race_id": "gnome",
+    "spell_id": "spell.20589",
+    "hardcore_valid": true
+  },
+  {
+    "id": "gnome.expansive_mind",
+    "race_id": "gnome",
+    "spell_id": "spell.20591",
+    "hardcore_valid": true
+  },
+  {
+    "id": "human.diplomacy",
+    "race_id": "human",
+    "spell_id": "spell.20599",
+    "hardcore_valid": true
+  },
+  {
+    "id": "human.mace_specialization",
+    "race_id": "human",
+    "spell_id": "spell.20864",
+    "hardcore_valid": true
+  },
+  {
+    "id": "human.perception",
+    "race_id": "human",
+    "spell_id": "spell.20600",
+    "hardcore_valid": true
+  },
+  {
+    "id": "human.sword_specialization",
+    "race_id": "human",
+    "spell_id": "spell.20597",
+    "hardcore_valid": true
+  },
+  {
+    "id": "human.the_human_spirit",
+    "race_id": "human",
+    "spell_id": "spell.20598",
+    "hardcore_valid": true
+  },
+  {
+    "id": "night_elf.nature_resistance",
+    "race_id": "night_elf",
+    "spell_id": "spell.20583",
+    "hardcore_valid": true
+  },
+  {
+    "id": "night_elf.quickness",
+    "race_id": "night_elf",
+    "spell_id": "spell.20582",
+    "hardcore_valid": true
+  },
+  {
+    "id": "night_elf.shadowmeld",
+    "race_id": "night_elf",
+    "spell_id": "spell.20580",
+    "hardcore_valid": true
+  },
+  {
+    "id": "night_elf.wisp_spirit",
+    "race_id": "night_elf",
+    "spell_id": "spell.20585",
+    "hardcore_valid": true
+  },
+  {
+    "id": "orc.axe_specialization",
+    "race_id": "orc",
+    "spell_id": "spell.20574",
+    "hardcore_valid": true
+  },
+  {
+    "id": "orc.blood_fury",
+    "race_id": "orc",
+    "spell_id": "spell.20572",
+    "hardcore_valid": true
+  },
+  {
+    "id": "orc.command",
+    "race_id": "orc",
+    "spell_id": "spell.20575",
+    "hardcore_valid": true
+  },
+  {
+    "id": "orc.hardiness",
+    "race_id": "orc",
+    "spell_id": "spell.20573",
+    "hardcore_valid": true
+  },
+  {
+    "id": "tauren.cultivation",
+    "race_id": "tauren",
+    "spell_id": "spell.20552",
+    "hardcore_valid": true
+  },
+  {
+    "id": "tauren.endurance",
+    "race_id": "tauren",
+    "spell_id": "spell.20550",
+    "hardcore_valid": true
+  },
+  {
+    "id": "tauren.nature_resistance",
+    "race_id": "tauren",
+    "spell_id": "spell.20551",
+    "hardcore_valid": true
+  },
+  {
+    "id": "tauren.war_stomp",
+    "race_id": "tauren",
+    "spell_id": "spell.20549",
+    "hardcore_valid": true
+  },
+  {
+    "id": "troll.beast_slaying",
+    "race_id": "troll",
+    "spell_id": "spell.20557",
+    "hardcore_valid": true
+  },
+  {
+    "id": "troll.berserking",
+    "race_id": "troll",
+    "spell_id": "spell.26297",
+    "hardcore_valid": true
+  },
+  {
+    "id": "troll.bow_specialization",
+    "race_id": "troll",
+    "spell_id": "spell.26290",
+    "hardcore_valid": true
+  },
+  {
+    "id": "troll.regeneration",
+    "race_id": "troll",
+    "spell_id": "spell.20555",
+    "hardcore_valid": true
+  },
+  {
+    "id": "troll.throwing_specialization",
+    "race_id": "troll",
+    "spell_id": "spell.20558",
+    "hardcore_valid": true
+  },
+  {
+    "id": "undead.cannibalize",
+    "race_id": "undead",
+    "spell_id": "spell.20577",
+    "hardcore_valid": true
+  },
+  {
+    "id": "undead.shadow_resistance",
+    "race_id": "undead",
+    "spell_id": "spell.20579",
+    "hardcore_valid": true
+  },
+  {
+    "id": "undead.underwater_breathing",
+    "race_id": "undead",
+    "spell_id": "spell.5227",
+    "hardcore_valid": true
+  },
+  {
+    "id": "undead.will_of_the_forsaken",
+    "race_id": "undead",
+    "spell_id": "spell.7744",
+    "hardcore_valid": true
+  }
 ]

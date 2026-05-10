@@ -1,10 +1,74 @@
 [
-  {"id": "human", "blizzard_id": 1, "faction_id": "alliance", "name": {"de": "Mensch", "en": "Human"}},
-  {"id": "orc", "blizzard_id": 2, "faction_id": "horde", "name": {"de": "Orc", "en": "Orc"}},
-  {"id": "dwarf", "blizzard_id": 3, "faction_id": "alliance", "name": {"de": "Zwerg", "en": "Dwarf"}},
-  {"id": "night_elf", "blizzard_id": 4, "faction_id": "alliance", "name": {"de": "Nachtelf", "en": "Night Elf"}},
-  {"id": "undead", "blizzard_id": 5, "faction_id": "horde", "name": {"de": "Untoter", "en": "Undead"}},
-  {"id": "tauren", "blizzard_id": 6, "faction_id": "horde", "name": {"de": "Taure", "en": "Tauren"}},
-  {"id": "gnome", "blizzard_id": 7, "faction_id": "alliance", "name": {"de": "Gnom", "en": "Gnome"}},
-  {"id": "troll", "blizzard_id": 8, "faction_id": "horde", "name": {"de": "Troll", "en": "Troll"}}
+  {
+    "id": "dwarf",
+    "blizzard_id": 3,
+    "faction_id": "alliance",
+    "name": {
+      "de": "Zwerg",
+      "en": "Dwarf"
+    }
+  },
+  {
+    "id": "gnome",
+    "blizzard_id": 7,
+    "faction_id": "alliance",
+    "name": {
+      "de": "Gnom",
+      "en": "Gnome"
+    }
+  },
+  {
+    "id": "human",
+    "blizzard_id": 1,
+    "faction_id": "alliance",
+    "name": {
+      "de": "Mensch",
+      "en": "Human"
+    }
+  },
+  {
+    "id": "night_elf",
+    "blizzard_id": 4,
+    "faction_id": "alliance",
+    "name": {
+      "de": "Nachtelf",
+      "en": "Night Elf"
+    }
+  },
+  {
+    "id": "orc",
+    "blizzard_id": 2,
+    "faction_id": "horde",
+    "name": {
+      "de": "Orc",
+      "en": "Orc"
+    }
+  },
+  {
+    "id": "tauren",
+    "blizzard_id": 6,
+    "faction_id": "horde",
+    "name": {
+      "de": "Taure",
+      "en": "Tauren"
+    }
+  },
+  {
+    "id": "troll",
+    "blizzard_id": 8,
+    "faction_id": "horde",
+    "name": {
+      "de": "Troll",
+      "en": "Troll"
+    }
+  },
+  {
+    "id": "undead",
+    "blizzard_id": 5,
+    "faction_id": "horde",
+    "name": {
+      "de": "Untoter",
+      "en": "Undead"
+    }
+  }
 ]

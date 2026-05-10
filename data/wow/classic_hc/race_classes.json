@@ -1,42 +1,202 @@
 [
-  {"race_id": "human", "class_id": "warrior"},
-  {"race_id": "human", "class_id": "paladin"},
-  {"race_id": "human", "class_id": "rogue"},
-  {"race_id": "human", "class_id": "priest"},
-  {"race_id": "human", "class_id": "mage"},
-  {"race_id": "human", "class_id": "warlock"},
-  {"race_id": "dwarf", "class_id": "warrior"},
-  {"race_id": "dwarf", "class_id": "paladin"},
-  {"race_id": "dwarf", "class_id": "hunter"},
-  {"race_id": "dwarf", "class_id": "rogue"},
-  {"race_id": "dwarf", "class_id": "priest"},
-  {"race_id": "night_elf", "class_id": "warrior"},
-  {"race_id": "night_elf", "class_id": "hunter"},
-  {"race_id": "night_elf", "class_id": "rogue"},
-  {"race_id": "night_elf", "class_id": "priest"},
-  {"race_id": "night_elf", "class_id": "druid"},
-  {"race_id": "gnome", "class_id": "warrior"},
-  {"race_id": "gnome", "class_id": "rogue"},
-  {"race_id": "gnome", "class_id": "mage"},
-  {"race_id": "gnome", "class_id": "warlock"},
-  {"race_id": "orc", "class_id": "warrior"},
-  {"race_id": "orc", "class_id": "hunter"},
-  {"race_id": "orc", "class_id": "rogue"},
-  {"race_id": "orc", "class_id": "shaman"},
-  {"race_id": "orc", "class_id": "warlock"},
-  {"race_id": "undead", "class_id": "warrior"},
-  {"race_id": "undead", "class_id": "rogue"},
-  {"race_id": "undead", "class_id": "priest"},
-  {"race_id": "undead", "class_id": "mage"},
-  {"race_id": "undead", "class_id": "warlock"},
-  {"race_id": "tauren", "class_id": "warrior"},
-  {"race_id": "tauren", "class_id": "hunter"},
-  {"race_id": "tauren", "class_id": "shaman"},
-  {"race_id": "tauren", "class_id": "druid"},
-  {"race_id": "troll", "class_id": "warrior"},
-  {"race_id": "troll", "class_id": "hunter"},
-  {"race_id": "troll", "class_id": "rogue"},
-  {"race_id": "troll", "class_id": "priest"},
-  {"race_id": "troll", "class_id": "shaman"},
-  {"race_id": "troll", "class_id": "mage"}
+  {
+    "id": "race_class.dwarf.hunter",
+    "race_id": "dwarf",
+    "class_id": "hunter"
+  },
+  {
+    "id": "race_class.dwarf.paladin",
+    "race_id": "dwarf",
+    "class_id": "paladin"
+  },
+  {
+    "id": "race_class.dwarf.priest",
+    "race_id": "dwarf",
+    "class_id": "priest"
+  },
+  {
+    "id": "race_class.dwarf.rogue",
+    "race_id": "dwarf",
+    "class_id": "rogue"
+  },
+  {
+    "id": "race_class.dwarf.warrior",
+    "race_id": "dwarf",
+    "class_id": "warrior"
+  },
+  {
+    "id": "race_class.gnome.mage",
+    "race_id": "gnome",
+    "class_id": "mage"
+  },
+  {
+    "id": "race_class.gnome.rogue",
+    "race_id": "gnome",
+    "class_id": "rogue"
+  },
+  {
+    "id": "race_class.gnome.warlock",
+    "race_id": "gnome",
+    "class_id": "warlock"
+  },
+  {
+    "id": "race_class.gnome.warrior",
+    "race_id": "gnome",
+    "class_id": "warrior"
+  },
+  {
+    "id": "race_class.human.mage",
+    "race_id": "human",
+    "class_id": "mage"
+  },
+  {
+    "id": "race_class.human.paladin",
+    "race_id": "human",
+    "class_id": "paladin"
+  },
+  {
+    "id": "race_class.human.priest",
+    "race_id": "human",
+    "class_id": "priest"
+  },
+  {
+    "id": "race_class.human.rogue",
+    "race_id": "human",
+    "class_id": "rogue"
+  },
+  {
+    "id": "race_class.human.warlock",
+    "race_id": "human",
+    "class_id": "warlock"
+  },
+  {
+    "id": "race_class.human.warrior",
+    "race_id": "human",
+    "class_id": "warrior"
+  },
+  {
+    "id": "race_class.night_elf.druid",
+    "race_id": "night_elf",
+    "class_id": "druid"
+  },
+  {
+    "id": "race_class.night_elf.hunter",
+    "race_id": "night_elf",
+    "class_id": "hunter"
+  },
+  {
+    "id": "race_class.night_elf.priest",
+    "race_id": "night_elf",
+    "class_id": "priest"
+  },
+  {
+    "id": "race_class.night_elf.rogue",
+    "race_id": "night_elf",
+    "class_id": "rogue"
+  },
+  {
+    "id": "race_class.night_elf.warrior",
+    "race_id": "night_elf",
+    "class_id": "warrior"
+  },
+  {
+    "id": "race_class.orc.hunter",
+    "race_id": "orc",
+    "class_id": "hunter"
+  },
+  {
+    "id": "race_class.orc.rogue",
+    "race_id": "orc",
+    "class_id": "rogue"
+  },
+  {
+    "id": "race_class.orc.shaman",
+    "race_id": "orc",
+    "class_id": "shaman"
+  },
+  {
+    "id": "race_class.orc.warlock",
+    "race_id": "orc",
+    "class_id": "warlock"
+  },
+  {
+    "id": "race_class.orc.warrior",
+    "race_id": "orc",
+    "class_id": "warrior"
+  },
+  {
+    "id": "race_class.tauren.druid",
+    "race_id": "tauren",
+    "class_id": "druid"
+  },
+  {
+    "id": "race_class.tauren.hunter",
+    "race_id": "tauren",
+    "class_id": "hunter"
+  },
+  {
+    "id": "race_class.tauren.shaman",
+    "race_id": "tauren",
+    "class_id": "shaman"
+  },
+  {
+    "id": "race_class.tauren.warrior",
+    "race_id": "tauren",
+    "class_id": "warrior"
+  },
+  {
+    "id": "race_class.troll.hunter",
+    "race_id": "troll",
+    "class_id": "hunter"
+  },
+  {
+    "id": "race_class.troll.mage",
+    "race_id": "troll",
+    "class_id": "mage"
+  },
+  {
+    "id": "race_class.troll.priest",
+    "race_id": "troll",
+    "class_id": "priest"
+  },
+  {
+    "id": "race_class.troll.rogue",
+    "race_id": "troll",
+    "class_id": "rogue"
+  },
+  {
+    "id": "race_class.troll.shaman",
+    "race_id": "troll",
+    "class_id": "shaman"
+  },
+  {
+    "id": "race_class.troll.warrior",
+    "race_id": "troll",
+    "class_id": "warrior"
+  },
+  {
+    "id": "race_class.undead.mage",
+    "race_id": "undead",
+    "class_id": "mage"
+  },
+  {
+    "id": "race_class.undead.priest",
+    "race_id": "undead",
+    "class_id": "priest"
+  },
+  {
+    "id": "race_class.undead.rogue",
+    "race_id": "undead",
+    "class_id": "rogue"
+  },
+  {
+    "id": "race_class.undead.warlock",
+    "race_id": "undead",
+    "class_id": "warlock"
+  },
+  {
+    "id": "race_class.undead.warrior",
+    "race_id": "undead",
+    "class_id": "warrior"
+  }
 ]

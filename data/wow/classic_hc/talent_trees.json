@@ -1,6 +1,218 @@
 [
-  {"id": "rogue.combat", "class_id": "rogue", "name": {"de": "Kampf", "en": "Combat"}},
-  {"id": "mage.frost", "class_id": "mage", "name": {"de": "Frost", "en": "Frost"}},
-  {"id": "warrior.arms", "class_id": "warrior", "name": {"de": "Waffen", "en": "Arms"}},
-  {"id": "priest.shadow", "class_id": "priest", "name": {"de": "Schatten", "en": "Shadow"}}
+  {
+    "id": "druid.balance",
+    "class_id": "druid",
+    "name": {
+      "de": "Gleichgewicht",
+      "en": "Balance"
+    }
+  },
+  {
+    "id": "druid.feral_combat",
+    "class_id": "druid",
+    "name": {
+      "de": "Wilder",
+      "en": "Feral Combat"
+    }
+  },
+  {
+    "id": "druid.restoration",
+    "class_id": "druid",
+    "name": {
+      "de": "Wiederherst",
+      "en": "Restoration"
+    }
+  },
+  {
+    "id": "hunter.beast_mastery",
+    "class_id": "hunter",
+    "name": {
+      "de": "Tierherrschaft",
+      "en": "Beast Mastery"
+    }
+  },
+  {
+    "id": "hunter.marksmanship",
+    "class_id": "hunter",
+    "name": {
+      "de": "Treffsicherheit",
+      "en": "Marksmanship"
+    }
+  },
+  {
+    "id": "hunter.survival",
+    "class_id": "hunter",
+    "name": {
+      "de": "Überleben",
+      "en": "Survival"
+    }
+  },
+  {
+    "id": "mage.arcane",
+    "class_id": "mage",
+    "name": {
+      "de": "Arkan",
+      "en": "Arcane"
+    }
+  },
+  {
+    "id": "mage.fire",
+    "class_id": "mage",
+    "name": {
+      "de": "Feuer",
+      "en": "Fire"
+    }
+  },
+  {
+    "id": "mage.frost",
+    "class_id": "mage",
+    "name": {
+      "de": "Frost",
+      "en": "Frost"
+    }
+  },
+  {
+    "id": "paladin.holy",
+    "class_id": "paladin",
+    "name": {
+      "de": "Heilig",
+      "en": "Holy"
+    }
+  },
+  {
+    "id": "paladin.protection",
+    "class_id": "paladin",
+    "name": {
+      "de": "Schutz",
+      "en": "Protection"
+    }
+  },
+  {
+    "id": "paladin.retribution",
+    "class_id": "paladin",
+    "name": {
+      "de": "Vergeltung",
+      "en": "Retribution"
+    }
+  },
+  {
+    "id": "priest.discipline",
+    "class_id": "priest",
+    "name": {
+      "de": "Disziplin",
+      "en": "Discipline"
+    }
+  },
+  {
+    "id": "priest.holy",
+    "class_id": "priest",
+    "name": {
+      "de": "Heilig",
+      "en": "Holy"
+    }
+  },
+  {
+    "id": "priest.shadow",
+    "class_id": "priest",
+    "name": {
+      "de": "Schatten",
+      "en": "Shadow"
+    }
+  },
+  {
+    "id": "rogue.assassination",
+    "class_id": "rogue",
+    "name": {
+      "de": "Meucheln",
+      "en": "Assassination"
+    }
+  },
+  {
+    "id": "rogue.combat",
+    "class_id": "rogue",
+    "name": {
+      "de": "Kampf",
+      "en": "Combat"
+    }
+  },
+  {
+    "id": "rogue.subtlety",
+    "class_id": "rogue",
+    "name": {
+      "de": "Täuschung",
+      "en": "Subtlety"
+    }
+  },
+  {
+    "id": "shaman.elemental",
+    "class_id": "shaman",
+    "name": {
+      "de": "Elementar",
+      "en": "Elemental"
+    }
+  },
+  {
+    "id": "shaman.enhancement",
+    "class_id": "shaman",
+    "name": {
+      "de": "Verstärk",
+      "en": "Enhancement"
+    }
+  },
+  {
+    "id": "shaman.restoration",
+    "class_id": "shaman",
+    "name": {
+      "de": "Wiederherst",
+      "en": "Restoration"
+    }
+  },
+  {
+    "id": "warlock.affliction",
+    "class_id": "warlock",
+    "name": {
+      "de": "Gebrechen",
+      "en": "Affliction"
+    }
+  },
+  {
+    "id": "warlock.demonology",
+    "class_id": "warlock",
+    "name": {
+      "de": "Dämonologie",
+      "en": "Demonology"
+    }
+  },
+  {
+    "id": "warlock.destruction",
+    "class_id": "warlock",
+    "name": {
+      "de": "Zerstörung",
+      "en": "Destruction"
+    }
+  },
+  {
+    "id": "warrior.arms",
+    "class_id": "warrior",
+    "name": {
+      "de": "Waffen",
+      "en": "Arms"
+    }
+  },
+  {
+    "id": "warrior.fury",
+    "class_id": "warrior",
+    "name": {
+      "de": "Furor",
+      "en": "Fury"
+    }
+  },
+  {
+    "id": "warrior.protection",
+    "class_id": "warrior",
+    "name": {
+      "de": "Schutz",
+      "en": "Protection"
+    }
+  }
 ]

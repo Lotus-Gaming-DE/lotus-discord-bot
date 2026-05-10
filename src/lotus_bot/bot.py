@@ -11,6 +11,7 @@ from lotus_bot.log_setup import setup_logging, get_logger
 from lotus_bot.cogs.quiz.question_state import QuestionStateManager
 from lotus_bot.cogs.quiz.question_generator import QuestionGenerator
 from lotus_bot.cogs.quiz.quiz_config import QuizAreaConfig
+from lotus_bot.cogs.quiz.area_providers.wow_validation import assert_valid_wow_data
 from lotus_bot.cogs.wcr.utils import load_wcr_data
 
 # Lade Umgebungsvariablen
@@ -56,6 +57,8 @@ def load_wow_data(base_path: str | Path = WOW_DATA_PATH) -> dict:
             data[file.stem] = load_json(file)
         except Exception as e:
             logger.error(f"[bot] Error loading WoW data file {file}: {e}")
+    if data:
+        assert_valid_wow_data(data)
     return data
 
 

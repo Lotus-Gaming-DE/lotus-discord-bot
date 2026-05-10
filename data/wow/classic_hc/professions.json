@@ -1,5 +1,98 @@
 [
-  {"id": "alchemy", "spell_id": "spell.2259", "name": {"de": "Alchemie", "en": "Alchemy"}, "type": "primary"},
-  {"id": "blacksmithing", "name": {"de": "Schmiedekunst", "en": "Blacksmithing"}, "type": "primary"},
-  {"id": "cooking", "name": {"de": "Kochkunst", "en": "Cooking"}, "type": "secondary"}
+  {
+    "id": "alchemy",
+    "name": {
+      "de": "Alchemie",
+      "en": "Alchemy"
+    },
+    "type": "primary"
+  },
+  {
+    "id": "blacksmithing",
+    "name": {
+      "de": "Schmiedekunst",
+      "en": "Blacksmithing"
+    },
+    "type": "primary"
+  },
+  {
+    "id": "cooking",
+    "name": {
+      "de": "Kochkunst",
+      "en": "Cooking"
+    },
+    "type": "secondary"
+  },
+  {
+    "id": "enchanting",
+    "name": {
+      "de": "Verzauberkunst",
+      "en": "Enchanting"
+    },
+    "type": "primary"
+  },
+  {
+    "id": "engineering",
+    "name": {
+      "de": "Ingenieurskunst",
+      "en": "Engineering"
+    },
+    "type": "primary"
+  },
+  {
+    "id": "first-aid",
+    "name": {
+      "de": "Erste Hilfe",
+      "en": "First Aid"
+    },
+    "type": "secondary"
+  },
+  {
+    "id": "fishing",
+    "name": {
+      "de": "Angeln",
+      "en": "Fishing"
+    },
+    "type": "secondary"
+  },
+  {
+    "id": "herbalism",
+    "name": {
+      "de": "Kräuterkunde",
+      "en": "Herbalism"
+    },
+    "type": "primary"
+  },
+  {
+    "id": "leatherworking",
+    "name": {
+      "de": "Lederverarbeitung",
+      "en": "Leatherworking"
+    },
+    "type": "primary"
+  },
+  {
+    "id": "mining",
+    "name": {
+      "de": "Bergbau",
+      "en": "Mining"
+    },
+    "type": "primary"
+  },
+  {
+    "id": "skinning",
+    "name": {
+      "de": "Kürschnerei",
+      "en": "Skinning"
+    },
+    "type": "primary"
+  },
+  {
+    "id": "tailoring",
+    "name": {
+      "de": "Schneiderei",
+      "en": "Tailoring"
+    },
+    "type": "primary"
+  }
 ]

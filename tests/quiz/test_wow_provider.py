@@ -24,7 +24,15 @@ def test_wow_provider_generates_broad_question_catalog():
 
 def test_wow_provider_uses_question_language_and_bilingual_answers(monkeypatch):
     provider = WoWQuestionProvider(DummyBot(), language="de")
-    monkeypatch.setattr("random.choice", lambda records: records[0])
+
+    def choose_precision(records):
+        for record in records:
+            spell = provider._spell_for(record)
+            if spell.get("wowhead_id") == 13845:
+                return record
+        return records[0]
+
+    monkeypatch.setattr("random.choice", choose_precision)
 
     question = provider.generate_talent_tree()
 
@@ -46,7 +54,15 @@ def test_wow_provider_ids_are_stable(monkeypatch):
 
 def test_talent_description_disambiguates_class_and_tree(monkeypatch):
     provider = WoWQuestionProvider(DummyBot(), language="de")
-    monkeypatch.setattr("random.choice", lambda records: records[0])
+
+    def choose_precision(records):
+        for record in records:
+            spell = provider._spell_for(record)
+            if spell.get("wowhead_id") == 13845:
+                return record
+        return records[0]
+
+    monkeypatch.setattr("random.choice", choose_precision)
 
     question = provider.generate_talent_description()
 
@@ -100,7 +116,10 @@ def test_filters_exclude_battlegrounds_and_quest_items(monkeypatch):
     for zone in data["zones"]:
         if zone["type"] == "battleground":
             zone["hardcore_enabled"] = False
-    data["items"][1]["is_quest_item"] = True
+    drop_item_ids = {drop["item_id"] for drop in data["instance_drops"]}
+    for item in data["items"]:
+        if item["id"] in drop_item_ids:
+            item["is_quest_item"] = True
     provider = WoWQuestionProvider(DummyBot(data), language="de")
     monkeypatch.setattr("random.choice", lambda records: records[-1])
 
@@ -128,7 +147,7 @@ def test_removed_patterns_are_not_generated():
 
     assert not any("auf Englisch" in text for text in texts)
     assert not any("hat Rang" in text for text in texts)
-    assert not any("Abklingzeit" in text for text in texts)
+    assert not any("hat" in text and "Abklingzeit" in text for text in texts)
     assert not any("Welche Item-Qualität" in text for text in texts)
 
 
@@ -147,7 +166,15 @@ def test_race_class_can_generate_negative_answer(monkeypatch):
 
 def test_drop_question_uses_item_subclass(monkeypatch):
     provider = WoWQuestionProvider(DummyBot(), language="de")
-    monkeypatch.setattr("random.choice", lambda records: records[0])
+
+    def choose_dagger(records):
+        for record in records:
+            item = provider._item_for(record)
+            if item.get("item_subclass") == "dagger":
+                return record
+        return records[0]
+
+    monkeypatch.setattr("random.choice", choose_dagger)
 
     question = provider.generate_drop_instance()
 

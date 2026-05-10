@@ -1,48 +1,782 @@
 [
   {
+    "id": "instance.ahn_qiraj",
+    "zone_id": "zone.3428",
+    "wowhead_id": 3428,
+    "type": "raid",
+    "name": {
+      "de": "Ahn'Qiraj",
+      "en": "Ahn'Qiraj"
+    },
+    "level_range": "60",
+    "territory_id": "contested",
+    "player_count": 40,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=3428",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=3428",
+      "en": "https://www.wowhead.com/classic/zone=3428"
+    },
+    "answers": {
+      "level_range": [
+        "60",
+        "Level 60",
+        "Stufe 60"
+      ],
+      "name": [
+        "Ahn'Qiraj",
+        "Ahn'Qiraj"
+      ]
+    }
+  },
+  {
+    "id": "instance.blackfathom_deeps",
+    "zone_id": "zone.719",
+    "wowhead_id": 719,
+    "type": "dungeon",
+    "name": {
+      "de": "Blackfathom-Tiefe",
+      "en": "Blackfathom Deeps"
+    },
+    "level_range": "22-32",
+    "territory_id": "contested",
+    "player_count": 10,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=719",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=719",
+      "en": "https://www.wowhead.com/classic/zone=719"
+    },
+    "answers": {
+      "level_range": [
+        "22-32",
+        "22 bis 32",
+        "22 to 32"
+      ],
+      "name": [
+        "Blackfathom-Tiefe",
+        "Blackfathom Deeps"
+      ]
+    }
+  },
+  {
+    "id": "instance.blackrock_depths",
+    "zone_id": "zone.1584",
+    "wowhead_id": 1584,
+    "type": "dungeon",
+    "name": {
+      "de": "Blackrocktiefen",
+      "en": "Blackrock Depths"
+    },
+    "level_range": "52-60",
+    "territory_id": "contested",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=1584",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=1584",
+      "en": "https://www.wowhead.com/classic/zone=1584"
+    },
+    "answers": {
+      "level_range": [
+        "52-60",
+        "52 bis 60",
+        "52 to 60"
+      ],
+      "name": [
+        "Blackrocktiefen",
+        "Blackrock Depths"
+      ]
+    }
+  },
+  {
+    "id": "instance.blackrock_spire",
+    "zone_id": "zone.1583",
+    "wowhead_id": 1583,
+    "type": "dungeon",
+    "name": {
+      "de": "Blackrockspitze",
+      "en": "Blackrock Spire"
+    },
+    "level_range": "55-60",
+    "territory_id": "contested",
+    "player_count": 10,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=1583",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=1583",
+      "en": "https://www.wowhead.com/classic/zone=1583"
+    },
+    "answers": {
+      "level_range": [
+        "55-60",
+        "55 bis 60",
+        "55 to 60"
+      ],
+      "name": [
+        "Blackrockspitze",
+        "Blackrock Spire"
+      ]
+    }
+  },
+  {
+    "id": "instance.blackwing_lair",
+    "zone_id": "zone.2677",
+    "wowhead_id": 2677,
+    "type": "raid",
+    "name": {
+      "de": "Pechschwingenhort",
+      "en": "Blackwing Lair"
+    },
+    "level_range": "60",
+    "territory_id": "contested",
+    "player_count": 40,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=2677",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=2677",
+      "en": "https://www.wowhead.com/classic/zone=2677"
+    },
+    "answers": {
+      "level_range": [
+        "60",
+        "Level 60",
+        "Stufe 60"
+      ],
+      "name": [
+        "Pechschwingenhort",
+        "Blackwing Lair"
+      ]
+    }
+  },
+  {
+    "id": "instance.dire_maul",
+    "zone_id": "zone.2557",
+    "wowhead_id": 2557,
+    "type": "dungeon",
+    "name": {
+      "de": "Düsterbruch",
+      "en": "Dire Maul"
+    },
+    "level_range": "44-54",
+    "territory_id": "contested",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=2557",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=2557",
+      "en": "https://www.wowhead.com/classic/zone=2557"
+    },
+    "answers": {
+      "level_range": [
+        "44-54",
+        "44 bis 54",
+        "44 to 54"
+      ],
+      "name": [
+        "Düsterbruch",
+        "Dire Maul"
+      ]
+    }
+  },
+  {
+    "id": "instance.gnomeregan",
+    "zone_id": "zone.721",
+    "wowhead_id": 721,
+    "type": "dungeon",
+    "name": {
+      "de": "Gnomeregan",
+      "en": "Gnomeregan"
+    },
+    "level_range": "26-36",
+    "territory_id": "alliance",
+    "player_count": 10,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=721",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=721",
+      "en": "https://www.wowhead.com/classic/zone=721"
+    },
+    "answers": {
+      "level_range": [
+        "26-36",
+        "26 bis 36",
+        "26 to 36"
+      ],
+      "name": [
+        "Gnomeregan",
+        "Gnomeregan"
+      ]
+    }
+  },
+  {
     "id": "instance.maraudon",
     "zone_id": "zone.2100",
     "wowhead_id": 2100,
     "type": "dungeon",
-    "name": {"de": "Maraudon", "en": "Maraudon"},
-    "level_range": "45-52",
-    "minimum_level": 30,
+    "name": {
+      "de": "Maraudon",
+      "en": "Maraudon"
+    },
+    "level_range": "42-52",
     "territory_id": "contested",
     "player_count": 5,
-    "location_zone_id": "zone.405",
-    "location_text": {"de": "Desolace", "en": "Desolace"},
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=2100/maraudon",
-    "answers": {"level_range": ["45-52", "45 bis 52", "45 to 52"], "name": ["Maraudon"]}
+    "source_url": "https://www.wowhead.com/classic/de/zone=2100",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=2100",
+      "en": "https://www.wowhead.com/classic/zone=2100"
+    },
+    "answers": {
+      "level_range": [
+        "42-52",
+        "42 bis 52",
+        "42 to 52"
+      ],
+      "name": [
+        "Maraudon",
+        "Maraudon"
+      ]
+    }
+  },
+  {
+    "id": "instance.molten_core",
+    "zone_id": "zone.2717",
+    "wowhead_id": 2717,
+    "type": "raid",
+    "name": {
+      "de": "Geschmolzener Kern",
+      "en": "Molten Core"
+    },
+    "level_range": "60",
+    "territory_id": "contested",
+    "player_count": 40,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=2717",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=2717",
+      "en": "https://www.wowhead.com/classic/zone=2717"
+    },
+    "answers": {
+      "level_range": [
+        "60",
+        "Level 60",
+        "Stufe 60"
+      ],
+      "name": [
+        "Geschmolzener Kern",
+        "Molten Core"
+      ]
+    }
+  },
+  {
+    "id": "instance.naxxramas",
+    "zone_id": "zone.3456",
+    "wowhead_id": 3456,
+    "type": "raid",
+    "name": {
+      "de": "Naxxramas",
+      "en": "Naxxramas"
+    },
+    "level_range": "60",
+    "territory_id": "contested",
+    "player_count": 40,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=3456",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=3456",
+      "en": "https://www.wowhead.com/classic/zone=3456"
+    },
+    "answers": {
+      "level_range": [
+        "60",
+        "Level 60",
+        "Stufe 60"
+      ],
+      "name": [
+        "Naxxramas",
+        "Naxxramas"
+      ]
+    }
+  },
+  {
+    "id": "instance.onyxia_s_lair",
+    "zone_id": "zone.2159",
+    "wowhead_id": 2159,
+    "type": "dungeon",
+    "name": {
+      "de": "Onyxias Hort",
+      "en": "Onyxia's Lair"
+    },
+    "level_range": "60",
+    "territory_id": "contested",
+    "player_count": 40,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=2159",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=2159",
+      "en": "https://www.wowhead.com/classic/zone=2159"
+    },
+    "answers": {
+      "level_range": [
+        "60",
+        "Level 60",
+        "Stufe 60"
+      ],
+      "name": [
+        "Onyxias Hort",
+        "Onyxia's Lair"
+      ]
+    }
   },
   {
     "id": "instance.ragefire_chasm",
     "zone_id": "zone.2437",
     "wowhead_id": 2437,
     "type": "dungeon",
-    "name": {"de": "Der Flammenschlund", "en": "Ragefire Chasm"},
-    "level_range": "13-18",
-    "minimum_level": 8,
+    "name": {
+      "de": "Ragefireabgrund",
+      "en": "Ragefire Chasm"
+    },
+    "level_range": "15-25",
     "territory_id": "horde",
     "player_count": 5,
-    "location_text": {"de": "Orgrimmar", "en": "Orgrimmar"},
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/zone=2437/ragefire-chasm",
-    "answers": {"level_range": ["13-18", "13 bis 18", "13 to 18"], "name": ["Der Flammenschlund", "Flammenschlund", "Ragefire Chasm", "RFC"]}
+    "source_url": "https://www.wowhead.com/classic/de/zone=2437",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=2437",
+      "en": "https://www.wowhead.com/classic/zone=2437"
+    },
+    "answers": {
+      "level_range": [
+        "15-25",
+        "15 bis 25",
+        "15 to 25"
+      ],
+      "name": [
+        "Ragefireabgrund",
+        "Ragefire Chasm"
+      ]
+    }
   },
   {
-    "id": "instance.zulgurub",
+    "id": "instance.razorfen_downs",
+    "zone_id": "zone.722",
+    "wowhead_id": 722,
+    "type": "dungeon",
+    "name": {
+      "de": "Die Hügel von Razorfen",
+      "en": "Razorfen Downs"
+    },
+    "level_range": "37-47",
+    "territory_id": "horde",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=722",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=722",
+      "en": "https://www.wowhead.com/classic/zone=722"
+    },
+    "answers": {
+      "level_range": [
+        "37-47",
+        "37 bis 47",
+        "37 to 47"
+      ],
+      "name": [
+        "Die Hügel von Razorfen",
+        "Razorfen Downs"
+      ]
+    }
+  },
+  {
+    "id": "instance.razorfen_kraul",
+    "zone_id": "zone.491",
+    "wowhead_id": 491,
+    "type": "dungeon",
+    "name": {
+      "de": "Der Kral von Razorfen",
+      "en": "Razorfen Kraul"
+    },
+    "level_range": "32-42",
+    "territory_id": "horde",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=491",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=491",
+      "en": "https://www.wowhead.com/classic/zone=491"
+    },
+    "answers": {
+      "level_range": [
+        "32-42",
+        "32 bis 42",
+        "32 to 42"
+      ],
+      "name": [
+        "Der Kral von Razorfen",
+        "Razorfen Kraul"
+      ]
+    }
+  },
+  {
+    "id": "instance.ruins_of_ahn_qiraj",
+    "zone_id": "zone.3429",
+    "wowhead_id": 3429,
+    "type": "raid",
+    "name": {
+      "de": "Ruinen von Ahn'Qiraj",
+      "en": "Ruins of Ahn'Qiraj"
+    },
+    "level_range": "60",
+    "territory_id": "contested",
+    "player_count": 20,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=3429",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=3429",
+      "en": "https://www.wowhead.com/classic/zone=3429"
+    },
+    "answers": {
+      "level_range": [
+        "60",
+        "Level 60",
+        "Stufe 60"
+      ],
+      "name": [
+        "Ruinen von Ahn'Qiraj",
+        "Ruins of Ahn'Qiraj"
+      ]
+    }
+  },
+  {
+    "id": "instance.scarlet_monastery",
+    "zone_id": "zone.796",
+    "wowhead_id": 796,
+    "type": "dungeon",
+    "name": {
+      "de": "Das Scharlachrote Kloster",
+      "en": "Scarlet Monastery"
+    },
+    "level_range": "26-45",
+    "territory_id": "horde",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=796",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=796",
+      "en": "https://www.wowhead.com/classic/zone=796"
+    },
+    "answers": {
+      "level_range": [
+        "26-45",
+        "26 bis 45",
+        "26 to 45"
+      ],
+      "name": [
+        "Das Scharlachrote Kloster",
+        "Scarlet Monastery"
+      ]
+    }
+  },
+  {
+    "id": "instance.scholomance",
+    "zone_id": "zone.2057",
+    "wowhead_id": 2057,
+    "type": "dungeon",
+    "name": {
+      "de": "Scholomance",
+      "en": "Scholomance"
+    },
+    "level_range": "55-60",
+    "territory_id": "contested",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=2057",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=2057",
+      "en": "https://www.wowhead.com/classic/zone=2057"
+    },
+    "answers": {
+      "level_range": [
+        "55-60",
+        "55 bis 60",
+        "55 to 60"
+      ],
+      "name": [
+        "Scholomance",
+        "Scholomance"
+      ]
+    }
+  },
+  {
+    "id": "instance.shadowfang_keep",
+    "zone_id": "zone.209",
+    "wowhead_id": 209,
+    "type": "dungeon",
+    "name": {
+      "de": "Burg Shadowfang",
+      "en": "Shadowfang Keep"
+    },
+    "level_range": "22-30",
+    "territory_id": "horde",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=209",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=209",
+      "en": "https://www.wowhead.com/classic/zone=209"
+    },
+    "answers": {
+      "level_range": [
+        "22-30",
+        "22 bis 30",
+        "22 to 30"
+      ],
+      "name": [
+        "Burg Shadowfang",
+        "Shadowfang Keep"
+      ]
+    }
+  },
+  {
+    "id": "instance.stratholme",
+    "zone_id": "zone.2017",
+    "wowhead_id": 2017,
+    "type": "dungeon",
+    "name": {
+      "de": "Stratholme",
+      "en": "Stratholme"
+    },
+    "level_range": "48-58",
+    "territory_id": "contested",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=2017",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=2017",
+      "en": "https://www.wowhead.com/classic/zone=2017"
+    },
+    "answers": {
+      "level_range": [
+        "48-58",
+        "48 bis 58",
+        "48 to 58"
+      ],
+      "name": [
+        "Stratholme",
+        "Stratholme"
+      ]
+    }
+  },
+  {
+    "id": "instance.the_deadmines",
+    "zone_id": "zone.1581",
+    "wowhead_id": 1581,
+    "type": "dungeon",
+    "name": {
+      "de": "Die Todesminen",
+      "en": "The Deadmines"
+    },
+    "level_range": "15-25",
+    "territory_id": "alliance",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=1581",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=1581",
+      "en": "https://www.wowhead.com/classic/zone=1581"
+    },
+    "answers": {
+      "level_range": [
+        "15-25",
+        "15 bis 25",
+        "15 to 25"
+      ],
+      "name": [
+        "Die Todesminen",
+        "The Deadmines"
+      ]
+    }
+  },
+  {
+    "id": "instance.the_stockade",
+    "zone_id": "zone.717",
+    "wowhead_id": 717,
+    "type": "dungeon",
+    "name": {
+      "de": "Das Verlies",
+      "en": "The Stockade"
+    },
+    "level_range": "22-32",
+    "territory_id": "alliance",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=717",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=717",
+      "en": "https://www.wowhead.com/classic/zone=717"
+    },
+    "answers": {
+      "level_range": [
+        "22-32",
+        "22 bis 32",
+        "22 to 32"
+      ],
+      "name": [
+        "Das Verlies",
+        "The Stockade"
+      ]
+    }
+  },
+  {
+    "id": "instance.the_temple_of_atal_hakkar",
+    "zone_id": "zone.1477",
+    "wowhead_id": 1477,
+    "type": "dungeon",
+    "name": {
+      "de": "Der Tempel von Atal'Hakkar",
+      "en": "The Temple of Atal'Hakkar"
+    },
+    "level_range": "50-60",
+    "territory_id": "contested",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=1477",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=1477",
+      "en": "https://www.wowhead.com/classic/zone=1477"
+    },
+    "answers": {
+      "level_range": [
+        "50-60",
+        "50 bis 60",
+        "50 to 60"
+      ],
+      "name": [
+        "Der Tempel von Atal'Hakkar",
+        "The Temple of Atal'Hakkar"
+      ]
+    }
+  },
+  {
+    "id": "instance.uldaman",
+    "zone_id": "zone.1337",
+    "wowhead_id": 1337,
+    "type": "dungeon",
+    "name": {
+      "de": "Uldaman",
+      "en": "Uldaman"
+    },
+    "level_range": "42-52",
+    "territory_id": "contested",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=1337",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=1337",
+      "en": "https://www.wowhead.com/classic/zone=1337"
+    },
+    "answers": {
+      "level_range": [
+        "42-52",
+        "42 bis 52",
+        "42 to 52"
+      ],
+      "name": [
+        "Uldaman",
+        "Uldaman"
+      ]
+    }
+  },
+  {
+    "id": "instance.wailing_caverns",
+    "zone_id": "zone.718",
+    "wowhead_id": 718,
+    "type": "dungeon",
+    "name": {
+      "de": "Die Höhlen des Wehklagens",
+      "en": "Wailing Caverns"
+    },
+    "level_range": "17-27",
+    "territory_id": "horde",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=718",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=718",
+      "en": "https://www.wowhead.com/classic/zone=718"
+    },
+    "answers": {
+      "level_range": [
+        "17-27",
+        "17 bis 27",
+        "17 to 27"
+      ],
+      "name": [
+        "Die Höhlen des Wehklagens",
+        "Wailing Caverns"
+      ]
+    }
+  },
+  {
+    "id": "instance.zul_farrak",
+    "zone_id": "zone.1176",
+    "wowhead_id": 1176,
+    "type": "dungeon",
+    "name": {
+      "de": "Zul'Farrak",
+      "en": "Zul'Farrak"
+    },
+    "level_range": "46-56",
+    "territory_id": "contested",
+    "player_count": 5,
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=1176",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=1176",
+      "en": "https://www.wowhead.com/classic/zone=1176"
+    },
+    "answers": {
+      "level_range": [
+        "46-56",
+        "46 bis 56",
+        "46 to 56"
+      ],
+      "name": [
+        "Zul'Farrak",
+        "Zul'Farrak"
+      ]
+    }
+  },
+  {
+    "id": "instance.zul_gurub",
     "zone_id": "zone.1977",
     "wowhead_id": 1977,
     "type": "raid",
-    "name": {"de": "Zul'Gurub", "en": "Zul'Gurub"},
+    "name": {
+      "de": "Zul'Gurub",
+      "en": "Zul'Gurub"
+    },
     "level_range": "60",
-    "minimum_level": 50,
     "territory_id": "contested",
     "player_count": 20,
-    "location_text": {"de": "Schlingendorntal", "en": "Stranglethorn Vale"},
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=1977/zulgurub",
-    "answers": {"level_range": ["60", "Level 60", "Stufe 60"], "name": ["Zul'Gurub", "ZG"]}
+    "source_url": "https://www.wowhead.com/classic/de/zone=1977",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=1977",
+      "en": "https://www.wowhead.com/classic/zone=1977"
+    },
+    "answers": {
+      "level_range": [
+        "60",
+        "Level 60",
+        "Stufe 60"
+      ],
+      "name": [
+        "Zul'Gurub",
+        "Zul'Gurub"
+      ]
+    }
   }
 ]

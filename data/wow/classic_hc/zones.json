@@ -1,32 +1,823 @@
 [
   {
-    "id": "zone.47",
-    "wowhead_id": 47,
-    "name": {"de": "Hinterland", "en": "The Hinterlands"},
+    "id": "zone.1",
+    "wowhead_id": 1,
+    "name": {
+      "de": "Dun Morogh",
+      "en": "Dun Morogh"
+    },
     "continent_id": "eastern_kingdoms",
     "territory_id": "contested",
-    "level_range": "40-50",
     "type": "outdoor_zone",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=47/hinterland"
+    "source_url": "https://www.wowhead.com/classic/de/zone=1",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=1",
+      "en": "https://www.wowhead.com/classic/zone=1"
+    },
+    "level_range": "1-12"
+  },
+  {
+    "id": "zone.10",
+    "wowhead_id": 10,
+    "name": {
+      "de": "Dämmerwald",
+      "en": "Duskwood"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=10",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=10",
+      "en": "https://www.wowhead.com/classic/zone=10"
+    },
+    "level_range": "10-30"
+  },
+  {
+    "id": "zone.11",
+    "wowhead_id": 11,
+    "name": {
+      "de": "Sumpfland",
+      "en": "Wetlands"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=11",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=11",
+      "en": "https://www.wowhead.com/classic/zone=11"
+    },
+    "level_range": "20-30"
+  },
+  {
+    "id": "zone.12",
+    "wowhead_id": 12,
+    "name": {
+      "de": "Wald von Elwynn",
+      "en": "Elwynn Forest"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "contested",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=12",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=12",
+      "en": "https://www.wowhead.com/classic/zone=12"
+    },
+    "level_range": "1-10"
+  },
+  {
+    "id": "zone.130",
+    "wowhead_id": 130,
+    "name": {
+      "de": "Silberwald",
+      "en": "Silverpine Forest"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "horde",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=130",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=130",
+      "en": "https://www.wowhead.com/classic/zone=130"
+    },
+    "level_range": "10-20"
+  },
+  {
+    "id": "zone.1377",
+    "wowhead_id": 1377,
+    "name": {
+      "de": "Silithus",
+      "en": "Silithus"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=1377",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=1377",
+      "en": "https://www.wowhead.com/classic/zone=1377"
+    },
+    "level_range": "55-59"
+  },
+  {
+    "id": "zone.139",
+    "wowhead_id": 139,
+    "name": {
+      "de": "Östliche Pestländer",
+      "en": "Eastern Plaguelands"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=139",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=139",
+      "en": "https://www.wowhead.com/classic/zone=139"
+    },
+    "level_range": "54-59"
+  },
+  {
+    "id": "zone.14",
+    "wowhead_id": 14,
+    "name": {
+      "de": "Durotar",
+      "en": "Durotar"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "horde",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=14",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=14",
+      "en": "https://www.wowhead.com/classic/zone=14"
+    },
+    "level_range": "1-10"
+  },
+  {
+    "id": "zone.141",
+    "wowhead_id": 141,
+    "name": {
+      "de": "Teldrassil",
+      "en": "Teldrassil"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "contested",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=141",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=141",
+      "en": "https://www.wowhead.com/classic/zone=141"
+    },
+    "level_range": "1-11"
+  },
+  {
+    "id": "zone.148",
+    "wowhead_id": 148,
+    "name": {
+      "de": "Dunkelküste",
+      "en": "Darkshore"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "contested",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=148",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=148",
+      "en": "https://www.wowhead.com/classic/zone=148"
+    },
+    "level_range": "11-19"
+  },
+  {
+    "id": "zone.15",
+    "wowhead_id": 15,
+    "name": {
+      "de": "Marschen von Dustwallow",
+      "en": "Dustwallow Marsh"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=15",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=15",
+      "en": "https://www.wowhead.com/classic/zone=15"
+    },
+    "level_range": "36-61"
+  },
+  {
+    "id": "zone.16",
+    "wowhead_id": 16,
+    "name": {
+      "de": "Azshara",
+      "en": "Azshara"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=16",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=16",
+      "en": "https://www.wowhead.com/classic/zone=16"
+    },
+    "level_range": "42-55"
   },
   {
     "id": "zone.1657",
     "wowhead_id": 1657,
-    "name": {"de": "Darnassus", "en": "Darnassus"},
+    "name": {
+      "de": "Darnassus",
+      "en": "Darnassus"
+    },
     "continent_id": "kalimdor",
     "territory_id": "alliance",
     "type": "city",
     "hardcore_enabled": true,
-    "source_url": "https://www.wowhead.com/classic/de/zone=1657/darnassus"
+    "source_url": "https://www.wowhead.com/classic/de/zone=1657/darnassus",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=1657",
+      "en": "https://www.wowhead.com/classic/zone=1657"
+    }
+  },
+  {
+    "id": "zone.17",
+    "wowhead_id": 17,
+    "name": {
+      "de": "Brachland",
+      "en": "The Barrens"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "horde",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=17",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=17",
+      "en": "https://www.wowhead.com/classic/zone=17"
+    },
+    "level_range": "10-33"
+  },
+  {
+    "id": "zone.1941",
+    "wowhead_id": 1941,
+    "name": {
+      "de": "Die Höhlen der Zeit",
+      "en": "Caverns of Time"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=1941",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=1941",
+      "en": "https://www.wowhead.com/classic/zone=1941"
+    }
+  },
+  {
+    "id": "zone.215",
+    "wowhead_id": 215,
+    "name": {
+      "de": "Mulgore",
+      "en": "Mulgore"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "horde",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=215",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=215",
+      "en": "https://www.wowhead.com/classic/zone=215"
+    },
+    "level_range": "1-10"
+  },
+  {
+    "id": "zone.2159",
+    "wowhead_id": 2159,
+    "name": {
+      "de": "Onyxias Hort",
+      "en": "Onyxia's Lair"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=2159",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=2159",
+      "en": "https://www.wowhead.com/classic/zone=2159"
+    }
+  },
+  {
+    "id": "zone.25",
+    "wowhead_id": 25,
+    "name": {
+      "de": "Der Blackrock",
+      "en": "Blackrock Mountain"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=25",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=25",
+      "en": "https://www.wowhead.com/classic/zone=25"
+    }
+  },
+  {
+    "id": "zone.267",
+    "wowhead_id": 267,
+    "name": {
+      "de": "Vorgebirge von Hillsbrad",
+      "en": "Hillsbrad Foothills"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=267",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=267",
+      "en": "https://www.wowhead.com/classic/zone=267"
+    },
+    "level_range": "20-31"
+  },
+  {
+    "id": "zone.28",
+    "wowhead_id": 28,
+    "name": {
+      "de": "Westliche Pestländer",
+      "en": "Western Plaguelands"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=28",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=28",
+      "en": "https://www.wowhead.com/classic/zone=28"
+    },
+    "level_range": "46-57"
+  },
+  {
+    "id": "zone.3",
+    "wowhead_id": 3,
+    "name": {
+      "de": "Ödland",
+      "en": "Badlands"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=3",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=3",
+      "en": "https://www.wowhead.com/classic/zone=3"
+    },
+    "level_range": "36-45"
   },
   {
     "id": "zone.3277",
     "wowhead_id": 3277,
-    "name": {"de": "Warsongschlucht", "en": "Warsong Gulch"},
+    "name": {
+      "de": "Warsongschlucht",
+      "en": "Warsong Gulch"
+    },
     "territory_id": "contested",
     "type": "battleground",
     "hardcore_enabled": false,
-    "source_url": "https://www.wowhead.com/classic/de/zone=3277/warsongschlucht"
+    "source_url": "https://www.wowhead.com/classic/de/zone=3277/warsongschlucht",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=3277",
+      "en": "https://www.wowhead.com/classic/zone=3277"
+    }
+  },
+  {
+    "id": "zone.33",
+    "wowhead_id": 33,
+    "name": {
+      "de": "Schlingendorntal",
+      "en": "Stranglethorn Vale"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=33",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=33",
+      "en": "https://www.wowhead.com/classic/zone=33"
+    },
+    "level_range": "30-50"
+  },
+  {
+    "id": "zone.331",
+    "wowhead_id": 331,
+    "name": {
+      "de": "Ashenvale",
+      "en": "Ashenvale"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=331",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=331",
+      "en": "https://www.wowhead.com/classic/zone=331"
+    },
+    "level_range": "19-30"
+  },
+  {
+    "id": "zone.357",
+    "wowhead_id": 357,
+    "name": {
+      "de": "Feralas",
+      "en": "Feralas"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=357",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=357",
+      "en": "https://www.wowhead.com/classic/zone=357"
+    },
+    "level_range": "41-60"
+  },
+  {
+    "id": "zone.36",
+    "wowhead_id": 36,
+    "name": {
+      "de": "Alteracgebirge",
+      "en": "Alterac Mountains"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=36",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=36",
+      "en": "https://www.wowhead.com/classic/zone=36"
+    },
+    "level_range": "27-39"
+  },
+  {
+    "id": "zone.361",
+    "wowhead_id": 361,
+    "name": {
+      "de": "Teufelswald",
+      "en": "Felwood"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=361",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=361",
+      "en": "https://www.wowhead.com/classic/zone=361"
+    },
+    "level_range": "47-54"
+  },
+  {
+    "id": "zone.38",
+    "wowhead_id": 38,
+    "name": {
+      "de": "Loch Modan",
+      "en": "Loch Modan"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "contested",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=38",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=38",
+      "en": "https://www.wowhead.com/classic/zone=38"
+    },
+    "level_range": "10-18"
+  },
+  {
+    "id": "zone.4",
+    "wowhead_id": 4,
+    "name": {
+      "de": "Verwüstete Lande",
+      "en": "Blasted Lands"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=4",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=4",
+      "en": "https://www.wowhead.com/classic/zone=4"
+    },
+    "level_range": "46-63"
+  },
+  {
+    "id": "zone.40",
+    "wowhead_id": 40,
+    "name": {
+      "de": "Westfall",
+      "en": "Westfall"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "contested",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=40",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=40",
+      "en": "https://www.wowhead.com/classic/zone=40"
+    },
+    "level_range": "9-18"
+  },
+  {
+    "id": "zone.400",
+    "wowhead_id": 400,
+    "name": {
+      "de": "Tausend Nadeln",
+      "en": "Thousand Needles"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=400",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=400",
+      "en": "https://www.wowhead.com/classic/zone=400"
+    },
+    "level_range": "24-35"
+  },
+  {
+    "id": "zone.405",
+    "wowhead_id": 405,
+    "name": {
+      "de": "Desolace",
+      "en": "Desolace"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=405",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=405",
+      "en": "https://www.wowhead.com/classic/zone=405"
+    },
+    "level_range": "30-39"
+  },
+  {
+    "id": "zone.406",
+    "wowhead_id": 406,
+    "name": {
+      "de": "Steinkrallengebirge",
+      "en": "Stonetalon Mountains"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=406",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=406",
+      "en": "https://www.wowhead.com/classic/zone=406"
+    },
+    "level_range": "15-25"
+  },
+  {
+    "id": "zone.41",
+    "wowhead_id": 41,
+    "name": {
+      "de": "Gebirgspass der Totenwinde",
+      "en": "Deadwind Pass"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=41",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=41",
+      "en": "https://www.wowhead.com/classic/zone=41"
+    },
+    "level_range": "50-60"
+  },
+  {
+    "id": "zone.44",
+    "wowhead_id": 44,
+    "name": {
+      "de": "Rotkammgebirge",
+      "en": "Redridge Mountains"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=44",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=44",
+      "en": "https://www.wowhead.com/classic/zone=44"
+    },
+    "level_range": "15-25"
+  },
+  {
+    "id": "zone.440",
+    "wowhead_id": 440,
+    "name": {
+      "de": "Tanaris",
+      "en": "Tanaris"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=440",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=440",
+      "en": "https://www.wowhead.com/classic/zone=440"
+    },
+    "level_range": "40-50"
+  },
+  {
+    "id": "zone.45",
+    "wowhead_id": 45,
+    "name": {
+      "de": "Arathihochland",
+      "en": "Arathi Highlands"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=45",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=45",
+      "en": "https://www.wowhead.com/classic/zone=45"
+    },
+    "level_range": "30-40"
+  },
+  {
+    "id": "zone.457",
+    "wowhead_id": 457,
+    "name": {
+      "de": "Das verhüllte Meer",
+      "en": "The Veiled Sea"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=457",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=457",
+      "en": "https://www.wowhead.com/classic/zone=457"
+    }
+  },
+  {
+    "id": "zone.46",
+    "wowhead_id": 46,
+    "name": {
+      "de": "Brennende Steppe",
+      "en": "Burning Steppes"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=46",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=46",
+      "en": "https://www.wowhead.com/classic/zone=46"
+    },
+    "level_range": "50-59"
+  },
+  {
+    "id": "zone.47",
+    "wowhead_id": 47,
+    "name": {
+      "de": "Hinterland",
+      "en": "The Hinterlands"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=47",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=47",
+      "en": "https://www.wowhead.com/classic/zone=47"
+    },
+    "level_range": "41-49"
+  },
+  {
+    "id": "zone.490",
+    "wowhead_id": 490,
+    "name": {
+      "de": "Un'Goro-Krater",
+      "en": "Un'Goro Crater"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=490",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=490",
+      "en": "https://www.wowhead.com/classic/zone=490"
+    },
+    "level_range": "48-55"
+  },
+  {
+    "id": "zone.493",
+    "wowhead_id": 493,
+    "name": {
+      "de": "Moonglade",
+      "en": "Moonglade"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=493",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=493",
+      "en": "https://www.wowhead.com/classic/zone=493"
+    },
+    "level_range": "15"
+  },
+  {
+    "id": "zone.51",
+    "wowhead_id": 51,
+    "name": {
+      "de": "Sengende Schlucht",
+      "en": "Searing Gorge"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=51",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=51",
+      "en": "https://www.wowhead.com/classic/zone=51"
+    },
+    "level_range": "43-56"
+  },
+  {
+    "id": "zone.618",
+    "wowhead_id": 618,
+    "name": {
+      "de": "Winterspring",
+      "en": "Winterspring"
+    },
+    "continent_id": "kalimdor",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=618",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=618",
+      "en": "https://www.wowhead.com/classic/zone=618"
+    },
+    "level_range": "55-60"
+  },
+  {
+    "id": "zone.8",
+    "wowhead_id": 8,
+    "name": {
+      "de": "Sümpfe des Elends",
+      "en": "Swamp of Sorrows"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "alliance",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=8",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=8",
+      "en": "https://www.wowhead.com/classic/zone=8"
+    },
+    "level_range": "36-43"
+  },
+  {
+    "id": "zone.85",
+    "wowhead_id": 85,
+    "name": {
+      "de": "Tirisfal",
+      "en": "Tirisfal Glades"
+    },
+    "continent_id": "eastern_kingdoms",
+    "territory_id": "horde",
+    "type": "outdoor_zone",
+    "hardcore_enabled": true,
+    "source_url": "https://www.wowhead.com/classic/de/zone=85",
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/zone=85",
+      "en": "https://www.wowhead.com/classic/zone=85"
+    },
+    "level_range": "1-12"
   }
 ]
