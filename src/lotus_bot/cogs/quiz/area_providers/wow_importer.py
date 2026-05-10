@@ -124,7 +124,11 @@ PROFESSIONS = {
     "enchanting": {"type": "primary", "de": "Verzauberkunst", "en": "Enchanting"},
     "engineering": {"type": "primary", "de": "Ingenieurskunst", "en": "Engineering"},
     "herbalism": {"type": "primary", "de": "Kräuterkunde", "en": "Herbalism"},
-    "leatherworking": {"type": "primary", "de": "Lederverarbeitung", "en": "Leatherworking"},
+    "leatherworking": {
+        "type": "primary",
+        "de": "Lederverarbeitung",
+        "en": "Leatherworking",
+    },
     "mining": {"type": "primary", "de": "Bergbau", "en": "Mining"},
     "skinning": {"type": "primary", "de": "Kürschnerei", "en": "Skinning"},
     "tailoring": {"type": "primary", "de": "Schneiderei", "en": "Tailoring"},
@@ -262,7 +266,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--limit-drops", type=int, default=None)
     parser.add_argument("--limit-records", type=int, default=None)
     parser.add_argument("--write", action="store_true")
-    parser.add_argument("--preview", action="store_true", help="Default; kept for clarity")
+    parser.add_argument(
+        "--preview", action="store_true", help="Default; kept for clarity"
+    )
     return parser.parse_args(argv)
 
 
@@ -301,7 +307,9 @@ async def run_import(args: argparse.Namespace) -> ImportResult:
         else:
             wowhead_ids = _instance_ids(args.ids)
             pages = await fetcher.fetch_instance_pages(wowhead_ids)
-            slice_result = import_instances(result.data, pages, limit_drops=args.limit_drops)
+            slice_result = import_instances(
+                result.data, pages, limit_drops=args.limit_drops
+            )
         result = _combine_results(slice_result, result)
 
     if args.write:
@@ -343,7 +351,9 @@ class WowheadFetcher:
         self.use_cache = use_cache
         self.delay_seconds = delay_seconds
 
-    async def fetch_instance_pages(self, wowhead_ids: list[int]) -> dict[int, dict[str, str]]:
+    async def fetch_instance_pages(
+        self, wowhead_ids: list[int]
+    ) -> dict[int, dict[str, str]]:
         pages: dict[int, dict[str, str]] = {}
         for wowhead_id in wowhead_ids:
             pages[wowhead_id] = {
@@ -411,7 +421,9 @@ async def _fetch_text(session: aiohttp.ClientSession, url: str) -> str:
     async with session.get(url) as response:
         if response.status != 200:
             text = await response.text()
-            raise RuntimeError(f"Wowhead request failed: HTTP {response.status} {url} {text[:200]}")
+            raise RuntimeError(
+                f"Wowhead request failed: HTTP {response.status} {url} {text[:200]}"
+            )
         return await response.text()
 
 
@@ -449,7 +461,9 @@ def import_zones(
     for continent_id, path in ZONE_LIST_URLS.items():
         localized = pages[path]
         de_rows = extract_listview_data(localized["de"], "zones")
-        en_rows = {row["id"]: row for row in extract_listview_data(localized["en"], "zones")}
+        en_rows = {
+            row["id"]: row for row in extract_listview_data(localized["en"], "zones")
+        }
         for row in de_rows:
             if int(row.get("instance", 0)) != 0:
                 continue
@@ -487,7 +501,9 @@ def import_spells(
             localized = pages[path]
             tree_id = f"{class_id}.{slugify(tree_slug)}"
             tree_name = _tree_name(localized, tree_slug)
-            talent_trees.append({"id": tree_id, "class_id": class_id, "name": tree_name})
+            talent_trees.append(
+                {"id": tree_id, "class_id": class_id, "name": tree_name}
+            )
             de_rows = extract_spell_rows(localized["de"])
             en_rows = {row["id"]: row for row in extract_spell_rows(localized["en"])}
             de_spell_data = extract_gatherer_spell_data(localized["de"])
@@ -616,7 +632,11 @@ def import_professions(
     data = copy.deepcopy(current)
     result = ImportResult(data=data)
     professions = [
-        {"id": key, "name": {"de": value["de"], "en": value["en"]}, "type": value["type"]}
+        {
+            "id": key,
+            "name": {"de": value["de"], "en": value["en"]},
+            "type": value["type"],
+        }
         for key, value in PROFESSIONS.items()
     ]
     spells: list[dict[str, Any]] = []
@@ -686,9 +706,13 @@ def import_instances(
     changes = ImportResult(data=data)
 
     for wowhead_id, localized_pages in pages.items():
-        records = parse_instance_page(wowhead_id, localized_pages, limit_drops=limit_drops)
+        records = parse_instance_page(
+            wowhead_id, localized_pages, limit_drops=limit_drops
+        )
         for table in INSTANCE_TABLES:
-            added, updated = merge_records(data.setdefault(table, []), records.get(table, []))
+            added, updated = merge_records(
+                data.setdefault(table, []), records.get(table, [])
+            )
             changes.added[table] = changes.added.get(table, 0) + added
             changes.updated[table] = changes.updated.get(table, 0) + updated
 
@@ -721,15 +745,22 @@ def parse_instance_page(
                 "type": instance_type,
                 "name": {"de": de_name, "en": en_name},
                 "level_range": level_range,
-                "territory_id": _territory_id(de_info.get("Territorium") or en_info.get("Territory")),
-                "player_count": _int_or_none(de_info.get("Anzahl an Spielern") or en_info.get("Players")),
+                "territory_id": _territory_id(
+                    de_info.get("Territorium") or en_info.get("Territory")
+                ),
+                "player_count": _int_or_none(
+                    de_info.get("Anzahl an Spielern") or en_info.get("Players")
+                ),
                 "hardcore_enabled": instance_type in {"dungeon", "raid"},
                 "source_url": _zone_url(wowhead_id, "de"),
                 "source_urls": {
                     "de": _zone_url(wowhead_id, "de"),
                     "en": _zone_url(wowhead_id, "en"),
                 },
-                "answers": {"level_range": _level_answers(level_range), "name": [de_name, en_name]},
+                "answers": {
+                    "level_range": _level_answers(level_range),
+                    "name": [de_name, en_name],
+                },
             }
         ],
         "zones": [],
@@ -753,7 +784,9 @@ def parse_instance_page(
         item_id = int(drop["id"])
         en_drop = en_drops.get(item_id, {})
         records["items"].append(normalize_item(drop, en_drop))
-        records["instance_drops"].append(normalize_drop(instance_id, wowhead_id, drop, en_drop))
+        records["instance_drops"].append(
+            normalize_drop(instance_id, wowhead_id, drop, en_drop)
+        )
 
     return records
 
@@ -890,7 +923,9 @@ def normalize_zone(
     min_level = int(de_row.get("minlevel") or 0)
     max_level = int(de_row.get("maxlevel") or 0)
     if min_level and max_level:
-        zone["level_range"] = f"{min_level}-{max_level}" if min_level != max_level else str(max_level)
+        zone["level_range"] = (
+            f"{min_level}-{max_level}" if min_level != max_level else str(max_level)
+        )
     return zone
 
 
@@ -904,7 +939,12 @@ def normalize_spell(
     wowhead_id = int(de_row["id"])
     name = {
         "de": str(de_spell_data.get("name_dede") or de_row.get("name") or ""),
-        "en": str(en_spell_data.get("name_enus") or en_row.get("name") or de_row.get("name") or ""),
+        "en": str(
+            en_spell_data.get("name_enus")
+            or en_row.get("name")
+            or de_row.get("name")
+            or ""
+        ),
     }
     description = {
         "de": _description(de_spell_data, name["de"]),
@@ -930,7 +970,9 @@ def normalize_spell(
     return spell
 
 
-def normalize_created_item(de_row: dict[str, Any], en_row: dict[str, Any]) -> dict[str, Any]:
+def normalize_created_item(
+    de_row: dict[str, Any], en_row: dict[str, Any]
+) -> dict[str, Any]:
     creates = de_row.get("creates") or []
     item_id = int(creates[0])
     quality = int(de_row.get("quality", 1))
@@ -1132,8 +1174,12 @@ def _tree_name(localized: dict[str, str], tree_slug: str) -> dict[str, str]:
     de_title = re.search(r"<title>Classic - (.*?) [^-]+ Talente", localized["de"])
     en_title = re.search(r"<title>Classic - (.*?) [^-]+ Talents", localized["en"])
     return {
-        "de": _clean_text(de_title.group(1)) if de_title else tree_slug.replace("-", " ").title(),
-        "en": _clean_text(en_title.group(1)) if en_title else tree_slug.replace("-", " ").title(),
+        "de": _clean_text(de_title.group(1))
+        if de_title
+        else tree_slug.replace("-", " ").title(),
+        "en": _clean_text(en_title.group(1))
+        if en_title
+        else tree_slug.replace("-", " ").title(),
     }
 
 

@@ -39,6 +39,7 @@ class DummyBot:
     def __init__(self, channel=None):
         self.channel = channel
         self.views = []
+        self.data = {}
 
     def get_channel(self, channel_id):
         return self.channel
@@ -109,6 +110,50 @@ def member(
         guild_rank=1,
         is_ghost=is_ghost,
     )
+
+
+def crafting_data():
+    return {
+        "professions": [
+            {"id": "alchemy", "name": {"de": "Alchemie", "en": "Alchemy"}},
+            {
+                "id": "blacksmithing",
+                "name": {"de": "Schmiedekunst", "en": "Blacksmithing"},
+            },
+        ],
+        "items": [
+            {
+                "id": "item.118",
+                "name": {"de": "Schwacher Heiltrank", "en": "Minor Healing Potion"},
+            },
+            {
+                "id": "item.2459",
+                "name": {"de": "Swiftnesstrank", "en": "Swiftness Potion"},
+            },
+            {
+                "id": "item.999",
+                "name": {"de": "Schwacher Manatrank", "en": "Minor Mana Potion"},
+            },
+        ],
+        "profession_recipes": [
+            {
+                "id": "recipe.minor_healing_potion",
+                "profession_id": "alchemy",
+                "creates_item_id": "item.118",
+                "required_skill": 1,
+                "learned_from": "trainer",
+                "hardcore_valid": True,
+            },
+            {
+                "id": "recipe.swiftness_potion",
+                "profession_id": "alchemy",
+                "creates_item_id": "item.2459",
+                "required_skill": 60,
+                "learned_from": "recipe",
+                "hardcore_valid": True,
+            },
+        ],
+    }
 
 
 async def create_cog(tmp_path, patch_logged_task, channel=None):
@@ -436,6 +481,75 @@ async def test_claim_review_button_rejects_non_mod(tmp_path, patch_logged_task):
     claim = await cog.data.get_claim("id:1")
     assert claim.status == "unverified"
     assert interaction.response.messages[0][1]["ephemeral"] is True
+
+
+@pytest.mark.asyncio
+async def test_crafting_set_profile_requires_own_claim_or_mod(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    await cog.data.replace_snapshot([member(name="Voidok")])
+    await cog.claim_character(42, "Voidok")
+
+    own = await cog.set_crafting_profile(42, "Voidok", "Alchemie", 250, "Elixiere")
+    assert own.reason == "saved"
+    assert own.profession.skill_level == 250
+
+    forbidden = await cog.set_crafting_profile(43, "Voidok", "Alchemie", 260, None)
+    assert forbidden.reason == "forbidden"
+
+    mod = await cog.set_crafting_profile(
+        43, "Voidok", "Alchemy", 260, None, is_mod=True
+    )
+    assert mod.reason == "saved"
+    assert mod.profession.skill_level == 260
+
+
+@pytest.mark.asyncio
+async def test_crafting_search_finds_claimed_trainer_recipe(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    await cog.data.replace_snapshot([member(name="Voidok")])
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    await cog.data.set_character_profession(claim, "alchemy", 75)
+
+    result = await cog.search_crafting("Schwacher Heiltrank")
+
+    assert result.status == "ok"
+    assert result.crafters[0].character_name == "Voidok"
+    assert "Voidok" in cog.format_crafting_search_result(result)
+
+
+@pytest.mark.asyncio
+async def test_crafting_search_ignores_unclaimed_crafters(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    await cog.data.replace_snapshot([member(name="Voidok")])
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    await cog.data.set_character_profession(claim, "alchemy", 75)
+    await cog.data.remove_claim(claim.character_key)
+
+    result = await cog.search_crafting("Minor Healing Potion")
+
+    assert result.status == "no_crafter"
+
+
+@pytest.mark.asyncio
+async def test_crafting_search_reports_manual_recipe_and_ambiguity(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+
+    manual = await cog.search_crafting("Swiftnesstrank")
+    ambiguous = await cog.search_crafting("Schwacher")
+
+    assert manual.status == "manual_recipe"
+    assert "kein Trainerrezept" in cog.format_crafting_search_result(manual)
+    assert ambiguous.status == "ambiguous_item"
 
 
 @pytest.mark.asyncio

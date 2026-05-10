@@ -127,7 +127,9 @@ class WoWValidationError:
     message: str
 
     def __str__(self) -> str:
-        location = self.table if not self.record_id else f"{self.table}:{self.record_id}"
+        location = (
+            self.table if not self.record_id else f"{self.table}:{self.record_id}"
+        )
         return f"{location}: {self.message}"
 
 
@@ -188,7 +190,9 @@ def _validate_records(
 
     for index, record in enumerate(records):
         if not isinstance(record, dict):
-            errors.append(WoWValidationError(table, str(index), "record must be an object"))
+            errors.append(
+                WoWValidationError(table, str(index), "record must be an object")
+            )
             continue
 
         record_id = str(record.get("id") or "")
@@ -205,7 +209,9 @@ def _validate_records(
 
         for field in LOCALIZED_FIELDS.get(table, set()):
             if field in record:
-                _validate_localized_field(table, record_id, field, record[field], errors)
+                _validate_localized_field(
+                    table, record_id, field, record[field], errors
+                )
 
         if "source_urls" in record:
             _validate_localized_field(
@@ -223,7 +229,9 @@ def _validate_localized_field(
     errors: list[WoWValidationError],
 ) -> None:
     if not isinstance(value, dict):
-        errors.append(WoWValidationError(table, record_id, f"{field} must be localized"))
+        errors.append(
+            WoWValidationError(table, record_id, f"{field} must be localized")
+        )
         return
 
     for language in LANGUAGES:
@@ -253,19 +261,35 @@ def _validate_quiz_filters(
             continue
         record_id = str(drop.get("id") or "")
         if drop.get("season") != "classic_era":
-            errors.append(WoWValidationError("instance_drops", record_id, "quiz drop is not classic_era"))
+            errors.append(
+                WoWValidationError(
+                    "instance_drops", record_id, "quiz drop is not classic_era"
+                )
+            )
         if drop.get("mode") != "normal":
-            errors.append(WoWValidationError("instance_drops", record_id, "quiz drop is not normal mode"))
+            errors.append(
+                WoWValidationError(
+                    "instance_drops", record_id, "quiz drop is not normal mode"
+                )
+            )
         item = items.get(drop.get("item_id"))
         if item and item.get("is_quest_item"):
-            errors.append(WoWValidationError("instance_drops", record_id, "quiz drop item is a quest item"))
+            errors.append(
+                WoWValidationError(
+                    "instance_drops", record_id, "quiz drop item is a quest item"
+                )
+            )
 
     for zone in data.get("zones", []):
         if not isinstance(zone, dict):
             continue
         record_id = str(zone.get("id") or "")
         if zone.get("type") == "battleground" and zone.get("hardcore_enabled"):
-            errors.append(WoWValidationError("zones", record_id, "battleground cannot be hardcore_enabled"))
+            errors.append(
+                WoWValidationError(
+                    "zones", record_id, "battleground cannot be hardcore_enabled"
+                )
+            )
 
 
 def _validate_semantic_consistency(
@@ -289,21 +313,39 @@ def _validate_semantic_consistency(
         record_id = str(talent.get("id") or "")
         tree = trees.get(talent.get("tree_id"))
         if tree and tree.get("class_id") != talent.get("class_id"):
-            errors.append(WoWValidationError("talents", record_id, "tree class does not match talent class"))
+            errors.append(
+                WoWValidationError(
+                    "talents", record_id, "tree class does not match talent class"
+                )
+            )
         spell = spells.get(talent.get("spell_id"))
         if spell and spell.get("category_id") != "talent":
-            errors.append(WoWValidationError("talents", record_id, "spell is not a talent"))
+            errors.append(
+                WoWValidationError("talents", record_id, "spell is not a talent")
+            )
 
     for ability in data.get("abilities", []):
         if not isinstance(ability, dict):
             continue
         spell = spells.get(ability.get("spell_id"))
         if spell and spell.get("category_id") != "class_ability":
-            errors.append(WoWValidationError("abilities", str(ability.get("id") or ""), "spell is not a class ability"))
+            errors.append(
+                WoWValidationError(
+                    "abilities",
+                    str(ability.get("id") or ""),
+                    "spell is not a class ability",
+                )
+            )
 
     for trait in data.get("racial_traits", []):
         if not isinstance(trait, dict):
             continue
         spell = spells.get(trait.get("spell_id"))
         if spell and spell.get("category_id") != "racial_trait":
-            errors.append(WoWValidationError("racial_traits", str(trait.get("id") or ""), "spell is not a racial trait"))
+            errors.append(
+                WoWValidationError(
+                    "racial_traits",
+                    str(trait.get("id") or ""),
+                    "spell is not a racial trait",
+                )
+            )

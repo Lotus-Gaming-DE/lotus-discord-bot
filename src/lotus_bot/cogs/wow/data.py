@@ -37,6 +37,18 @@ class CharacterClaim:
     review_message_id: int | None
 
 
+@dataclass
+class CharacterProfession:
+    character_key: str
+    character_name: str
+    realm_slug: str
+    discord_user_id: int
+    profession_id: str
+    skill_level: int
+    specialization: str | None
+    updated_at: str
+
+
 class WoWData:
     """SQLite storage for WoW guild settings, snapshots, and milestones."""
 
@@ -111,6 +123,18 @@ class WoWData:
                 verified_at TEXT,
                 verified_by INTEGER,
                 review_message_id INTEGER
+            )
+            """
+        )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS character_professions (
+                character_key TEXT NOT NULL,
+                profession_id TEXT NOT NULL,
+                skill_level INTEGER NOT NULL,
+                specialization TEXT,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY(character_key, profession_id)
             )
             """
         )
@@ -450,6 +474,143 @@ class WoWData:
         rows = await cur.fetchall()
         return [_claim_from_row(row) for row in rows]
 
+    async def set_character_profession(
+        self,
+        claim: CharacterClaim,
+        profession_id: str,
+        skill_level: int,
+        specialization: str | None = None,
+    ) -> CharacterProfession:
+        if skill_level < 1 or skill_level > 300:
+            raise ValueError("skill_level must be between 1 and 300")
+        await self.init_db()
+        db = await self._get_db()
+        now = datetime.utcnow().isoformat()
+        cleaned_specialization = (
+            specialization.strip()
+            if specialization and specialization.strip()
+            else None
+        )
+        await db.execute(
+            """
+            INSERT INTO character_professions(
+                character_key, profession_id, skill_level, specialization, updated_at
+            ) VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(character_key, profession_id)
+            DO UPDATE SET
+                skill_level = excluded.skill_level,
+                specialization = excluded.specialization,
+                updated_at = excluded.updated_at
+            """,
+            (
+                claim.character_key,
+                profession_id,
+                skill_level,
+                cleaned_specialization,
+                now,
+            ),
+        )
+        await db.commit()
+        profession = await self.get_character_profession(
+            claim.character_key, profession_id
+        )
+        if profession is None:  # pragma: no cover - defensive
+            raise RuntimeError("Profession update failed")
+        return profession
+
+    async def get_character_profession(
+        self, character_key: str, profession_id: str
+    ) -> CharacterProfession | None:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT c.character_key, c.character_name, c.realm_slug, c.discord_user_id,
+                   p.profession_id, p.skill_level, p.specialization, p.updated_at
+              FROM character_professions p
+              JOIN character_claims c ON c.character_key = p.character_key
+             WHERE p.character_key = ? AND p.profession_id = ?
+            """,
+            (character_key, profession_id),
+        )
+        row = await cur.fetchone()
+        return _profession_from_row(row) if row else None
+
+    async def remove_character_profession(
+        self, character_key: str, profession_id: str
+    ) -> bool:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            DELETE FROM character_professions
+             WHERE character_key = ? AND profession_id = ?
+            """,
+            (character_key, profession_id),
+        )
+        await db.commit()
+        return cur.rowcount > 0
+
+    async def professions_for_user(
+        self, discord_user_id: int
+    ) -> list[CharacterProfession]:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT c.character_key, c.character_name, c.realm_slug, c.discord_user_id,
+                   p.profession_id, p.skill_level, p.specialization, p.updated_at
+              FROM character_professions p
+              JOIN character_claims c ON c.character_key = p.character_key
+             WHERE c.discord_user_id = ?
+             ORDER BY lower(c.character_name), p.profession_id
+            """,
+            (discord_user_id,),
+        )
+        rows = await cur.fetchall()
+        return [_profession_from_row(row) for row in rows]
+
+    async def list_professions(
+        self, profession_id: str | None = None
+    ) -> list[CharacterProfession]:
+        await self.init_db()
+        db = await self._get_db()
+        query = """
+            SELECT c.character_key, c.character_name, c.realm_slug, c.discord_user_id,
+                   p.profession_id, p.skill_level, p.specialization, p.updated_at
+              FROM character_professions p
+              JOIN character_claims c ON c.character_key = p.character_key
+        """
+        params: tuple[str, ...] = ()
+        if profession_id:
+            query += " WHERE p.profession_id = ?"
+            params = (profession_id,)
+        query += (
+            " ORDER BY p.profession_id, p.skill_level DESC, lower(c.character_name)"
+        )
+        cur = await db.execute(query, params)
+        rows = await cur.fetchall()
+        return [_profession_from_row(row) for row in rows]
+
+    async def find_crafters(
+        self, profession_id: str, minimum_skill: int
+    ) -> list[CharacterProfession]:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT c.character_key, c.character_name, c.realm_slug, c.discord_user_id,
+                   p.profession_id, p.skill_level, p.specialization, p.updated_at
+              FROM character_professions p
+              JOIN character_claims c ON c.character_key = p.character_key
+             WHERE p.profession_id = ? AND p.skill_level >= ?
+             ORDER BY p.skill_level DESC, lower(c.character_name)
+            """,
+            (profession_id, minimum_skill),
+        )
+        rows = await cur.fetchall()
+        return [_profession_from_row(row) for row in rows]
+
 
 def _claim_from_row(row: tuple[Any, ...]) -> CharacterClaim:
     return CharacterClaim(
@@ -462,6 +623,19 @@ def _claim_from_row(row: tuple[Any, ...]) -> CharacterClaim:
         verified_at=row[6],
         verified_by=row[7],
         review_message_id=row[8],
+    )
+
+
+def _profession_from_row(row: tuple[Any, ...]) -> CharacterProfession:
+    return CharacterProfession(
+        character_key=row[0],
+        character_name=row[1],
+        realm_slug=row[2],
+        discord_user_id=row[3],
+        profession_id=row[4],
+        skill_level=row[5],
+        specialization=row[6],
+        updated_at=row[7],
     )
 
 

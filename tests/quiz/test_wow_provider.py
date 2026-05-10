@@ -90,8 +90,9 @@ def test_missing_required_level_does_not_generate_broken_question(monkeypatch):
 
 def test_missing_german_description_is_skipped(monkeypatch):
     data = load_wow_data("data/wow/classic_hc")
+    talent_spell_ids = {talent["spell_id"] for talent in data["talents"]}
     for spell in data["spells"]:
-        if spell["id"] == data["talents"][0]["spell_id"]:
+        if spell["id"] in talent_spell_ids:
             spell["description"].pop("de", None)
     provider = WoWQuestionProvider(DummyBot(data), language="de")
     monkeypatch.setattr("random.choice", lambda records: records[0])
@@ -99,6 +100,28 @@ def test_missing_german_description_is_skipped(monkeypatch):
     question = provider.generate_talent_description()
 
     assert question is None
+
+
+def test_quiz_eligible_false_records_are_skipped(monkeypatch):
+    data = load_wow_data("data/wow/classic_hc")
+    for talent in data["talents"]:
+        talent["quiz_eligible"] = False
+    provider = WoWQuestionProvider(DummyBot(data), language="de")
+    monkeypatch.setattr("random.choice", lambda records: records[0])
+
+    assert provider.generate_talent_tree() is None
+
+
+def test_fallback_descriptions_are_skipped(monkeypatch):
+    data = load_wow_data("data/wow/classic_hc")
+    talent_spell_ids = {talent["spell_id"] for talent in data["talents"]}
+    for spell in data["spells"]:
+        if spell["id"] in talent_spell_ids:
+            spell["description"]["de"] = spell["name"]["de"]
+    provider = WoWQuestionProvider(DummyBot(data), language="de")
+    monkeypatch.setattr("random.choice", lambda records: records[0])
+
+    assert provider.generate_talent_description() is None
 
 
 def test_item_subclass_question_requires_subclass(monkeypatch):
@@ -109,6 +132,26 @@ def test_item_subclass_question_requires_subclass(monkeypatch):
     monkeypatch.setattr("random.choice", lambda records: records[0])
 
     assert provider.generate_item_subclass() is None
+
+
+def test_item_subclass_question_skips_miscellaneous(monkeypatch):
+    data = load_wow_data("data/wow/classic_hc")
+    for item in data["items"]:
+        item["item_subclass"] = "miscellaneous"
+    provider = WoWQuestionProvider(DummyBot(data), language="de")
+    monkeypatch.setattr("random.choice", lambda records: records[0])
+
+    assert provider.generate_item_subclass() is None
+
+
+def test_drop_source_question_requires_source_name(monkeypatch):
+    data = load_wow_data("data/wow/classic_hc")
+    for drop in data["instance_drops"]:
+        drop["source_name"] = {"de": "", "en": ""}
+    provider = WoWQuestionProvider(DummyBot(data), language="de")
+    monkeypatch.setattr("random.choice", lambda records: records[0])
+
+    assert provider.generate_drop_source() is None
 
 
 def test_filters_exclude_battlegrounds_and_quest_items(monkeypatch):

@@ -14,7 +14,6 @@ from lotus_bot.cogs.quiz.area_providers.wow_importer import (
     import_instances,
     merge_records,
     normalize_drop,
-    normalize_item,
     parse_instance_page,
     run_import,
 )

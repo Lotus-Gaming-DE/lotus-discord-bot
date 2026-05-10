@@ -17,7 +17,13 @@ from .api import (
     fetch_character_profile,
     fetch_guild_roster,
 )
-from .data import CharacterClaim, RosterMember, WoWData, parse_roster_member
+from .data import (
+    CharacterClaim,
+    CharacterProfession,
+    RosterMember,
+    WoWData,
+    parse_roster_member,
+)
 
 logger = get_logger(__name__)
 
@@ -122,6 +128,24 @@ class ClaimResult:
     created: bool = False
     reason: str = ""
     review_posted: bool = False
+
+
+@dataclass
+class CraftingProfileResult:
+    profession: CharacterProfession | None
+    claim: CharacterClaim | None = None
+    reason: str = ""
+
+
+@dataclass
+class CraftingSearchResult:
+    status: str
+    item: dict | None = None
+    candidates: list[dict] | None = None
+    recipe: dict | None = None
+    crafters: list[CharacterProfession] | None = None
+    required_skill: int = 0
+    profession_id: str | None = None
 
 
 class WoWCog(ManagedTaskCog):
@@ -510,6 +534,214 @@ class WoWCog(ManagedTaskCog):
             f"**{claim.character_name}** geclaimed."
         )
 
+    def _wow_records(self, table: str) -> list[dict]:
+        data = getattr(self.bot, "data", {}).get("wow", {})
+        records = data.get(table, [])
+        return records if isinstance(records, list) else []
+
+    def _localized_text(self, value: object, language: str = "de") -> str:
+        if isinstance(value, str):
+            return value
+        if isinstance(value, dict):
+            return value.get(language) or value.get("de") or value.get("en") or ""
+        return ""
+
+    def _profession_name(self, profession_id: str) -> str:
+        profession = self._get_static_record("professions", profession_id)
+        return self._localized_text(profession.get("name")) or profession_id
+
+    def _get_static_record(self, table: str, record_id: str | None) -> dict:
+        if not record_id:
+            return {}
+        for record in self._wow_records(table):
+            if record.get("id") == record_id:
+                return record
+        return {}
+
+    def resolve_profession_id(self, value: str) -> str | None:
+        needle = _norm(value)
+        for profession in self._wow_records("professions"):
+            names = [
+                profession.get("id", ""),
+                self._localized_text(profession.get("name"), "de"),
+                self._localized_text(profession.get("name"), "en"),
+            ]
+            if needle in {_norm(name) for name in names if name}:
+                return profession["id"]
+        return None
+
+    def profession_choices(self, current: str = "") -> list[tuple[str, str]]:
+        needle = _norm(current)
+        choices = []
+        for profession in self._wow_records("professions"):
+            name = self._localized_text(profession.get("name"))
+            profession_id = profession.get("id")
+            if not profession_id or not name:
+                continue
+            searchable = f"{profession_id} {name} {self._localized_text(profession.get('name'), 'en')}"
+            if not needle or needle in _norm(searchable):
+                choices.append((name, profession_id))
+        return choices[:25]
+
+    async def set_crafting_profile(
+        self,
+        discord_user_id: int,
+        char_name: str,
+        profession_value: str,
+        skill_level: int,
+        specialization: str | None,
+        *,
+        is_mod: bool = False,
+    ) -> CraftingProfileResult:
+        if skill_level < 1 or skill_level > 300:
+            return CraftingProfileResult(None, reason="invalid_skill")
+        profession_id = self.resolve_profession_id(profession_value)
+        if not profession_id:
+            return CraftingProfileResult(None, reason="unknown_profession")
+        claim = await self.data.get_claim_by_name(char_name)
+        if not claim:
+            return CraftingProfileResult(None, reason="not_claimed")
+        if not is_mod and claim.discord_user_id != discord_user_id:
+            return CraftingProfileResult(None, claim=claim, reason="forbidden")
+        profession = await self.data.set_character_profession(
+            claim, profession_id, skill_level, specialization
+        )
+        return CraftingProfileResult(profession, claim=claim, reason="saved")
+
+    async def remove_crafting_profile(
+        self,
+        discord_user_id: int,
+        char_name: str,
+        profession_value: str,
+        *,
+        is_mod: bool = False,
+    ) -> CraftingProfileResult:
+        profession_id = self.resolve_profession_id(profession_value)
+        if not profession_id:
+            return CraftingProfileResult(None, reason="unknown_profession")
+        claim = await self.data.get_claim_by_name(char_name)
+        if not claim:
+            return CraftingProfileResult(None, reason="not_claimed")
+        if not is_mod and claim.discord_user_id != discord_user_id:
+            return CraftingProfileResult(None, claim=claim, reason="forbidden")
+        removed = await self.data.remove_character_profession(
+            claim.character_key, profession_id
+        )
+        return CraftingProfileResult(
+            None, claim=claim, reason="removed" if removed else "not_set"
+        )
+
+    async def search_crafting(self, item_name: str) -> CraftingSearchResult:
+        matches = self._match_items(item_name)
+        if not matches:
+            return CraftingSearchResult("item_not_found")
+        if len(matches) > 1:
+            return CraftingSearchResult("ambiguous_item", candidates=matches[:5])
+
+        item = matches[0]
+        recipes = [
+            recipe
+            for recipe in self._wow_records("profession_recipes")
+            if recipe.get("creates_item_id") == item.get("id")
+            and recipe.get("hardcore_valid")
+        ]
+        if not recipes:
+            return CraftingSearchResult("recipe_not_found", item=item)
+
+        trainer_recipes = [
+            recipe for recipe in recipes if recipe.get("learned_from") == "trainer"
+        ]
+        if not trainer_recipes:
+            return CraftingSearchResult("manual_recipe", item=item, recipe=recipes[0])
+
+        recipe = min(
+            trainer_recipes,
+            key=lambda record: int(record.get("required_skill") or 0),
+        )
+        profession_id = recipe.get("profession_id")
+        required_skill = int(recipe.get("required_skill") or 1)
+        crafters = await self.data.find_crafters(profession_id, required_skill)
+        if not crafters:
+            return CraftingSearchResult(
+                "no_crafter",
+                item=item,
+                recipe=recipe,
+                required_skill=required_skill,
+                profession_id=profession_id,
+                crafters=[],
+            )
+        return CraftingSearchResult(
+            "ok",
+            item=item,
+            recipe=recipe,
+            crafters=crafters,
+            required_skill=required_skill,
+            profession_id=profession_id,
+        )
+
+    def _match_items(self, item_name: str) -> list[dict]:
+        needle = _norm(item_name)
+        exact = []
+        partial = []
+        for item in self._wow_records("items"):
+            names = [
+                self._localized_text(item.get("name"), "de"),
+                self._localized_text(item.get("name"), "en"),
+            ]
+            normalized = [_norm(name) for name in names if name]
+            if needle in normalized:
+                exact.append(item)
+            elif any(needle and needle in name for name in normalized):
+                partial.append(item)
+        return exact or partial[:5]
+
+    def format_profession(self, profile: CharacterProfession) -> str:
+        specialization = (
+            f" ({profile.specialization})" if profile.specialization else ""
+        )
+        return (
+            f"**{profile.character_name}** - "
+            f"{self._profession_name(profile.profession_id)} "
+            f"{profile.skill_level}{specialization}"
+        )
+
+    def format_crafting_search_result(self, result: CraftingSearchResult) -> str:
+        if result.status == "item_not_found":
+            return "❌ Dieses Item wurde in den WoW-Daten nicht gefunden."
+        if result.status == "ambiguous_item":
+            names = [
+                f"- {self._localized_text(item.get('name'))}"
+                for item in result.candidates or []
+            ]
+            return "Mehrere Items gefunden. Bitte genauer suchen:\n" + "\n".join(names)
+        item_name = self._localized_text((result.item or {}).get("name"))
+        if result.status == "recipe_not_found":
+            return f"❌ Für **{item_name}** wurde kein Crafting-Rezept gefunden."
+        if result.status == "manual_recipe":
+            return (
+                f"ℹ️ **{item_name}** hat ein Rezept, aber es ist kein Trainerrezept. "
+                "V1 kennt gefundene/gekaufte Rezepte noch nicht als gelernt."
+            )
+        profession_name = self._profession_name(result.profession_id or "")
+        if result.status == "no_crafter":
+            return (
+                f"❌ **{item_name}** benötigt {profession_name} "
+                f"{result.required_skill}. Kein geclaimter Crafter passt aktuell."
+            )
+        lines = [
+            f"**{item_name}** kann vermutlich gecraftet werden von:",
+            "",
+        ]
+        for crafter in result.crafters or []:
+            specialization = (
+                f" ({crafter.specialization})" if crafter.specialization else ""
+            )
+            lines.append(
+                f"- <@{crafter.discord_user_id}> mit **{crafter.character_name}** "
+                f"({profession_name} {crafter.skill_level}{specialization})"
+            )
+        return "\n".join(lines)
+
     async def update_claim_review_message(
         self, interaction: discord.Interaction, claim: CharacterClaim, action: str
     ) -> None:
@@ -602,3 +834,7 @@ class ClaimReviewView(discord.ui.View):
             return
         await self.cog.data.remove_claim(claim.character_key)
         await self.cog.update_claim_review_message(interaction, claim, "rejected")
+
+
+def _norm(value: str) -> str:
+    return " ".join(str(value).casefold().split())

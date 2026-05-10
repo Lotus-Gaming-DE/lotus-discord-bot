@@ -108,3 +108,56 @@ async def test_claim_listing_and_review_message_lookup(tmp_path):
     await data.remove_claim(claim.character_key)
     assert await data.list_claims() == []
     await data.close()
+
+
+async def test_character_profession_lifecycle(tmp_path):
+    data = WoWData(str(tmp_path / "wow.db"))
+    member = roster_member()
+    await data.replace_snapshot([member])
+    claim, _ = await data.create_claim(member, 42)
+
+    profile = await data.set_character_profession(claim, "alchemy", 250, "TrÃ¤nke")
+    assert profile.character_name == "Lyxendra"
+    assert profile.profession_id == "alchemy"
+    assert profile.skill_level == 250
+    assert profile.specialization == "TrÃ¤nke"
+
+    updated = await data.set_character_profession(claim, "alchemy", 300, None)
+    assert updated.skill_level == 300
+    assert updated.specialization is None
+
+    assert await data.professions_for_user(42) == [updated]
+    assert await data.list_professions("alchemy") == [updated]
+    assert await data.find_crafters("alchemy", 275) == [updated]
+    assert await data.find_crafters("alchemy", 301) == []
+
+    assert await data.remove_character_profession(member.character_key, "alchemy")
+    assert await data.professions_for_user(42) == []
+    await data.close()
+
+
+async def test_character_profession_rejects_invalid_skill(tmp_path):
+    data = WoWData(str(tmp_path / "wow.db"))
+    member = roster_member()
+    await data.replace_snapshot([member])
+    claim, _ = await data.create_claim(member, 42)
+
+    with pytest.raises(ValueError):
+        await data.set_character_profession(claim, "alchemy", 0)
+    with pytest.raises(ValueError):
+        await data.set_character_profession(claim, "alchemy", 301)
+    await data.close()
+
+
+async def test_character_profession_hidden_after_claim_remove(tmp_path):
+    data = WoWData(str(tmp_path / "wow.db"))
+    member = roster_member()
+    await data.replace_snapshot([member])
+    claim, _ = await data.create_claim(member, 42)
+    await data.set_character_profession(claim, "alchemy", 250)
+
+    await data.remove_claim(member.character_key)
+
+    assert await data.list_professions() == []
+    assert await data.find_crafters("alchemy", 1) == []
+    await data.close()

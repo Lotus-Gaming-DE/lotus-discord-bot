@@ -31,7 +31,9 @@ def test_rejects_missing_required_field():
 
     errors = validate_wow_data(data)
 
-    assert any(f"spells:{spell_id}: missing source_urls" == str(error) for error in errors)
+    assert any(
+        f"spells:{spell_id}: missing source_urls" == str(error) for error in errors
+    )
 
 
 def test_rejects_unknown_references():
@@ -40,7 +42,10 @@ def test_rejects_unknown_references():
 
     errors = validate_wow_data(data)
 
-    assert any("spell_id references unknown spells id 'spell.missing'" in str(error) for error in errors)
+    assert any(
+        "spell_id references unknown spells id 'spell.missing'" in str(error)
+        for error in errors
+    )
 
 
 def test_rejects_incomplete_localized_fields():
@@ -71,12 +76,16 @@ def test_rejects_hardcore_quiz_drop_for_quest_item():
 
 def test_rejects_hardcore_enabled_battleground():
     data = copy.deepcopy(load_wow_data("data/wow/classic_hc"))
-    battleground = next(zone for zone in data["zones"] if zone["type"] == "battleground")
+    battleground = next(
+        zone for zone in data["zones"] if zone["type"] == "battleground"
+    )
     battleground["hardcore_enabled"] = True
 
     errors = validate_wow_data(data)
 
-    assert any("battleground cannot be hardcore_enabled" in str(error) for error in errors)
+    assert any(
+        "battleground cannot be hardcore_enabled" in str(error) for error in errors
+    )
 
 
 def test_assert_valid_wow_data_raises_readable_error():
@@ -93,7 +102,9 @@ def test_rejects_talent_tree_class_mismatch():
 
     errors = validate_wow_data(data)
 
-    assert any("tree class does not match talent class" in str(error) for error in errors)
+    assert any(
+        "tree class does not match talent class" in str(error) for error in errors
+    )
 
 
 def test_rejects_ability_with_non_ability_spell():

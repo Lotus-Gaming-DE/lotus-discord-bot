@@ -6,6 +6,7 @@ from lotus_bot.log_setup import get_logger
 
 from ..utils import create_permutations_list
 from .base import DynamicQuestionProvider
+from .wow_audit import has_quality_flag
 
 logger = get_logger(__name__)
 
@@ -104,6 +105,12 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         records = self.data.get(key, [])
         return records if isinstance(records, list) else []
 
+    def _eligible(self, record: dict[str, Any]) -> bool:
+        return record.get("quiz_eligible") is not False
+
+    def _quiz_records(self, key: str) -> list[dict[str, Any]]:
+        return [record for record in self._records(key) if self._eligible(record)]
+
     def _by_id(self, key: str) -> dict[str, dict[str, Any]]:
         if key not in self.indexes:
             self.indexes[key] = {
@@ -163,6 +170,20 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         name = self._text(record.get("name"))
         return f"Wowhead - {name}" if name else "Wowhead"
 
+    def _has_description_for_question(self, spell: dict[str, Any]) -> bool:
+        if not spell or not self._eligible(spell):
+            return False
+        description = self._text(spell.get("description"), require_lang=True)
+        name = self._text(spell.get("name"), require_lang=True)
+        if not description or not name:
+            return False
+        return " ".join(description.casefold().split()) != " ".join(
+            name.casefold().split()
+        )
+
+    def _source_name(self, drop: dict[str, Any]) -> str:
+        return self._text(drop.get("source_name"), require_lang=True)
+
     def _question(
         self,
         pattern: str,
@@ -217,7 +238,9 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         return self._get("professions", record.get("profession_id"))
 
     def _hc_zones(self) -> list[dict[str, Any]]:
-        return [zone for zone in self._records("zones") if zone.get("hardcore_enabled")]
+        return [
+            zone for zone in self._quiz_records("zones") if zone.get("hardcore_enabled")
+        ]
 
     def _parse_level_range(self, value: str | None) -> tuple[int, int] | None:
         if not value:
@@ -249,13 +272,14 @@ class WoWQuestionProvider(DynamicQuestionProvider):
 
     def _quiz_drops(self) -> list[dict[str, Any]]:
         drops = []
-        for drop in self._records("instance_drops"):
+        for drop in self._quiz_records("instance_drops"):
             item = self._item_for(drop)
             if (
                 drop.get("season") == "classic_era"
                 and drop.get("mode") == "normal"
                 and drop.get("include_in_hardcore_quiz")
                 and item
+                and self._eligible(item)
                 and not item.get("is_quest_item")
             ):
                 drops.append(drop)
@@ -271,7 +295,9 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         return question
 
     def generate_race_faction(self):
-        records = [race for race in self._records("races") if race.get("faction_id")]
+        records = [
+            race for race in self._quiz_records("races") if race.get("faction_id")
+        ]
         if not records:
             return None
         race = random.choice(records)
@@ -288,7 +314,11 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         )
 
     def generate_racial_trait_description(self):
-        records = self._records("racial_traits")
+        records = [
+            trait
+            for trait in self._quiz_records("racial_traits")
+            if self._has_description_for_question(self._spell_for(trait))
+        ]
         if not records:
             return None
         trait = random.choice(records)
@@ -325,8 +355,8 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         )
 
     def generate_race_class_allowed(self):
-        races = self._records("races")
-        classes = self._records("classes")
+        races = self._quiz_records("races")
+        classes = self._quiz_records("classes")
         allowed = {
             (combo.get("race_id"), combo.get("class_id"))
             for combo in self._records("race_classes")
@@ -352,7 +382,9 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         )
 
     def generate_class_power_type(self):
-        records = [cls for cls in self._records("classes") if cls.get("power_type_id")]
+        records = [
+            cls for cls in self._quiz_records("classes") if cls.get("power_type_id")
+        ]
         if not records:
             return None
         cls = random.choice(records)
@@ -370,7 +402,7 @@ class WoWQuestionProvider(DynamicQuestionProvider):
 
     def generate_talent_tree(self):
         records = [
-            talent for talent in self._records("talents") if talent.get("tree_id")
+            talent for talent in self._quiz_records("talents") if talent.get("tree_id")
         ]
         if not records:
             return None
@@ -393,7 +425,7 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         )
 
     def generate_talent_class(self):
-        records = self._records("talents")
+        records = self._quiz_records("talents")
         if not records:
             return None
         talent = random.choice(records)
@@ -410,7 +442,11 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         )
 
     def generate_talent_description(self):
-        records = self._records("talents")
+        records = [
+            talent
+            for talent in self._quiz_records("talents")
+            if self._has_description_for_question(self._spell_for(talent))
+        ]
         if not records:
             return None
         talent = random.choice(records)
@@ -456,7 +492,7 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         )
 
     def generate_ability_class(self):
-        records = self._records("abilities")
+        records = self._quiz_records("abilities")
         if not records:
             return None
         ability = random.choice(records)
@@ -479,8 +515,9 @@ class WoWQuestionProvider(DynamicQuestionProvider):
     def generate_ability_required_level(self):
         records = [
             ability
-            for ability in self._records("abilities")
+            for ability in self._quiz_records("abilities")
             if self._spell_for(ability).get("required_level")
+            and self._eligible(self._spell_for(ability))
         ]
         if not records:
             return None
@@ -500,7 +537,11 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         )
 
     def generate_ability_description(self):
-        records = self._records("abilities")
+        records = [
+            ability
+            for ability in self._quiz_records("abilities")
+            if self._has_description_for_question(self._spell_for(ability))
+        ]
         if not records:
             return None
         ability = random.choice(records)
@@ -714,7 +755,7 @@ class WoWQuestionProvider(DynamicQuestionProvider):
 
     def generate_instance_level(self):
         records = [
-            inst for inst in self._records("dungeons") if inst.get("level_range")
+            inst for inst in self._quiz_records("dungeons") if inst.get("level_range")
         ]
         if not records:
             return None
@@ -734,7 +775,7 @@ class WoWQuestionProvider(DynamicQuestionProvider):
 
     def generate_instance_level_fit(self):
         records = [
-            inst for inst in self._records("dungeons") if inst.get("level_range")
+            inst for inst in self._quiz_records("dungeons") if inst.get("level_range")
         ]
         if not records:
             return None
@@ -756,7 +797,7 @@ class WoWQuestionProvider(DynamicQuestionProvider):
 
     def generate_instance_players(self):
         records = [
-            inst for inst in self._records("dungeons") if inst.get("player_count")
+            inst for inst in self._quiz_records("dungeons") if inst.get("player_count")
         ]
         if not records:
             return None
@@ -774,7 +815,7 @@ class WoWQuestionProvider(DynamicQuestionProvider):
 
     def generate_instance_location(self):
         records = [
-            inst for inst in self._records("dungeons") if inst.get("location_text")
+            inst for inst in self._quiz_records("dungeons") if inst.get("location_text")
         ]
         if not records:
             return None
@@ -812,7 +853,12 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         )
 
     def generate_drop_source(self):
-        drops = self._quiz_drops()
+        drops = [
+            drop
+            for drop in self._quiz_drops()
+            if self._source_name(drop)
+            and not has_quality_flag(drop, "missing_source_name")
+        ]
         if not drops:
             return None
         drop = random.choice(drops)
@@ -822,7 +868,7 @@ class WoWQuestionProvider(DynamicQuestionProvider):
             "drop_source",
             drop["id"],
             category="Drops",
-            answers=[drop.get("source_name")],
+            answers=[self._source_name(drop)],
             difficulty="hard",
             source=item,
             item_name=self._text(item.get("name"), require_lang=True),
@@ -830,7 +876,7 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         )
 
     def generate_item_quality(self):
-        records = [item for item in self._records("items") if item.get("quality")]
+        records = [item for item in self._quiz_records("items") if item.get("quality")]
         if not records:
             return None
         item = random.choice(records)
@@ -850,7 +896,13 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         )
 
     def generate_item_subclass(self):
-        records = [item for item in self._records("items") if item.get("item_subclass")]
+        records = [
+            item
+            for item in self._quiz_records("items")
+            if item.get("item_subclass")
+            and not has_quality_flag(item, "miscellaneous_item_subclass")
+            and str(item.get("item_subclass")).lower() != "miscellaneous"
+        ]
         if not records:
             return None
         item = random.choice(records)
@@ -871,7 +923,7 @@ class WoWQuestionProvider(DynamicQuestionProvider):
 
     def generate_item_required_level(self):
         records = [
-            item for item in self._records("items") if item.get("required_level")
+            item for item in self._quiz_records("items") if item.get("required_level")
         ]
         if not records:
             return None

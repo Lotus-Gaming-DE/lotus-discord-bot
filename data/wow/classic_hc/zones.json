@@ -230,7 +230,11 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=1657",
       "en": "https://www.wowhead.com/classic/zone=1657"
-    }
+    },
+    "qa_flags": [
+      "missing_level_range"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "zone.17",
@@ -265,7 +269,11 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=1941",
       "en": "https://www.wowhead.com/classic/zone=1941"
-    }
+    },
+    "qa_flags": [
+      "missing_level_range"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "zone.215",
@@ -300,7 +308,11 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=2159",
       "en": "https://www.wowhead.com/classic/zone=2159"
-    }
+    },
+    "qa_flags": [
+      "missing_level_range"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "zone.25",
@@ -317,7 +329,11 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=25",
       "en": "https://www.wowhead.com/classic/zone=25"
-    }
+    },
+    "qa_flags": [
+      "missing_level_range"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "zone.267",
@@ -674,7 +690,11 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/zone=457",
       "en": "https://www.wowhead.com/classic/zone=457"
-    }
+    },
+    "qa_flags": [
+      "missing_level_range"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "zone.46",

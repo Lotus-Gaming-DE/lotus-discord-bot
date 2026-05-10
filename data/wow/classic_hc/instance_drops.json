@@ -165,7 +165,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackfathom_deeps.strike_of_the_hydra",
@@ -225,7 +229,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.ban_thok_sash",
@@ -261,7 +269,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.black_steel_bindings",
@@ -297,7 +309,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.blood_etched_blade",
@@ -357,7 +373,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.burst_of_knowledge",
@@ -429,7 +449,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.circle_of_flame",
@@ -453,7 +477,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.cyclopean_band",
@@ -513,7 +541,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.dreadforge_retaliator",
@@ -561,7 +593,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.emberplate_armguards",
@@ -573,7 +609,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.emperor_s_seal",
@@ -765,7 +805,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.ghostshroud",
@@ -813,7 +857,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.graverot_cape",
@@ -885,7 +933,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.haunting_specter_leggings",
@@ -897,7 +949,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.high_priestess_boots",
@@ -909,7 +965,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.hookfang_shanker",
@@ -1233,7 +1293,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.mixologist_s_tunic",
@@ -1401,7 +1465,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.plans_tempered_dark_iron_plate",
@@ -1485,7 +1553,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.robes_of_the_royal_crown",
@@ -1569,7 +1641,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.runed_golem_shackles",
@@ -1581,7 +1657,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.sash_of_the_burning_heart",
@@ -1749,7 +1829,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.searingscale_leggings",
@@ -1869,7 +1953,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.splinthide_shoulders",
@@ -1929,7 +2017,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.stonewall_girdle",
@@ -1953,7 +2045,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.thaurissan_s_royal_scepter",
@@ -2001,7 +2097,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_depths.totem_of_rage",
@@ -2181,7 +2281,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.beaststalker_s_gloves",
@@ -2361,7 +2465,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.brazecore_armguards",
@@ -2481,7 +2589,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.crystallized_girdle",
@@ -2565,7 +2677,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.devout_mantle",
@@ -2625,7 +2741,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.draconic_infused_emblem",
@@ -2685,7 +2805,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.dreadmist_robe",
@@ -2961,7 +3085,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.halycon_s_spiked_collar",
@@ -3201,7 +3329,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.magister_s_robes",
@@ -3573,7 +3705,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.reiver_claws",
@@ -3729,7 +3865,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.shadowcraft_gloves",
@@ -3789,7 +3929,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.slamshot_shoulders",
@@ -4005,7 +4149,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.trindlehaven_staff",
@@ -4113,7 +4261,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.wildheart_boots",
@@ -4161,7 +4313,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.blackrock_spire.wolfshear_leggings",
@@ -4245,7 +4401,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.barrier_shield",
@@ -4257,7 +4417,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.bile_etched_spaulders",
@@ -4389,7 +4553,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.carrion_scorpid_helm",
@@ -4401,7 +4569,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.chestplate_of_tranquility",
@@ -4473,7 +4645,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.crown_of_the_ogre_king",
@@ -4521,7 +4697,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.diabolic_mantle",
@@ -4569,7 +4749,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.eidolon_talisman",
@@ -4581,7 +4765,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.elder_magus_pendant",
@@ -4617,7 +4805,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.emerald_flame_ring",
@@ -4773,7 +4965,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.gauntlets_of_accuracy",
@@ -4821,7 +5017,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.gordok_nose_ring",
@@ -4833,7 +5033,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.gordok_shackle_key",
@@ -4845,7 +5049,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.grimy_metal_boots",
@@ -4893,7 +5101,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.heliotrope_cloak",
@@ -4905,7 +5117,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.helm_of_awareness",
@@ -4941,7 +5157,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.hyena_hide_jerkin",
@@ -4953,7 +5173,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.insightful_hood",
@@ -4989,7 +5213,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.kreeg_s_mug",
@@ -5049,7 +5277,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.libram_of_hope",
@@ -5073,7 +5305,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.libram_of_rapidity",
@@ -5085,7 +5321,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.magically_sealed_bracers",
@@ -5121,7 +5361,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.merciful_greaves",
@@ -5181,7 +5425,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.monstrous_glaive",
@@ -5205,7 +5453,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.mugger_s_belt",
@@ -5253,7 +5505,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.odious_greaves",
@@ -5289,7 +5545,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.ogre_tannin",
@@ -5301,7 +5561,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.ogre_toothpick_shooter",
@@ -5313,7 +5577,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.orphic_bracers",
@@ -5325,7 +5593,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.padre_s_trousers",
@@ -5553,7 +5825,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.petrified_bark_shield",
@@ -5649,7 +5925,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.ring_of_demonic_guile",
@@ -5697,7 +5977,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.robe_of_everlasting_night",
@@ -5745,7 +6029,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.schematic_major_recombobulator",
@@ -5781,7 +6069,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.silvermoon_leggings",
@@ -5805,7 +6097,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.stonebark_gauntlets",
@@ -5817,7 +6113,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.stoneflower_staff",
@@ -5853,7 +6153,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.tanglemoss_leggings",
@@ -5961,7 +6265,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.unsophisticated_hand_cannon",
@@ -5973,7 +6281,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.unyielding_maul",
@@ -6009,7 +6321,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.dire_maul.warpwood_binding",
@@ -6105,7 +6421,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.charged_gear",
@@ -6177,7 +6497,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.glass_shooter",
@@ -6225,7 +6549,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.hi_tech_supergun",
@@ -6237,7 +6565,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.hotshot_pilot_s_gloves",
@@ -6249,7 +6581,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.hydrocane",
@@ -6273,7 +6609,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.mechbuilder_s_overalls",
@@ -6285,7 +6625,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.oscillating_power_hammer",
@@ -6297,7 +6641,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.petrolspill_leggings",
@@ -6309,7 +6657,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.royal_diplomatic_scepter",
@@ -6333,7 +6685,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.schematic_flame_deflector",
@@ -6345,7 +6701,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.schematic_flash_bomb",
@@ -6357,7 +6717,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.schematic_goblin_rocket_boots",
@@ -6369,7 +6733,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.security_delta_data_access_card",
@@ -6381,7 +6749,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.spidertank_oilrag",
@@ -6405,7 +6777,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.gnomeregan.thermaplugg_s_central_core",
@@ -6453,7 +6829,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.maraudon.albino_crocscale_boots",
@@ -7005,7 +7385,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_downs.death_s_head_vestment",
@@ -7017,7 +7401,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_downs.deathchill_armor",
@@ -7065,7 +7453,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_downs.glowing_eye_of_mordresh",
@@ -7125,7 +7517,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_downs.mantle_of_lady_falther_ess",
@@ -7173,7 +7569,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_downs.quillward_harness",
@@ -7185,7 +7585,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_downs.robes_of_the_lich",
@@ -7245,7 +7649,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_downs.x_caliboar",
@@ -7293,7 +7701,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_kraul.batwing_mantle",
@@ -7389,7 +7801,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_kraul.nightstalker_bow",
@@ -7413,7 +7829,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_kraul.pronged_reaver",
@@ -7437,7 +7857,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_kraul.pysan_s_old_greatsword",
@@ -7449,7 +7873,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_kraul.slaghammer",
@@ -7461,7 +7889,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_kraul.staff_of_the_shade",
@@ -7473,7 +7905,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_kraul.stygian_bone_amulet",
@@ -7509,7 +7945,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_kraul.tusken_helm",
@@ -7533,7 +7973,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.razorfen_kraul.vicar_s_robe",
@@ -7581,7 +8025,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.aegis_of_the_scarlet_commander",
@@ -7617,7 +8065,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.blighted_leggings",
@@ -7665,7 +8117,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.dog_training_gloves",
@@ -7737,7 +8193,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.flintrock_shoulders",
@@ -7749,7 +8209,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.gauntlets_of_divinity",
@@ -7905,7 +8369,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.mograine_s_might",
@@ -8001,7 +8469,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.scarlet_belt",
@@ -8013,7 +8485,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.scarlet_boots",
@@ -8025,7 +8501,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.scarlet_chestpiece",
@@ -8061,7 +8541,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.scarlet_wristguards",
@@ -8073,7 +8557,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.scorn_s_focal_dagger",
@@ -8109,7 +8597,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.steelclaw_reaver",
@@ -8121,7 +8613,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.sunblaze_coif",
@@ -8133,7 +8629,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.swampchill_fetish",
@@ -8145,7 +8645,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.tainted_pierce",
@@ -8157,7 +8661,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.the_frozen_clutch",
@@ -8217,7 +8725,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scarlet_monastery.whitemane_s_chapeau",
@@ -8241,7 +8753,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.ace_of_portals",
@@ -8289,7 +8805,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.band_of_the_steadfast_hero",
@@ -8337,7 +8857,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.blackwood_s_thigh",
@@ -8385,7 +8909,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.bloodmail_boots",
@@ -8397,7 +8925,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.bloodmail_gauntlets",
@@ -8409,7 +8941,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.bloodmail_hauberk",
@@ -8421,7 +8957,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.bloodmail_legguards",
@@ -8433,7 +8973,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.bone_golem_shoulders",
@@ -8469,7 +9013,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.bonechill_hammer",
@@ -8541,7 +9089,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.cadaverous_armor",
@@ -8553,7 +9105,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.cadaverous_belt",
@@ -8565,7 +9121,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.cadaverous_gloves",
@@ -8577,7 +9137,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.cadaverous_leggings",
@@ -8589,7 +9153,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.cadaverous_walkers",
@@ -8601,7 +9169,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.clutch_of_andros",
@@ -8637,7 +9209,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.corpselight_greaves",
@@ -8721,7 +9297,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.deathbone_gauntlets",
@@ -8733,7 +9313,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.deathbone_girdle",
@@ -8745,7 +9329,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.deathbone_legguards",
@@ -8757,7 +9345,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.deathbone_sabatons",
@@ -8769,7 +9361,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.detention_strap",
@@ -8805,7 +9401,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.don_mauricio_s_band_of_domination",
@@ -8961,7 +9561,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.gravestone_war_axe",
@@ -8997,7 +9601,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.headmaster_s_charge",
@@ -9057,7 +9665,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.innervating_band",
@@ -9069,7 +9681,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.intricately_runed_shield",
@@ -9105,7 +9721,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.lightforge_bracers",
@@ -9117,7 +9737,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.lightforge_helm",
@@ -9225,7 +9849,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.malicious_axe",
@@ -9261,7 +9889,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.necropile_cuffs",
@@ -9273,7 +9905,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.necropile_leggings",
@@ -9285,7 +9921,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.necropile_mantle",
@@ -9297,7 +9937,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.necropile_robe",
@@ -9309,7 +9953,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.oblivion_s_touch",
@@ -9549,7 +10197,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.tombstone_breastplate",
@@ -9573,7 +10225,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.scholomance.vigorsteel_vambraces",
@@ -9669,7 +10325,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.shadowfang_keep.baron_s_scepter",
@@ -9705,7 +10365,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.shadowfang_keep.black_wolf_bracers",
@@ -9777,7 +10441,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.shadowfang_keep.eerie_stable_lantern",
@@ -9789,7 +10457,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.shadowfang_keep.face_smasher",
@@ -9801,7 +10473,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.shadowfang_keep.feline_mantle",
@@ -9849,7 +10525,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.shadowfang_keep.guillotine_axe",
@@ -9861,7 +10541,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.shadowfang_keep.haunting_blade",
@@ -9897,7 +10581,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.shadowfang_keep.necrology_robes",
@@ -9909,7 +10597,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.shadowfang_keep.night_reaver",
@@ -9921,7 +10613,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.shadowfang_keep.odo_s_ley_staff",
@@ -9981,7 +10677,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.shadowfang_keep.silverlaine_s_family_seal",
@@ -10017,7 +10717,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.shadowfang_keep.wolfmaster_cape",
@@ -10137,7 +10841,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.banshee_finger",
@@ -10173,7 +10881,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.beaststalker_s_boots",
@@ -10245,7 +10957,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.cape_of_the_black_baron",
@@ -10425,7 +11141,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.devout_bracers",
@@ -10437,7 +11157,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.devout_gloves",
@@ -10545,7 +11269,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.flamescarred_girdle",
@@ -10557,7 +11285,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.foresight_girdle",
@@ -10641,7 +11373,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.grand_crusader_s_helm",
@@ -10701,7 +11437,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.husk_of_nerub_enkan",
@@ -10749,7 +11489,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.key_to_the_city",
@@ -10785,7 +11529,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.legplates_of_valor",
@@ -10821,7 +11569,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.lightforge_boots",
@@ -10953,7 +11705,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.miniature_cannon_balls",
@@ -10965,7 +11721,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.morlune_s_bracer",
@@ -10977,7 +11737,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.nacreous_shell_necklace",
@@ -10989,7 +11753,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.oneiric_epiphany",
@@ -11049,7 +11817,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.pattern_wicked_leather_belt",
@@ -11097,7 +11869,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.plaguehound_leggings",
@@ -11109,7 +11885,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.plans_deadly_heartseeker",
@@ -11205,7 +11985,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.redemption",
@@ -11217,7 +12001,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.ritssyn_s_wand_of_bad_mojo",
@@ -11277,7 +12065,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.scepter_of_interminable_focus",
@@ -11373,7 +12165,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.shadowy_laced_handwraps",
@@ -11553,7 +12349,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.tearfall_bracers",
@@ -11829,7 +12629,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.stratholme.windshrieker_pauldrons",
@@ -11865,7 +12669,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.the_deadmines.blackened_defias_armor",
@@ -11913,7 +12721,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.the_deadmines.blackened_defias_leggings",
@@ -11925,7 +12737,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.the_deadmines.blackwater_cutlass",
@@ -11937,7 +12753,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.the_deadmines.buzz_saw",
@@ -12165,7 +12985,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.the_deadmines.smelting_pants",
@@ -12273,7 +13097,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.the_stockade.iron_knuckles",
@@ -12357,7 +13185,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.uldaman.emberscale_cape",
@@ -12417,7 +13249,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.uldaman.grimlok_s_charge",
@@ -12489,7 +13325,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.uldaman.monolithic_bow",
@@ -12501,7 +13341,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.uldaman.nordic_longshank",
@@ -12525,7 +13369,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.uldaman.oilskin_leggings",
@@ -12561,7 +13409,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.uldaman.pendulum_of_doom",
@@ -12573,7 +13425,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.uldaman.precision_arrow",
@@ -12657,7 +13513,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.uldaman.skullplate_bracers",
@@ -12681,7 +13541,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.uldaman.stoneslayer",
@@ -12705,7 +13569,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.uldaman.stoneweaver_leggings",
@@ -12729,7 +13597,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.uldaman.the_rockpounder",
@@ -13053,7 +13925,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.zul_farrak.desertwalker_cane",
@@ -13101,7 +13977,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.zul_farrak.flaming_incinerator",
@@ -13113,7 +13993,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.zul_farrak.gahz_rilla_fang",
@@ -13149,7 +14033,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.zul_farrak.jang_thraze_the_protector",
@@ -13197,7 +14085,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.zul_farrak.lifeblood_amulet",
@@ -13257,7 +14149,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.zul_farrak.the_chief_s_enforcer",
@@ -13293,7 +14189,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.zul_farrak.vice_grips",
@@ -13317,7 +14217,11 @@
     },
     "mode": "normal",
     "season": "classic_era",
-    "include_in_hardcore_quiz": true
+    "include_in_hardcore_quiz": true,
+    "qa_flags": [
+      "missing_source_name"
+    ],
+    "data_quality": "partial"
   },
   {
     "id": "drop.zul_farrak.zum_rah_s_vexing_cane",
