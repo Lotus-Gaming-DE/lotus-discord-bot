@@ -200,6 +200,13 @@ async def status(interaction: discord.Interaction):
     officer_channel_text = (
         f"<#{officer_channel_id}>" if officer_channel_id else "nicht konfiguriert"
     )
+    panel_channel_id = info.get("panel_channel_id")
+    panel_message_id = info.get("panel_message_id")
+    panel_text = (
+        f"<#{panel_channel_id}> / `{panel_message_id}`"
+        if panel_channel_id and panel_message_id
+        else "nicht konfiguriert"
+    )
     last_scan = info.get("last_scan_at") or "noch nie"
     interval_hours = int(info["poll_interval"]) // 3600
     await interaction.response.send_message(
@@ -209,6 +216,7 @@ async def status(interaction: discord.Interaction):
                 f"Realm: **{info['realm']}**",
                 f"Channel: {channel_text}",
                 f"Offi-Channel: {officer_channel_text}",
+                f"Panel: {panel_text}",
                 f"Letzter Scan: {last_scan}",
                 f"Mitglieder im Snapshot: {info['member_count']}",
                 f"Polling: alle {interval_hours} Stunden",
@@ -243,6 +251,44 @@ async def scan(interaction: discord.Interaction, post: bool = True):
     await interaction.followup.send(
         f"{mode}: {result.member_count} Mitglieder geprüft, "
         f"{len(result.milestones)} Meilensteine gefunden, {result.posted} gepostet."
+    )
+
+
+panel_group = app_commands.Group(
+    name="panel",
+    description="WoW Info-Panel",
+    parent=wow_group,
+)
+
+
+@panel_group.command(
+    name="publish",
+    description="Erstellt oder aktualisiert das WoW-Info-Panel",
+)
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+@app_commands.describe(channel="Channel fuer das WoW-Info-Panel")
+async def panel_publish(interaction: discord.Interaction, channel: discord.TextChannel):
+    logger.info(f"/wow panel publish by {interaction.user} channel={channel.id}")
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "WoW-System nicht verfuegbar.", ephemeral=True
+        )
+        return
+    try:
+        result = await cog.publish_panel(channel)
+    except (discord.Forbidden, discord.HTTPException) as exc:
+        logger.warning("[WoWCommands] Panel publish failed: %s", exc, exc_info=True)
+        await interaction.response.send_message(
+            "Panel konnte nicht gepostet werden. Bitte Bot-Rechte im Channel pruefen.",
+            ephemeral=True,
+        )
+        return
+    action = "erstellt" if result.created else "aktualisiert"
+    await interaction.response.send_message(
+        f"WoW-Panel {action}: <#{result.channel_id}> (`{result.message_id}`).",
+        ephemeral=True,
     )
 
 

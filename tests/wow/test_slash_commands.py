@@ -20,6 +20,7 @@ from lotus_bot.cogs.wow.slash_commands import (
     crafting_remove,
     crafting_search,
     crafting_set,
+    panel_publish,
     recipes_profession_autocomplete,
     roster_char_autocomplete,
     scan,
@@ -45,6 +46,8 @@ class DummyCog:
         self.recipe_selection_result = None
         self.known_recipes_result = None
         self.remove_known_recipe_result = None
+        self.panel_publish_calls = []
+        self.panel_publish_result = None
         self.data = DummyData()
 
     async def set_announcement_channel(self, channel_id):
@@ -55,6 +58,8 @@ class DummyCog:
             "guild": "Black Lotus",
             "realm": "soulseeker",
             "channel_id": self.channel_id,
+            "panel_channel_id": None,
+            "panel_message_id": None,
             "last_scan_at": "now",
             "member_count": 12,
             "poll_interval": 10800,
@@ -92,6 +97,10 @@ class DummyCog:
 
     async def remove_known_recipe(self, user_id, char, recipe, *, is_mod=False):
         return self.remove_known_recipe_result
+
+    async def publish_panel(self, channel):
+        self.panel_publish_calls.append(channel.id)
+        return self.panel_publish_result
 
     def _profession_name(self, profession_id):
         return {"alchemy": "Alchemie"}.get(profession_id, profession_id)
@@ -338,6 +347,23 @@ async def test_status_command_reports_state():
     msg, kwargs = inter.response.messages[0]
     assert "Black Lotus" in msg
     assert "<#123>" in msg
+    assert kwargs.get("ephemeral")
+
+
+async def test_panel_publish_command_publishes_panel():
+    cog = DummyCog()
+    cog.panel_publish_result = type(
+        "Result",
+        (),
+        {"channel_id": 123, "message_id": 555, "created": True},
+    )()
+    inter = DummyInteraction(cog, manage_guild=True)
+
+    await panel_publish.callback(inter, DummyChannel())
+
+    assert cog.panel_publish_calls == [123]
+    msg, kwargs = inter.response.messages[0]
+    assert "WoW-Panel erstellt" in msg
     assert kwargs.get("ephemeral")
 
 

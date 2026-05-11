@@ -158,6 +158,13 @@ class RecipeSelectionResult:
     recipes: list[dict] | None = None
 
 
+@dataclass
+class PanelPublishResult:
+    channel_id: int
+    message_id: int
+    created: bool
+
+
 class WoWCog(ManagedTaskCog):
     """Track Black Lotus WoW Classic Hardcore milestones."""
 
@@ -176,6 +183,7 @@ class WoWCog(ManagedTaskCog):
         self._track_task(self._poll_loop())
         if hasattr(self.bot, "add_view"):
             self.bot.add_view(ClaimReviewView(self))
+            self.bot.add_view(WoWPanelView(self))
 
     async def _poll_loop(self) -> None:
         while True:
@@ -199,6 +207,43 @@ class WoWCog(ManagedTaskCog):
     async def get_claim_review_channel_id(self) -> int:
         value = await self.data.get_setting("claim_review_channel_id")
         return int(value) if value else DEFAULT_CLAIM_REVIEW_CHANNEL_ID
+
+    async def publish_panel(self, channel: discord.TextChannel) -> PanelPublishResult:
+        content = self.format_panel_content()
+        view = WoWPanelView(self)
+        message_id_value = await self.data.get_setting("panel_message_id")
+        if message_id_value:
+            try:
+                message = await channel.fetch_message(int(message_id_value))
+                await message.edit(content=content, view=view)
+                await self.data.set_setting("panel_channel_id", str(channel.id))
+                return PanelPublishResult(channel.id, message.id, created=False)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                logger.info("[WoWCog] Existing WoW panel message not editable.")
+            except AttributeError:
+                logger.info("[WoWCog] Channel does not support fetching panel message.")
+
+        message = await channel.send(content, view=view)
+        await self.data.set_setting("panel_channel_id", str(channel.id))
+        await self.data.set_setting("panel_message_id", str(message.id))
+        return PanelPublishResult(channel.id, message.id, created=True)
+
+    def format_panel_content(self) -> str:
+        return "\n".join(
+            [
+                "**Black Lotus WoW-Hub**",
+                "",
+                (
+                    "Hier kannst du deine WoW-Charaktere verbinden, Berufe pflegen "
+                    "und Crafter in der Gilde finden."
+                ),
+                "",
+                "**Char claimen** verbindet einen Black-Lotus-Char mit deinem Discord-User.",
+                "**Berufe pflegen** speichert Beruf, Skill und optional Spezialisierung.",
+                "**Rezepte pflegen** speichert gelernte Spezialrezepte.",
+                "**Crafter suchen** zeigt, wer ein Item herstellen kann.",
+            ]
+        )
 
     async def fetch_roster(self) -> list[RosterMember]:
         raw_members = await fetch_guild_roster(
@@ -993,11 +1038,15 @@ class WoWCog(ManagedTaskCog):
 
     async def status(self) -> dict[str, object]:
         channel_id = await self.get_announcement_channel_id()
+        panel_channel_id = await self.data.get_setting("panel_channel_id")
+        panel_message_id = await self.data.get_setting("panel_message_id")
         return {
             "guild": self.guild_name,
             "realm": self.realm_slug,
             "channel_id": channel_id,
             "officer_channel_id": await self.get_claim_review_channel_id(),
+            "panel_channel_id": int(panel_channel_id) if panel_channel_id else None,
+            "panel_message_id": int(panel_message_id) if panel_message_id else None,
             "last_scan_at": await self.data.last_scan_at(),
             "member_count": await self.data.member_count(),
             "poll_interval": self.poll_interval,
@@ -1253,6 +1302,516 @@ def _recipe_selection_content(
         f"Offene Spezialrezepte: {len(recipes)} | Seite {page + 1} | "
         f"ausgewählt: {selected_count}"
     )
+
+
+class PanelCharacterSearchModal(discord.ui.Modal):
+    def __init__(self, cog: WoWCog) -> None:
+        super().__init__(title="Charakter suchen")
+        self.cog = cog
+        self.query = discord.ui.TextInput(
+            label="Charaktername",
+            placeholder="z.B. Voidok",
+            min_length=2,
+            max_length=32,
+        )
+        self.add_item(self.query)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        query = str(self.query.value).strip()
+        snapshot = await self.cog.data.get_snapshot()
+        matches = [
+            member
+            for member in sorted(
+                snapshot.values(), key=lambda item: item.name.casefold()
+            )
+            if query.casefold() in member.name.casefold()
+        ][:25]
+        if not matches:
+            await interaction.response.send_message(
+                f"Kein Black-Lotus-Charakter zu **{query}** gefunden.",
+                ephemeral=True,
+            )
+            return
+        view = PanelRosterCharacterSelectView(self.cog, interaction.user.id, matches)
+        await interaction.response.send_message(
+            "Bitte wähle deinen Charakter aus.",
+            view=view,
+            ephemeral=True,
+        )
+
+
+class PanelRosterCharacterSelect(discord.ui.Select):
+    def __init__(self, parent: "PanelRosterCharacterSelectView") -> None:
+        self.parent_view = parent
+        super().__init__(
+            placeholder="Charakter auswählen",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(
+                    label=member.name[:100],
+                    value=member.name,
+                    description=(
+                        f"Level {member.level} - "
+                        f"{parent.cog._display_character(member)}"
+                    )[:100],
+                )
+                for member in parent.members
+            ],
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        result = await self.parent_view.cog.claim_character(
+            interaction.user.id, self.values[0]
+        )
+        await interaction.response.edit_message(
+            content=_format_panel_claim_result(result, self.values[0]),
+            view=None,
+        )
+
+
+class PanelRosterCharacterSelectView(discord.ui.View):
+    def __init__(
+        self, cog: WoWCog, owner_user_id: int, members: list[RosterMember]
+    ) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.owner_user_id = owner_user_id
+        self.members = members
+        self.add_item(PanelRosterCharacterSelect(self))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.owner_user_id:
+            return True
+        await interaction.response.send_message(
+            "Diese Auswahl gehört nicht dir.", ephemeral=True
+        )
+        return False
+
+
+class PanelOwnedCharacterSelect(discord.ui.Select):
+    def __init__(
+        self, parent: "PanelOwnedCharacterSelectView", claims: list[CharacterClaim]
+    ) -> None:
+        self.parent_view = parent
+        super().__init__(
+            placeholder="Charakter auswählen",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(
+                    label=claim.character_name[:100],
+                    value=claim.character_name,
+                    description=(
+                        "bestätigt" if claim.status == "verified" else "ungeprüft"
+                    ),
+                )
+                for claim in claims[:25]
+            ],
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        claim = await self.parent_view.cog.data.get_claim_by_name(self.values[0])
+        if not claim or claim.discord_user_id != interaction.user.id:
+            await interaction.response.edit_message(
+                content="Dieser Charakter ist nicht mehr verfügbar.",
+                view=None,
+            )
+            return
+        if self.parent_view.mode == "profession":
+            view = PanelProfessionSelectView(
+                self.parent_view.cog, interaction.user.id, claim
+            )
+            await interaction.response.edit_message(
+                content=(
+                    f"Welchen Beruf möchtest du für "
+                    f"**{claim.character_name}** pflegen?"
+                ),
+                view=view,
+            )
+            return
+        profiles = await self.parent_view.cog.data.professions_for_character(
+            claim.character_key
+        )
+        if not profiles:
+            await interaction.response.edit_message(
+                content=(
+                    f"Für **{claim.character_name}** sind noch keine Berufe gepflegt. "
+                    "Nutze zuerst **Berufe pflegen**."
+                ),
+                view=None,
+            )
+            return
+        view = PanelRecipeProfessionSelectView(
+            self.parent_view.cog, interaction.user.id, claim, profiles
+        )
+        await interaction.response.edit_message(
+            content="Für welchen Beruf möchtest du Spezialrezepte pflegen?",
+            view=view,
+        )
+
+
+class PanelOwnedCharacterSelectView(discord.ui.View):
+    def __init__(
+        self,
+        cog: WoWCog,
+        owner_user_id: int,
+        claims: list[CharacterClaim],
+        mode: str,
+    ) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.owner_user_id = owner_user_id
+        self.mode = mode
+        self.add_item(PanelOwnedCharacterSelect(self, claims))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.owner_user_id:
+            return True
+        await interaction.response.send_message(
+            "Diese Auswahl gehört nicht dir.", ephemeral=True
+        )
+        return False
+
+
+class PanelProfessionSelect(discord.ui.Select):
+    def __init__(self, parent: "PanelProfessionSelectView") -> None:
+        self.parent_view = parent
+        super().__init__(
+            placeholder="Beruf auswählen",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(label=name[:100], value=value)
+                for name, value in parent.cog.profession_choices("")
+            ],
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        await interaction.response.send_modal(
+            PanelProfessionEditModal(
+                self.parent_view.cog,
+                self.parent_view.claim,
+                self.values[0],
+            )
+        )
+
+
+class PanelProfessionSelectView(discord.ui.View):
+    def __init__(self, cog: WoWCog, owner_user_id: int, claim: CharacterClaim) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.owner_user_id = owner_user_id
+        self.claim = claim
+        self.add_item(PanelProfessionSelect(self))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.owner_user_id:
+            return True
+        await interaction.response.send_message(
+            "Diese Auswahl gehört nicht dir.", ephemeral=True
+        )
+        return False
+
+
+class PanelProfessionEditModal(discord.ui.Modal):
+    def __init__(self, cog: WoWCog, claim: CharacterClaim, profession_id: str) -> None:
+        super().__init__(title="Beruf pflegen")
+        self.cog = cog
+        self.claim = claim
+        self.profession_id = profession_id
+        self.skill = discord.ui.TextInput(
+            label="Skill",
+            placeholder="1-300",
+            min_length=1,
+            max_length=3,
+        )
+        self.specialization = discord.ui.TextInput(
+            label="Spezialisierung",
+            placeholder="optional, z.B. Tränke",
+            required=False,
+            max_length=64,
+        )
+        self.add_item(self.skill)
+        self.add_item(self.specialization)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        try:
+            skill = int(str(self.skill.value).strip())
+        except ValueError:
+            await interaction.response.send_message(
+                "Skill muss eine Zahl zwischen 1 und 300 sein.",
+                ephemeral=True,
+            )
+            return
+        result = await self.cog.set_crafting_profile(
+            interaction.user.id,
+            self.claim.character_name,
+            self.profession_id,
+            skill,
+            str(self.specialization.value).strip() or None,
+        )
+        await interaction.response.send_message(
+            _format_panel_profession_result(self.cog, result),
+            ephemeral=True,
+        )
+
+
+class PanelRecipeProfessionSelect(discord.ui.Select):
+    def __init__(self, parent: "PanelRecipeProfessionSelectView") -> None:
+        self.parent_view = parent
+        super().__init__(
+            placeholder="Beruf auswählen",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(
+                    label=parent.cog._profession_name(profile.profession_id)[:100],
+                    value=profile.profession_id,
+                    description=f"Skill {profile.skill_level}",
+                )
+                for profile in parent.profiles[:25]
+            ],
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        await interaction.response.send_modal(
+            PanelRecipeSearchModal(
+                self.parent_view.cog,
+                self.parent_view.claim,
+                self.values[0],
+            )
+        )
+
+
+class PanelRecipeProfessionSelectView(discord.ui.View):
+    def __init__(
+        self,
+        cog: WoWCog,
+        owner_user_id: int,
+        claim: CharacterClaim,
+        profiles: list[CharacterProfession],
+    ) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.owner_user_id = owner_user_id
+        self.claim = claim
+        self.profiles = profiles
+        self.add_item(PanelRecipeProfessionSelect(self))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.owner_user_id:
+            return True
+        await interaction.response.send_message(
+            "Diese Auswahl gehört nicht dir.", ephemeral=True
+        )
+        return False
+
+
+class PanelRecipeSearchModal(discord.ui.Modal):
+    def __init__(self, cog: WoWCog, claim: CharacterClaim, profession_id: str) -> None:
+        super().__init__(title="Spezialrezepte suchen")
+        self.cog = cog
+        self.claim = claim
+        self.profession_id = profession_id
+        self.search = discord.ui.TextInput(
+            label="Suchbegriff",
+            placeholder="optional, z.B. Wut",
+            required=False,
+            max_length=80,
+        )
+        self.add_item(self.search)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        result = await self.cog.prepare_recipe_selection(
+            interaction.user.id,
+            self.claim.character_name,
+            self.profession_id,
+            str(self.search.value).strip() or None,
+        )
+        if result.status != "ok" or not result.recipes:
+            await interaction.response.send_message(
+                f"Für **{self.claim.character_name}** gibt es aktuell keine passenden offenen Spezialrezepte.",
+                ephemeral=True,
+            )
+            return
+        view = CraftingRecipeSelectionView(
+            self.cog,
+            interaction.user.id,
+            result.claim,
+            result.profile,
+            result.recipes,
+        )
+        await interaction.response.send_message(
+            view.content(),
+            view=view,
+            ephemeral=True,
+        )
+
+
+class PanelCraftingSearchModal(discord.ui.Modal):
+    def __init__(self, cog: WoWCog) -> None:
+        super().__init__(title="Crafter suchen")
+        self.cog = cog
+        self.item = discord.ui.TextInput(
+            label="Item",
+            placeholder="z.B. Wuttrank",
+            min_length=2,
+            max_length=80,
+        )
+        self.add_item(self.item)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        result = await self.cog.search_crafting(str(self.item.value).strip())
+        await interaction.response.send_message(
+            self.cog.format_crafting_search_result(result),
+            ephemeral=True,
+        )
+
+
+class WoWPanelView(discord.ui.View):
+    def __init__(self, cog: WoWCog) -> None:
+        super().__init__(timeout=None)
+        self.cog = cog
+
+    async def _send_claim_select(
+        self, interaction: discord.Interaction, mode: str
+    ) -> None:
+        claims = await self.cog.data.claims_for_user(interaction.user.id)
+        if not claims:
+            await interaction.response.send_message(
+                "Du hast noch keinen Charakter verbunden. Nutze zuerst **Char claimen**.",
+                ephemeral=True,
+            )
+            return
+        view = PanelOwnedCharacterSelectView(
+            self.cog, interaction.user.id, claims, mode
+        )
+        await interaction.response.send_message(
+            "Bitte wähle deinen Charakter aus.",
+            view=view,
+            ephemeral=True,
+        )
+
+    @discord.ui.button(
+        label="Char claimen",
+        style=discord.ButtonStyle.primary,
+        custom_id="wow_panel:claim",
+    )
+    async def claim(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        await interaction.response.send_modal(PanelCharacterSearchModal(self.cog))
+
+    @discord.ui.button(
+        label="Meine Chars",
+        style=discord.ButtonStyle.secondary,
+        custom_id="wow_panel:my_chars",
+    )
+    async def my_chars(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        claims = await self.cog.data.claims_for_user(interaction.user.id)
+        if not claims:
+            await interaction.response.send_message(
+                "Du hast noch keinen Charakter verbunden.", ephemeral=True
+            )
+            return
+        lines = [
+            f"- **{claim.character_name}** ({'bestätigt' if claim.status == 'verified' else 'ungeprüft'})"
+            for claim in claims
+        ]
+        await interaction.response.send_message("\n".join(lines), ephemeral=True)
+
+    @discord.ui.button(
+        label="Berufe pflegen",
+        style=discord.ButtonStyle.secondary,
+        custom_id="wow_panel:professions",
+    )
+    async def professions(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        await self._send_claim_select(interaction, "profession")
+
+    @discord.ui.button(
+        label="Rezepte pflegen",
+        style=discord.ButtonStyle.secondary,
+        custom_id="wow_panel:recipes",
+    )
+    async def recipes(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        await self._send_claim_select(interaction, "recipes")
+
+    @discord.ui.button(
+        label="Crafter suchen",
+        style=discord.ButtonStyle.secondary,
+        custom_id="wow_panel:crafting_search",
+    )
+    async def crafting_search(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        await interaction.response.send_modal(PanelCraftingSearchModal(self.cog))
+
+    @discord.ui.button(
+        label="Hilfe",
+        style=discord.ButtonStyle.secondary,
+        custom_id="wow_panel:help",
+    )
+    async def help(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        await interaction.response.send_message(
+            "\n".join(
+                [
+                    "**Kurz erklärt**",
+                    "1. Verbinde zuerst deinen Char über **Char claimen**.",
+                    "2. Pflege danach Berufe und Skill über **Berufe pflegen**.",
+                    "3. Spezialrezepte ergänzt du über **Rezepte pflegen**.",
+                    "4. Über **Crafter suchen** findest du passende Gildenmitglieder.",
+                ]
+            ),
+            ephemeral=True,
+        )
+
+
+def _format_panel_claim_result(result: ClaimResult, requested_name: str) -> str:
+    if result.reason == "not_found":
+        return (
+            f"**{requested_name}** wurde im aktuellen Black-Lotus-Roster "
+            "nicht gefunden."
+        )
+    if result.claim is None:
+        return "Der Charakter konnte nicht verbunden werden."
+    if result.reason == "taken":
+        return (
+            f"**{result.claim.character_name}** ist bereits mit einem "
+            "Discord-User verbunden."
+        )
+    if result.reason == "already_own":
+        status = "bestätigt" if result.claim.status == "verified" else "ungeprüft"
+        return (
+            f"Du hast **{result.claim.character_name}** bereits verbunden ({status})."
+        )
+    warning = (
+        "" if result.review_posted else "\nOffi-Review konnte nicht gepostet werden."
+    )
+    return (
+        f"Gespeichert: **{result.claim.character_name}** ist jetzt mit dir "
+        f"verbunden.{warning}"
+    )
+
+
+def _format_panel_profession_result(cog: WoWCog, result: CraftingProfileResult) -> str:
+    if result.reason == "unknown_profession":
+        return "Dieser Beruf ist unbekannt."
+    if result.reason == "not_claimed":
+        return "Dieser Charakter ist nicht verbunden."
+    if result.reason == "forbidden":
+        return "Du darfst diesen Charakter nicht bearbeiten."
+    if result.reason == "invalid_skill":
+        return "Skill muss zwischen 1 und 300 liegen."
+    return f"Gespeichert: {cog.format_profession(result.profession)}"
 
 
 class ClaimReviewView(discord.ui.View):

@@ -29,6 +29,31 @@ class DummyChannel:
         return type("Message", (), {"id": self.next_message_id})()
 
 
+class DummyPanelMessage:
+    def __init__(self, message_id):
+        self.id = message_id
+        self.edits = []
+
+    async def edit(self, **kwargs):
+        self.edits.append(kwargs)
+
+
+class DummyPanelChannel(DummyChannel):
+    id = 1463577361562992807
+
+    def __init__(self, existing_message=None):
+        super().__init__()
+        self.existing_message = existing_message
+        self.fetches = []
+
+    async def fetch_message(self, message_id):
+        self.fetches.append(message_id)
+        if self.existing_message is None:
+            response = type("Response", (), {"status": 404, "reason": "Not Found"})()
+            raise discord.NotFound(response, {"message": "Unknown Message"})
+        return self.existing_message
+
+
 class ForbiddenChannel:
     async def send(self, msg):
         response = type("Response", (), {"status": 403, "reason": "Forbidden"})()
@@ -75,12 +100,16 @@ class DummyReviewResponse:
     def __init__(self):
         self.messages = []
         self.edits = []
+        self.modals = []
 
     async def send_message(self, msg, **kwargs):
         self.messages.append((msg, kwargs))
 
     async def edit_message(self, **kwargs):
         self.edits.append(kwargs)
+
+    async def send_modal(self, modal):
+        self.modals.append(modal)
 
 
 class DummyReviewInteraction:
@@ -180,6 +209,234 @@ async def create_cog(tmp_path, patch_logged_task, channel=None):
     cog.data = WoWData(str(tmp_path / "wow.db"))
     CREATED_COGS.append(cog)
     return cog
+
+
+@pytest.mark.asyncio
+async def test_panel_publish_creates_and_stores_message(tmp_path, patch_logged_task):
+    channel = DummyPanelChannel()
+    cog = await create_cog(tmp_path, patch_logged_task)
+
+    result = await cog.publish_panel(channel)
+
+    assert result.created is True
+    assert result.channel_id == channel.id
+    assert result.message_id == 555
+    assert "Black Lotus WoW-Hub" in channel.sent[0][0]
+    assert channel.sent[0][1]["view"] is not None
+    assert await cog.data.get_setting("panel_channel_id") == str(channel.id)
+    assert await cog.data.get_setting("panel_message_id") == "555"
+
+
+@pytest.mark.asyncio
+async def test_panel_publish_updates_existing_message(tmp_path, patch_logged_task):
+    existing = DummyPanelMessage(777)
+    channel = DummyPanelChannel(existing)
+    cog = await create_cog(tmp_path, patch_logged_task)
+    await cog.data.set_setting("panel_message_id", "777")
+
+    result = await cog.publish_panel(channel)
+
+    assert result.created is False
+    assert channel.fetches == [777]
+    assert channel.sent == []
+    assert "Black Lotus WoW-Hub" in existing.edits[0]["content"]
+    assert existing.edits[0]["view"] is not None
+
+
+@pytest.mark.asyncio
+async def test_panel_claim_button_opens_search_modal(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    view = wow_cog_mod.WoWPanelView(cog)
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await view.children[0].callback(interaction)
+
+    assert isinstance(
+        interaction.response.modals[0], wow_cog_mod.PanelCharacterSearchModal
+    )
+
+
+@pytest.mark.asyncio
+async def test_panel_professions_requires_claim(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    view = wow_cog_mod.WoWPanelView(cog)
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await view.children[2].callback(interaction)
+
+    assert "keinen Charakter" in interaction.response.messages[0][0]
+    assert interaction.response.messages[0][1]["ephemeral"] is True
+
+
+@pytest.mark.asyncio
+async def test_panel_my_chars_lists_claims(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    await cog.data.replace_snapshot([member(name="Voidok")])
+    await cog.data.create_claim(member(name="Voidok"), 42)
+    view = wow_cog_mod.WoWPanelView(cog)
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await view.children[1].callback(interaction)
+
+    assert "Voidok" in interaction.response.messages[0][0]
+    assert interaction.response.messages[0][1]["ephemeral"] is True
+
+
+@pytest.mark.asyncio
+async def test_panel_character_search_limits_matches(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    await cog.data.replace_snapshot(
+        [member(key=f"id:{idx}", name=f"Vochar{idx}") for idx in range(30)]
+    )
+    modal = wow_cog_mod.PanelCharacterSearchModal(cog)
+    modal.query._value = "Vo"
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await modal.on_submit(interaction)
+
+    msg, kwargs = interaction.response.messages[0]
+    assert "aus" in msg
+    assert kwargs["ephemeral"] is True
+    assert len(kwargs["view"].children[0].options) == 25
+
+
+@pytest.mark.asyncio
+async def test_panel_character_search_reports_no_match(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    modal = wow_cog_mod.PanelCharacterSearchModal(cog)
+    modal.query._value = "Voidok"
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await modal.on_submit(interaction)
+
+    assert "Kein Black-Lotus-Charakter" in interaction.response.messages[0][0]
+
+
+@pytest.mark.asyncio
+async def test_panel_roster_select_claims_character(tmp_path, patch_logged_task):
+    channel = DummyChannel()
+    cog = await create_cog(tmp_path, patch_logged_task, channel=channel)
+    await cog.data.replace_snapshot([member(name="Voidok")])
+    view = wow_cog_mod.PanelRosterCharacterSelectView(cog, 42, [member(name="Voidok")])
+    select = view.children[0]
+    select._values = ["Voidok"]
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await select.callback(interaction)
+
+    assert "verbunden" in interaction.response.edits[0]["content"]
+    assert await cog.data.get_claim_by_name("Voidok")
+
+
+@pytest.mark.asyncio
+async def test_panel_profession_flow_saves_profile(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+
+    char_view = wow_cog_mod.PanelOwnedCharacterSelectView(
+        cog, 42, [claim], "profession"
+    )
+    char_select = char_view.children[0]
+    char_select._values = ["Voidok"]
+    char_interaction = DummyReviewInteraction(DummyUser(42))
+    await char_select.callback(char_interaction)
+    assert isinstance(
+        char_interaction.response.edits[0]["view"],
+        wow_cog_mod.PanelProfessionSelectView,
+    )
+
+    profession_view = char_interaction.response.edits[0]["view"]
+    profession_select = profession_view.children[0]
+    profession_select._values = ["alchemy"]
+    modal_interaction = DummyReviewInteraction(DummyUser(42))
+    await profession_select.callback(modal_interaction)
+    modal = modal_interaction.response.modals[0]
+    modal.skill._value = "250"
+    modal.specialization._value = "Elixiere"
+    save_interaction = DummyReviewInteraction(DummyUser(42))
+    await modal.on_submit(save_interaction)
+
+    assert "Gespeichert" in save_interaction.response.messages[0][0]
+    profiles = await cog.data.professions_for_user(42)
+    assert profiles[0].profession_id == "alchemy"
+
+
+@pytest.mark.asyncio
+async def test_panel_profession_modal_rejects_invalid_skill(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    modal = wow_cog_mod.PanelProfessionEditModal(cog, claim, "alchemy")
+    modal.skill._value = "abc"
+    modal.specialization._value = ""
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await modal.on_submit(interaction)
+
+    assert "Skill muss" in interaction.response.messages[0][0]
+
+
+@pytest.mark.asyncio
+async def test_panel_recipes_flow_opens_recipe_selection(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    await cog.data.set_character_profession(claim, "alchemy", 75)
+
+    char_view = wow_cog_mod.PanelOwnedCharacterSelectView(cog, 42, [claim], "recipes")
+    char_select = char_view.children[0]
+    char_select._values = ["Voidok"]
+    char_interaction = DummyReviewInteraction(DummyUser(42))
+    await char_select.callback(char_interaction)
+    recipe_profession_view = char_interaction.response.edits[0]["view"]
+    assert isinstance(
+        recipe_profession_view, wow_cog_mod.PanelRecipeProfessionSelectView
+    )
+
+    profession_select = recipe_profession_view.children[0]
+    profession_select._values = ["alchemy"]
+    modal_interaction = DummyReviewInteraction(DummyUser(42))
+    await profession_select.callback(modal_interaction)
+    modal = modal_interaction.response.modals[0]
+    modal.search._value = "swift"
+    recipe_interaction = DummyReviewInteraction(DummyUser(42))
+    await modal.on_submit(recipe_interaction)
+
+    assert "Offene Spezialrezepte" in recipe_interaction.response.messages[0][0]
+    assert isinstance(
+        recipe_interaction.response.messages[0][1]["view"],
+        wow_cog_mod.CraftingRecipeSelectionView,
+    )
+
+
+@pytest.mark.asyncio
+async def test_panel_recipes_requires_profession(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    view = wow_cog_mod.PanelOwnedCharacterSelectView(cog, 42, [claim], "recipes")
+    select = view.children[0]
+    select._values = ["Voidok"]
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await select.callback(interaction)
+
+    assert "noch keine Berufe" in interaction.response.edits[0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_panel_crafting_search_modal_uses_search(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    modal = wow_cog_mod.PanelCraftingSearchModal(cog)
+    modal.item._value = "Swiftnesstrank"
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await modal.on_submit(interaction)
+
+    assert "Spezialrezept" in interaction.response.messages[0][0]
 
 
 @pytest.mark.asyncio
