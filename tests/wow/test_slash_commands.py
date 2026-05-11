@@ -105,13 +105,25 @@ class DummyCog:
     def _profession_name(self, profession_id):
         return {"alchemy": "Alchemie"}.get(profession_id, profession_id)
 
+    def _get_static_record(self, table, record_id):
+        return {"id": record_id, "type": "primary"} if table == "professions" else {}
+
+    def _is_crafting_profession(self, profession):
+        return profession.get("id") not in {"first-aid", "fishing"}
+
     def _recipe_by_spell_id(self, spell_id):
         return {"spell_id": spell_id, "id": "recipe.test"}
 
-    def _recipe_name(self, recipe):
+    def _recipe_name(self, recipe, language="de"):
         return {"spell.2335": "Swiftnesstrank"}.get(
             recipe.get("spell_id"), "Testrezept"
         )
+
+    def _recipe_secondary_name(self, recipe, language="de"):
+        return ""
+
+    def normalize_recipe_language(self, language):
+        return language if language in {"de", "en"} else "de"
 
     def _spell_for_recipe(self, recipe):
         return {"name": {"de": "Swiftnesstrank herstellen"}}

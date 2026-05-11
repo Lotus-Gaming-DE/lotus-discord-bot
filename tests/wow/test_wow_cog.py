@@ -144,10 +144,35 @@ def member(
 def crafting_data():
     return {
         "professions": [
-            {"id": "alchemy", "name": {"de": "Alchemie", "en": "Alchemy"}},
+            {
+                "id": "alchemy",
+                "type": "primary",
+                "name": {"de": "Alchemie", "en": "Alchemy"},
+            },
             {
                 "id": "blacksmithing",
+                "type": "primary",
                 "name": {"de": "Schmiedekunst", "en": "Blacksmithing"},
+            },
+            {
+                "id": "engineering",
+                "type": "primary",
+                "name": {"de": "Ingenieurskunst", "en": "Engineering"},
+            },
+            {
+                "id": "cooking",
+                "type": "secondary",
+                "name": {"de": "Kochkunst", "en": "Cooking"},
+            },
+            {
+                "id": "fishing",
+                "type": "secondary",
+                "name": {"de": "Angeln", "en": "Fishing"},
+            },
+            {
+                "id": "first-aid",
+                "type": "secondary",
+                "name": {"de": "Erste Hilfe", "en": "First Aid"},
             },
         ],
         "items": [
@@ -345,6 +370,8 @@ async def test_panel_profession_flow_saves_profile(tmp_path, patch_logged_task):
         char_interaction.response.edits[0]["view"],
         wow_cog_mod.PanelProfessionSelectView,
     )
+    assert "Hauptberuf 1: frei" in char_interaction.response.edits[0]["content"]
+    assert "Kochen: frei" in char_interaction.response.edits[0]["content"]
 
     profession_view = char_interaction.response.edits[0]["view"]
     profession_select = profession_view.children[0]
@@ -398,16 +425,20 @@ async def test_panel_recipes_flow_opens_recipe_selection(tmp_path, patch_logged_
 
     profession_select = recipe_profession_view.children[0]
     profession_select._values = ["alchemy"]
-    modal_interaction = DummyReviewInteraction(DummyUser(42))
-    await profession_select.callback(modal_interaction)
-    modal = modal_interaction.response.modals[0]
-    modal.search._value = "swift"
-    recipe_interaction = DummyReviewInteraction(DummyUser(42))
-    await modal.on_submit(recipe_interaction)
+    language_interaction = DummyReviewInteraction(DummyUser(42))
+    await profession_select.callback(language_interaction)
+    language_view = language_interaction.response.edits[0]["view"]
+    assert isinstance(language_view, wow_cog_mod.PanelRecipeLanguageSelectView)
 
-    assert "Offene Spezialrezepte" in recipe_interaction.response.messages[0][0]
+    language_select = language_view.children[0]
+    language_select._values = ["en"]
+    recipe_interaction = DummyReviewInteraction(DummyUser(42))
+    await language_select.callback(recipe_interaction)
+
+    assert "Offene Spezialrezepte" in recipe_interaction.response.edits[0]["content"]
+    assert "Sprache: English" in recipe_interaction.response.edits[0]["content"]
     assert isinstance(
-        recipe_interaction.response.messages[0][1]["view"],
+        recipe_interaction.response.edits[0]["view"],
         wow_cog_mod.CraftingRecipeSelectionView,
     )
 
@@ -779,6 +810,46 @@ async def test_crafting_set_profile_requires_own_claim_or_mod(
     )
     assert mod.reason == "saved"
     assert mod.profession.skill_level == 260
+
+
+@pytest.mark.asyncio
+async def test_crafting_set_limits_primary_professions_but_allows_cooking(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    await cog.data.set_character_profession(claim, "alchemy", 250)
+    await cog.data.set_character_profession(claim, "blacksmithing", 200)
+
+    third_primary = await cog.set_crafting_profile(
+        42, "Voidok", "engineering", 100, None
+    )
+    cooking = await cog.set_crafting_profile(42, "Voidok", "cooking", 100, None)
+
+    assert third_primary.reason == "primary_limit"
+    assert cooking.reason == "saved"
+    assert cooking.profession.profession_id == "cooking"
+
+
+@pytest.mark.asyncio
+async def test_profession_choices_exclude_unwanted_secondaries_and_slot_limit(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    await cog.data.set_character_profession(claim, "alchemy", 250)
+    await cog.data.set_character_profession(claim, "blacksmithing", 200)
+    profiles = await cog.data.professions_for_character(claim.character_key)
+
+    all_choices = {value for _, value in cog.profession_choices("")}
+    char_choices = {value for _, value, _ in cog.profession_choices_for_claim(profiles)}
+
+    assert "first-aid" not in all_choices
+    assert "fishing" not in all_choices
+    assert "engineering" not in char_choices
+    assert {"alchemy", "blacksmithing", "cooking"} <= char_choices
 
 
 @pytest.mark.asyncio

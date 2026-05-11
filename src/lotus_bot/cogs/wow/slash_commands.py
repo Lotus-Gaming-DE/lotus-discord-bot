@@ -59,6 +59,19 @@ async def profession_autocomplete(
     ]
 
 
+async def recipe_language_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[app_commands.Choice[str]]:
+    choices = [
+        app_commands.Choice(name="Deutsch", value="de"),
+        app_commands.Choice(name="English", value="en"),
+    ]
+    needle = current.casefold()
+    return [
+        choice for choice in choices if not needle or needle in choice.name.casefold()
+    ]
+
+
 def _match_choice_text(name: str, current: str) -> bool:
     return not current or current.casefold() in name.casefold()
 
@@ -131,6 +144,9 @@ async def recipes_profession_autocomplete(
     profiles = await cog.data.professions_for_character(claim.character_key)
     choices = []
     for profile in profiles:
+        profession = cog._get_static_record("professions", profile.profession_id)
+        if not cog._is_crafting_profession(profession):
+            continue
         name = cog._profession_name(profile.profession_id)
         if _match_choice_text(name, current) or _match_choice_text(
             profile.profession_id, current
@@ -512,6 +528,11 @@ async def crafting_set(
             "Skill muss zwischen 1 und 300 liegen.", ephemeral=True
         )
         return
+    if result.reason == "primary_limit":
+        await interaction.response.send_message(
+            f"**{char}** hat bereits zwei Hauptberufe gepflegt.", ephemeral=True
+        )
+        return
 
     await interaction.response.send_message(
         f"Gespeichert: {cog.format_profession(result.profession)}",
@@ -638,15 +659,19 @@ async def crafting_list(
     char="Name des geclaimten Charakters",
     profession="Optionaler Beruf-Filter",
     search="Optionaler Suchbegriff fuer Rezept oder Item",
+    language="Anzeigesprache der Rezeptliste",
 )
 @app_commands.autocomplete(
-    char=claim_char_autocomplete, profession=recipes_profession_autocomplete
+    char=claim_char_autocomplete,
+    profession=recipes_profession_autocomplete,
+    language=recipe_language_autocomplete,
 )
 async def crafting_recipes(
     interaction: discord.Interaction,
     char: str,
     profession: str | None = None,
     search: str | None = None,
+    language: str = "de",
 ):
     cog: WoWCog | None = interaction.client.get_cog("WoWCog")
     if cog is None:
@@ -689,7 +714,12 @@ async def crafting_recipes(
         return
     if result.status == "choose_profession":
         view = CraftingProfessionSelectView(
-            cog, interaction.user.id, result.claim, result.profiles, search
+            cog,
+            interaction.user.id,
+            result.claim,
+            result.profiles,
+            search,
+            language,
         )
         await interaction.response.send_message(
             f"Bitte Beruf fuer **{result.claim.character_name}** auswaehlen.",
@@ -713,6 +743,7 @@ async def crafting_recipes(
         result.claim,
         result.profile,
         recipes,
+        language=language,
     )
     await interaction.response.send_message(
         view.content(),

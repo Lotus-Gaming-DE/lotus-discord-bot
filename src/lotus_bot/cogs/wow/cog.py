@@ -33,6 +33,10 @@ DEFAULT_GUILD_NAME = "Black Lotus"
 DEFAULT_POLL_INTERVAL = 3 * 60 * 60
 DEFAULT_CLAIM_REVIEW_CHANNEL_ID = 1184115540822855772
 MILESTONE_LEVELS = {30, 40, 50, 60}
+MAX_PRIMARY_PROFESSIONS = 2
+SECONDARY_CRAFTING_PROFESSIONS = {"cooking"}
+EXCLUDED_CRAFTING_PROFESSIONS = {"first-aid", "fishing"}
+RECIPE_LANGUAGE_LABELS = {"de": "Deutsch", "en": "English"}
 
 CLASS_NAMES_DE = {
     1: "Krieger",
@@ -601,15 +605,39 @@ class WoWCog(ManagedTaskCog):
             return value.get(language) or value.get("de") or value.get("en") or ""
         return ""
 
-    def _profession_name(self, profession_id: str) -> str:
+    def _profession_name(self, profession_id: str, language: str = "de") -> str:
         profession = self._get_static_record("professions", profession_id)
-        return self._localized_text(profession.get("name")) or profession_id
+        return self._localized_text(profession.get("name"), language) or profession_id
+
+    def normalize_recipe_language(self, language: str | None) -> str:
+        if language in RECIPE_LANGUAGE_LABELS:
+            return str(language)
+        return "de"
+
+    def _profession_type(self, profession_id: str) -> str:
+        profession = self._get_static_record("professions", profession_id)
+        return str(profession.get("type") or "primary")
+
+    def _is_primary_profession(self, profession_id: str) -> bool:
+        return self._profession_type(profession_id) == "primary"
+
+    def _is_crafting_profession(self, profession: dict) -> bool:
+        profession_id = profession.get("id")
+        if not profession_id:
+            return False
+        if profession_id in EXCLUDED_CRAFTING_PROFESSIONS:
+            return False
+        profession_type = profession.get("type") or "primary"
+        return (
+            profession_type == "primary"
+            or profession_id in SECONDARY_CRAFTING_PROFESSIONS
+        )
 
     def _crafting_professions(self) -> list[dict]:
         return [
             profession
             for profession in self._wow_records("professions")
-            if profession.get("id") != "first-aid"
+            if self._is_crafting_profession(profession)
         ]
 
     def _get_static_record(self, table: str, record_id: str | None) -> dict:
@@ -626,14 +654,22 @@ class WoWCog(ManagedTaskCog):
     def _item_for_recipe(self, recipe: dict) -> dict:
         return self._get_static_record("items", recipe.get("creates_item_id"))
 
-    def _recipe_name(self, recipe: dict) -> str:
+    def _recipe_name(self, recipe: dict, language: str = "de") -> str:
+        language = self.normalize_recipe_language(language)
         spell = self._spell_for_recipe(recipe)
         item = self._item_for_recipe(recipe)
         return (
-            self._localized_text(item.get("name"))
-            or self._localized_text(spell.get("name"))
+            self._localized_text(item.get("name"), language)
+            or self._localized_text(spell.get("name"), language)
             or str(recipe.get("id") or recipe.get("spell_id") or "")
         )
+
+    def _recipe_secondary_name(self, recipe: dict, language: str = "de") -> str:
+        other_language = (
+            "en" if self.normalize_recipe_language(language) == "de" else "de"
+        )
+        name = self._recipe_name(recipe, other_language)
+        return name if name != self._recipe_name(recipe, language) else ""
 
     def _recipe_search_text(self, recipe: dict) -> str:
         spell = self._spell_for_recipe(recipe)
@@ -673,6 +709,87 @@ class WoWCog(ManagedTaskCog):
                 choices.append((name, profession_id))
         return choices[:25]
 
+    def profession_choices_for_claim(
+        self, profiles: list[CharacterProfession], current: str = ""
+    ) -> list[tuple[str, str, str]]:
+        needle = _norm(current)
+        current_ids = {profile.profession_id for profile in profiles}
+        primary_count = sum(
+            1
+            for profile in profiles
+            if self._is_primary_profession(profile.profession_id)
+        )
+        choices = []
+        for profession in self._crafting_professions():
+            profession_id = profession.get("id")
+            if not profession_id:
+                continue
+            is_existing = profession_id in current_ids
+            is_primary = self._is_primary_profession(profession_id)
+            if (
+                not is_existing
+                and is_primary
+                and primary_count >= MAX_PRIMARY_PROFESSIONS
+            ):
+                continue
+            if (
+                not is_existing
+                and not is_primary
+                and profession_id not in SECONDARY_CRAFTING_PROFESSIONS
+            ):
+                continue
+            name = self._localized_text(profession.get("name"))
+            if not name:
+                continue
+            searchable = f"{profession_id} {name} {self._localized_text(profession.get('name'), 'en')}"
+            if needle and needle not in _norm(searchable):
+                continue
+            profile = next(
+                (
+                    profile
+                    for profile in profiles
+                    if profile.profession_id == profession_id
+                ),
+                None,
+            )
+            if profile:
+                description = f"Aktuell: Skill {profile.skill_level}"
+            elif is_primary:
+                description = "Freier Hauptberuf-Slot"
+            else:
+                description = "Nebenberuf"
+            choices.append((name, profession_id, description))
+        return choices[:25]
+
+    def format_profession_slots(self, profiles: list[CharacterProfession]) -> str:
+        primary_profiles = [
+            profile
+            for profile in profiles
+            if self._is_primary_profession(profile.profession_id)
+        ]
+        primary_profiles.sort(
+            key=lambda profile: self._profession_name(profile.profession_id)
+        )
+        lines = []
+        for index in range(MAX_PRIMARY_PROFESSIONS):
+            if index < len(primary_profiles):
+                profile = primary_profiles[index]
+                lines.append(
+                    f"Hauptberuf {index + 1}: {self.format_profession(profile)}"
+                )
+            else:
+                lines.append(f"Hauptberuf {index + 1}: frei")
+
+        cooking = next(
+            (profile for profile in profiles if profile.profession_id == "cooking"),
+            None,
+        )
+        if cooking:
+            lines.append(f"Kochen: {self.format_profession(cooking)}")
+        else:
+            lines.append("Kochen: frei")
+        return "\n".join(lines)
+
     async def set_crafting_profile(
         self,
         discord_user_id: int,
@@ -693,6 +810,21 @@ class WoWCog(ManagedTaskCog):
             return CraftingProfileResult(None, reason="not_claimed")
         if not is_mod and claim.discord_user_id != discord_user_id:
             return CraftingProfileResult(None, claim=claim, reason="forbidden")
+        profiles = await self.data.professions_for_character(claim.character_key)
+        already_set = any(
+            profile.profession_id == profession_id for profile in profiles
+        )
+        primary_count = sum(
+            1
+            for profile in profiles
+            if self._is_primary_profession(profile.profession_id)
+        )
+        if (
+            self._is_primary_profession(profession_id)
+            and not already_set
+            and primary_count >= MAX_PRIMARY_PROFESSIONS
+        ):
+            return CraftingProfileResult(None, claim=claim, reason="primary_limit")
         profession = await self.data.set_character_profession(
             claim, profession_id, skill_level, specialization
         )
@@ -1065,12 +1197,14 @@ class CraftingProfessionSelect(discord.ui.Select):
         claim: CharacterClaim,
         profiles: list[CharacterProfession],
         search: str | None,
+        language: str = "de",
     ) -> None:
         self.cog = cog
         self.owner_user_id = owner_user_id
         self.claim = claim
         self.profiles = profiles
         self.search = search
+        self.language = cog.normalize_recipe_language(language)
         options = [
             discord.SelectOption(
                 label=cog._profession_name(profile.profession_id),
@@ -1119,6 +1253,7 @@ class CraftingProfessionSelect(discord.ui.Select):
             self.claim,
             profile,
             result.recipes,
+            language=self.language,
         )
         await interaction.response.edit_message(content=view.content(), view=view)
 
@@ -1131,11 +1266,14 @@ class CraftingProfessionSelectView(discord.ui.View):
         claim: CharacterClaim,
         profiles: list[CharacterProfession],
         search: str | None,
+        language: str = "de",
     ) -> None:
         super().__init__(timeout=300)
         self.owner_user_id = owner_user_id
         self.add_item(
-            CraftingProfessionSelect(cog, owner_user_id, claim, profiles, search)
+            CraftingProfessionSelect(
+                cog, owner_user_id, claim, profiles, search, language
+            )
         )
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -1190,6 +1328,7 @@ class CraftingRecipeSelectionView(discord.ui.View):
         claim: CharacterClaim,
         profile: CharacterProfession,
         recipes: list[dict],
+        language: str = "de",
     ) -> None:
         super().__init__(timeout=300)
         self.cog = cog
@@ -1197,6 +1336,7 @@ class CraftingRecipeSelectionView(discord.ui.View):
         self.claim = claim
         self.profile = profile
         self.recipes = recipes
+        self.language = cog.normalize_recipe_language(language)
         self.page = 0
         self.selected_spell_ids: set[str] = set()
         self.refresh_items()
@@ -1210,15 +1350,18 @@ class CraftingRecipeSelectionView(discord.ui.View):
         return self.recipes[start : start + self.page_size]
 
     def option_label(self, recipe: dict) -> str:
-        label = self.cog._recipe_name(recipe)
+        label = self.cog._recipe_name(recipe, self.language)
         return label[:100] or str(recipe.get("spell_id"))[:100]
 
     def option_description(self, recipe: dict) -> str:
         skill = int(recipe.get("required_skill") or 0)
         spell = self.cog._spell_for_recipe(recipe)
-        spell_name = self.cog._localized_text(spell.get("name"))
+        other_name = self.cog._recipe_secondary_name(recipe, self.language)
+        spell_name = self.cog._localized_text(spell.get("name"), self.language)
         text = f"Skill {skill}"
-        if spell_name and spell_name != self.option_label(recipe):
+        if other_name:
+            text = f"{text} - {other_name}"
+        elif spell_name and spell_name != self.option_label(recipe):
             text = f"{text} - {spell_name}"
         return text[:100]
 
@@ -1230,6 +1373,7 @@ class CraftingRecipeSelectionView(discord.ui.View):
             self.recipes,
             self.page,
             self.selected_spell_ids,
+            self.language,
         )
 
     def refresh_items(self) -> None:
@@ -1294,13 +1438,15 @@ def _recipe_selection_content(
     recipes: list[dict],
     page: int = 0,
     selected: set[str] | None = None,
+    language: str = "de",
 ) -> str:
     selected_count = len(selected or set())
+    language_label = RECIPE_LANGUAGE_LABELS.get(language, "Deutsch")
     return (
         f"**{claim.character_name}** - "
         f"{cog._profession_name(profile.profession_id)} {profile.skill_level}\n"
         f"Offene Spezialrezepte: {len(recipes)} | Seite {page + 1} | "
-        f"ausgewählt: {selected_count}"
+        f"ausgewählt: {selected_count} | Sprache: {language_label}"
     )
 
 
@@ -1419,13 +1565,17 @@ class PanelOwnedCharacterSelect(discord.ui.Select):
             )
             return
         if self.parent_view.mode == "profession":
+            profiles = await self.parent_view.cog.data.professions_for_character(
+                claim.character_key
+            )
             view = PanelProfessionSelectView(
-                self.parent_view.cog, interaction.user.id, claim
+                self.parent_view.cog, interaction.user.id, claim, profiles
             )
             await interaction.response.edit_message(
                 content=(
-                    f"Welchen Beruf möchtest du für "
-                    f"**{claim.character_name}** pflegen?"
+                    f"Berufe fuer **{claim.character_name}**:\n"
+                    f"{self.parent_view.cog.format_profession_slots(profiles)}\n\n"
+                    "Welchen Beruf moechtest du pflegen?"
                 ),
                 view=view,
             )
@@ -1477,13 +1627,18 @@ class PanelOwnedCharacterSelectView(discord.ui.View):
 class PanelProfessionSelect(discord.ui.Select):
     def __init__(self, parent: "PanelProfessionSelectView") -> None:
         self.parent_view = parent
+        choices = parent.cog.profession_choices_for_claim(parent.profiles)
         super().__init__(
             placeholder="Beruf auswählen",
             min_values=1,
             max_values=1,
             options=[
-                discord.SelectOption(label=name[:100], value=value)
-                for name, value in parent.cog.profession_choices("")
+                discord.SelectOption(
+                    label=name[:100],
+                    value=value,
+                    description=description[:100],
+                )
+                for name, value, description in choices
             ],
         )
 
@@ -1498,11 +1653,18 @@ class PanelProfessionSelect(discord.ui.Select):
 
 
 class PanelProfessionSelectView(discord.ui.View):
-    def __init__(self, cog: WoWCog, owner_user_id: int, claim: CharacterClaim) -> None:
+    def __init__(
+        self,
+        cog: WoWCog,
+        owner_user_id: int,
+        claim: CharacterClaim,
+        profiles: list[CharacterProfession],
+    ) -> None:
         super().__init__(timeout=300)
         self.cog = cog
         self.owner_user_id = owner_user_id
         self.claim = claim
+        self.profiles = profiles
         self.add_item(PanelProfessionSelect(self))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -1575,12 +1737,15 @@ class PanelRecipeProfessionSelect(discord.ui.Select):
         )
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        await interaction.response.send_modal(
-            PanelRecipeSearchModal(
-                self.parent_view.cog,
-                self.parent_view.claim,
-                self.values[0],
-            )
+        view = PanelRecipeLanguageSelectView(
+            self.parent_view.cog,
+            self.parent_view.owner_user_id,
+            self.parent_view.claim,
+            self.values[0],
+        )
+        await interaction.response.edit_message(
+            content="In welcher Sprache soll die Rezeptliste angezeigt werden?",
+            view=view,
         )
 
 
@@ -1608,45 +1773,69 @@ class PanelRecipeProfessionSelectView(discord.ui.View):
         return False
 
 
-class PanelRecipeSearchModal(discord.ui.Modal):
-    def __init__(self, cog: WoWCog, claim: CharacterClaim, profession_id: str) -> None:
-        super().__init__(title="Spezialrezepte suchen")
-        self.cog = cog
-        self.claim = claim
-        self.profession_id = profession_id
-        self.search = discord.ui.TextInput(
-            label="Suchbegriff",
-            placeholder="optional, z.B. Wut",
-            required=False,
-            max_length=80,
+class PanelRecipeLanguageSelect(discord.ui.Select):
+    def __init__(self, parent: "PanelRecipeLanguageSelectView") -> None:
+        self.parent_view = parent
+        super().__init__(
+            placeholder="Sprache auswählen",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(label="Deutsch", value="de"),
+                discord.SelectOption(label="English", value="en"),
+            ],
         )
-        self.add_item(self.search)
 
-    async def on_submit(self, interaction: discord.Interaction) -> None:
-        result = await self.cog.prepare_recipe_selection(
+    async def callback(self, interaction: discord.Interaction) -> None:
+        language = self.parent_view.cog.normalize_recipe_language(self.values[0])
+        result = await self.parent_view.cog.prepare_recipe_selection(
             interaction.user.id,
-            self.claim.character_name,
-            self.profession_id,
-            str(self.search.value).strip() or None,
+            self.parent_view.claim.character_name,
+            self.parent_view.profession_id,
+            None,
         )
         if result.status != "ok" or not result.recipes:
-            await interaction.response.send_message(
-                f"Für **{self.claim.character_name}** gibt es aktuell keine passenden offenen Spezialrezepte.",
-                ephemeral=True,
+            await interaction.response.edit_message(
+                content=(
+                    f"Fuer **{self.parent_view.claim.character_name}** gibt es "
+                    "aktuell keine offenen Spezialrezepte."
+                ),
+                view=None,
             )
             return
         view = CraftingRecipeSelectionView(
-            self.cog,
+            self.parent_view.cog,
             interaction.user.id,
             result.claim,
             result.profile,
             result.recipes,
+            language=language,
         )
+        await interaction.response.edit_message(content=view.content(), view=view)
+
+
+class PanelRecipeLanguageSelectView(discord.ui.View):
+    def __init__(
+        self,
+        cog: WoWCog,
+        owner_user_id: int,
+        claim: CharacterClaim,
+        profession_id: str,
+    ) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.owner_user_id = owner_user_id
+        self.claim = claim
+        self.profession_id = profession_id
+        self.add_item(PanelRecipeLanguageSelect(self))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.owner_user_id:
+            return True
         await interaction.response.send_message(
-            view.content(),
-            view=view,
-            ephemeral=True,
+            "Diese Auswahl gehört nicht dir.", ephemeral=True
         )
+        return False
 
 
 class PanelCraftingSearchModal(discord.ui.Modal):
@@ -1811,6 +2000,8 @@ def _format_panel_profession_result(cog: WoWCog, result: CraftingProfileResult) 
         return "Du darfst diesen Charakter nicht bearbeiten."
     if result.reason == "invalid_skill":
         return "Skill muss zwischen 1 und 300 liegen."
+    if result.reason == "primary_limit":
+        return "Dieser Charakter hat bereits zwei Hauptberufe gepflegt."
     return f"Gespeichert: {cog.format_profession(result.profession)}"
 
 
