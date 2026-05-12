@@ -441,7 +441,9 @@ class WowheadFetcher:
             }
         return pages
 
-    async def fetch_localized_items(self, item_ids: list[int]) -> dict[str, dict[str, str]]:
+    async def fetch_localized_items(
+        self, item_ids: list[int]
+    ) -> dict[str, dict[str, str]]:
         pages: dict[str, dict[str, str]] = {}
         missing: list[tuple[int, str]] = []
         for item_id in item_ids:
@@ -1432,7 +1434,10 @@ def spell_list_paths() -> list[str]:
 
 def profession_list_paths() -> list[str]:
     return sorted(
-        {profession_spell_path(profession_id) for profession_id in RECIPE_PROFESSION_IDS}
+        {
+            profession_spell_path(profession_id)
+            for profession_id in RECIPE_PROFESSION_IDS
+        }
         | {
             profession_recipe_item_path(profession_id)
             for profession_id in RECIPE_ITEM_PROFESSION_IDS
@@ -1488,9 +1493,7 @@ def recipe_items_by_spell_id(
             spell_ids = _recipe_item_craft_spell_ids(detail.get("en", ""))
             de_row = de_rows.get(item_id, en_row)
             for spell_id in spell_ids:
-                candidate = normalize_recipe_source_item(
-                    de_row, en_row, profession_id
-                )
+                candidate = normalize_recipe_source_item(de_row, en_row, profession_id)
                 recipe_items.setdefault(spell_id, []).append(candidate)
     return recipe_items
 
@@ -1566,7 +1569,9 @@ def _description(spell_data: dict[str, Any], fallback_name: str) -> str:
     return fallback_name
 
 
-def _learned_from(row: dict[str, Any], recipe_item: dict[str, Any] | None = None) -> str:
+def _learned_from(
+    row: dict[str, Any], recipe_item: dict[str, Any] | None = None
+) -> str:
     if recipe_item:
         return "recipe"
     sources = row.get("source", [])
@@ -1640,7 +1645,9 @@ def _dedupe_recipe_items(recipe_items: list[dict[str, Any]]) -> list[dict[str, A
         item_id = str(item.get("recipe_item_id") or "")
         if item_id:
             by_id[item_id] = item
-    return sorted(by_id.values(), key=lambda item: str(item.get("recipe_item_id") or ""))
+    return sorted(
+        by_id.values(), key=lambda item: str(item.get("recipe_item_id") or "")
+    )
 
 
 def _recipe_item_name_key(name: str) -> str:

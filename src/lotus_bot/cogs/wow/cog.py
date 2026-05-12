@@ -720,7 +720,7 @@ class WoWCog(ManagedTaskCog):
     def format_milestone(self, milestone: Milestone) -> str:
         return self._format_milestone_line(milestone, None)
 
-    async def format_activity_digest(self, activity: ActivityDiff) -> str:
+    async def _format_activity_digest_legacy(self, activity: ActivityDiff) -> str:
         lines = [random.choice(DIGEST_OPENERS), ""]
         if activity.new_members:
             lines.append("**Neue Chars**")
@@ -869,7 +869,9 @@ class WoWCog(ManagedTaskCog):
         lines.append(self._digest_closer(activity))
         return "\n".join(lines)
 
-    def _format_roster_line(self, member: RosterMember, level: int | None = None) -> str:
+    def _format_roster_line(
+        self, member: RosterMember, level: int | None = None
+    ) -> str:
         parts = [f"**{member.name}**", f"Level **{level or member.level}**"]
         race = RACE_NAMES_DE.get(member.race_id)
         class_name = CLASS_NAMES_DE.get(member.class_id)

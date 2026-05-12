@@ -271,7 +271,8 @@ reputation_group = app_commands.Group(
 
 
 @reputation_group.command(
-    name="probe", description="Prueft, ob die Classic-API Rufdaten fuer einen Char liefert"
+    name="probe",
+    description="Prueft, ob die Classic-API Rufdaten fuer einen Char liefert",
 )
 @moderator_only()
 @app_commands.default_permissions(manage_guild=True)
