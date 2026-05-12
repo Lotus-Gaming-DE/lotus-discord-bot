@@ -106,3 +106,15 @@ async def test_fetch_character_profile_success_and_error():
     with pytest.raises(api.WoWAPIError) as exc_info:
         await api.fetch_character_profile("soulseeker", "Voidok")
     assert exc_info.value.status == 404
+
+
+@pytest.mark.asyncio
+async def test_fetch_character_reputations_uses_reputation_endpoint():
+    FakeSession.get_response = FakeResponse(payload={"reputations": []})
+
+    result = await api.fetch_character_reputations("soulseeker", "Voidok")
+
+    assert result == {"reputations": []}
+    args, kwargs = FakeSession.get_calls[0]
+    assert args[0].endswith("/profile/wow/character/soulseeker/voidok/reputations")
+    assert kwargs["params"]["namespace"] == api.DEFAULT_NAMESPACE

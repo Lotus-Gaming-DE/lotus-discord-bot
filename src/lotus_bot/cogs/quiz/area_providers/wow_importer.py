@@ -173,6 +173,30 @@ RECIPE_PROFESSION_IDS = {
     "tailoring",
 }
 
+PROFESSION_SPELL_PATHS = {
+    "cooking": "/spells/secondary-skills",
+}
+
+RECIPE_ITEM_PROFESSION_IDS = {
+    "alchemy",
+    "blacksmithing",
+    "cooking",
+    "enchanting",
+    "engineering",
+    "leatherworking",
+    "tailoring",
+}
+
+RECIPE_ITEM_PREFIXES = (
+    "Recipe:",
+    "Formula:",
+    "Plans:",
+    "Schematic:",
+    "Pattern:",
+)
+
+ALLIANCE_SIDE = 1
+
 ZONE_LIST_URLS = {
     "eastern_kingdoms": "/zones/eastern-kingdoms",
     "kalimdor": "/zones/kalimdor",
@@ -339,6 +363,8 @@ async def run_import(args: argparse.Namespace) -> ImportResult:
             )
         elif slice_name == "professions":
             pages = await fetcher.fetch_localized_paths(profession_list_paths())
+            recipe_item_ids = recipe_item_ids_from_pages(pages)
+            pages.update(await fetcher.fetch_localized_items(recipe_item_ids))
             slice_result = import_professions(
                 result.data,
                 pages,
@@ -414,6 +440,46 @@ class WowheadFetcher:
                 "en": await self.fetch_url(_path_url(str(path), "en")),
             }
         return pages
+
+    async def fetch_localized_items(self, item_ids: list[int]) -> dict[str, dict[str, str]]:
+        pages: dict[str, dict[str, str]] = {}
+        missing: list[tuple[int, str]] = []
+        for item_id in item_ids:
+            url = _item_url(item_id, "en")
+            cached = self._read_cache(url)
+            if cached is None:
+                missing.append((item_id, url))
+                continue
+            pages[_item_page_key(item_id)] = {"de": cached, "en": cached}
+
+        if missing:
+            semaphore = asyncio.Semaphore(8)
+            async with aiohttp.ClientSession(
+                headers={"User-Agent": "Mozilla/5.0 LotusGamingDEBot/1.0"}
+            ) as session:
+                tasks = [
+                    self._fetch_item_page(session, semaphore, item_id, url)
+                    for item_id, url in missing
+                ]
+                for item_id, page in await asyncio.gather(*tasks):
+                    if page:
+                        pages[_item_page_key(item_id)] = {"de": page, "en": page}
+        return pages
+
+    async def _fetch_item_page(
+        self,
+        session: aiohttp.ClientSession,
+        semaphore: asyncio.Semaphore,
+        item_id: int,
+        url: str,
+    ) -> tuple[int, str | None]:
+        async with semaphore:
+            try:
+                text = await self._fetch_text(session, url)
+            except RuntimeError:
+                return item_id, None
+            self._write_cache(url, text)
+            return item_id, text
 
     async def fetch_url(self, url: str) -> str:
         cached = self._read_cache(url)
@@ -687,9 +753,11 @@ def import_professions(
     spells: list[dict[str, Any]] = []
     items: list[dict[str, Any]] = []
     recipes_by_spell: dict[str, dict[str, Any]] = {}
+    recipe_items_by_spell = recipe_items_by_spell_id(pages)
+    recipe_items_by_name = recipe_items_by_recipe_name(pages)
 
     for profession_id in sorted(RECIPE_PROFESSION_IDS):
-        path = f"/spells/professions/{profession_id}"
+        path = profession_spell_path(profession_id)
         localized = pages[path]
         de_rows = extract_spell_rows(localized["de"])
         en_rows = {row["id"]: row for row in extract_spell_rows(localized["en"])}
@@ -700,7 +768,7 @@ def import_professions(
         for row in de_rows:
             if not _is_classic_era_spell(row):
                 continue
-            if "creates" not in row:
+            if not _is_profession_recipe_row(row):
                 continue
             recipe_profession_id = _profession_from_skillline(row)
             if recipe_profession_id != profession_id:
@@ -713,25 +781,42 @@ def import_professions(
                 de_spell_data.get(row["id"], {}),
                 en_spell_data.get(row["id"], {}),
             )
-            item_id = int((row.get("creates") or [0])[0])
-            item = normalize_created_item(
-                row,
-                en_row,
-                de_item_data.get(item_id, {}),
-                en_item_data.get(item_id, {}),
-                recipe_profession_id,
+            item = None
+            if "creates" in row:
+                item_id = int((row.get("creates") or [0])[0])
+                item = normalize_created_item(
+                    row,
+                    en_row,
+                    de_item_data.get(item_id, {}),
+                    en_item_data.get(item_id, {}),
+                    recipe_profession_id,
+                )
+            recipe_items = list(recipe_items_by_spell.get(spell["id"], []))
+            recipe_items.extend(
+                recipe_items_by_name.get(
+                    (
+                        recipe_profession_id,
+                        _recipe_name_key(spell["name"].get("en", "")),
+                    ),
+                    [],
+                )
             )
+            recipe_items = _dedupe_recipe_items(recipe_items)
+            recipe_item = _primary_recipe_item(recipe_items)
             recipe = {
                 "id": f"{recipe_profession_id}.{slugify(str(en_row.get('name') or row.get('name')))}",
                 "profession_id": recipe_profession_id,
                 "skillline_id": PROFESSION_SKILLLINE_IDS[recipe_profession_id],
                 "spell_id": spell["id"],
-                "creates_item_id": item["id"],
+                "creates_item_id": item["id"] if item else None,
                 "required_skill": int(row.get("learnedat") or 0),
-                "learned_from": _learned_from(row),
+                "learned_from": _learned_from(row, recipe_item),
                 "hardcore_valid": True,
                 "source_urls": spell["source_urls"],
             }
+            if recipe_item:
+                recipe.update(recipe_item)
+                recipe["recipe_items"] = recipe_items
             existing = recipes_by_spell.get(spell["id"])
             if existing and existing["profession_id"] != recipe_profession_id:
                 result.warnings.append(
@@ -741,7 +826,8 @@ def import_professions(
                 recipes_by_spell.pop(spell["id"], None)
                 continue
             spells.append(spell)
-            items.append(item)
+            if item:
+                items.append(item)
             recipes_by_spell[spell["id"]] = recipe
             if limit_records and len(recipes_by_spell) >= limit_records:
                 break
@@ -947,6 +1033,11 @@ def extract_spell_rows(page: str) -> list[dict[str, Any]]:
     return json.loads(_jsonish_to_json(raw)) if raw else []
 
 
+def extract_item_rows(page: str) -> list[dict[str, Any]]:
+    raw = extract_js_var_array(page, "listviewitems")
+    return json.loads(_jsonish_to_json(raw)) if raw else []
+
+
 def extract_gatherer_spell_data(page: str) -> dict[int, dict[str, Any]]:
     return extract_gatherer_data(page, 6)
 
@@ -1104,6 +1195,31 @@ def normalize_created_item(
     if item_level:
         item["item_level"] = item_level
     return item
+
+
+def normalize_recipe_source_item(
+    de_row: dict[str, Any],
+    en_row: dict[str, Any],
+    profession_id: str,
+) -> dict[str, Any]:
+    item_id = int(en_row["id"])
+    return {
+        "recipe_item_id": f"item.{item_id}",
+        "recipe_item_name": {
+            "de": str(de_row.get("name") or en_row.get("name") or ""),
+            "en": str(en_row.get("name") or de_row.get("name") or ""),
+        },
+        "recipe_item_sources": _source_labels(en_row.get("source", [])),
+        "recipe_item_side": _side_label(en_row.get("side")),
+        "recipe_item_required_skill": int(
+            en_row.get("skill") or de_row.get("skill") or 0
+        ),
+        "recipe_item_profession_id": profession_id,
+        "recipe_item_source_urls": {
+            "de": _item_url(item_id, "de"),
+            "en": _item_url(item_id, "en"),
+        },
+    }
 
 
 def normalize_item(de_drop: dict[str, Any], en_drop: dict[str, Any]) -> dict[str, Any]:
@@ -1315,10 +1431,94 @@ def spell_list_paths() -> list[str]:
 
 
 def profession_list_paths() -> list[str]:
-    return [
-        f"/spells/professions/{profession_id}"
-        for profession_id in sorted(RECIPE_PROFESSION_IDS)
-    ]
+    return sorted(
+        {profession_spell_path(profession_id) for profession_id in RECIPE_PROFESSION_IDS}
+        | {
+            profession_recipe_item_path(profession_id)
+            for profession_id in RECIPE_ITEM_PROFESSION_IDS
+        }
+    )
+
+
+def profession_spell_path(profession_id: str) -> str:
+    return PROFESSION_SPELL_PATHS.get(
+        profession_id, f"/spells/professions/{profession_id}"
+    )
+
+
+def profession_recipe_item_path(profession_id: str) -> str:
+    return f"/items/recipes/{profession_id}"
+
+
+def recipe_item_ids_from_pages(pages: dict[str, dict[str, str]]) -> list[int]:
+    item_ids: set[int] = set()
+    for profession_id in RECIPE_ITEM_PROFESSION_IDS:
+        path = profession_recipe_item_path(profession_id)
+        localized = pages.get(path)
+        if not localized:
+            continue
+        for row in extract_item_rows(localized["en"]):
+            if _is_horde_recipe_item(row):
+                item_ids.add(int(row["id"]))
+    return sorted(item_ids)
+
+
+def recipe_items_by_spell_id(
+    pages: dict[str, dict[str, str]],
+) -> dict[str, list[dict[str, Any]]]:
+    recipe_items: dict[str, list[dict[str, Any]]] = {}
+    for profession_id in RECIPE_ITEM_PROFESSION_IDS:
+        path = profession_recipe_item_path(profession_id)
+        localized = pages.get(path)
+        if not localized:
+            continue
+        de_rows = {
+            int(row["id"]): row
+            for row in extract_item_rows(localized["de"])
+            if _is_horde_recipe_item(row)
+        }
+        en_rows = [
+            row
+            for row in extract_item_rows(localized["en"])
+            if _is_horde_recipe_item(row)
+        ]
+        for en_row in en_rows:
+            item_id = int(en_row["id"])
+            detail = pages.get(_item_page_key(item_id), {})
+            spell_ids = _recipe_item_craft_spell_ids(detail.get("en", ""))
+            de_row = de_rows.get(item_id, en_row)
+            for spell_id in spell_ids:
+                candidate = normalize_recipe_source_item(
+                    de_row, en_row, profession_id
+                )
+                recipe_items.setdefault(spell_id, []).append(candidate)
+    return recipe_items
+
+
+def recipe_items_by_recipe_name(
+    pages: dict[str, dict[str, str]],
+) -> dict[tuple[str, str], list[dict[str, Any]]]:
+    recipe_items: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for profession_id in RECIPE_ITEM_PROFESSION_IDS:
+        path = profession_recipe_item_path(profession_id)
+        localized = pages.get(path)
+        if not localized:
+            continue
+        de_rows = {
+            int(row["id"]): row
+            for row in extract_item_rows(localized["de"])
+            if _is_horde_recipe_item(row)
+        }
+        for en_row in extract_item_rows(localized["en"]):
+            if not _is_horde_recipe_item(en_row):
+                continue
+            item_id = int(en_row["id"])
+            candidate = normalize_recipe_source_item(
+                de_rows.get(item_id, en_row), en_row, profession_id
+            )
+            key = (profession_id, _recipe_item_name_key(str(en_row.get("name") or "")))
+            recipe_items.setdefault(key, []).append(candidate)
+    return recipe_items
 
 
 def _tree_name(localized: dict[str, str], tree_slug: str) -> dict[str, str]:
@@ -1366,11 +1566,102 @@ def _description(spell_data: dict[str, Any], fallback_name: str) -> str:
     return fallback_name
 
 
-def _learned_from(row: dict[str, Any]) -> str:
+def _learned_from(row: dict[str, Any], recipe_item: dict[str, Any] | None = None) -> str:
+    if recipe_item:
+        return "recipe"
     sources = row.get("source", [])
-    if 6 in sources:
-        return "trainer"
-    return "recipe"
+    if sources and 6 not in sources:
+        return "recipe"
+    return "trainer"
+
+
+def _is_profession_recipe_row(row: dict[str, Any]) -> bool:
+    if "creates" in row:
+        return True
+    # Enchanting enchant spells apply an effect directly to gear, so Wowhead does
+    # not expose a created item. They still are learnable recipes/formulas.
+    return bool(row.get("reagents")) and _profession_from_skillline(row) == "enchanting"
+
+
+def _is_horde_recipe_item(row: dict[str, Any]) -> bool:
+    try:
+        item_id = int(row.get("id") or 0)
+    except (TypeError, ValueError):
+        return False
+    if item_id >= 100000:
+        return False
+    if int(row.get("side") or 0) == ALLIANCE_SIDE:
+        return False
+    return str(row.get("name") or "").startswith(RECIPE_ITEM_PREFIXES)
+
+
+def _recipe_item_craft_spell_ids(page: str) -> list[str]:
+    spell_data = extract_gatherer_spell_data(page)
+    return [f"spell.{spell_id}" for spell_id in sorted(spell_data) if spell_id < 100000]
+
+
+def _item_page_key(item_id: int) -> str:
+    return f"/item={item_id}"
+
+
+def _source_labels(sources: Any) -> list[str]:
+    labels = {
+        1: "crafted",
+        2: "drop",
+        3: "pvp",
+        4: "quest",
+        5: "vendor",
+        6: "trainer",
+        16: "world_drop",
+        21: "pickpocketed",
+    }
+    if not isinstance(sources, list):
+        return []
+    return [labels.get(int(source), str(source)) for source in sources]
+
+
+def _side_label(side: Any) -> str:
+    if int(side or 0) == 2:
+        return "horde"
+    return "neutral"
+
+
+def _recipe_source_priority(recipe_item: dict[str, Any]) -> int:
+    return 1 if recipe_item.get("recipe_item_side") == "horde" else 0
+
+
+def _primary_recipe_item(recipe_items: list[dict[str, Any]]) -> dict[str, Any] | None:
+    return max(recipe_items, key=_recipe_source_priority, default=None)
+
+
+def _dedupe_recipe_items(recipe_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_id: dict[str, dict[str, Any]] = {}
+    for item in recipe_items:
+        item_id = str(item.get("recipe_item_id") or "")
+        if item_id:
+            by_id[item_id] = item
+    return sorted(by_id.values(), key=lambda item: str(item.get("recipe_item_id") or ""))
+
+
+def _recipe_item_name_key(name: str) -> str:
+    cleaned = name.strip()
+    for prefix in RECIPE_ITEM_PREFIXES:
+        if cleaned.startswith(prefix):
+            cleaned = cleaned[len(prefix) :].strip()
+            break
+    return _recipe_name_key(cleaned)
+
+
+def _recipe_name_key(name: str) -> str:
+    aliases = {
+        "mithril headed trout": "mithril head trout",
+    }
+    key = _norm(name)
+    return aliases.get(key, key)
+
+
+def _norm(value: Any) -> str:
+    return unidecode(str(value or "")).casefold().strip()
 
 
 def _profession_from_skillline(row: dict[str, Any]) -> str | None:

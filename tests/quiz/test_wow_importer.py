@@ -86,6 +86,40 @@ PROFESSION_EN_PAGE = """
 <script>var listviewspells = [{cat:11,colors:[1,55,75,95],creates:[118,1,1],id:2330,learnedat:1,level:0,name:"Minor Healing Potion",quality:1,skill:[171],source:[6]}];</script>
 """
 
+ENCHANTING_DE_PAGE = """
+<script>WH.Gatherer.addData(6, 4, {"13898":{"name_dede":"Waffe - Feurige Waffe","description_dede":"Verzaubert dauerhaft eine Nahkampfwaffe."}});</script>
+<script>var listviewspells = [{cat:11,colors:[265,285,305,325],id:13898,learnedat:265,level:0,name:"Waffe - Feurige Waffe",quality:-1,reagents:[[11177,4],[7078,1]],skill:[333]}];</script>
+"""
+
+ENCHANTING_EN_PAGE = """
+<script>WH.Gatherer.addData(6, 4, {"13898":{"name_enus":"Enchant Weapon - Fiery Weapon","description_enus":"Permanently enchant a melee weapon."}});</script>
+<script>var listviewspells = [{cat:11,colors:[265,285,305,325],id:13898,learnedat:265,level:0,name:"Enchant Weapon - Fiery Weapon",quality:-1,reagents:[[11177,4],[7078,1]],skill:[333]}];</script>
+"""
+
+ENCHANTING_RECIPE_ITEMS_DE_PAGE = """
+<script>var listviewitems = [{classs:9,id:11207,name:"Formel: Waffe - Feurige Waffe",quality:2,skill:265,subclass:8}];</script>
+"""
+
+ENCHANTING_RECIPE_ITEMS_EN_PAGE = """
+<script>var listviewitems = [{classs:9,id:11207,name:"Formula: Enchant Weapon - Fiery Weapon",quality:2,skill:265,subclass:8}];</script>
+"""
+
+ENCHANTING_RECIPE_ITEM_DETAIL_EN_PAGE = """
+<script>WH.Gatherer.addData(6, 4, {"13898":{"name_enus":"Enchant Weapon - Fiery Weapon","description_enus":"Permanently enchant a melee weapon."}});</script>
+"""
+
+SECONDARY_SKILLS_DE_PAGE = """
+<script>WH.Gatherer.addData(3, 4, {"6888":{"name_dede":"KrÃ¤uterei","quality":1}});</script>
+<script>WH.Gatherer.addData(6, 4, {"2538":{"name_dede":"KrÃ¤uterei","description_dede":"Stellt KrÃ¤uterei her."}});</script>
+<script>var listviewspells = [{cat:11,colors:[1,45,65,85],creates:[6888,1,1],id:2538,learnedat:1,level:0,name:"KrÃ¤uterei",quality:1,skill:[185],source:[6]}];</script>
+"""
+
+SECONDARY_SKILLS_EN_PAGE = """
+<script>WH.Gatherer.addData(3, 4, {"6888":{"name_enus":"Herb Baked Egg","quality":1}});</script>
+<script>WH.Gatherer.addData(6, 4, {"2538":{"name_enus":"Charred Wolf Meat","description_enus":"Creates Charred Wolf Meat."}});</script>
+<script>var listviewspells = [{cat:11,colors:[1,45,65,85],creates:[6888,1,1],id:2538,learnedat:1,level:0,name:"Charred Wolf Meat",quality:1,skill:[185],source:[6]}];</script>
+"""
+
 WRONG_PROFESSION_DE_PAGE = """
 <script>WH.Gatherer.addData(3, 4, {"8201":{"name_dede":"Große Voodoomaske","quality":2,"jsonequip":{"slotbak":1,"reqlevel":43}}});</script>
 <script>WH.Gatherer.addData(6, 4, {"10531":{"name_dede":"Große Voodoomaske","description_dede":"Stellt eine Große Voodoomaske her."}});</script>
@@ -221,6 +255,64 @@ def test_import_professions_normalizes_recipe_spell_and_created_item():
     assert recipe["required_skill"] == 1
     assert recipe["learned_from"] == "trainer"
     assert recipe["skillline_id"] == 171
+
+
+def test_import_professions_keeps_enchanting_formulas_without_created_item():
+    data = copy.deepcopy(load_wow_data("data/wow/classic_hc"))
+    empty_page = "<script>var listviewspells = [];</script>"
+    pages = {
+        path: {"de": empty_page, "en": empty_page}
+        for path in wow_importer.profession_list_paths()
+    }
+    pages["/spells/professions/enchanting"] = {
+        "de": ENCHANTING_DE_PAGE,
+        "en": ENCHANTING_EN_PAGE,
+    }
+    pages["/items/recipes/enchanting"] = {
+        "de": ENCHANTING_RECIPE_ITEMS_DE_PAGE,
+        "en": ENCHANTING_RECIPE_ITEMS_EN_PAGE,
+    }
+    pages["/item=11207"] = {
+        "de": ENCHANTING_RECIPE_ITEM_DETAIL_EN_PAGE,
+        "en": ENCHANTING_RECIPE_ITEM_DETAIL_EN_PAGE,
+    }
+
+    result = import_professions(data, pages)
+
+    recipe = next(
+        row
+        for row in result.data["profession_recipes"]
+        if row["spell_id"] == "spell.13898"
+    )
+    assert recipe["profession_id"] == "enchanting"
+    assert recipe["creates_item_id"] is None
+    assert recipe["required_skill"] == 265
+    assert recipe["learned_from"] == "recipe"
+    assert recipe["recipe_item_id"] == "item.11207"
+
+
+def test_import_professions_reads_cooking_from_secondary_skill_page():
+    data = copy.deepcopy(load_wow_data("data/wow/classic_hc"))
+    empty_page = "<script>var listviewspells = [];</script>"
+    pages = {
+        path: {"de": empty_page, "en": empty_page}
+        for path in wow_importer.profession_list_paths()
+    }
+    pages["/spells/secondary-skills"] = {
+        "de": SECONDARY_SKILLS_DE_PAGE,
+        "en": SECONDARY_SKILLS_EN_PAGE,
+    }
+
+    result = import_professions(data, pages)
+
+    recipe = next(
+        row
+        for row in result.data["profession_recipes"]
+        if row["spell_id"] == "spell.2538"
+    )
+    assert recipe["profession_id"] == "cooking"
+    assert recipe["creates_item_id"] == "item.6888"
+    assert recipe["learned_from"] == "trainer"
 
 
 def test_import_professions_uses_skillline_not_page_path():

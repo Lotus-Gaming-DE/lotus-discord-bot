@@ -1,6 +1,7 @@
 import pytest
 import discord
 import pytest_asyncio
+from datetime import datetime, timezone
 
 from lotus_bot.cogs.wow.cog import WoWCog
 from lotus_bot.cogs.wow.data import RosterMember, WoWData
@@ -71,6 +72,27 @@ class DummyBot:
 
     def add_view(self, view):
         self.views.append(view)
+
+    def get_cog(self, name):
+        return None
+
+
+class DummyChampionCog:
+    def __init__(self):
+        self.updates = []
+
+    async def update_user_score(self, user_id, delta, reason):
+        self.updates.append((user_id, delta, reason))
+        return delta
+
+
+class ChampionBot(DummyBot):
+    def __init__(self, channel=None, champion=None):
+        super().__init__(channel=channel)
+        self.champion = champion
+
+    def get_cog(self, name):
+        return self.champion if name == "ChampionCog" else None
 
 
 class MultiChannelBot(DummyBot):
@@ -222,6 +244,7 @@ def crafting_data():
                 "creates_item_id": "item.2459",
                 "required_skill": 60,
                 "learned_from": "recipe",
+                "recipe_item_sources": ["drop"],
                 "hardcore_valid": True,
             },
         ],
@@ -425,18 +448,10 @@ async def test_panel_recipes_flow_opens_recipe_selection(tmp_path, patch_logged_
 
     profession_select = recipe_profession_view.children[0]
     profession_select._values = ["alchemy"]
-    language_interaction = DummyReviewInteraction(DummyUser(42))
-    await profession_select.callback(language_interaction)
-    language_view = language_interaction.response.edits[0]["view"]
-    assert isinstance(language_view, wow_cog_mod.PanelRecipeLanguageSelectView)
-
-    language_select = language_view.children[0]
-    language_select._values = ["en"]
     recipe_interaction = DummyReviewInteraction(DummyUser(42))
-    await language_select.callback(recipe_interaction)
+    await profession_select.callback(recipe_interaction)
 
     assert "Offene Spezialrezepte" in recipe_interaction.response.edits[0]["content"]
-    assert "Sprache: English" in recipe_interaction.response.edits[0]["content"]
     assert isinstance(
         recipe_interaction.response.edits[0]["view"],
         wow_cog_mod.CraftingRecipeSelectionView,
@@ -468,6 +483,37 @@ async def test_panel_crafting_search_modal_uses_search(tmp_path, patch_logged_ta
     await modal.on_submit(interaction)
 
     assert "Spezialrezept" in interaction.response.messages[0][0]
+
+
+@pytest.mark.asyncio
+async def test_crafting_search_suggestion_select_runs_selected_search(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    await cog.data.set_character_profession(claim, "alchemy", 75)
+    result = await cog.search_crafting("Schwacher")
+    view = wow_cog_mod.CraftingSearchSuggestionView(cog, 42, result.candidates)
+    select = view.children[0]
+    select._values = ["item.118"]
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await select.callback(interaction)
+
+    assert "kann gecraftet werden" in interaction.response.edits[0]["content"]
+    assert interaction.response.edits[0]["view"] is None
+
+
+@pytest.mark.asyncio
+async def test_daily_digest_sleep_targets_next_9am(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+
+    before_9 = datetime(2026, 5, 12, 8, 30, tzinfo=timezone.utc)
+    after_9 = datetime(2026, 5, 12, 9, 30, tzinfo=timezone.utc)
+
+    assert cog._seconds_until_next_digest(before_9) == 30 * 60
+    assert cog._seconds_until_next_digest(after_9) == 23.5 * 60 * 60
 
 
 @pytest.mark.asyncio
@@ -571,11 +617,13 @@ async def test_digest_posts_one_message_for_multiple_events(
     assert result.posted == 1
     assert len(channel.sent) == 1
     msg = channel.sent[0][0]
-    assert "Schaut mal" in msg
-    assert "Wir begrüßen" in msg
-    assert "Troll Krieger Voidok" in msg
+    assert "Black Lotus" in msg
+    assert "Neuzugaenge" in msg
+    assert "**Voidok**, Level **23**, Troll, Krieger" in msg
+    assert "**Lyxendra**, Level **50**, Troll, Schurke" in msg
+    assert "Level **23**" in msg
     assert "Level **50**" in msg
-    assert "Wir gratulieren" in msg
+    assert "Glückwunsch" in msg
 
 
 @pytest.mark.asyncio
@@ -597,7 +645,32 @@ async def test_digest_mentions_claimed_character(
 
     msg = await cog.format_activity_digest(activity)
 
-    assert "<@42> hat mit **Troll Krieger Lyxendra** Level **40** erreicht." in msg
+    assert "**Lyxendra**, Level **40**, Troll, Krieger - <@42>" in msg
+    assert "+3 Champion-Punkte" in msg
+
+
+@pytest.mark.asyncio
+async def test_record_public_events_awards_claimed_milestone_points(
+    tmp_path, patch_logged_task
+):
+    channel = DummyChannel()
+    champion = DummyChampionCog()
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(ChampionBot(channel=channel, champion=champion))
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+    claimed = member(level=59, class_id=1, race_id=8)
+    await cog.data.create_claim(claimed, 42)
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[wow_cog_mod.Milestone(member(level=60, class_id=1, race_id=8), 60)],
+        deaths=[],
+        officer_notes=[],
+    )
+
+    await cog._record_public_events(activity)
+
+    assert champion.updates == [(42, 10, "WoW-Meilenstein: Lyxendra Level 60")]
 
 
 @pytest.mark.asyncio
@@ -870,6 +943,20 @@ async def test_crafting_search_finds_claimed_trainer_recipe(
 
 
 @pytest.mark.asyncio
+async def test_crafting_search_tolerates_typos(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    await cog.data.replace_snapshot([member(name="Voidok")])
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    await cog.data.set_character_profession(claim, "alchemy", 75)
+
+    result = await cog.search_crafting("Schwacher Heiltrnak")
+
+    assert result.status == "ok"
+    assert result.item["id"] == "item.118"
+
+
+@pytest.mark.asyncio
 async def test_crafting_search_ignores_unclaimed_crafters(tmp_path, patch_logged_task):
     cog = await create_cog(tmp_path, patch_logged_task)
     cog.bot.data = {"wow": crafting_data()}
@@ -956,6 +1043,99 @@ async def test_recipe_selection_view_saves_multiple_recipes(
 
     assert await cog.data.known_recipe_spell_ids(claim.character_key) == {"spell.2335"}
     assert "1 Rezepte" in interaction.response.edits[0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_rare_recipe_learning_creates_digest_event_and_points(
+    tmp_path, patch_logged_task
+):
+    champion = DummyChampionCog()
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(ChampionBot(champion=champion))
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+    cog.bot.data = {"wow": crafting_data()}
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    await cog.data.verify_claim(claim.character_key, 99)
+    claim = await cog.data.get_claim(claim.character_key)
+
+    saved = await cog.save_known_recipes(claim, "alchemy", ["spell.2335"])
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        recipe_events=await cog.data.pending_recipe_learning_events(),
+    )
+    msg = await cog.format_activity_digest(activity)
+    await cog._record_public_events(activity)
+    await cog._record_public_events(activity)
+
+    assert saved == 1
+    assert "Folgende seltene Rezepte" in msg
+    assert "Swiftnesstrank" in msg
+    assert champion.updates == [(42, 2, "WoW-Rezept: Voidok lernt Swiftnesstrank")]
+
+
+@pytest.mark.asyncio
+async def test_vendor_recipe_learning_does_not_create_reward_event(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    data = crafting_data()
+    data["profession_recipes"][1]["recipe_item_sources"] = ["vendor"]
+    cog.bot.data = {"wow": data}
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    await cog.data.verify_claim(claim.character_key, 99)
+    claim = await cog.data.get_claim(claim.character_key)
+
+    assert await cog.save_known_recipes(claim, "alchemy", ["spell.2335"]) == 1
+    assert await cog.data.pending_recipe_learning_events() == []
+
+
+@pytest.mark.asyncio
+async def test_reputation_scan_baselines_then_records_new_exalted(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    await cog.set_reputation_tracking_enabled(True)
+    calls = []
+
+    async def fake_reputations(*args, **kwargs):
+        calls.append(None)
+        standing = "Honored" if len(calls) == 1 else "Exalted"
+        return {
+            "reputations": [
+                {
+                    "faction": {"id": 529, "name": "Argent Dawn"},
+                    "standing": {"name": standing, "value": 42000},
+                }
+            ]
+        }
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_reputations", fake_reputations)
+
+    assert await cog._detect_reputation_events([member(name="Voidok")]) == []
+    events = await cog._detect_reputation_events([member(name="Voidok")])
+
+    assert len(events) == 1
+    assert events[0].faction_name == "Argent Dawn"
+    assert events[0].standing == "Exalted"
+
+
+@pytest.mark.asyncio
+async def test_reputation_scan_api_error_is_nonfatal(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    await cog.set_reputation_tracking_enabled(True)
+
+    async def fake_reputations(*args, **kwargs):
+        raise wow_cog_mod.WoWAPIError("forbidden", status=403)
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_reputations", fake_reputations)
+
+    assert await cog._detect_reputation_events([member(name="Voidok")]) == []
 
 
 @pytest.mark.asyncio

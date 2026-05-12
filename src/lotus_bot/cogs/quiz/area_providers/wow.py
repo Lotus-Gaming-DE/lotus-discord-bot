@@ -605,7 +605,11 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         )
 
     def generate_recipe_creates_item(self):
-        recipes = self._records("profession_recipes")
+        recipes = [
+            recipe
+            for recipe in self._records("profession_recipes")
+            if recipe.get("creates_item_id")
+        ]
         if not recipes:
             return None
         recipe = random.choice(recipes)

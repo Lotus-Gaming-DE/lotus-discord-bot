@@ -395,12 +395,7 @@
       "en": "https://www.wowhead.com/classic/item=10034"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.10035",
@@ -608,12 +603,7 @@
       "en": "https://www.wowhead.com/classic/item=10050"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.10051",
@@ -631,12 +621,7 @@
       "en": "https://www.wowhead.com/classic/item=10051"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.10052",
@@ -654,12 +639,7 @@
       "en": "https://www.wowhead.com/classic/item=10052"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.10053",
@@ -695,12 +675,7 @@
       "en": "https://www.wowhead.com/classic/item=10054"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.10055",
@@ -718,12 +693,7 @@
       "en": "https://www.wowhead.com/classic/item=10055"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.10056",
@@ -741,12 +711,24 @@
       "en": "https://www.wowhead.com/classic/item=10056"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
+  },
+  {
+    "id": "item.1017",
+    "wowhead_id": 1017,
+    "name": {
+      "de": "Gewürzter Wolfskebab",
+      "en": "Seasoned Wolf Kabob"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=1017",
+      "en": "https://www.wowhead.com/classic/item=1017"
+    },
+    "required_level": 15
   },
   {
     "id": "item.10328",
@@ -1119,11 +1101,7 @@
       "en": "https://www.wowhead.com/classic/item=10499"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.10500",
@@ -1141,11 +1119,7 @@
       "en": "https://www.wowhead.com/classic/item=10500"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.10501",
@@ -1163,11 +1137,7 @@
       "en": "https://www.wowhead.com/classic/item=10501"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.10502",
@@ -1185,11 +1155,7 @@
       "en": "https://www.wowhead.com/classic/item=10502"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.10503",
@@ -1207,11 +1173,7 @@
       "en": "https://www.wowhead.com/classic/item=10503"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.10504",
@@ -1229,11 +1191,7 @@
       "en": "https://www.wowhead.com/classic/item=10504"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.10505",
@@ -1267,11 +1225,7 @@
       "en": "https://www.wowhead.com/classic/item=10506"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.10507",
@@ -1306,11 +1260,7 @@
     },
     "slot": "ranged",
     "inventory_type": "ranged",
-    "required_level": 36,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 36
   },
   {
     "id": "item.10510",
@@ -1419,11 +1369,7 @@
       "en": "https://www.wowhead.com/classic/item=10542"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.10543",
@@ -1441,11 +1387,7 @@
       "en": "https://www.wowhead.com/classic/item=10543"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.10545",
@@ -1463,11 +1405,7 @@
       "en": "https://www.wowhead.com/classic/item=10545"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.10546",
@@ -1810,11 +1748,7 @@
       "en": "https://www.wowhead.com/classic/item=10588"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.10592",
@@ -1951,11 +1885,7 @@
       "en": "https://www.wowhead.com/classic/item=10721"
     },
     "slot": "waist",
-    "inventory_type": "waist",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "waist"
   },
   {
     "id": "item.10724",
@@ -1973,11 +1903,7 @@
       "en": "https://www.wowhead.com/classic/item=10724"
     },
     "slot": "feet",
-    "inventory_type": "feet",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "feet"
   },
   {
     "id": "item.10725",
@@ -2013,11 +1939,7 @@
       "en": "https://www.wowhead.com/classic/item=10726"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.10727",
@@ -2416,6 +2338,40 @@
     },
     "required_level": 37,
     "item_level": 42
+  },
+  {
+    "id": "item.1082",
+    "wowhead_id": 1082,
+    "name": {
+      "de": "Rotkammgulasch",
+      "en": "Redridge Goulash"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=1082",
+      "en": "https://www.wowhead.com/classic/item=1082"
+    },
+    "required_level": 10
+  },
+  {
+    "id": "item.10841",
+    "wowhead_id": 10841,
+    "name": {
+      "de": "Golddorntee",
+      "en": "Goldthorn Tea"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=10841",
+      "en": "https://www.wowhead.com/classic/item=10841"
+    },
+    "required_level": 25
   },
   {
     "id": "item.11086",
@@ -2827,11 +2783,7 @@
     },
     "slot": "two_hand",
     "inventory_type": "two_hand",
-    "required_level": 52,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 52
   },
   {
     "id": "item.11608",
@@ -2850,11 +2802,7 @@
     },
     "slot": "two_hand",
     "inventory_type": "two_hand",
-    "required_level": 50,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 50
   },
   {
     "id": "item.11610",
@@ -4935,6 +4883,176 @@
     "required_level": 35
   },
   {
+    "id": "item.12209",
+    "wowhead_id": 12209,
+    "name": {
+      "de": "Mageres Wolfsteak",
+      "en": "Lean Wolf Steak"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=12209",
+      "en": "https://www.wowhead.com/classic/item=12209"
+    },
+    "required_level": 15
+  },
+  {
+    "id": "item.12210",
+    "wowhead_id": 12210,
+    "name": {
+      "de": "Gerösteter Raptor",
+      "en": "Roast Raptor"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=12210",
+      "en": "https://www.wowhead.com/classic/item=12210"
+    },
+    "required_level": 25
+  },
+  {
+    "id": "item.12212",
+    "wowhead_id": 12212,
+    "name": {
+      "de": "Dschungeleintopf",
+      "en": "Jungle Stew"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=12212",
+      "en": "https://www.wowhead.com/classic/item=12212"
+    },
+    "required_level": 25
+  },
+  {
+    "id": "item.12213",
+    "wowhead_id": 12213,
+    "name": {
+      "de": "Aas Surprise",
+      "en": "Carrion Surprise"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=12213",
+      "en": "https://www.wowhead.com/classic/item=12213"
+    },
+    "required_level": 25
+  },
+  {
+    "id": "item.12214",
+    "wowhead_id": 12214,
+    "name": {
+      "de": "Eigenartiger Eintopf",
+      "en": "Mystery Stew"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=12214",
+      "en": "https://www.wowhead.com/classic/item=12214"
+    },
+    "required_level": 25
+  },
+  {
+    "id": "item.12215",
+    "wowhead_id": 12215,
+    "name": {
+      "de": "Schwerer Kodoeintopf",
+      "en": "Heavy Kodo Stew"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=12215",
+      "en": "https://www.wowhead.com/classic/item=12215"
+    },
+    "required_level": 35
+  },
+  {
+    "id": "item.12216",
+    "wowhead_id": 12216,
+    "name": {
+      "de": "Gewürzter Chilikrebs",
+      "en": "Spiced Chili Crab"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=12216",
+      "en": "https://www.wowhead.com/classic/item=12216"
+    },
+    "required_level": 40
+  },
+  {
+    "id": "item.12217",
+    "wowhead_id": 12217,
+    "name": {
+      "de": "Drachenodemchili",
+      "en": "Dragonbreath Chili"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=12217",
+      "en": "https://www.wowhead.com/classic/item=12217"
+    },
+    "required_level": 35
+  },
+  {
+    "id": "item.12218",
+    "wowhead_id": 12218,
+    "name": {
+      "de": "Monsteromelett",
+      "en": "Monster Omelet"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=12218",
+      "en": "https://www.wowhead.com/classic/item=12218"
+    },
+    "required_level": 40
+  },
+  {
+    "id": "item.12224",
+    "wowhead_id": 12224,
+    "name": {
+      "de": "Knuspriger Fledermausflügel",
+      "en": "Crispy Bat Wing"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=12224",
+      "en": "https://www.wowhead.com/classic/item=12224"
+    },
+    "required_level": 1
+  },
+  {
     "id": "item.12259",
     "wowhead_id": 12259,
     "name": {
@@ -6674,11 +6792,7 @@
     },
     "slot": "one_hand",
     "inventory_type": "one_hand",
-    "required_level": 50,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 50
   },
   {
     "id": "item.12775",
@@ -6735,11 +6849,7 @@
     },
     "slot": "one_hand",
     "inventory_type": "one_hand",
-    "required_level": 51,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 51
   },
   {
     "id": "item.12781",
@@ -6758,11 +6868,7 @@
     },
     "slot": "main_hand",
     "inventory_type": "main_hand",
-    "required_level": 52,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 52
   },
   {
     "id": "item.12782",
@@ -6781,11 +6887,7 @@
     },
     "slot": "two_hand",
     "inventory_type": "two_hand",
-    "required_level": 53,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 53
   },
   {
     "id": "item.12783",
@@ -6804,11 +6906,7 @@
     },
     "slot": "one_hand",
     "inventory_type": "one_hand",
-    "required_level": 58,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 58
   },
   {
     "id": "item.12784",
@@ -6827,11 +6925,7 @@
     },
     "slot": "two_hand",
     "inventory_type": "two_hand",
-    "required_level": 58,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 58
   },
   {
     "id": "item.12790",
@@ -6850,11 +6944,7 @@
     },
     "slot": "two_hand",
     "inventory_type": "two_hand",
-    "required_level": 58,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 58
   },
   {
     "id": "item.12791",
@@ -6970,11 +7060,7 @@
     },
     "slot": "main_hand",
     "inventory_type": "main_hand",
-    "required_level": 58,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 58
   },
   {
     "id": "item.12798",
@@ -6993,11 +7079,7 @@
     },
     "slot": "main_hand",
     "inventory_type": "main_hand",
-    "required_level": 58,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 58
   },
   {
     "id": "item.12803",
@@ -10676,6 +10758,23 @@
     "item_level": 60
   },
   {
+    "id": "item.13851",
+    "wowhead_id": 13851,
+    "name": {
+      "de": "Scharfe Wolfrippchen",
+      "en": "Hot Wolf Ribs"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=13851",
+      "en": "https://www.wowhead.com/classic/item=13851"
+    },
+    "required_level": 25
+  },
+  {
     "id": "item.13856",
     "wowhead_id": 13856,
     "name": {
@@ -10921,6 +11020,159 @@
     "slot": "legs",
     "inventory_type": "legs",
     "required_level": 51
+  },
+  {
+    "id": "item.13927",
+    "wowhead_id": 13927,
+    "name": {
+      "de": "Gekochter glänzender Machtfisch",
+      "en": "Cooked Glossy Mightfish"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=13927",
+      "en": "https://www.wowhead.com/classic/item=13927"
+    },
+    "required_level": 35
+  },
+  {
+    "id": "item.13928",
+    "wowhead_id": 13928,
+    "name": {
+      "de": "Gegrillter Kalmar",
+      "en": "Grilled Squid"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=13928",
+      "en": "https://www.wowhead.com/classic/item=13928"
+    },
+    "required_level": 35
+  },
+  {
+    "id": "item.13929",
+    "wowhead_id": 13929,
+    "name": {
+      "de": "Scharfer geräucherter Barsch",
+      "en": "Hot Smoked Bass"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=13929",
+      "en": "https://www.wowhead.com/classic/item=13929"
+    },
+    "required_level": 35
+  },
+  {
+    "id": "item.13930",
+    "wowhead_id": 13930,
+    "name": {
+      "de": "Rotkiemenfilet",
+      "en": "Filet of Redgill"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=13930",
+      "en": "https://www.wowhead.com/classic/item=13930"
+    },
+    "required_level": 35
+  },
+  {
+    "id": "item.13931",
+    "wowhead_id": 13931,
+    "name": {
+      "de": "Nachtflossensuppe",
+      "en": "Nightfin Soup"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=13931",
+      "en": "https://www.wowhead.com/classic/item=13931"
+    },
+    "required_level": 35
+  },
+  {
+    "id": "item.13932",
+    "wowhead_id": 13932,
+    "name": {
+      "de": "Gedünsteter Sonnenschuppenlachs",
+      "en": "Poached Sunscale Salmon"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=13932",
+      "en": "https://www.wowhead.com/classic/item=13932"
+    },
+    "required_level": 35
+  },
+  {
+    "id": "item.13933",
+    "wowhead_id": 13933,
+    "name": {
+      "de": "Hummereintopf",
+      "en": "Lobster Stew"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=13933",
+      "en": "https://www.wowhead.com/classic/item=13933"
+    },
+    "required_level": 45
+  },
+  {
+    "id": "item.13934",
+    "wowhead_id": 13934,
+    "name": {
+      "de": "Machtfischsteak",
+      "en": "Mightfish Steak"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=13934",
+      "en": "https://www.wowhead.com/classic/item=13934"
+    },
+    "required_level": 45
+  },
+  {
+    "id": "item.13935",
+    "wowhead_id": 13935,
+    "name": {
+      "de": "Gebackener Lachs",
+      "en": "Baked Salmon"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=13935",
+      "en": "https://www.wowhead.com/classic/item=13935"
+    },
+    "required_level": 45
   },
   {
     "id": "item.13937",
@@ -11354,12 +11606,7 @@
       "en": "https://www.wowhead.com/classic/item=14046"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.14048",
@@ -11375,12 +11622,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=14048",
       "en": "https://www.wowhead.com/classic/item=14048"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.14100",
@@ -12012,12 +12254,7 @@
       "en": "https://www.wowhead.com/classic/item=14155"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.14156",
@@ -12035,12 +12272,7 @@
       "en": "https://www.wowhead.com/classic/item=14156"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.14340",
@@ -12076,12 +12308,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=14342",
       "en": "https://www.wowhead.com/classic/item=14342"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.14487",
@@ -14021,12 +14248,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=15407",
       "en": "https://www.wowhead.com/classic/item=15407"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.15564",
@@ -14043,12 +14265,7 @@
       "de": "https://www.wowhead.com/classic/de/item=15564",
       "en": "https://www.wowhead.com/classic/item=15564"
     },
-    "required_level": 40,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 40
   },
   {
     "id": "item.15730",
@@ -14483,11 +14700,7 @@
       "en": "https://www.wowhead.com/classic/item=15999"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.16000",
@@ -14591,11 +14804,7 @@
       "en": "https://www.wowhead.com/classic/item=16008"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.16009",
@@ -16135,6 +16344,23 @@
     "item_level": 59
   },
   {
+    "id": "item.16766",
+    "wowhead_id": 16766,
+    "name": {
+      "de": "Undermine-Muschelsuppe",
+      "en": "Undermine Clam Chowder"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=16766",
+      "en": "https://www.wowhead.com/classic/item=16766"
+    },
+    "required_level": 35
+  },
+  {
     "id": "item.16979",
     "wowhead_id": 16979,
     "name": {
@@ -16322,11 +16548,7 @@
     },
     "slot": "main_hand",
     "inventory_type": "main_hand",
-    "required_level": 60,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 60
   },
   {
     "id": "item.17016",
@@ -16345,11 +16567,7 @@
     },
     "slot": "main_hand",
     "inventory_type": "main_hand",
-    "required_level": 60,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 60
   },
   {
     "id": "item.17061",
@@ -16408,6 +16626,57 @@
     "required_level": 60
   },
   {
+    "id": "item.17197",
+    "wowhead_id": 17197,
+    "name": {
+      "de": "Lebkuchen",
+      "en": "Gingerbread Cookie"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=17197",
+      "en": "https://www.wowhead.com/classic/item=17197"
+    },
+    "required_level": 1
+  },
+  {
+    "id": "item.17198",
+    "wowhead_id": 17198,
+    "name": {
+      "de": "Eierflip",
+      "en": "Egg Nog"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=17198",
+      "en": "https://www.wowhead.com/classic/item=17198"
+    },
+    "required_level": 1
+  },
+  {
+    "id": "item.17222",
+    "wowhead_id": 17222,
+    "name": {
+      "de": "Spinnenwurst",
+      "en": "Spider Sausage"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=17222",
+      "en": "https://www.wowhead.com/classic/item=17222"
+    },
+    "required_level": 35
+  },
+  {
     "id": "item.1727",
     "wowhead_id": 1727,
     "name": {
@@ -16444,11 +16713,7 @@
     },
     "slot": "main_hand",
     "inventory_type": "main_hand",
-    "required_level": 33,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 33
   },
   {
     "id": "item.17707",
@@ -16698,12 +16963,7 @@
       "en": "https://www.wowhead.com/classic/item=17723"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.17728",
@@ -17285,6 +17545,23 @@
     "item_level": 57
   },
   {
+    "id": "item.18045",
+    "wowhead_id": 18045,
+    "name": {
+      "de": "Zartes Wolfsteak",
+      "en": "Tender Wolf Steak"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=18045",
+      "en": "https://www.wowhead.com/classic/item=18045"
+    },
+    "required_level": 40
+  },
+  {
     "id": "item.18047",
     "wowhead_id": 18047,
     "name": {
@@ -17541,12 +17818,7 @@
       "de": "https://www.wowhead.com/classic/de/item=18251",
       "en": "https://www.wowhead.com/classic/item=18251"
     },
-    "required_level": 50,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 50
   },
   {
     "id": "item.18253",
@@ -17566,6 +17838,23 @@
     "required_level": 50
   },
   {
+    "id": "item.18254",
+    "wowhead_id": 18254,
+    "name": {
+      "de": "Runn Tum Knolle Surprise",
+      "en": "Runn Tum Tuber Surprise"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=18254",
+      "en": "https://www.wowhead.com/classic/item=18254"
+    },
+    "required_level": 45
+  },
+  {
     "id": "item.18258",
     "wowhead_id": 18258,
     "name": {
@@ -17580,12 +17869,7 @@
       "de": "https://www.wowhead.com/classic/de/item=18258",
       "en": "https://www.wowhead.com/classic/item=18258"
     },
-    "required_level": 55,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 55
   },
   {
     "id": "item.18262",
@@ -21036,12 +21320,7 @@
       "de": "https://www.wowhead.com/classic/de/item=18662",
       "en": "https://www.wowhead.com/classic/item=18662"
     },
-    "required_level": 1,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 1
   },
   {
     "id": "item.18680",
@@ -22571,11 +22850,7 @@
     },
     "slot": "one_hand",
     "inventory_type": "one_hand",
-    "required_level": 60,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 60
   },
   {
     "id": "item.19167",
@@ -22594,11 +22869,7 @@
     },
     "slot": "two_hand",
     "inventory_type": "two_hand",
-    "required_level": 60,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 60
   },
   {
     "id": "item.19168",
@@ -22617,11 +22888,7 @@
     },
     "slot": "one_hand",
     "inventory_type": "one_hand",
-    "required_level": 60,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 60
   },
   {
     "id": "item.19169",
@@ -22640,11 +22907,7 @@
     },
     "slot": "two_hand",
     "inventory_type": "two_hand",
-    "required_level": 60,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 60
   },
   {
     "id": "item.19170",
@@ -22663,11 +22926,7 @@
     },
     "slot": "one_hand",
     "inventory_type": "one_hand",
-    "required_level": 60,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 60
   },
   {
     "id": "item.19227",
@@ -23420,11 +23679,7 @@
     },
     "slot": "head",
     "inventory_type": "head",
-    "required_level": 60,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 60
   },
   {
     "id": "item.19999",
@@ -23443,11 +23698,7 @@
     },
     "slot": "head",
     "inventory_type": "head",
-    "required_level": 60,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 60
   },
   {
     "id": "item.20002",
@@ -23535,6 +23786,23 @@
     "slot": "feet",
     "inventory_type": "feet",
     "required_level": 60
+  },
+  {
+    "id": "item.20074",
+    "wowhead_id": 20074,
+    "name": {
+      "de": "Schwerer Krokiliskeneintopf",
+      "en": "Heavy Crocolisk Stew"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=20074",
+      "en": "https://www.wowhead.com/classic/item=20074"
+    },
+    "required_level": 20
   },
   {
     "id": "item.20295",
@@ -23652,6 +23920,23 @@
     },
     "required_level": 43,
     "item_level": 48
+  },
+  {
+    "id": "item.20452",
+    "wowhead_id": 20452,
+    "name": {
+      "de": "Geräucherte Wüstenknödel",
+      "en": "Smoked Desert Dumplings"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=20452",
+      "en": "https://www.wowhead.com/classic/item=20452"
+    },
+    "required_level": 45
   },
   {
     "id": "item.20476",
@@ -24044,6 +24329,40 @@
     "data_quality": "partial"
   },
   {
+    "id": "item.21023",
+    "wowhead_id": 21023,
+    "name": {
+      "de": "Dirges abgefahrene Chimaerokkoteletts",
+      "en": "Dirge's Kickin' Chimaerok Chops"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=21023",
+      "en": "https://www.wowhead.com/classic/item=21023"
+    },
+    "required_level": 55
+  },
+  {
+    "id": "item.21072",
+    "wowhead_id": 21072,
+    "name": {
+      "de": "Geräucherter Weisenfisch",
+      "en": "Smoked Sagefish"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=21072",
+      "en": "https://www.wowhead.com/classic/item=21072"
+    },
+    "required_level": 10
+  },
+  {
     "id": "item.21154",
     "wowhead_id": 21154,
     "name": {
@@ -24060,6 +24379,23 @@
     },
     "slot": "chest",
     "inventory_type": "chest"
+  },
+  {
+    "id": "item.21217",
+    "wowhead_id": 21217,
+    "name": {
+      "de": "Weisenfisch Supreme",
+      "en": "Sagefish Delight"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=21217",
+      "en": "https://www.wowhead.com/classic/item=21217"
+    },
+    "required_level": 30
   },
   {
     "id": "item.21277",
@@ -24135,12 +24471,7 @@
       "en": "https://www.wowhead.com/classic/item=21340"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.21341",
@@ -24158,12 +24489,7 @@
       "en": "https://www.wowhead.com/classic/item=21341"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.21342",
@@ -24181,12 +24507,7 @@
       "en": "https://www.wowhead.com/classic/item=21342"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.21542",
@@ -25317,12 +25638,7 @@
       "en": "https://www.wowhead.com/classic/item=22246"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.22247",
@@ -25360,12 +25676,7 @@
       "en": "https://www.wowhead.com/classic/item=22248"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.22249",
@@ -25383,12 +25694,7 @@
       "en": "https://www.wowhead.com/classic/item=22249"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.22251",
@@ -25406,12 +25712,7 @@
       "en": "https://www.wowhead.com/classic/item=22251"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.22252",
@@ -25429,12 +25730,7 @@
       "en": "https://www.wowhead.com/classic/item=22252"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.22253",
@@ -26940,11 +27236,7 @@
     },
     "slot": "main_hand",
     "inventory_type": "main_hand",
-    "required_level": 58,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 58
   },
   {
     "id": "item.22385",
@@ -34435,12 +34727,7 @@
       "de": "https://www.wowhead.com/classic/de/item=2304",
       "en": "https://www.wowhead.com/classic/item=2304"
     },
-    "required_level": 1,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 1
   },
   {
     "id": "item.2307",
@@ -34691,12 +34978,7 @@
       "de": "https://www.wowhead.com/classic/de/item=2313",
       "en": "https://www.wowhead.com/classic/item=2313"
     },
-    "required_level": 5,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 5
   },
   {
     "id": "item.23132",
@@ -34988,12 +35270,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=2318",
       "en": "https://www.wowhead.com/classic/item=2318"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.2319",
@@ -35009,12 +35286,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=2319",
       "en": "https://www.wowhead.com/classic/item=2319"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.23198",
@@ -35697,12 +35969,7 @@
       "en": "https://www.wowhead.com/classic/item=2575"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.2576",
@@ -35720,12 +35987,7 @@
       "en": "https://www.wowhead.com/classic/item=2576"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.2577",
@@ -35743,12 +36005,7 @@
       "en": "https://www.wowhead.com/classic/item=2577"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.2578",
@@ -35785,12 +36042,7 @@
       "en": "https://www.wowhead.com/classic/item=2579"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.2580",
@@ -35903,12 +36155,7 @@
       "en": "https://www.wowhead.com/classic/item=2587"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.2662",
@@ -35959,6 +36206,142 @@
       "miscellaneous_item_subclass"
     ],
     "data_quality": "partial"
+  },
+  {
+    "id": "item.2679",
+    "wowhead_id": 2679,
+    "name": {
+      "de": "Verkohltes Wolfsfleisch",
+      "en": "Charred Wolf Meat"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=2679",
+      "en": "https://www.wowhead.com/classic/item=2679"
+    },
+    "required_level": 1
+  },
+  {
+    "id": "item.2680",
+    "wowhead_id": 2680,
+    "name": {
+      "de": "Gewürztes Wolfsfleisch",
+      "en": "Spiced Wolf Meat"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=2680",
+      "en": "https://www.wowhead.com/classic/item=2680"
+    },
+    "required_level": 1
+  },
+  {
+    "id": "item.2681",
+    "wowhead_id": 2681,
+    "name": {
+      "de": "Geröstetes Eberfleisch",
+      "en": "Roasted Boar Meat"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=2681",
+      "en": "https://www.wowhead.com/classic/item=2681"
+    },
+    "required_level": 1
+  },
+  {
+    "id": "item.2682",
+    "wowhead_id": 2682,
+    "name": {
+      "de": "Gekochte Krebsschere",
+      "en": "Cooked Crab Claw"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=2682",
+      "en": "https://www.wowhead.com/classic/item=2682"
+    },
+    "required_level": 5
+  },
+  {
+    "id": "item.2683",
+    "wowhead_id": 2683,
+    "name": {
+      "de": "Krebsküchlein",
+      "en": "Crab Cake"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=2683",
+      "en": "https://www.wowhead.com/classic/item=2683"
+    },
+    "required_level": 5
+  },
+  {
+    "id": "item.2684",
+    "wowhead_id": 2684,
+    "name": {
+      "de": "Kojotensteak",
+      "en": "Coyote Steak"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=2684",
+      "en": "https://www.wowhead.com/classic/item=2684"
+    },
+    "required_level": 5
+  },
+  {
+    "id": "item.2685",
+    "wowhead_id": 2685,
+    "name": {
+      "de": "Saftige Schweinerippchen",
+      "en": "Succulent Pork Ribs"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=2685",
+      "en": "https://www.wowhead.com/classic/item=2685"
+    },
+    "required_level": 10
+  },
+  {
+    "id": "item.2687",
+    "wowhead_id": 2687,
+    "name": {
+      "de": "Trockene Schweinerippchen",
+      "en": "Dry Pork Ribs"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=2687",
+      "en": "https://www.wowhead.com/classic/item=2687"
+    },
+    "required_level": 5
   },
   {
     "id": "item.2807",
@@ -36423,6 +36806,23 @@
     "required_level": 15
   },
   {
+    "id": "item.2888",
+    "wowhead_id": 2888,
+    "name": {
+      "de": "Eberrippchen in Biersauce",
+      "en": "Beer Basted Boar Ribs"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=2888",
+      "en": "https://www.wowhead.com/classic/item=2888"
+    },
+    "required_level": 1
+  },
+  {
     "id": "item.2941",
     "wowhead_id": 2941,
     "name": {
@@ -36476,12 +36876,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=2996",
       "en": "https://www.wowhead.com/classic/item=2996"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.2997",
@@ -36497,12 +36892,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=2997",
       "en": "https://www.wowhead.com/classic/item=2997"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.3078",
@@ -36563,6 +36953,23 @@
     },
     "required_level": 16,
     "item_level": 21
+  },
+  {
+    "id": "item.3220",
+    "wowhead_id": 3220,
+    "name": {
+      "de": "Blutwurst",
+      "en": "Blood Sausage"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=3220",
+      "en": "https://www.wowhead.com/classic/item=3220"
+    },
+    "required_level": 5
   },
   {
     "id": "item.3228",
@@ -37180,11 +37587,7 @@
     },
     "slot": "one_hand",
     "inventory_type": "one_hand",
-    "required_level": 20,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 20
   },
   {
     "id": "item.3491",
@@ -37293,6 +37696,91 @@
     }
   },
   {
+    "id": "item.3662",
+    "wowhead_id": 3662,
+    "name": {
+      "de": "Krokiliskensteak",
+      "en": "Crocolisk Steak"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=3662",
+      "en": "https://www.wowhead.com/classic/item=3662"
+    },
+    "required_level": 5
+  },
+  {
+    "id": "item.3663",
+    "wowhead_id": 3663,
+    "name": {
+      "de": "Murlocflossensuppe",
+      "en": "Murloc Fin Soup"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=3663",
+      "en": "https://www.wowhead.com/classic/item=3663"
+    },
+    "required_level": 15
+  },
+  {
+    "id": "item.3664",
+    "wowhead_id": 3664,
+    "name": {
+      "de": "Krokiliskengumbo",
+      "en": "Crocolisk Gumbo"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=3664",
+      "en": "https://www.wowhead.com/classic/item=3664"
+    },
+    "required_level": 15
+  },
+  {
+    "id": "item.3665",
+    "wowhead_id": 3665,
+    "name": {
+      "de": "Seltsam schmeckendes Omelett",
+      "en": "Curiously Tasty Omelet"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=3665",
+      "en": "https://www.wowhead.com/classic/item=3665"
+    },
+    "required_level": 15
+  },
+  {
+    "id": "item.3666",
+    "wowhead_id": 3666,
+    "name": {
+      "de": "Klebriger Spinnenkuchen",
+      "en": "Gooey Spider Cake"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=3666",
+      "en": "https://www.wowhead.com/classic/item=3666"
+    },
+    "required_level": 15
+  },
+  {
     "id": "item.3719",
     "wowhead_id": 3719,
     "name": {
@@ -37309,6 +37797,74 @@
     },
     "slot": "back",
     "inventory_type": "back",
+    "required_level": 25
+  },
+  {
+    "id": "item.3726",
+    "wowhead_id": 3726,
+    "name": {
+      "de": "Großes Bärensteak",
+      "en": "Big Bear Steak"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=3726",
+      "en": "https://www.wowhead.com/classic/item=3726"
+    },
+    "required_level": 15
+  },
+  {
+    "id": "item.3727",
+    "wowhead_id": 3727,
+    "name": {
+      "de": "Scharfe Löwenkoteletts",
+      "en": "Hot Lion Chops"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=3727",
+      "en": "https://www.wowhead.com/classic/item=3727"
+    },
+    "required_level": 15
+  },
+  {
+    "id": "item.3728",
+    "wowhead_id": 3728,
+    "name": {
+      "de": "Schmackhaftes Löwensteak",
+      "en": "Tasty Lion Steak"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=3728",
+      "en": "https://www.wowhead.com/classic/item=3728"
+    },
+    "required_level": 20
+  },
+  {
+    "id": "item.3729",
+    "wowhead_id": 3729,
+    "name": {
+      "de": "Milde Schildkrötensuppe",
+      "en": "Soothing Turtle Bisque"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=3729",
+      "en": "https://www.wowhead.com/classic/item=3729"
+    },
     "required_level": 25
   },
   {
@@ -37676,11 +38232,7 @@
     },
     "slot": "one_hand",
     "inventory_type": "one_hand",
-    "required_level": 15,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 15
   },
   {
     "id": "item.3849",
@@ -37737,11 +38289,7 @@
     },
     "slot": "two_hand",
     "inventory_type": "two_hand",
-    "required_level": 26,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 26
   },
   {
     "id": "item.3852",
@@ -37760,11 +38308,7 @@
     },
     "slot": "two_hand",
     "inventory_type": "two_hand",
-    "required_level": 29,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 29
   },
   {
     "id": "item.3853",
@@ -37905,12 +38449,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=4231",
       "en": "https://www.wowhead.com/classic/item=4231"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.4233",
@@ -37926,12 +38465,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=4233",
       "en": "https://www.wowhead.com/classic/item=4233"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.4234",
@@ -37947,12 +38481,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=4234",
       "en": "https://www.wowhead.com/classic/item=4234"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.4236",
@@ -37968,12 +38497,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=4236",
       "en": "https://www.wowhead.com/classic/item=4236"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.4237",
@@ -38010,12 +38534,7 @@
       "en": "https://www.wowhead.com/classic/item=4238"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.4239",
@@ -38052,12 +38571,7 @@
       "en": "https://www.wowhead.com/classic/item=4240"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.4241",
@@ -38075,12 +38589,7 @@
       "en": "https://www.wowhead.com/classic/item=4241"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.4242",
@@ -38155,12 +38664,7 @@
       "en": "https://www.wowhead.com/classic/item=4245"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.4246",
@@ -38500,12 +39004,7 @@
       "de": "https://www.wowhead.com/classic/de/item=4265",
       "en": "https://www.wowhead.com/classic/item=4265"
     },
-    "required_level": 20,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 20
   },
   {
     "id": "item.4304",
@@ -38521,12 +39020,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=4304",
       "en": "https://www.wowhead.com/classic/item=4304"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.4305",
@@ -38542,12 +39036,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=4305",
       "en": "https://www.wowhead.com/classic/item=4305"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.4307",
@@ -39002,12 +39491,7 @@
       "en": "https://www.wowhead.com/classic/item=4330"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.4331",
@@ -39044,12 +39528,7 @@
       "en": "https://www.wowhead.com/classic/item=4332"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.4333",
@@ -39067,12 +39546,7 @@
       "en": "https://www.wowhead.com/classic/item=4333"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.4334",
@@ -39090,12 +39564,7 @@
       "en": "https://www.wowhead.com/classic/item=4334"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.4335",
@@ -39113,12 +39582,7 @@
       "en": "https://www.wowhead.com/classic/item=4335"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.4336",
@@ -39136,12 +39600,7 @@
       "en": "https://www.wowhead.com/classic/item=4336"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.4339",
@@ -39157,12 +39616,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=4339",
       "en": "https://www.wowhead.com/classic/item=4339"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.4343",
@@ -39199,12 +39653,7 @@
       "en": "https://www.wowhead.com/classic/item=4344"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.4357",
@@ -39303,11 +39752,7 @@
     },
     "slot": "ranged",
     "inventory_type": "ranged",
-    "required_level": 5,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 5
   },
   {
     "id": "item.4363",
@@ -39405,11 +39850,7 @@
       "en": "https://www.wowhead.com/classic/item=4368"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.4369",
@@ -39428,11 +39869,7 @@
     },
     "slot": "ranged",
     "inventory_type": "ranged",
-    "required_level": 16,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 16
   },
   {
     "id": "item.4370",
@@ -39483,11 +39920,7 @@
     },
     "slot": "ranged",
     "inventory_type": "ranged",
-    "required_level": 19,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 19
   },
   {
     "id": "item.4373",
@@ -39505,11 +39938,7 @@
       "en": "https://www.wowhead.com/classic/item=4373"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.4374",
@@ -39712,11 +40141,7 @@
       "en": "https://www.wowhead.com/classic/item=4385"
     },
     "slot": "head",
-    "inventory_type": "head",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "head"
   },
   {
     "id": "item.4386",
@@ -39849,11 +40274,7 @@
     },
     "slot": "head",
     "inventory_type": "head",
-    "required_level": 32,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 32
   },
   {
     "id": "item.4394",
@@ -40146,6 +40567,74 @@
     "required_level": 28
   },
   {
+    "id": "item.4457",
+    "wowhead_id": 4457,
+    "name": {
+      "de": "Gegrillter Bussardflügel",
+      "en": "Barbecued Buzzard Wing"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=4457",
+      "en": "https://www.wowhead.com/classic/item=4457"
+    },
+    "required_level": 25
+  },
+  {
+    "id": "item.4592",
+    "wowhead_id": 4592,
+    "name": {
+      "de": "Langzahniger Matschschnapper",
+      "en": "Longjaw Mud Snapper"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=4592",
+      "en": "https://www.wowhead.com/classic/item=4592"
+    },
+    "required_level": 5
+  },
+  {
+    "id": "item.4593",
+    "wowhead_id": 4593,
+    "name": {
+      "de": "Stoppelfühlerwels",
+      "en": "Bristle Whisker Catfish"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=4593",
+      "en": "https://www.wowhead.com/classic/item=4593"
+    },
+    "required_level": 15
+  },
+  {
+    "id": "item.4594",
+    "wowhead_id": 4594,
+    "name": {
+      "de": "Steinschuppenkabeljau",
+      "en": "Rockscale Cod"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=4594",
+      "en": "https://www.wowhead.com/classic/item=4594"
+    },
+    "required_level": 25
+  },
+  {
     "id": "item.4596",
     "wowhead_id": 4596,
     "name": {
@@ -40212,12 +40701,24 @@
       "en": "https://www.wowhead.com/classic/item=5081"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
+  },
+  {
+    "id": "item.5095",
+    "wowhead_id": 5095,
+    "name": {
+      "de": "Regenbogenflossenthunfisch",
+      "en": "Rainbow Fin Albacore"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=5095",
+      "en": "https://www.wowhead.com/classic/item=5095"
+    },
+    "required_level": 5
   },
   {
     "id": "item.5191",
@@ -40520,6 +41021,142 @@
     "item_level": 19
   },
   {
+    "id": "item.5472",
+    "wowhead_id": 5472,
+    "name": {
+      "de": "Kaldorei-Spinnenkebab",
+      "en": "Kaldorei Spider Kabob"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=5472",
+      "en": "https://www.wowhead.com/classic/item=5472"
+    },
+    "required_level": 1
+  },
+  {
+    "id": "item.5473",
+    "wowhead_id": 5473,
+    "name": {
+      "de": "Skorpid Surprise",
+      "en": "Scorpid Surprise"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=5473",
+      "en": "https://www.wowhead.com/classic/item=5473"
+    },
+    "required_level": 1
+  },
+  {
+    "id": "item.5474",
+    "wowhead_id": 5474,
+    "name": {
+      "de": "Geröstetes Kodofleisch",
+      "en": "Roasted Kodo Meat"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=5474",
+      "en": "https://www.wowhead.com/classic/item=5474"
+    },
+    "required_level": 1
+  },
+  {
+    "id": "item.5476",
+    "wowhead_id": 5476,
+    "name": {
+      "de": "Frenzyfilet",
+      "en": "Fillet of Frenzy"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=5476",
+      "en": "https://www.wowhead.com/classic/item=5476"
+    },
+    "required_level": 5
+  },
+  {
+    "id": "item.5477",
+    "wowhead_id": 5477,
+    "name": {
+      "de": "Schreitereintopf",
+      "en": "Strider Stew"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=5477",
+      "en": "https://www.wowhead.com/classic/item=5477"
+    },
+    "required_level": 5
+  },
+  {
+    "id": "item.5478",
+    "wowhead_id": 5478,
+    "name": {
+      "de": "Grubenratteneintopf",
+      "en": "Dig Rat Stew"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=5478",
+      "en": "https://www.wowhead.com/classic/item=5478"
+    },
+    "required_level": 10
+  },
+  {
+    "id": "item.5479",
+    "wowhead_id": 5479,
+    "name": {
+      "de": "Knuspriger Donnerechsenschwanz",
+      "en": "Crispy Lizard Tail"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=5479",
+      "en": "https://www.wowhead.com/classic/item=5479"
+    },
+    "required_level": 12
+  },
+  {
+    "id": "item.5480",
+    "wowhead_id": 5480,
+    "name": {
+      "de": "Mageres Wildbret",
+      "en": "Lean Venison"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=5480",
+      "en": "https://www.wowhead.com/classic/item=5480"
+    },
+    "required_level": 15
+  },
+  {
     "id": "item.5507",
     "wowhead_id": 5507,
     "name": {
@@ -40534,6 +41171,57 @@
       "de": "https://www.wowhead.com/classic/de/item=5507",
       "en": "https://www.wowhead.com/classic/item=5507"
     }
+  },
+  {
+    "id": "item.5525",
+    "wowhead_id": 5525,
+    "name": {
+      "de": "Gekochte Muscheln",
+      "en": "Boiled Clams"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=5525",
+      "en": "https://www.wowhead.com/classic/item=5525"
+    },
+    "required_level": 5
+  },
+  {
+    "id": "item.5526",
+    "wowhead_id": 5526,
+    "name": {
+      "de": "Muschelsuppe",
+      "en": "Clam Chowder"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=5526",
+      "en": "https://www.wowhead.com/classic/item=5526"
+    },
+    "required_level": 10
+  },
+  {
+    "id": "item.5527",
+    "wowhead_id": 5527,
+    "name": {
+      "de": "Scharfe Muscheln nach Goblin-Art",
+      "en": "Goblin Deviled Clams"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=5527",
+      "en": "https://www.wowhead.com/classic/item=5527"
+    },
+    "required_level": 15
   },
   {
     "id": "item.5540",
@@ -40718,12 +41406,7 @@
       "en": "https://www.wowhead.com/classic/item=5762"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.5763",
@@ -40741,12 +41424,7 @@
       "en": "https://www.wowhead.com/classic/item=5763"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.5764",
@@ -40764,12 +41442,7 @@
       "en": "https://www.wowhead.com/classic/item=5764"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.5765",
@@ -40787,12 +41460,7 @@
       "en": "https://www.wowhead.com/classic/item=5765"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.5766",
@@ -41171,6 +41839,23 @@
     }
   },
   {
+    "id": "item.6038",
+    "wowhead_id": 6038,
+    "name": {
+      "de": "Riesenmuschelrisotto",
+      "en": "Giant Clam Scorcho"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=6038",
+      "en": "https://www.wowhead.com/classic/item=6038"
+    },
+    "required_level": 25
+  },
+  {
     "id": "item.6040",
     "wowhead_id": 6040,
     "name": {
@@ -41356,11 +42041,7 @@
     },
     "slot": "two_hand",
     "inventory_type": "two_hand",
-    "required_level": 11,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 11
   },
   {
     "id": "item.6218",
@@ -41395,11 +42076,7 @@
       "en": "https://www.wowhead.com/classic/item=6219"
     },
     "slot": "main_hand",
-    "inventory_type": "main_hand",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "main_hand"
   },
   {
     "id": "item.6220",
@@ -41575,6 +42252,23 @@
     "required_level": 18
   },
   {
+    "id": "item.6290",
+    "wowhead_id": 6290,
+    "name": {
+      "de": "Glänzender Kleinfisch",
+      "en": "Brilliant Smallfish"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=6290",
+      "en": "https://www.wowhead.com/classic/item=6290"
+    },
+    "required_level": 1
+  },
+  {
     "id": "item.6314",
     "wowhead_id": 6314,
     "name": {
@@ -41593,6 +42287,23 @@
     },
     "required_level": 22,
     "item_level": 27
+  },
+  {
+    "id": "item.6316",
+    "wowhead_id": 6316,
+    "name": {
+      "de": "Lochfrenzy Supreme",
+      "en": "Loch Frenzy Delight"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=6316",
+      "en": "https://www.wowhead.com/classic/item=6316"
+    },
+    "required_level": 5
   },
   {
     "id": "item.6318",
@@ -41888,12 +42599,7 @@
       "en": "https://www.wowhead.com/classic/item=6384"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.6385",
@@ -41911,12 +42617,7 @@
       "en": "https://www.wowhead.com/classic/item=6385"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.6392",
@@ -42370,6 +43071,22 @@
     },
     "required_level": 20,
     "item_level": 25
+  },
+  {
+    "id": "item.6657",
+    "wowhead_id": 6657,
+    "name": {
+      "de": "Pikantes Deviat-Supreme",
+      "en": "Savory Deviate Delight"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=6657",
+      "en": "https://www.wowhead.com/classic/item=6657"
+    }
   },
   {
     "id": "item.6662",
@@ -42836,12 +43553,7 @@
       "en": "https://www.wowhead.com/classic/item=6795"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
   },
   {
     "id": "item.6796",
@@ -42859,12 +43571,58 @@
       "en": "https://www.wowhead.com/classic/item=6796"
     },
     "slot": "miscellaneous",
-    "inventory_type": "miscellaneous",
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "miscellaneous"
+  },
+  {
+    "id": "item.6887",
+    "wowhead_id": 6887,
+    "name": {
+      "de": "Tüpfelgelbschwanz",
+      "en": "Spotted Yellowtail"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=6887",
+      "en": "https://www.wowhead.com/classic/item=6887"
+    },
+    "required_level": 35
+  },
+  {
+    "id": "item.6888",
+    "wowhead_id": 6888,
+    "name": {
+      "de": "Kräutergebackenes Ei",
+      "en": "Herb Baked Egg"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=6888",
+      "en": "https://www.wowhead.com/classic/item=6888"
+    },
+    "required_level": 1
+  },
+  {
+    "id": "item.6890",
+    "wowhead_id": 6890,
+    "name": {
+      "de": "Geräuchertes Bärenfleisch",
+      "en": "Smoked Bear Meat"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=6890",
+      "en": "https://www.wowhead.com/classic/item=6890"
+    },
+    "required_level": 5
   },
   {
     "id": "item.6901",
@@ -43657,11 +44415,7 @@
       "en": "https://www.wowhead.com/classic/item=7189"
     },
     "slot": "feet",
-    "inventory_type": "feet",
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "inventory_type": "feet"
   },
   {
     "id": "item.7192",
@@ -43706,6 +44460,23 @@
     },
     "required_level": 18,
     "item_level": 23
+  },
+  {
+    "id": "item.724",
+    "wowhead_id": 724,
+    "name": {
+      "de": "Pastete aus Geiferzahnleber",
+      "en": "Goretusk Liver Pie"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=724",
+      "en": "https://www.wowhead.com/classic/item=724"
+    },
+    "required_level": 5
   },
   {
     "id": "item.7276",
@@ -43762,12 +44533,7 @@
     },
     "slot": "miscellaneous",
     "inventory_type": "miscellaneous",
-    "required_level": 1,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 1
   },
   {
     "id": "item.7279",
@@ -43786,12 +44552,7 @@
     },
     "slot": "miscellaneous",
     "inventory_type": "miscellaneous",
-    "required_level": 1,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 1
   },
   {
     "id": "item.7280",
@@ -43908,6 +44669,23 @@
     "required_level": 19
   },
   {
+    "id": "item.733",
+    "wowhead_id": 733,
+    "name": {
+      "de": "Westfall-Eintopf",
+      "en": "Westfall Stew"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=733",
+      "en": "https://www.wowhead.com/classic/item=733"
+    },
+    "required_level": 5
+  },
+  {
     "id": "item.7348",
     "wowhead_id": 7348,
     "name": {
@@ -44019,12 +44797,7 @@
     },
     "slot": "miscellaneous",
     "inventory_type": "miscellaneous",
-    "required_level": 30,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 30
   },
   {
     "id": "item.7372",
@@ -44043,12 +44816,7 @@
     },
     "slot": "miscellaneous",
     "inventory_type": "miscellaneous",
-    "required_level": 30,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 30
   },
   {
     "id": "item.7373",
@@ -44238,6 +45006,23 @@
     },
     "slot": "trinket",
     "inventory_type": "trinket"
+  },
+  {
+    "id": "item.7676",
+    "wowhead_id": 7676,
+    "name": {
+      "de": "Disteltee",
+      "en": "Thistle Tea"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=7676",
+      "en": "https://www.wowhead.com/classic/item=7676"
+    },
+    "required_level": 5
   },
   {
     "id": "item.7682",
@@ -44960,6 +45745,23 @@
     "item_level": 38
   },
   {
+    "id": "item.787",
+    "wowhead_id": 787,
+    "name": {
+      "de": "Glitschhautmakrele",
+      "en": "Slitherskin Mackerel"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=787",
+      "en": "https://www.wowhead.com/classic/item=787"
+    },
+    "required_level": 1
+  },
+  {
     "id": "item.7913",
     "wowhead_id": 7913,
     "name": {
@@ -45508,11 +46310,7 @@
     },
     "slot": "main_hand",
     "inventory_type": "main_hand",
-    "required_level": 43,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 43
   },
   {
     "id": "item.7945",
@@ -45569,11 +46367,7 @@
     },
     "slot": "one_hand",
     "inventory_type": "one_hand",
-    "required_level": 46,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 46
   },
   {
     "id": "item.7954",
@@ -45592,11 +46386,7 @@
     },
     "slot": "main_hand",
     "inventory_type": "main_hand",
-    "required_level": 42,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 42
   },
   {
     "id": "item.7955",
@@ -45615,11 +46405,7 @@
     },
     "slot": "two_hand",
     "inventory_type": "two_hand",
-    "required_level": 6,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 6
   },
   {
     "id": "item.7956",
@@ -45695,11 +46481,7 @@
     },
     "slot": "two_hand",
     "inventory_type": "two_hand",
-    "required_level": 45,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 45
   },
   {
     "id": "item.7960",
@@ -45718,11 +46500,7 @@
     },
     "slot": "two_hand",
     "inventory_type": "two_hand",
-    "required_level": 47,
-    "qa_flags": [
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 47
   },
   {
     "id": "item.7961",
@@ -45915,12 +46693,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=8170",
       "en": "https://www.wowhead.com/classic/item=8170"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.8172",
@@ -45936,12 +46709,7 @@
     "source_urls": {
       "de": "https://www.wowhead.com/classic/de/item=8172",
       "en": "https://www.wowhead.com/classic/item=8172"
-    },
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    }
   },
   {
     "id": "item.8173",
@@ -45958,12 +46726,7 @@
       "de": "https://www.wowhead.com/classic/de/item=8173",
       "en": "https://www.wowhead.com/classic/item=8173"
     },
-    "required_level": 30,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 30
   },
   {
     "id": "item.8174",
@@ -46514,12 +47277,7 @@
     },
     "slot": "miscellaneous",
     "inventory_type": "miscellaneous",
-    "required_level": 40,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 40
   },
   {
     "id": "item.8218",
@@ -46538,12 +47296,7 @@
     },
     "slot": "miscellaneous",
     "inventory_type": "miscellaneous",
-    "required_level": 40,
-    "qa_flags": [
-      "miscellaneous_item_class",
-      "miscellaneous_item_subclass"
-    ],
-    "data_quality": "partial"
+    "required_level": 40
   },
   {
     "id": "item.8225",
@@ -46659,6 +47412,23 @@
     "slot": "chest",
     "inventory_type": "chest",
     "required_level": 45
+  },
+  {
+    "id": "item.8364",
+    "wowhead_id": 8364,
+    "name": {
+      "de": "Mithrilkopfforelle",
+      "en": "Mithril Head Trout"
+    },
+    "quality": "common",
+    "item_class": "consumable",
+    "item_subclass": "food_drink",
+    "is_quest_item": false,
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/item=8364",
+      "en": "https://www.wowhead.com/classic/item=8364"
+    },
+    "required_level": 25
   },
   {
     "id": "item.8367",

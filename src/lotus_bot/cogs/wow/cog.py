@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import difflib
 import random
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 import discord
 from discord.ext import commands
 
@@ -14,12 +16,15 @@ from .api import (
     DEFAULT_NAMESPACE,
     WoWAPIError,
     fetch_character_profile,
+    fetch_character_reputations,
     fetch_guild_roster,
 )
 from .data import (
     CharacterClaim,
     CharacterKnownRecipe,
     CharacterProfession,
+    RecipeLearningEvent,
+    ReputationEvent,
     RosterMember,
     WoWData,
     parse_roster_member,
@@ -32,11 +37,29 @@ DEFAULT_GUILD_SLUG = "black-lotus"
 DEFAULT_GUILD_NAME = "Black Lotus"
 DEFAULT_POLL_INTERVAL = 3 * 60 * 60
 DEFAULT_CLAIM_REVIEW_CHANNEL_ID = 1184115540822855772
+DEFAULT_DIGEST_HOUR = 9
 MILESTONE_LEVELS = {30, 40, 50, 60}
+CLAIMED_MILESTONE_POINTS = {30: 2, 40: 3, 50: 5, 60: 10}
+RARE_RECIPE_POINTS = 2
+EPIC_RECIPE_POINTS = 5
+REPUTATION_EXALTED_POINTS = 5
 MAX_PRIMARY_PROFESSIONS = 2
 SECONDARY_CRAFTING_PROFESSIONS = {"cooking"}
 EXCLUDED_CRAFTING_PROFESSIONS = {"first-aid", "fishing"}
-RECIPE_LANGUAGE_LABELS = {"de": "Deutsch", "en": "English"}
+RARE_RECIPE_SOURCES = {"drop", "world_drop", "pickpocketed"}
+EPIC_RECIPE_SPELL_IDS = {
+    "spell.22749",  # Enchant Weapon - Spell Power
+    "spell.22750",  # Enchant Weapon - Healing Power
+    "spell.20034",  # Enchant Weapon - Crusader
+    "spell.20036",  # Enchant 2H Weapon - Major Intellect
+    "spell.20035",  # Enchant 2H Weapon - Major Spirit
+    "spell.16994",  # Arcanite Reaper
+    "spell.16990",  # Arcanite Champion
+    "spell.19830",  # Arcanite Dragonling
+    "spell.24121",  # Primal Batskin Jerkin
+    "spell.24122",  # Primal Batskin Gloves
+    "spell.24123",  # Primal Batskin Bracers
+}
 
 CLASS_NAMES_DE = {
     1: "Krieger",
@@ -60,28 +83,26 @@ RACE_NAMES_DE = {
     8: "Troll",
 }
 DIGEST_OPENERS = [
-    "Schaut mal, was sich bei uns bewegt hat:",
-    "Bei Black Lotus gibt es Neuigkeiten:",
-    "Aus der Gilde gibt es frische Meldungen:",
-    "Heute hat sich bei Black Lotus wieder etwas getan:",
-    "Ein kurzer Blick ins Gildenleben:",
-    "Unsere Hardcore-Reise geht weiter:",
-    "Neue Bewegung bei Black Lotus:",
-    "Aus Soulseeker gibt es Neues:",
-    "Die Gilde war wieder fleißig:",
-    "Hier kommt das aktuelle Black-Lotus-Update:",
+    "🌿 **Black Lotus Tagesbericht**",
+    "📜 **Was gestern bei Black Lotus passiert ist**",
+    "🌅 **Guten Morgen, Black Lotus**",
+    "🪷 **Neues aus der Gilde**",
+    "⚔️ **Unser Hardcore-Tag in Kurzform**",
 ]
-DIGEST_CLOSERS = [
-    "Wir gratulieren ganz herzlich!",
-    "Stark gemacht, weiter so!",
-    "Black Lotus gratuliert!",
-    "Auf viele weitere sichere Level!",
-    "Möge der nächste Pull gnädig sein.",
-    "Sehr schön, wir feiern mit!",
-    "Weiterhin sichere Wege da draußen!",
-    "Das sieht nach Fortschritt aus.",
-    "Wir freuen uns mit euch!",
-    "Sauber, Black Lotus!",
+DIGEST_POSITIVE_CLOSERS = [
+    "Glückwunsch an alle, die gestern Fortschritt gemacht haben. Weiter sichere Wege!",
+    "Stark gespielt. Mögen die nächsten Pulls sauber bleiben.",
+    "Black Lotus gratuliert. Heute geht es weiter.",
+]
+DIGEST_MIXED_CLOSERS = [
+    "Glückwunsch an die Aufsteiger, und Respekt für alle gefallenen Chars.",
+    "Hardcore bleibt gnadenlos. Passt heute gut auf euch auf.",
+    "Fortschritt und Verluste liegen nah beieinander. Bleibt wachsam da draußen.",
+]
+DIGEST_DEATH_CLOSERS = [
+    "Ruhe in Frieden. Der nächste Char trägt die Geschichte weiter.",
+    "Hardcore vergisst nichts. Passt heute gut auf euch auf.",
+    "Ein stiller Gruß an die gefallenen Chars.",
 ]
 
 
@@ -109,10 +130,18 @@ class ActivityDiff:
     milestones: list[Milestone]
     deaths: list[DeathEvent]
     officer_notes: list[OfficerNote]
+    recipe_events: list[RecipeLearningEvent] | None = None
+    reputation_events: list[ReputationEvent] | None = None
 
     @property
     def public_count(self) -> int:
-        return len(self.new_members) + len(self.milestones) + len(self.deaths)
+        return (
+            len(self.new_members)
+            + len(self.milestones)
+            + len(self.deaths)
+            + len(self.recipe_events or [])
+            + len(self.reputation_events or [])
+        )
 
 
 @dataclass
@@ -122,6 +151,8 @@ class ScanResult:
     new_members: list[RosterMember] | None = None
     deaths: list[DeathEvent] | None = None
     officer_notes: list[OfficerNote] | None = None
+    recipe_events: list[RecipeLearningEvent] | None = None
+    reputation_events: list[ReputationEvent] | None = None
     posted: int = 0
 
 
@@ -169,6 +200,15 @@ class PanelPublishResult:
     created: bool
 
 
+@dataclass
+class ReputationProbeResult:
+    status: str
+    claim: CharacterClaim | None = None
+    count: int = 0
+    exalted: list[str] | None = None
+    error: str = ""
+
+
 class WoWCog(ManagedTaskCog):
     """Track Black Lotus WoW Classic Hardcore milestones."""
 
@@ -191,6 +231,7 @@ class WoWCog(ManagedTaskCog):
 
     async def _poll_loop(self) -> None:
         while True:
+            await asyncio.sleep(self._seconds_until_next_digest())
             try:
                 channel_id = await self.data.get_setting("announcement_channel_id")
                 if channel_id:
@@ -199,7 +240,15 @@ class WoWCog(ManagedTaskCog):
                 raise
             except Exception as exc:  # pragma: no cover - defensive logging
                 logger.error("[WoWCog] Polling failed: %s", exc, exc_info=True)
-            await asyncio.sleep(self.poll_interval)
+
+    def _seconds_until_next_digest(self, now: datetime | None = None) -> float:
+        now = now or datetime.now().astimezone()
+        target = now.replace(
+            hour=DEFAULT_DIGEST_HOUR, minute=0, second=0, microsecond=0
+        )
+        if now >= target:
+            target += timedelta(days=1)
+        return max((target - now).total_seconds(), 1)
 
     async def set_announcement_channel(self, channel_id: int) -> None:
         await self.data.set_setting("announcement_channel_id", str(channel_id))
@@ -287,6 +336,8 @@ class WoWCog(ManagedTaskCog):
                 new_members=activity.new_members,
                 deaths=activity.deaths,
                 officer_notes=activity.officer_notes,
+                recipe_events=activity.recipe_events or [],
+                reputation_events=activity.reputation_events or [],
                 posted=posted,
             )
 
@@ -305,12 +356,85 @@ class WoWCog(ManagedTaskCog):
             previous, current_by_key
         )
         deaths.extend(missing_deaths)
+        recipe_events = await self.data.pending_recipe_learning_events()
+        reputation_events = await self._detect_reputation_events(current)
         return ActivityDiff(
             new_members=new_members,
             milestones=milestones,
             deaths=deaths,
             officer_notes=officer_notes,
+            recipe_events=recipe_events,
+            reputation_events=reputation_events,
         )
+
+    async def _reputation_tracking_enabled(self) -> bool:
+        value = await self.data.get_setting("wow_reputation_tracking_enabled")
+        return str(value or "").casefold() in {"1", "true", "yes", "on", "enabled"}
+
+    async def set_reputation_tracking_enabled(self, enabled: bool) -> None:
+        await self.data.set_setting(
+            "wow_reputation_tracking_enabled", "1" if enabled else "0"
+        )
+
+    async def _detect_reputation_events(
+        self, members: list[RosterMember]
+    ) -> list[ReputationEvent]:
+        if not await self._reputation_tracking_enabled():
+            return []
+        for member in members:
+            await self._refresh_member_reputations(member)
+        return await self.data.pending_reputation_events()
+
+    async def _refresh_member_reputations(self, member: RosterMember) -> None:
+        try:
+            payload = await fetch_character_reputations(
+                member.realm_slug,
+                member.name,
+                namespace=self.namespace,
+                locale=self.locale,
+            )
+        except WoWAPIError as exc:
+            logger.info(
+                "[WoWCog] Reputation API unavailable for %s: %s",
+                member.name,
+                exc,
+            )
+            return
+        except Exception as exc:
+            logger.info(
+                "[WoWCog] Reputation scan failed for %s: %s",
+                member.name,
+                exc,
+                exc_info=True,
+            )
+            return
+
+        reputations = self._parse_reputations(payload)
+        if not reputations:
+            return
+        had_baseline = await self.data.reputation_snapshot_exists(member.character_key)
+        previous = await self.data.reputation_snapshot(member.character_key)
+        if had_baseline:
+            for reputation in reputations:
+                if not self._is_exalted_reputation(reputation):
+                    continue
+                old = previous.get(int(reputation["faction_id"]))
+                if old and self._is_exalted_reputation(old):
+                    continue
+                exists = await self.data.reputation_event_exists(
+                    member.character_key,
+                    int(reputation["faction_id"]),
+                    str(reputation["standing"]),
+                )
+                if not exists:
+                    await self.data.record_reputation_event(
+                        member.character_key,
+                        int(reputation["faction_id"]),
+                        str(reputation["faction_name"]),
+                        str(reputation["standing"]),
+                        REPUTATION_EXALTED_POINTS,
+                    )
+        await self.data.replace_reputation_snapshot(member.character_key, reputations)
 
     async def _detect_milestones(
         self,
@@ -407,6 +531,44 @@ class WoWCog(ManagedTaskCog):
             or profile.get("ghost")
         )
 
+    def _parse_reputations(self, payload: dict) -> list[dict[str, object]]:
+        raw_reputations = payload.get("reputations") or []
+        if not isinstance(raw_reputations, list):
+            return []
+        parsed: list[dict[str, object]] = []
+        for raw in raw_reputations:
+            if not isinstance(raw, dict):
+                continue
+            faction = raw.get("faction") or {}
+            standing = raw.get("standing") or raw.get("standing_name") or {}
+            faction_id = faction.get("id") or raw.get("faction_id")
+            faction_name = faction.get("name") or raw.get("faction_name")
+            if isinstance(standing, dict):
+                standing_name = (
+                    standing.get("name")
+                    or standing.get("type")
+                    or standing.get("display_string")
+                )
+                value = standing.get("value")
+            else:
+                standing_name = str(standing)
+                value = raw.get("value")
+            if faction_id is None or not faction_name or not standing_name:
+                continue
+            parsed.append(
+                {
+                    "faction_id": int(faction_id),
+                    "faction_name": str(faction_name),
+                    "standing": str(standing_name),
+                    "value": int(value) if value is not None else None,
+                }
+            )
+        return parsed
+
+    def _is_exalted_reputation(self, reputation: dict[str, object]) -> bool:
+        standing = str(reputation.get("standing") or "").casefold()
+        return standing in {"exalted", "ehrfuerchtig", "ehrfürchtig"}
+
     async def _post_activity_digest(self, activity: ActivityDiff) -> int:
         channel_id = await self.get_announcement_channel_id()
         if channel_id is None:
@@ -466,28 +628,138 @@ class WoWCog(ManagedTaskCog):
             await self.data.record_milestone(
                 milestone.member.character_key, milestone.level
             )
+            await self._award_claimed_milestone_points(milestone)
         for death in activity.deaths:
             await self.data.record_death(death.member.character_key)
+        for event in activity.recipe_events or []:
+            await self.data.mark_recipe_learning_announced(
+                event.character_key, event.spell_id
+            )
+            await self._award_recipe_learning_points(event)
+        for event in activity.reputation_events or []:
+            await self.data.mark_reputation_announced(
+                event.character_key, event.faction_id, event.standing
+            )
+            await self._award_reputation_points(event)
+
+    async def _award_claimed_milestone_points(self, milestone: Milestone) -> None:
+        claim = await self.data.get_claim(milestone.member.character_key)
+        if not claim:
+            return
+        points = CLAIMED_MILESTONE_POINTS.get(milestone.level, 0)
+        if points <= 0:
+            return
+        get_cog = getattr(self.bot, "get_cog", None)
+        champion = get_cog("ChampionCog") if get_cog else None
+        if champion is None or not hasattr(champion, "update_user_score"):
+            logger.info("[WoWCog] ChampionCog not available for milestone bonus.")
+            return
+        reason = f"WoW-Meilenstein: {milestone.member.name} Level {milestone.level}"
+        try:
+            await champion.update_user_score(claim.discord_user_id, points, reason)
+        except Exception as exc:  # pragma: no cover - defensive integration logging
+            logger.warning(
+                "[WoWCog] Could not award claimed milestone points: %s",
+                exc,
+                exc_info=True,
+            )
+
+    async def _award_recipe_learning_points(self, event: RecipeLearningEvent) -> None:
+        if event.points <= 0:
+            return
+        get_cog = getattr(self.bot, "get_cog", None)
+        champion = get_cog("ChampionCog") if get_cog else None
+        if champion is None or not hasattr(champion, "update_user_score"):
+            logger.info("[WoWCog] ChampionCog not available for recipe bonus.")
+            return
+        if not await self.data.mark_recipe_learning_awarded(
+            event.character_key, event.spell_id
+        ):
+            return
+        recipe = self._recipe_by_spell_id(event.spell_id)
+        recipe_name = self._recipe_name(recipe) if recipe else event.spell_id
+        reason = f"WoW-Rezept: {event.character_name} lernt {recipe_name}"
+        try:
+            await champion.update_user_score(
+                event.discord_user_id, event.points, reason
+            )
+        except Exception as exc:  # pragma: no cover - defensive integration logging
+            logger.warning(
+                "[WoWCog] Could not award recipe learning points: %s",
+                exc,
+                exc_info=True,
+            )
+
+    async def _award_reputation_points(self, event: ReputationEvent) -> None:
+        if event.points <= 0 or event.discord_user_id is None:
+            return
+        get_cog = getattr(self.bot, "get_cog", None)
+        champion = get_cog("ChampionCog") if get_cog else None
+        if champion is None or not hasattr(champion, "update_user_score"):
+            logger.info("[WoWCog] ChampionCog not available for reputation bonus.")
+            return
+        if not await self.data.mark_reputation_awarded(
+            event.character_key, event.faction_id, event.standing
+        ):
+            return
+        reason = (
+            f"WoW-Ruf: {event.character_name} erreicht {event.standing} "
+            f"bei {event.faction_name}"
+        )
+        try:
+            await champion.update_user_score(
+                event.discord_user_id, event.points, reason
+            )
+        except Exception as exc:  # pragma: no cover - defensive integration logging
+            logger.warning(
+                "[WoWCog] Could not award reputation points: %s",
+                exc,
+                exc_info=True,
+            )
 
     def format_milestone(self, milestone: Milestone) -> str:
         return self._format_milestone_line(milestone, None)
 
     async def format_activity_digest(self, activity: ActivityDiff) -> str:
         lines = [random.choice(DIGEST_OPENERS), ""]
-        for member in activity.new_members:
-            lines.append(f"- {self._format_new_member_line(member)}")
-        for milestone in activity.milestones:
-            claim = await self.data.get_claim(milestone.member.character_key)
-            lines.append(f"- {self._format_milestone_line(milestone, claim)}")
-        for death in activity.deaths:
-            lines.append(f"- {self._format_death_line(death)}")
-        lines.extend(["", random.choice(DIGEST_CLOSERS)])
+        if activity.new_members:
+            lines.append("**Neue Chars**")
+            for member in activity.new_members:
+                lines.append(f"🆕 {self._format_new_member_line(member)}")
+            lines.append("")
+        if activity.milestones:
+            lines.append("**Level-Meilensteine**")
+            for milestone in activity.milestones:
+                claim = await self.data.get_claim(milestone.member.character_key)
+                lines.append(f"🏅 {self._format_milestone_line(milestone, claim)}")
+            lines.append("")
+        if activity.deaths:
+            lines.append("**Gefallene Chars**")
+            for death in activity.deaths:
+                lines.append(f"🕯️ {self._format_death_line(death)}")
+            lines.append("")
+        lines.append(self._digest_closer(activity))
         return "\n".join(lines)
+
+    def _digest_closer(self, activity: ActivityDiff) -> str:
+        has_good_news = bool(
+            activity.new_members
+            or activity.milestones
+            or (activity.recipe_events or [])
+            or (activity.reputation_events or [])
+        )
+        has_deaths = bool(activity.deaths)
+        if has_deaths and has_good_news:
+            return random.choice(DIGEST_MIXED_CLOSERS)
+        if has_deaths:
+            return random.choice(DIGEST_DEATH_CLOSERS)
+        return random.choice(DIGEST_POSITIVE_CLOSERS)
 
     def _format_new_member_line(self, member: RosterMember) -> str:
         return (
-            "Wir begrüßen ganz herzlich den neuen Char "
-            f"**{self._display_character(member)}** bei uns in der Gilde!"
+            "Willkommen bei Black Lotus: "
+            f"**{self._display_character(member)}** "
+            f"(Level **{member.level}**)."
         )
 
     def _format_milestone_line(
@@ -497,7 +769,8 @@ class WoWCog(ManagedTaskCog):
         if claim:
             return (
                 f"<@{claim.discord_user_id}> hat mit **{character}** "
-                f"Level **{milestone.level}** erreicht."
+                f"Level **{milestone.level}** erreicht "
+                f"(+{CLAIMED_MILESTONE_POINTS.get(milestone.level, 0)} Champion-Punkte)."
             )
         return f"**{character}** ist auf Level **{milestone.level}** aufgestiegen."
 
@@ -507,13 +780,104 @@ class WoWCog(ManagedTaskCog):
         if not death.confirmed:
             return (
                 f"**{character}** ist auf Level **{level}** aus dem Roster "
-                "verschwunden und nicht mehr auffindbar. Wir gehen davon aus, "
-                "dass die Hardcore-Reise geendet hat."
+                "verschwunden und nicht mehr auffindbar. Wahrscheinlich ist die "
+                "Hardcore-Reise hier geendet."
             )
         return (
-            f"**{character}** ist auf Level **{level}** gestorben. "
-            "Wir trinken einen Heiltrank auf den Mut."
+            f"**{character}** ist auf Level **{level}** gestorben. " "Ruhe in Frieden."
         )
+
+    async def format_activity_digest(self, activity: ActivityDiff) -> str:
+        lines = [random.choice(DIGEST_OPENERS), ""]
+        if activity.new_members:
+            lines.append("**Wir wollen ganz herzlich die Neuzugaenge begruessen:**")
+            for member in sorted(
+                activity.new_members,
+                key=lambda item: (-item.level, item.name.casefold()),
+            ):
+                lines.append(f"- {self._format_roster_line(member)}")
+            lines.append("")
+        if activity.milestones:
+            lines.append(
+                "**Ausserdem haben folgende Charaktere einen Meilenstein erreicht:**"
+            )
+            for milestone in sorted(
+                activity.milestones,
+                key=lambda item: (-item.level, item.member.name.casefold()),
+            ):
+                claim = await self.data.get_claim(milestone.member.character_key)
+                line = self._format_roster_line(milestone.member, level=milestone.level)
+                if claim:
+                    points = CLAIMED_MILESTONE_POINTS.get(milestone.level, 0)
+                    line = (
+                        f"{line} - <@{claim.discord_user_id}> "
+                        f"(+{points} Champion-Punkte)"
+                    )
+                lines.append(f"- {line}")
+            lines.append("")
+        if activity.recipe_events:
+            lines.append("**Folgende seltene Rezepte wurden gelernt:**")
+            for event in sorted(
+                activity.recipe_events,
+                key=lambda item: (
+                    -item.points,
+                    self._profession_name(item.profession_id).casefold(),
+                    item.character_name.casefold(),
+                ),
+            ):
+                recipe = self._recipe_by_spell_id(event.spell_id)
+                recipe_name = self._recipe_name(recipe) if recipe else event.spell_id
+                source = self._recipe_source_label(recipe)
+                lines.append(
+                    f"- **{event.character_name}**, "
+                    f"{self._profession_name(event.profession_id)}: "
+                    f"**{recipe_name}** ({event.rarity}, {source}, "
+                    f"+{event.points} Champion-Punkte)"
+                )
+            lines.append("")
+        if activity.reputation_events:
+            lines.append("**Folgende Ruf-Meilensteine wurden erreicht:**")
+            for event in sorted(
+                activity.reputation_events,
+                key=lambda item: (
+                    item.faction_name.casefold(),
+                    item.character_name.casefold(),
+                ),
+            ):
+                mention = (
+                    f" - <@{event.discord_user_id}>"
+                    if event.discord_user_id is not None
+                    else ""
+                )
+                lines.append(
+                    f"- **{event.character_name}** ist bei "
+                    f"**{event.faction_name}** {event.standing}"
+                    f"{mention} (+{event.points} Champion-Punkte)"
+                )
+            lines.append("")
+        if activity.deaths:
+            lines.append(
+                "**Wir mussten leider Verluste in Kauf nehmen. Gestorben sind:**"
+            )
+            for death in sorted(
+                activity.deaths,
+                key=lambda item: (-item.member.level, item.member.name.casefold()),
+            ):
+                suffix = "" if death.confirmed else " - nicht mehr im Roster auffindbar"
+                lines.append(f"- {self._format_roster_line(death.member)}{suffix}")
+            lines.append("")
+        lines.append(self._digest_closer(activity))
+        return "\n".join(lines)
+
+    def _format_roster_line(self, member: RosterMember, level: int | None = None) -> str:
+        parts = [f"**{member.name}**", f"Level **{level or member.level}**"]
+        race = RACE_NAMES_DE.get(member.race_id)
+        class_name = CLASS_NAMES_DE.get(member.class_id)
+        if race:
+            parts.append(race)
+        if class_name:
+            parts.append(class_name)
+        return ", ".join(parts)
 
     def _display_character(self, member: RosterMember) -> str:
         parts = []
@@ -610,7 +974,7 @@ class WoWCog(ManagedTaskCog):
         return self._localized_text(profession.get("name"), language) or profession_id
 
     def normalize_recipe_language(self, language: str | None) -> str:
-        if language in RECIPE_LANGUAGE_LABELS:
+        if language in {"de", "en"}:
             return str(language)
         return "de"
 
@@ -670,6 +1034,34 @@ class WoWCog(ManagedTaskCog):
         )
         name = self._recipe_name(recipe, other_language)
         return name if name != self._recipe_name(recipe, language) else ""
+
+    def _recipe_source_label(self, recipe: dict) -> str:
+        sources = [str(source) for source in recipe.get("recipe_item_sources") or []]
+        if not sources:
+            return "Quelle unbekannt"
+        labels = {
+            "drop": "Drop",
+            "world_drop": "World-Drop",
+            "pickpocketed": "Taschendiebstahl",
+            "quest": "Quest",
+            "vendor": "Haendler",
+            "crafted": "Crafting",
+        }
+        return ", ".join(labels.get(source, source) for source in sources)
+
+    def recipe_learning_reward(self, recipe: dict) -> tuple[str, int]:
+        if not recipe or recipe.get("learned_from") == "trainer":
+            return "common", 0
+        spell_id = str(recipe.get("spell_id") or "")
+        if spell_id in EPIC_RECIPE_SPELL_IDS:
+            return "epic", EPIC_RECIPE_POINTS
+        sources = {str(source) for source in recipe.get("recipe_item_sources") or []}
+        required_skill = int(recipe.get("required_skill") or 0)
+        if sources & RARE_RECIPE_SOURCES:
+            return "rare", RARE_RECIPE_POINTS
+        if required_skill >= 275 and sources != {"vendor"}:
+            return "rare", RARE_RECIPE_POINTS
+        return "common", 0
 
     def _recipe_search_text(self, recipe: dict) -> str:
         spell = self._spell_for_recipe(recipe)
@@ -945,17 +1337,24 @@ class WoWCog(ManagedTaskCog):
         profession_id: str,
         spell_ids: list[str],
     ) -> int:
-        valid_spell_ids = {
-            recipe.get("spell_id")
+        valid_recipes = {
+            recipe.get("spell_id"): recipe
             for recipe in self._wow_records("profession_recipes")
             if recipe.get("profession_id") == profession_id
             and recipe.get("learned_from") != "trainer"
             and recipe.get("hardcore_valid")
         }
-        accepted = [spell_id for spell_id in spell_ids if spell_id in valid_spell_ids]
-        return await self.data.add_known_recipes(
+        accepted = [spell_id for spell_id in spell_ids if spell_id in valid_recipes]
+        inserted = await self.data.add_known_recipes_returning_inserted(
             claim.character_key, profession_id, accepted
         )
+        for spell_id in inserted:
+            rarity, points = self.recipe_learning_reward(valid_recipes[spell_id])
+            if points > 0 and claim.status == "verified":
+                await self.data.record_recipe_learning_event(
+                    claim.character_key, spell_id, profession_id, rarity, points
+                )
+        return len(inserted)
 
     async def known_recipes_for_character(
         self,
@@ -1027,8 +1426,15 @@ class WoWCog(ManagedTaskCog):
             return CraftingSearchResult("item_not_found")
         if len(matches) > 1:
             return CraftingSearchResult("ambiguous_item", candidates=matches[:5])
+        return await self._search_crafting_for_item(matches[0])
 
-        item = matches[0]
+    async def search_crafting_by_item_id(self, item_id: str) -> CraftingSearchResult:
+        item = self._get_static_record("items", item_id)
+        if not item:
+            return CraftingSearchResult("item_not_found")
+        return await self._search_crafting_for_item(item)
+
+    async def _search_crafting_for_item(self, item: dict) -> CraftingSearchResult:
         recipes = [
             recipe
             for recipe in self._wow_records("profession_recipes")
@@ -1093,6 +1499,7 @@ class WoWCog(ManagedTaskCog):
         needle = _norm(item_name)
         exact = []
         partial = []
+        fuzzy: list[tuple[float, dict]] = []
         for item in self._wow_records("items"):
             names = [
                 self._localized_text(item.get("name"), "de"),
@@ -1103,7 +1510,27 @@ class WoWCog(ManagedTaskCog):
                 exact.append(item)
             elif any(needle and needle in name for name in normalized):
                 partial.append(item)
-        return exact or partial[:5]
+            elif needle:
+                score = max(
+                    (
+                        difflib.SequenceMatcher(None, needle, name).ratio()
+                        for name in normalized
+                    ),
+                    default=0,
+                )
+                if score >= 0.82:
+                    fuzzy.append((score, item))
+        if exact:
+            return exact[:25]
+        if partial:
+            return partial[:25]
+        fuzzy.sort(
+            key=lambda match: (
+                -match[0],
+                self._localized_text(match[1].get("name")).casefold(),
+            )
+        )
+        return [item for _, item in fuzzy[:25]]
 
     def format_profession(self, profile: CharacterProfession) -> str:
         specialization = (
@@ -1168,6 +1595,47 @@ class WoWCog(ManagedTaskCog):
             )
         await interaction.response.edit_message(content=content, view=None)
 
+    async def probe_reputation_api(
+        self,
+        discord_user_id: int,
+        char_name: str,
+        *,
+        is_mod: bool = False,
+    ) -> ReputationProbeResult:
+        claim = await self.data.get_claim_by_name(char_name)
+        if not claim:
+            return ReputationProbeResult("not_claimed")
+        if not is_mod and claim.discord_user_id != discord_user_id:
+            return ReputationProbeResult("forbidden", claim=claim)
+        try:
+            payload = await fetch_character_reputations(
+                claim.realm_slug,
+                claim.character_name,
+                namespace=self.namespace,
+                locale=self.locale,
+            )
+        except WoWAPIError as exc:
+            return ReputationProbeResult(
+                "api_error", claim=claim, error=f"HTTP {exc.status}: {exc}"
+            )
+        except Exception as exc:
+            logger.warning(
+                "[WoWCog] Reputation probe failed for %s: %s",
+                claim.character_name,
+                exc,
+                exc_info=True,
+            )
+            return ReputationProbeResult("api_error", claim=claim, error=str(exc))
+        reputations = self._parse_reputations(payload)
+        exalted = [
+            str(rep["faction_name"])
+            for rep in reputations
+            if self._is_exalted_reputation(rep)
+        ]
+        return ReputationProbeResult(
+            "ok", claim=claim, count=len(reputations), exalted=sorted(exalted)
+        )
+
     async def status(self) -> dict[str, object]:
         channel_id = await self.get_announcement_channel_id()
         panel_channel_id = await self.data.get_setting("panel_channel_id")
@@ -1182,6 +1650,10 @@ class WoWCog(ManagedTaskCog):
             "last_scan_at": await self.data.last_scan_at(),
             "member_count": await self.data.member_count(),
             "poll_interval": self.poll_interval,
+            "recipe_events": "aktiv",
+            "reputation_tracking": (
+                "aktiv" if await self._reputation_tracking_enabled() else "inaktiv"
+            ),
         }
 
     def cog_unload(self) -> None:
@@ -1373,7 +1845,6 @@ class CraftingRecipeSelectionView(discord.ui.View):
             self.recipes,
             self.page,
             self.selected_spell_ids,
-            self.language,
         )
 
     def refresh_items(self) -> None:
@@ -1431,6 +1902,50 @@ class CraftingRecipeSelectionView(discord.ui.View):
         )
 
 
+class CraftingSearchSuggestionSelect(discord.ui.Select):
+    def __init__(self, parent: "CraftingSearchSuggestionView") -> None:
+        self.parent_view = parent
+        super().__init__(
+            placeholder="Item auswählen",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(
+                    label=parent.cog._localized_text(item.get("name"), "de")[:100],
+                    value=str(item.get("id")),
+                    description=parent.cog._localized_text(item.get("name"), "en")[
+                        :100
+                    ],
+                )
+                for item in parent.items[:25]
+            ],
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        result = await self.parent_view.cog.search_crafting_by_item_id(self.values[0])
+        await interaction.response.edit_message(
+            content=self.parent_view.cog.format_crafting_search_result(result),
+            view=None,
+        )
+
+
+class CraftingSearchSuggestionView(discord.ui.View):
+    def __init__(self, cog: WoWCog, owner_user_id: int, items: list[dict]) -> None:
+        super().__init__(timeout=180)
+        self.cog = cog
+        self.owner_user_id = owner_user_id
+        self.items = items
+        self.add_item(CraftingSearchSuggestionSelect(self))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.owner_user_id:
+            return True
+        await interaction.response.send_message(
+            "Diese Auswahl gehört nicht dir.", ephemeral=True
+        )
+        return False
+
+
 def _recipe_selection_content(
     cog: WoWCog,
     claim: CharacterClaim,
@@ -1438,15 +1953,13 @@ def _recipe_selection_content(
     recipes: list[dict],
     page: int = 0,
     selected: set[str] | None = None,
-    language: str = "de",
 ) -> str:
     selected_count = len(selected or set())
-    language_label = RECIPE_LANGUAGE_LABELS.get(language, "Deutsch")
     return (
         f"**{claim.character_name}** - "
         f"{cog._profession_name(profile.profession_id)} {profile.skill_level}\n"
         f"Offene Spezialrezepte: {len(recipes)} | Seite {page + 1} | "
-        f"ausgewählt: {selected_count} | Sprache: {language_label}"
+        f"ausgewählt: {selected_count}"
     )
 
 
@@ -1737,14 +2250,30 @@ class PanelRecipeProfessionSelect(discord.ui.Select):
         )
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        view = PanelRecipeLanguageSelectView(
-            self.parent_view.cog,
-            self.parent_view.owner_user_id,
-            self.parent_view.claim,
+        result = await self.parent_view.cog.prepare_recipe_selection(
+            interaction.user.id,
+            self.parent_view.claim.character_name,
             self.values[0],
+            None,
+        )
+        if result.status != "ok" or not result.recipes:
+            await interaction.response.edit_message(
+                content=(
+                    f"Für **{self.parent_view.claim.character_name}** gibt es "
+                    "aktuell keine offenen Spezialrezepte."
+                ),
+                view=None,
+            )
+            return
+        view = CraftingRecipeSelectionView(
+            self.parent_view.cog,
+            interaction.user.id,
+            result.claim,
+            result.profile,
+            result.recipes,
         )
         await interaction.response.edit_message(
-            content="In welcher Sprache soll die Rezeptliste angezeigt werden?",
+            content=view.content(),
             view=view,
         )
 
@@ -1773,71 +2302,6 @@ class PanelRecipeProfessionSelectView(discord.ui.View):
         return False
 
 
-class PanelRecipeLanguageSelect(discord.ui.Select):
-    def __init__(self, parent: "PanelRecipeLanguageSelectView") -> None:
-        self.parent_view = parent
-        super().__init__(
-            placeholder="Sprache auswählen",
-            min_values=1,
-            max_values=1,
-            options=[
-                discord.SelectOption(label="Deutsch", value="de"),
-                discord.SelectOption(label="English", value="en"),
-            ],
-        )
-
-    async def callback(self, interaction: discord.Interaction) -> None:
-        language = self.parent_view.cog.normalize_recipe_language(self.values[0])
-        result = await self.parent_view.cog.prepare_recipe_selection(
-            interaction.user.id,
-            self.parent_view.claim.character_name,
-            self.parent_view.profession_id,
-            None,
-        )
-        if result.status != "ok" or not result.recipes:
-            await interaction.response.edit_message(
-                content=(
-                    f"Fuer **{self.parent_view.claim.character_name}** gibt es "
-                    "aktuell keine offenen Spezialrezepte."
-                ),
-                view=None,
-            )
-            return
-        view = CraftingRecipeSelectionView(
-            self.parent_view.cog,
-            interaction.user.id,
-            result.claim,
-            result.profile,
-            result.recipes,
-            language=language,
-        )
-        await interaction.response.edit_message(content=view.content(), view=view)
-
-
-class PanelRecipeLanguageSelectView(discord.ui.View):
-    def __init__(
-        self,
-        cog: WoWCog,
-        owner_user_id: int,
-        claim: CharacterClaim,
-        profession_id: str,
-    ) -> None:
-        super().__init__(timeout=300)
-        self.cog = cog
-        self.owner_user_id = owner_user_id
-        self.claim = claim
-        self.profession_id = profession_id
-        self.add_item(PanelRecipeLanguageSelect(self))
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user.id == self.owner_user_id:
-            return True
-        await interaction.response.send_message(
-            "Diese Auswahl gehört nicht dir.", ephemeral=True
-        )
-        return False
-
-
 class PanelCraftingSearchModal(discord.ui.Modal):
     def __init__(self, cog: WoWCog) -> None:
         super().__init__(title="Crafter suchen")
@@ -1852,8 +2316,14 @@ class PanelCraftingSearchModal(discord.ui.Modal):
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         result = await self.cog.search_crafting(str(self.item.value).strip())
+        view = None
+        if result.status == "ambiguous_item":
+            view = CraftingSearchSuggestionView(
+                self.cog, interaction.user.id, result.candidates or []
+            )
         await interaction.response.send_message(
             self.cog.format_crafting_search_result(result),
+            view=view,
             ephemeral=True,
         )
 

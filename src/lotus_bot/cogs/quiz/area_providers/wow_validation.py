@@ -67,7 +67,6 @@ REQUIRED_FIELDS = {
         "id",
         "profession_id",
         "spell_id",
-        "creates_item_id",
         "required_skill",
         "skillline_id",
         "learned_from",

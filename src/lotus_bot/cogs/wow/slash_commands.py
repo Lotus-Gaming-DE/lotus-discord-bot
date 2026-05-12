@@ -4,7 +4,12 @@ from discord import app_commands
 from lotus_bot.log_setup import get_logger
 from lotus_bot.permissions import moderator_only
 
-from .cog import CraftingProfessionSelectView, CraftingRecipeSelectionView, WoWCog
+from .cog import (
+    CraftingProfessionSelectView,
+    CraftingRecipeSelectionView,
+    CraftingSearchSuggestionView,
+    WoWCog,
+)
 from .data import CharacterClaim, CharacterKnownRecipe, CharacterProfession
 
 logger = get_logger(__name__)
@@ -56,19 +61,6 @@ async def profession_autocomplete(
     return [
         app_commands.Choice(name=name, value=value)
         for name, value in cog.profession_choices(current)
-    ]
-
-
-async def recipe_language_autocomplete(
-    interaction: discord.Interaction, current: str
-) -> list[app_commands.Choice[str]]:
-    choices = [
-        app_commands.Choice(name="Deutsch", value="de"),
-        app_commands.Choice(name="English", value="en"),
-    ]
-    needle = current.casefold()
-    return [
-        choice for choice in choices if not needle or needle in choice.name.casefold()
     ]
 
 
@@ -224,7 +216,6 @@ async def status(interaction: discord.Interaction):
         else "nicht konfiguriert"
     )
     last_scan = info.get("last_scan_at") or "noch nie"
-    interval_hours = int(info["poll_interval"]) // 3600
     await interaction.response.send_message(
         "\n".join(
             [
@@ -235,7 +226,9 @@ async def status(interaction: discord.Interaction):
                 f"Panel: {panel_text}",
                 f"Letzter Scan: {last_scan}",
                 f"Mitglieder im Snapshot: {info['member_count']}",
-                f"Polling: alle {interval_hours} Stunden",
+                f"Recipe-Events: {info.get('recipe_events', 'aktiv')}",
+                f"Ruftracking: {info.get('reputation_tracking', 'inaktiv')}",
+                "Digest: täglich um 09:00 Uhr",
             ]
         ),
         ephemeral=True,
@@ -268,6 +261,68 @@ async def scan(interaction: discord.Interaction, post: bool = True):
         f"{mode}: {result.member_count} Mitglieder geprüft, "
         f"{len(result.milestones)} Meilensteine gefunden, {result.posted} gepostet."
     )
+
+
+reputation_group = app_commands.Group(
+    name="reputation",
+    description="WoW Ruftracking",
+    parent=wow_group,
+)
+
+
+@reputation_group.command(
+    name="probe", description="Prueft, ob die Classic-API Rufdaten fuer einen Char liefert"
+)
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+@app_commands.describe(char="Name des geclaimten Charakters")
+@app_commands.autocomplete(char=all_claims_autocomplete)
+async def reputation_probe(interaction: discord.Interaction, char: str):
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "WoW-System nicht verfuegbar.", ephemeral=True
+        )
+        return
+    await interaction.response.defer(ephemeral=True, thinking=True)
+    result = await cog.probe_reputation_api(
+        interaction.user.id, char, is_mod=_is_mod(interaction)
+    )
+    if result.status == "not_claimed":
+        await interaction.followup.send(f"**{char}** ist nicht geclaimed.")
+        return
+    if result.status == "forbidden":
+        await interaction.followup.send(f"Du darfst **{char}** nicht pruefen.")
+        return
+    if result.status == "api_error":
+        await interaction.followup.send(
+            f"Ruf-API fuer **{result.claim.character_name}** nicht nutzbar: "
+            f"{result.error}"
+        )
+        return
+    exalted = ", ".join(result.exalted or []) or "keine"
+    await interaction.followup.send(
+        f"Ruf-API liefert Daten fuer **{result.claim.character_name}**: "
+        f"{result.count} Fraktionen, Ehrfuerchtig: {exalted}."
+    )
+
+
+@reputation_group.command(
+    name="enable", description="Aktiviert oder deaktiviert Ruftracking"
+)
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+@app_commands.describe(enabled="Ruftracking aktivieren")
+async def reputation_enable(interaction: discord.Interaction, enabled: bool):
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "WoW-System nicht verfuegbar.", ephemeral=True
+        )
+        return
+    await cog.set_reputation_tracking_enabled(enabled)
+    state = "aktiviert" if enabled else "deaktiviert"
+    await interaction.response.send_message(f"Ruftracking {state}.", ephemeral=True)
 
 
 panel_group = app_commands.Group(
@@ -659,19 +714,16 @@ async def crafting_list(
     char="Name des geclaimten Charakters",
     profession="Optionaler Beruf-Filter",
     search="Optionaler Suchbegriff fuer Rezept oder Item",
-    language="Anzeigesprache der Rezeptliste",
 )
 @app_commands.autocomplete(
     char=claim_char_autocomplete,
     profession=recipes_profession_autocomplete,
-    language=recipe_language_autocomplete,
 )
 async def crafting_recipes(
     interaction: discord.Interaction,
     char: str,
     profession: str | None = None,
     search: str | None = None,
-    language: str = "de",
 ):
     cog: WoWCog | None = interaction.client.get_cog("WoWCog")
     if cog is None:
@@ -719,7 +771,6 @@ async def crafting_recipes(
             result.claim,
             result.profiles,
             search,
-            language,
         )
         await interaction.response.send_message(
             f"Bitte Beruf fuer **{result.claim.character_name}** auswaehlen.",
@@ -743,7 +794,6 @@ async def crafting_recipes(
         result.claim,
         result.profile,
         recipes,
-        language=language,
     )
     await interaction.response.send_message(
         view.content(),
@@ -853,7 +903,13 @@ async def crafting_search(interaction: discord.Interaction, item: str):
         return
 
     result = await cog.search_crafting(item)
+    view = None
+    if getattr(result, "status", "") == "ambiguous_item":
+        view = CraftingSearchSuggestionView(
+            cog, interaction.user.id, result.candidates or []
+        )
     await interaction.response.send_message(
         cog.format_crafting_search_result(result),
+        view=view,
         ephemeral=True,
     )
