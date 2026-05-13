@@ -1840,9 +1840,12 @@ def _int_or_none(value: str | None) -> int:
     return max(numbers) if numbers else 0
 
 
+_CLASSIC_DROP_MODES = {1, 9}
+
+
 def _is_classic_normal_drop(drop: dict[str, Any]) -> bool:
     modes = drop.get("modes", {}).get("mode", [])
-    return not modes or 1 in modes
+    return not modes or bool(_CLASSIC_DROP_MODES.intersection(modes))
 
 
 def _is_quest_item(drop: dict[str, Any]) -> bool:

@@ -90,7 +90,7 @@ class QuestionManager:
             embed.add_field(name="Schwierigkeit", value=difficulty, inline=False)
         embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
 
-        view = AnswerButtonView(area, correct_answers, self.cog)
+        view = AnswerButtonView(area, correct_answers, self.cog, question.get("difficulty"))
         sent_msg = await channel.send(embed=embed, view=view)
         logger.debug(
             f"[QuestionManager] Nachricht ID {sent_msg.id} an Channel {channel.id} gesendet."

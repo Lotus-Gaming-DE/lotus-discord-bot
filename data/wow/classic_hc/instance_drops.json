@@ -1,5 +1,1385 @@
 [
   {
+    "id": "drop.ahn_qiraj.amulet_of_foul_warding",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21702",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.amulet_of_vek_nilash",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21608",
+    "source_name": {
+      "de": "Imperator Vek'nilash",
+      "en": "Emperor Vek'nilash"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.ancient_qiraji_ripper",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21650",
+    "source_name": {
+      "de": "Fankriss der Unnachgiebige",
+      "en": "Fankriss the Unyielding"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.angelista_s_charm",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21690",
+    "source_name": {
+      "de": "Vem",
+      "en": "Vem"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.angelista_s_touch",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21695",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.anubisath_warhammer",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21837",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.badge_of_the_swarmguard",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21670",
+    "source_name": {
+      "de": "Schlachtwache Sartura",
+      "en": "Battleguard Sartura"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.barb_of_the_sand_reaver",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21635",
+    "source_name": {
+      "de": "Fankriss der Unnachgiebige",
+      "en": "Fankriss the Unyielding"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.barbed_choker",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21664",
+    "source_name": {
+      "de": "Fankriss der Unnachgiebige",
+      "en": "Fankriss the Unyielding"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.barrage_shoulders",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21699",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.beetle_scaled_wristguards",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21708",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.belt_of_never_ending_agony",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21586",
+    "source_name": {
+      "de": "C'Thun",
+      "en": "C'Thun"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.belt_of_the_fallen_emperor",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21606",
+    "source_name": {
+      "de": "Imperator Vek'nilash",
+      "en": "Emperor Vek'nilash"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.bile_covered_gauntlets",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21682",
+    "source_name": {
+      "de": "Prinzessin Yauj",
+      "en": "Princess Yauj"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.blue_qiraji_resonating_crystal",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21218",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.boots_of_epiphany",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21600",
+    "source_name": {
+      "de": "Imperator Vek'lor",
+      "en": "Emperor Vek'lor"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.boots_of_the_fallen_hero",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21688",
+    "source_name": {
+      "de": "Vem",
+      "en": "Vem"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.boots_of_the_fallen_prophet",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21705",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.boots_of_the_redeemed_prophecy",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21704",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.boots_of_the_unwavering_will",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21706",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.bracelets_of_royal_redemption",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21604",
+    "source_name": {
+      "de": "Imperator Vek'nilash",
+      "en": "Emperor Vek'nilash"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.breastplate_of_annihilation",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21814",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.burrower_bracers",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21611",
+    "source_name": {
+      "de": "Ouro",
+      "en": "Ouro"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.cape_of_the_trinity",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21697",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.cloak_of_clarity",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21583",
+    "source_name": {
+      "de": "C'Thun",
+      "en": "C'Thun"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.cloak_of_concentrated_hatred",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21701",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.cloak_of_the_devoured",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.22731",
+    "source_name": {
+      "de": "C'Thun",
+      "en": "C'Thun"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.cloak_of_the_golden_hive",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21621",
+    "source_name": {
+      "de": "Prinzessin Huhuran",
+      "en": "Princess Huhuran"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.cloak_of_untold_secrets",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21627",
+    "source_name": {
+      "de": "Fankriss der Unnachgiebige",
+      "en": "Fankriss the Unyielding"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.creeping_vine_helm",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21669",
+    "source_name": {
+      "de": "Schlachtwache Sartura",
+      "en": "Battleguard Sartura"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.dark_edge_of_insanity",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21134",
+    "source_name": {
+      "de": "C'Thun",
+      "en": "C'Thun"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.dark_storm_gauntlets",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21585",
+    "source_name": {
+      "de": "C'Thun",
+      "en": "C'Thun"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.death_s_sting",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21126",
+    "source_name": {
+      "de": "C'Thun",
+      "en": "C'Thun"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.don_rigoberto_s_lost_hat",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21615",
+    "source_name": {
+      "de": "Ouro",
+      "en": "Ouro"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.eyestalk_waist_cord",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.22730",
+    "source_name": {
+      "de": "C'Thun",
+      "en": "C'Thun"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.fetish_of_the_sand_reaver",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21647",
+    "source_name": {
+      "de": "Fankriss der Unnachgiebige",
+      "en": "Fankriss the Unyielding"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.garb_of_royal_ascension",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21838",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.gauntlets_of_annihilation",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21581",
+    "source_name": {
+      "de": "C'Thun",
+      "en": "C'Thun"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.gauntlets_of_kalimdor",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21624",
+    "source_name": {
+      "de": "Viscidus",
+      "en": "Viscidus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.gauntlets_of_steadfast_determination",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21674",
+    "source_name": {
+      "de": "Schlachtwache Sartura",
+      "en": "Battleguard Sartura"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.gauntlets_of_the_righteous_champion",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21623",
+    "source_name": {
+      "de": "Viscidus",
+      "en": "Viscidus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.gloves_of_ebru",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21689",
+    "source_name": {
+      "de": "Vem",
+      "en": "Vem"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.gloves_of_enforcement",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21672",
+    "source_name": {
+      "de": "Schlachtwache Sartura",
+      "en": "Battleguard Sartura"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.gloves_of_the_hidden_temple",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21605",
+    "source_name": {
+      "de": "Imperator Vek'nilash",
+      "en": "Emperor Vek'nilash"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.gloves_of_the_immortal",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21888",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.gloves_of_the_messiah",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21619",
+    "source_name": {
+      "de": "Prinzessin Huhuran",
+      "en": "Princess Huhuran"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.gloves_of_the_redeemed_prophecy",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21889",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.grasp_of_the_fallen_emperor",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21607",
+    "source_name": {
+      "de": "Imperator Vek'nilash",
+      "en": "Emperor Vek'nilash"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.grasp_of_the_old_god",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21582",
+    "source_name": {
+      "de": "C'Thun",
+      "en": "C'Thun"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.green_qiraji_resonating_crystal",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21323",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.guise_of_the_devourer",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21693",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.hammer_of_ji_zhi",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21703",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.hive_defiler_wristguards",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21618",
+    "source_name": {
+      "de": "Prinzessin Huhuran",
+      "en": "Princess Huhuran"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.hive_tunneler_s_boots",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21645",
+    "source_name": {
+      "de": "Fankriss der Unnachgiebige",
+      "en": "Fankriss the Unyielding"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.huhuran_s_stinger",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21616",
+    "source_name": {
+      "de": "Prinzessin Huhuran",
+      "en": "Princess Huhuran"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.idol_of_health",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.22399",
+    "source_name": {
+      "de": "Viscidus",
+      "en": "Viscidus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.jom_gabbar",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.23570",
+    "source_name": {
+      "de": "Ouro",
+      "en": "Ouro"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.kalimdor_s_revenge",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21679",
+    "source_name": {
+      "de": "Imperator Vek'nilash",
+      "en": "Emperor Vek'nilash"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.larvae_of_the_great_worm",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.23557",
+    "source_name": {
+      "de": "Ouro",
+      "en": "Ouro"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.leggings_of_immersion",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21698",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.leggings_of_the_festering_swarm",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21676",
+    "source_name": {
+      "de": "Schlachtwache Sartura",
+      "en": "Battleguard Sartura"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.legplates_of_blazing_light",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21667",
+    "source_name": {
+      "de": "Schlachtwache Sartura",
+      "en": "Battleguard Sartura"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.libram_of_grace",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.22402",
+    "source_name": {
+      "de": "Fankriss der Unnachgiebige",
+      "en": "Fankriss the Unyielding"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.mantle_of_phrenic_power",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21686",
+    "source_name": {
+      "de": "Prinzessin Yauj",
+      "en": "Princess Yauj"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.mantle_of_the_desert_crusade",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21683",
+    "source_name": {
+      "de": "Prinzessin Yauj",
+      "en": "Princess Yauj"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.mantle_of_the_desert_s_fury",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21684",
+    "source_name": {
+      "de": "Prinzessin Yauj",
+      "en": "Princess Yauj"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.mantle_of_wicked_revenge",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21665",
+    "source_name": {
+      "de": "Fankriss der Unnachgiebige",
+      "en": "Fankriss the Unyielding"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.mark_of_c_thun",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.22732",
+    "source_name": {
+      "de": "C'Thun",
+      "en": "C'Thun"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.necklace_of_purity",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21678",
+    "source_name": {
+      "de": "Schlachtwache Sartura",
+      "en": "Battleguard Sartura"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.neretzek_the_blood_drinker",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21856",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.ooze_ridden_gauntlets",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21691",
+    "source_name": {
+      "de": "Vem",
+      "en": "Vem"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.pauldrons_of_the_unrelenting",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21639",
+    "source_name": {
+      "de": "Fankriss der Unnachgiebige",
+      "en": "Fankriss the Unyielding"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.pendant_of_the_qiraji_guardian",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21700",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.petrified_scarab",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21685",
+    "source_name": {
+      "de": "Lord Kri",
+      "en": "Lord Kri"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.plans_thick_obsidian_breastplate",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.22222",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.qiraji_execution_bracers",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21602",
+    "source_name": {
+      "de": "Imperator Vek'lor",
+      "en": "Emperor Vek'lor"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.recomposed_boots",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21648",
+    "source_name": {
+      "de": "Schlachtwache Sartura",
+      "en": "Battleguard Sartura"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.red_qiraji_resonating_crystal",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21321",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.regenerating_belt_of_vek_nilash",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21609",
+    "source_name": {
+      "de": "Imperator Vek'nilash",
+      "en": "Emperor Vek'nilash"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.ring_of_emperor_vek_lor",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21601",
+    "source_name": {
+      "de": "Imperator Vek'lor",
+      "en": "Emperor Vek'lor"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.ring_of_swarming_thought",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21707",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.ring_of_the_devoured",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21681",
+    "source_name": {
+      "de": "Lord Kri",
+      "en": "Lord Kri"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.ring_of_the_godslayer",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21596",
+    "source_name": {
+      "de": "C'Thun",
+      "en": "C'Thun"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.ring_of_the_martyr",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21620",
+    "source_name": {
+      "de": "Prinzessin Huhuran",
+      "en": "Princess Huhuran"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.ring_of_the_qiraji_fury",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21677",
+    "source_name": {
+      "de": "Viscidus",
+      "en": "Viscidus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.ritssyn_s_ring_of_chaos",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21836",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.robes_of_the_battleguard",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21671",
+    "source_name": {
+      "de": "Schlachtwache Sartura",
+      "en": "Battleguard Sartura"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.robes_of_the_guardian_saint",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21663",
+    "source_name": {
+      "de": "Fankriss der Unnachgiebige",
+      "en": "Fankriss the Unyielding"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.robes_of_the_triumvirate",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21696",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.royal_qiraji_belt",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21598",
+    "source_name": {
+      "de": "Imperator Vek'lor",
+      "en": "Emperor Vek'lor"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.royal_scepter_of_vek_lor",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21597",
+    "source_name": {
+      "de": "Imperator Vek'lor",
+      "en": "Emperor Vek'lor"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.sartura_s_might",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21666",
+    "source_name": {
+      "de": "Schlachtwache Sartura",
+      "en": "Battleguard Sartura"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.scaled_leggings_of_qiraji_fury",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21668",
+    "source_name": {
+      "de": "Schlachtwache Sartura",
+      "en": "Battleguard Sartura"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.scaled_sand_reaver_leggings",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21651",
+    "source_name": {
+      "de": "Fankriss der Unnachgiebige",
+      "en": "Fankriss the Unyielding"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.scarab_brooch",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21625",
+    "source_name": {
+      "de": "Viscidus",
+      "en": "Viscidus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.scepter_of_the_false_prophet",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21839",
+    "source_name": {
+      "de": "C'Thun",
+      "en": "C'Thun"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.shard_of_the_fallen_star",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21891",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.sharpened_silithid_femur",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21622",
+    "source_name": {
+      "de": "Viscidus",
+      "en": "Viscidus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.silithid_carapace_chestguard",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21652",
+    "source_name": {
+      "de": "Fankriss der Unnachgiebige",
+      "en": "Fankriss the Unyielding"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.silithid_claw",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21673",
+    "source_name": {
+      "de": "Schlachtwache Sartura",
+      "en": "Battleguard Sartura"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.slime_coated_leggings",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21626",
+    "source_name": {
+      "de": "Viscidus",
+      "en": "Viscidus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.staff_of_the_qiraji_prophets",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21128",
+    "source_name": {
+      "de": "Der Prophet Skeram",
+      "en": "The Prophet Skeram"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.ternary_mantle",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21694",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.the_burrower_s_shell",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.23558",
+    "source_name": {
+      "de": "Ouro",
+      "en": "Ouro"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.thick_qirajihide_belt",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21675",
+    "source_name": {
+      "de": "Schlachtwache Sartura",
+      "en": "Battleguard Sartura"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.totem_of_life",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.22396",
+    "source_name": {
+      "de": "Fankriss der Unnachgiebige",
+      "en": "Fankriss the Unyielding"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.triad_girdle",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21692",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.ukko_s_ring_of_darkness",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21687",
+    "source_name": {
+      "de": "Prinzessin Yauj",
+      "en": "Princess Yauj"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.vanquished_tentacle_of_c_thun",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21579",
+    "source_name": {
+      "de": "C'Thun",
+      "en": "C'Thun"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.vek_lor_s_gloves_of_devastation",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21599",
+    "source_name": {
+      "de": "Imperator Vek'lor",
+      "en": "Emperor Vek'lor"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.vest_of_swift_execution",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21680",
+    "source_name": {
+      "de": "Lord Kri",
+      "en": "Lord Kri"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.wand_of_qiraji_nobility",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21603",
+    "source_name": {
+      "de": "Lord Kri",
+      "en": "Lord Kri"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.wasphide_gauntlets",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21617",
+    "source_name": {
+      "de": "Prinzessin Huhuran",
+      "en": "Princess Huhuran"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.wormscale_blocker",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21610",
+    "source_name": {
+      "de": "Ouro",
+      "en": "Ouro"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.ahn_qiraj.yellow_qiraji_resonating_crystal",
+    "instance_id": "instance.ahn_qiraj",
+    "item_id": "item.21324",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
     "id": "drop.blackfathom_deeps.algae_fists",
     "instance_id": "instance.blackfathom_deeps",
     "item_id": "item.6906",
@@ -4332,6 +5712,1602 @@
     "include_in_hardcore_quiz": true
   },
   {
+    "id": "drop.blackwing_lair.aegis_of_preservation",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19345",
+    "source_name": {
+      "de": "Schattenschwinge",
+      "en": "Ebonroc"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.angelista_s_grasp",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19388",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.arcane_infused_gem",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19336",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.archimtiros_ring_of_reckoning",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19376",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.ashjre_thul_crossbow_of_smiting",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19361",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.ashkandi_greatsword_of_the_brotherhood",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19364",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.band_of_dark_dominion",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19434",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.band_of_forced_concentration",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19403",
+    "source_name": {
+      "de": "Schattenschwinge",
+      "en": "Ebonroc"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.belt_of_ten_storms",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16944",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.belt_of_transcendence",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16925",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.bindings_of_transcendence",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16926",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.black_ash_robe",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19399",
+    "source_name": {
+      "de": "Feuerschwinge",
+      "en": "Firemaw"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.black_brood_pauldrons",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19373",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.bloodfang_belt",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16910",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.bloodfang_boots",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16906",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.bloodfang_bracers",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16911",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.bloodfang_chestpiece",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16905",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.bloodfang_gloves",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16907",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.bloodfang_spaulders",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16832",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.boots_of_pure_thought",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19437",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.boots_of_the_shadow_flame",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19381",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.boots_of_transcendence",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16919",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.bracelets_of_wrath",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16959",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.bracers_of_arcane_accuracy",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19374",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.bracers_of_ten_storms",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16943",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.breastplate_of_ten_storms",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16950",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.breastplate_of_wrath",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16966",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.chromatic_boots",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19387",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.chromatically_tempered_sword",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19352",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.circle_of_applied_force",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19432",
+    "source_name": {
+      "de": "Flammenmaul",
+      "en": "Flamegor"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.claw_of_chromaggus",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19347",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.claw_of_the_black_drake",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19365",
+    "source_name": {
+      "de": "Feuerschwinge",
+      "en": "Firemaw"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.cloak_of_draconic_might",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19436",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.cloak_of_firemaw",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19398",
+    "source_name": {
+      "de": "Feuerschwinge",
+      "en": "Firemaw"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.cloak_of_the_brood_lord",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19378",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.crul_shorukh_edge_of_chaos",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19363",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.doom_s_edge",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19362",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.draconic_avenger",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19354",
+    "source_name": {
+      "de": "Wyrmwache der Todeskrallen",
+      "en": "Death Talon Wyrmguard"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.draconic_maul",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19358",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.dragon_s_touch",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19367",
+    "source_name": {
+      "de": "Flammenmaul",
+      "en": "Flamegor"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.dragonbreath_hand_cannon",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19368",
+    "source_name": {
+      "de": "Schattenschwinge",
+      "en": "Ebonroc"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.dragonfang_blade",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19346",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.dragonstalker_s_belt",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16936",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.dragonstalker_s_bracers",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16935",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.dragonstalker_s_breastplate",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16942",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.dragonstalker_s_gauntlets",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16940",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.dragonstalker_s_greaves",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16941",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.dragonstalker_s_spaulders",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16937",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.drake_fang_talisman",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19406",
+    "source_name": {
+      "de": "Schattenschwinge",
+      "en": "Ebonroc"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.drake_talon_cleaver",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19353",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.drake_talon_pauldrons",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19394",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.ebony_flame_gloves",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19407",
+    "source_name": {
+      "de": "Schattenschwinge",
+      "en": "Ebonroc"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.elementium_ore",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.18562",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.elementium_reinforced_bulwark",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19349",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.elementium_threaded_cloak",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19386",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.emberweave_leggings",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19433",
+    "source_name": {
+      "de": "Flammenmaul",
+      "en": "Flamegor"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.empowered_leggings",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19385",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.epaulets_of_ten_storms",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16945",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.essence_gatherer",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19435",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.firemaw_s_clutch",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19400",
+    "source_name": {
+      "de": "Feuerschwinge",
+      "en": "Firemaw"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.gauntlets_of_ten_storms",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16948",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.gauntlets_of_wrath",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16964",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.girdle_of_the_fallen_crusader",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19392",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.gloves_of_rapid_evolution",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19369",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.greaves_of_ten_storms",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16949",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.handguards_of_transcendence",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16920",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.heartstriker",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19350",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.helm_of_endless_rage",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19372",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.herald_of_woe",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19357",
+    "source_name": {
+      "de": "Flammenmaul",
+      "en": "Flamegor"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.interlaced_shadow_jerkin",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19439",
+    "source_name": {
+      "de": "Wyrmwache der Todeskrallen",
+      "en": "Death Talon Wyrmguard"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.judgement_belt",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16952",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.judgement_bindings",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16951",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.judgement_breastplate",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16958",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.judgement_gauntlets",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16956",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.judgement_sabatons",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16957",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.judgement_spaulders",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16953",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.legguards_of_the_fallen_crusader",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19402",
+    "source_name": {
+      "de": "Feuerschwinge",
+      "en": "Firemaw"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.lifegiving_gem",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19341",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.lok_amir_il_romathis",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19360",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.maladath_runed_blade_of_the_black_flight",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19351",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.malfurion_s_blessed_bulwark",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19405",
+    "source_name": {
+      "de": "Schattenschwinge",
+      "en": "Ebonroc"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.mantle_of_the_blackwing_cabal",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19370",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.mind_quickening_gem",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19339",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.mish_undare_circlet_of_the_mind_flayer",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19375",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.natural_alignment_crystal",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19344",
+    "source_name": {
+      "de": "Feuerschwinge",
+      "en": "Firemaw"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.neltharion_s_tear",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19379",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.nemesis_belt",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16933",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.nemesis_boots",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16927",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.nemesis_bracers",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16934",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.nemesis_gloves",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16928",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.nemesis_robes",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16931",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.nemesis_spaulders",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16932",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.netherwind_belt",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16818",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.netherwind_bindings",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16918",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.netherwind_boots",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16912",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.netherwind_gloves",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16913",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.netherwind_mantle",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16917",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.netherwind_robes",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16916",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.pauldrons_of_transcendence",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16924",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.pauldrons_of_wrath",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16961",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.pendant_of_the_fallen_dragon",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19371",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.prestor_s_talisman_of_connivery",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19377",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.primalist_s_linked_legguards",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19401",
+    "source_name": {
+      "de": "Feuerschwinge",
+      "en": "Firemaw"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.primalist_s_linked_waistguard",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19393",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.pure_elementium_band",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19382",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.red_dragonscale_protector",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19348",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.rejuvenating_gem",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19395",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.ring_of_blackrock",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19397",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.ringo_s_blizzard_boots",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19438",
+    "source_name": {
+      "de": "Wyrmwache der Todeskrallen",
+      "en": "Death Talon Wyrmguard"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.robes_of_transcendence",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16923",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.rune_of_metamorphosis",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19340",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.sabatons_of_wrath",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16965",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.scrolls_of_blinding_light",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19343",
+    "source_name": {
+      "de": "Feuerschwinge",
+      "en": "Firemaw"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.shadow_wing_focus_staff",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19355",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.shimmering_geta",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19391",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.shroud_of_pure_thought",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19430",
+    "source_name": {
+      "de": "Flammenmaul",
+      "en": "Flamegor"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.spineshatter",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19335",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.staff_of_the_shadow_flame",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19356",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.stormrage_belt",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16903",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.stormrage_boots",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16898",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.stormrage_bracers",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16904",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.stormrage_chestguard",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16897",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.stormrage_handguards",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16899",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.stormrage_pauldrons",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16902",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.styleen_s_impeding_scarab",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19431",
+    "source_name": {
+      "de": "Flammenmaul",
+      "en": "Flamegor"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.taut_dragonhide_belt",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19396",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.taut_dragonhide_gloves",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19390",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.taut_dragonhide_shoulderpads",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19389",
+    "source_name": {
+      "de": "Chromaggus",
+      "en": "Chromaggus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.the_black_book",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19337",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.the_untamed_blade",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19334",
+    "source_name": {
+      "de": "Razorgore der Ungezähmte",
+      "en": "Razorgore the Untamed"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.therazane_s_link",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19380",
+    "source_name": {
+      "de": "Nefarian",
+      "en": "Nefarian"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.venomous_totem",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.19342",
+    "source_name": {
+      "de": "Brutwächter Dreschbringer",
+      "en": "Broodlord Lashlayer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.blackwing_lair.waistband_of_wrath",
+    "instance_id": "instance.blackwing_lair",
+    "item_id": "item.16960",
+    "source_name": {
+      "de": "Vaelastrasz der Verdorbene",
+      "en": "Vaelastrasz the Corrupt"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
     "id": "drop.dire_maul.ace_of_warlords",
     "instance_id": "instance.dire_maul",
     "item_id": "item.19258",
@@ -7238,6 +10214,3198 @@
     "source_name": {
       "de": "Schlingwurzler",
       "en": "Razorlash"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.aged_core_leather_gloves",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18823",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.arcanist_belt",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16802",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.arcanist_bindings",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16799",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.arcanist_boots",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16800",
+    "source_name": {
+      "de": "Lucifron",
+      "en": "Lucifron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.arcanist_crown",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16795",
+    "source_name": {
+      "de": "Garr",
+      "en": "Garr"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.arcanist_gloves",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16801",
+    "source_name": {
+      "de": "Shazzrah",
+      "en": "Shazzrah"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.arcanist_leggings",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16796",
+    "source_name": {
+      "de": "Magmadar",
+      "en": "Magmadar"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.arcanist_mantle",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16797",
+    "source_name": {
+      "de": "Baron Geddon",
+      "en": "Baron Geddon"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.arcanist_robes",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16798",
+    "source_name": {
+      "de": "Golemagg der Verbrenner",
+      "en": "Golemagg the Incinerator"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.aurastone_hammer",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17105",
+    "source_name": {
+      "de": "Garr",
+      "en": "Garr"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.azuresong_mageblade",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17103",
+    "source_name": {
+      "de": "Golemagg der Verbrenner",
+      "en": "Golemagg the Incinerator"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.band_of_accuria",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17063",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.band_of_sulfuras",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.19138",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.belt_of_might",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16864",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.blastershot_launcher",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17072",
+    "source_name": {
+      "de": "Golemagg der Verbrenner",
+      "en": "Golemagg the Incinerator"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.bloodfang_pants",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16909",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.bonereaver_s_edge",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17076",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.boots_of_prophecy",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16811",
+    "source_name": {
+      "de": "Shazzrah",
+      "en": "Shazzrah"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.bracers_of_might",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16861",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.breastplate_of_might",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16865",
+    "source_name": {
+      "de": "Golemagg der Verbrenner",
+      "en": "Golemagg the Incinerator"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.brutality_blade",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18832",
+    "source_name": {
+      "de": "Garr",
+      "en": "Garr"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.cenarion_belt",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16828",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.cenarion_boots",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16829",
+    "source_name": {
+      "de": "Lucifron",
+      "en": "Lucifron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.cenarion_bracers",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16830",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.cenarion_gloves",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16831",
+    "source_name": {
+      "de": "Shazzrah",
+      "en": "Shazzrah"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.cenarion_helm",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16834",
+    "source_name": {
+      "de": "Garr",
+      "en": "Garr"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.cenarion_leggings",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16835",
+    "source_name": {
+      "de": "Magmadar",
+      "en": "Magmadar"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.cenarion_spaulders",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16836",
+    "source_name": {
+      "de": "Baron Geddon",
+      "en": "Baron Geddon"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.cenarion_vestments",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16833",
+    "source_name": {
+      "de": "Golemagg der Verbrenner",
+      "en": "Golemagg the Incinerator"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.choker_of_enlightenment",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17109",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.choker_of_the_fire_lord",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18814",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.circlet_of_prophecy",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16813",
+    "source_name": {
+      "de": "Garr",
+      "en": "Garr"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.cloak_of_the_shrouded_mists",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17102",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.crimson_shocker",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17077",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.crown_of_destruction",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18817",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.deep_earth_spaulders",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18829",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.draconic_for_dummies",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.21110",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.dragon_s_blood_cape",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17107",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.dragonstalker_s_legguards",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16938",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.drillborer_disk",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17066",
+    "source_name": {
+      "de": "Garr",
+      "en": "Garr"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.earthfury_belt",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16838",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.earthfury_boots",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16837",
+    "source_name": {
+      "de": "Lucifron",
+      "en": "Lucifron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.earthfury_bracers",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16840",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.earthfury_epaulets",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16844",
+    "source_name": {
+      "de": "Baron Geddon",
+      "en": "Baron Geddon"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.earthfury_gauntlets",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16839",
+    "source_name": {
+      "de": "Gehennas",
+      "en": "Gehennas"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.earthfury_helmet",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16842",
+    "source_name": {
+      "de": "Garr",
+      "en": "Garr"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.earthfury_legguards",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16843",
+    "source_name": {
+      "de": "Magmadar",
+      "en": "Magmadar"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.earthfury_vestments",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16841",
+    "source_name": {
+      "de": "Golemagg der Verbrenner",
+      "en": "Golemagg the Incinerator"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.earthshaker",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17073",
+    "source_name": {
+      "de": "Magmadar",
+      "en": "Magmadar"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.eskhandar_s_right_claw",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18203",
+    "source_name": {
+      "de": "Magmadar",
+      "en": "Magmadar"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.essence_of_the_pure_flame",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18815",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.eye_of_sulfuras",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17204",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.felheart_belt",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16806",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.felheart_bracers",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16804",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.felheart_gloves",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16805",
+    "source_name": {
+      "de": "Lucifron",
+      "en": "Lucifron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.felheart_horns",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16808",
+    "source_name": {
+      "de": "Garr",
+      "en": "Garr"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.felheart_pants",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16810",
+    "source_name": {
+      "de": "Magmadar",
+      "en": "Magmadar"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.felheart_robes",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16809",
+    "source_name": {
+      "de": "Golemagg der Verbrenner",
+      "en": "Golemagg the Incinerator"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.felheart_shoulder_pads",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16807",
+    "source_name": {
+      "de": "Baron Geddon",
+      "en": "Baron Geddon"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.felheart_slippers",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16803",
+    "source_name": {
+      "de": "Shazzrah",
+      "en": "Shazzrah"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.fire_runed_grimoire",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.19142",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.flameguard_gauntlets",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.19143",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.flamewaker_legplates",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18861",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.gauntlets_of_might",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16863",
+    "source_name": {
+      "de": "Lucifron",
+      "en": "Lucifron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.giantstalker_s_belt",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16851",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.giantstalker_s_boots",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16849",
+    "source_name": {
+      "de": "Gehennas",
+      "en": "Gehennas"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.giantstalker_s_bracers",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16850",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.giantstalker_s_breastplate",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16845",
+    "source_name": {
+      "de": "Golemagg der Verbrenner",
+      "en": "Golemagg the Incinerator"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.giantstalker_s_epaulets",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16848",
+    "source_name": {
+      "de": "Sulfuronherold",
+      "en": "Sulfuron Harbinger"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.giantstalker_s_gloves",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16852",
+    "source_name": {
+      "de": "Shazzrah",
+      "en": "Shazzrah"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.giantstalker_s_helmet",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16846",
+    "source_name": {
+      "de": "Garr",
+      "en": "Garr"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.giantstalker_s_leggings",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16847",
+    "source_name": {
+      "de": "Magmadar",
+      "en": "Magmadar"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.girdle_of_prophecy",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16817",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.gloves_of_prophecy",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16812",
+    "source_name": {
+      "de": "Gehennas",
+      "en": "Gehennas"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.gutgore_ripper",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17071",
+    "source_name": {
+      "de": "Garr",
+      "en": "Garr"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.heavy_dark_iron_ring",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18879",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.helm_of_might",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16866",
+    "source_name": {
+      "de": "Garr",
+      "en": "Garr"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.helm_of_the_lifegiver",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18870",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.judgement_legplates",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16954",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.lawbringer_belt",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16858",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.lawbringer_boots",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16859",
+    "source_name": {
+      "de": "Lucifron",
+      "en": "Lucifron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.lawbringer_bracers",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16857",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.lawbringer_chestguard",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16853",
+    "source_name": {
+      "de": "Golemagg der Verbrenner",
+      "en": "Golemagg the Incinerator"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.lawbringer_gauntlets",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16860",
+    "source_name": {
+      "de": "Gehennas",
+      "en": "Gehennas"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.lawbringer_helm",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16854",
+    "source_name": {
+      "de": "Garr",
+      "en": "Garr"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.lawbringer_legplates",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16855",
+    "source_name": {
+      "de": "Magmadar",
+      "en": "Magmadar"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.lawbringer_spaulders",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16856",
+    "source_name": {
+      "de": "Baron Geddon",
+      "en": "Baron Geddon"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.leggings_of_transcendence",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16922",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.legplates_of_might",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16867",
+    "source_name": {
+      "de": "Magmadar",
+      "en": "Magmadar"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.legplates_of_ten_storms",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16946",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.legplates_of_wrath",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16962",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.magma_tempered_boots",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18824",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.malistar_s_defender",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17106",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.mana_igniting_cord",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.19136",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.manastorm_leggings",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18872",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.mantle_of_prophecy",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16816",
+    "source_name": {
+      "de": "Sulfuronherold",
+      "en": "Sulfuron Harbinger"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.medallion_of_steadfast_might",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17065",
+    "source_name": {
+      "de": "Magmadar",
+      "en": "Magmadar"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.nemesis_leggings",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16930",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.netherwind_pants",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16915",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.nightslayer_belt",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16827",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.nightslayer_boots",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16824",
+    "source_name": {
+      "de": "Shazzrah",
+      "en": "Shazzrah"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.nightslayer_bracelets",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16825",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.nightslayer_chestpiece",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16820",
+    "source_name": {
+      "de": "Golemagg der Verbrenner",
+      "en": "Golemagg the Incinerator"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.nightslayer_cover",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16821",
+    "source_name": {
+      "de": "Garr",
+      "en": "Garr"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.nightslayer_gloves",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16826",
+    "source_name": {
+      "de": "Gehennas",
+      "en": "Gehennas"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.nightslayer_pants",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16822",
+    "source_name": {
+      "de": "Magmadar",
+      "en": "Magmadar"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.nightslayer_shoulder_pads",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16823",
+    "source_name": {
+      "de": "Sulfuronherold",
+      "en": "Sulfuron Harbinger"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.obsidian_edged_blade",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18822",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.onslaught_girdle",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.19137",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.pants_of_prophecy",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16814",
+    "source_name": {
+      "de": "Magmadar",
+      "en": "Magmadar"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.pattern_flarecore_wraps",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18265",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.pauldrons_of_might",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16868",
+    "source_name": {
+      "de": "Sulfuronherold",
+      "en": "Sulfuron Harbinger"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.perdition_s_blade",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18816",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.quick_strike_ring",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18821",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.recipe_major_rejuvenation_potion",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18257",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.ring_of_spell_power",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.19147",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.robe_of_volatile_power",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.19145",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.robes_of_prophecy",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16815",
+    "source_name": {
+      "de": "Golemagg der Verbrenner",
+      "en": "Golemagg the Incinerator"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.sabatons_of_might",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16862",
+    "source_name": {
+      "de": "Gehennas",
+      "en": "Gehennas"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.sabatons_of_the_flamewalker",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.19144",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.salamander_scale_pants",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18875",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.schematic_biznicks_247x128_accurascope",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18290",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.seal_of_the_archmagus",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17110",
+    "source_name": {
+      "de": "Baron Geddon",
+      "en": "Baron Geddon"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.shadowstrike",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17074",
+    "source_name": {
+      "de": "Sulfuronherold",
+      "en": "Sulfuron Harbinger"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.shard_of_the_flame",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17082",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.sorcerous_dagger",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18878",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.spinal_reaper",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17104",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.staff_of_dominance",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18842",
+    "source_name": {
+      "de": "Golemagg der Verbrenner",
+      "en": "Golemagg the Incinerator"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.stormrage_legguards",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16901",
+    "source_name": {
+      "de": "Ragnaros",
+      "en": "Ragnaros"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.striker_s_mark",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17069",
+    "source_name": {
+      "de": "Magmadar",
+      "en": "Magmadar"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.sulfuron_ingot",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.17203",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.talisman_of_ephemeral_power",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.18820",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.tome_of_tranquilizing_shot",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16665",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.vambraces_of_prophecy",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.16819",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.molten_core.wristguards_of_stability",
+    "instance_id": "instance.molten_core",
+    "item_id": "item.19146",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.band_of_reanimation",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22961",
+    "source_name": {
+      "de": "Flickwerk",
+      "en": "Patchwerk"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.band_of_the_inevitable",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23031",
+    "source_name": {
+      "de": "Noth der Seuchenfürst",
+      "en": "Noth the Plaguebringer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.band_of_unanswered_prayers",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22939",
+    "source_name": {
+      "de": "Anub'Rekhan",
+      "en": "Anub'Rekhan"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.band_of_unnatural_forces",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23038",
+    "source_name": {
+      "de": "Loatheb",
+      "en": "Loatheb"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.belt_of_the_grand_crusader",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23666",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.bonescythe_ring",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23060",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.boots_of_displacement",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23073",
+    "source_name": {
+      "de": "Gothik der Seelenjäger",
+      "en": "Gothik the Harvester"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.brimstone_staff",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22800",
+    "source_name": {
+      "de": "Loatheb",
+      "en": "Loatheb"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.claw_of_the_frost_wyrm",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23242",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.claymore_of_unholy_might",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22813",
+    "source_name": {
+      "de": "Gluth",
+      "en": "Gluth"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.cloak_of_suturing",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22960",
+    "source_name": {
+      "de": "Flickwerk",
+      "en": "Patchwerk"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.cloak_of_the_necropolis",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23050",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.cloak_of_the_scourge",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23030",
+    "source_name": {
+      "de": "Noth der Seuchenfürst",
+      "en": "Noth the Plaguebringer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.cryptfiend_silk_cloak",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22938",
+    "source_name": {
+      "de": "Anub'Rekhan",
+      "en": "Anub'Rekhan"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.crystal_webbed_robe",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23220",
+    "source_name": {
+      "de": "Maexxna",
+      "en": "Maexxna"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.death_s_bargain",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23075",
+    "source_name": {
+      "de": "Gluth",
+      "en": "Gluth"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_belt",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22370",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_bindings",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22369",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_boots",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22365",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_bracers",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22355",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_circlet",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22367",
+    "source_name": {
+      "de": "Thaddius",
+      "en": "Thaddius"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_gauntlets",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22357",
+    "source_name": {
+      "de": "Maexxna",
+      "en": "Maexxna"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_girdle",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22363",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_gloves",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22371",
+    "source_name": {
+      "de": "Maexxna",
+      "en": "Maexxna"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_handguards",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22364",
+    "source_name": {
+      "de": "Maexxna",
+      "en": "Maexxna"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_headpiece",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22360",
+    "source_name": {
+      "de": "Thaddius",
+      "en": "Thaddius"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_helmet",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22353",
+    "source_name": {
+      "de": "Thaddius",
+      "en": "Thaddius"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_leggings",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22366",
+    "source_name": {
+      "de": "Loatheb",
+      "en": "Loatheb"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_legguards",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22359",
+    "source_name": {
+      "de": "Loatheb",
+      "en": "Loatheb"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_legplates",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22352",
+    "source_name": {
+      "de": "Loatheb",
+      "en": "Loatheb"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_pauldrons",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22354",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_sabatons",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22358",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_sandals",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22372",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_shoulderpads",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22368",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_spaulders",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22361",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_waistguard",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22356",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.desecrated_wristguards",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22362",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.digested_hand_of_power",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22994",
+    "source_name": {
+      "de": "Gluth",
+      "en": "Gluth"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.doomfinger",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22821",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.eye_of_diminution",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23001",
+    "source_name": {
+      "de": "Thaddius",
+      "en": "Thaddius"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.eye_of_the_dead",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23047",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.fortitude_of_the_scourge",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23549",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.frostfire_ring",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23062",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.frozen_rune",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22682",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.gem_of_nerubis",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22937",
+    "source_name": {
+      "de": "Anub'Rekhan",
+      "en": "Anub'Rekhan"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.gem_of_trapped_innocents",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23057",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.ghoul_skin_tunic",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23226",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.girdle_of_elemental_fury",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23663",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.girdle_of_the_mentor",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23219",
+    "source_name": {
+      "de": "Instrukteur Razuvious",
+      "en": "Instructor Razuvious"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.glacial_headdress",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23032",
+    "source_name": {
+      "de": "Gothik der Seelenjäger",
+      "en": "Gothik the Harvester"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.glacial_mantle",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22968",
+    "source_name": {
+      "de": "Grobbulus",
+      "en": "Grobbulus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.gluth_s_missing_collar",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22981",
+    "source_name": {
+      "de": "Gluth",
+      "en": "Gluth"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.glyph_of_deflection",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23040",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.gressil_dawn_of_ruin",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23054",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.hailstone_band",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23028",
+    "source_name": {
+      "de": "Noth der Seuchenfürst",
+      "en": "Noth the Plaguebringer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.hammer_of_the_twisting_nether",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23056",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.harbinger_of_doom",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23044",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.hatchet_of_sundered_bone",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22816",
+    "source_name": {
+      "de": "Noth der Seuchenfürst",
+      "en": "Noth the Plaguebringer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.iblis_blade_of_the_fallen_seraph",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23014",
+    "source_name": {
+      "de": "Instrukteur Razuvious",
+      "en": "Instructor Razuvious"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.icebane_helmet",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23019",
+    "source_name": {
+      "de": "Heigan der Unreine",
+      "en": "Heigan the Unclean"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.icebane_pauldrons",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22940",
+    "source_name": {
+      "de": "Großwitwe Faerlina",
+      "en": "Grand Widow Faerlina"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.icy_scale_coif",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23033",
+    "source_name": {
+      "de": "Heigan der Unreine",
+      "en": "Heigan the Unclean"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.icy_scale_spaulders",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22967",
+    "source_name": {
+      "de": "Grobbulus",
+      "en": "Grobbulus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.idol_of_longevity",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23004",
+    "source_name": {
+      "de": "Instrukteur Razuvious",
+      "en": "Instructor Razuvious"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.kingsfall",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22802",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.kiss_of_the_spider",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22954",
+    "source_name": {
+      "de": "Maexxna",
+      "en": "Maexxna"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.leggings_of_elemental_fury",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23665",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.leggings_of_polarity",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23070",
+    "source_name": {
+      "de": "Thaddius",
+      "en": "Thaddius"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.leggings_of_the_grand_crusader",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23668",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.legplates_of_carnage",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23068",
+    "source_name": {
+      "de": "Heigan der Unreine",
+      "en": "Heigan the Unclean"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.libram_of_light",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23006",
+    "source_name": {
+      "de": "Noth der Seuchenfürst",
+      "en": "Noth the Plaguebringer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.loatheb_s_reflection",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23042",
+    "source_name": {
+      "de": "Loatheb",
+      "en": "Loatheb"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.maexxna_s_fang",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22804",
+    "source_name": {
+      "de": "Maexxna",
+      "en": "Maexxna"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.malice_stone_pendant",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22943",
+    "source_name": {
+      "de": "Großwitwe Faerlina",
+      "en": "Grand Widow Faerlina"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.midnight_haze",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22803",
+    "source_name": {
+      "de": "Grobbulus",
+      "en": "Grobbulus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.might_of_menethil",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22798",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.might_of_the_scourge",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23548",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.misplaced_servo_arm",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23221",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.necklace_of_necropsy",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23036",
+    "source_name": {
+      "de": "Heigan der Unreine",
+      "en": "Heigan the Unclean"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.necro_knight_s_garb",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23069",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.nerubian_slavemaker",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22812",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.noth_s_frigid_heart",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23029",
+    "source_name": {
+      "de": "Noth der Seuchenfürst",
+      "en": "Noth the Plaguebringer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.pauldrons_of_elemental_fury",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23664",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.pendant_of_forgotten_names",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22947",
+    "source_name": {
+      "de": "Maexxna",
+      "en": "Maexxna"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.plagueheart_ring",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23063",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.plated_abomination_ribcage",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23000",
+    "source_name": {
+      "de": "Thaddius",
+      "en": "Thaddius"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.polar_helmet",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23020",
+    "source_name": {
+      "de": "Gothik der Seelenjäger",
+      "en": "Gothik the Harvester"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.polar_shoulder_pads",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22941",
+    "source_name": {
+      "de": "Großwitwe Faerlina",
+      "en": "Grand Widow Faerlina"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.power_of_the_scourge",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23545",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.preceptor_s_hat",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23035",
+    "source_name": {
+      "de": "Heigan der Unreine",
+      "en": "Heigan the Unclean"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.resilience_of_the_scourge",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23547",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.rime_covered_mantle",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22983",
+    "source_name": {
+      "de": "Gluth",
+      "en": "Gluth"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.ring_of_faith",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23061",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.ring_of_redemption",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23066",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.ring_of_spiritual_fervor",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23037",
+    "source_name": {
+      "de": "Loatheb",
+      "en": "Loatheb"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.ring_of_the_cryptstalker",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23067",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.ring_of_the_dreadnaught",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23059",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.ring_of_the_dreamwalker",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23064",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.ring_of_the_earthshatterer",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23065",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.ring_of_the_eternal_flame",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23237",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.sadist_s_collar",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23023",
+    "source_name": {
+      "de": "Gothik der Seelenjäger",
+      "en": "Gothik the Harvester"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.sapphiron_s_left_eye",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23049",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.sapphiron_s_right_eye",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23048",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.severance",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22815",
+    "source_name": {
+      "de": "Flickwerk",
+      "en": "Patchwerk"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.shield_of_condemnation",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22819",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.shroud_of_dominion",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23045",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.signet_of_the_fallen_defender",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23018",
+    "source_name": {
+      "de": "Instrukteur Razuvious",
+      "en": "Instructor Razuvious"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.slayer_s_crest",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23041",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.soulseeker",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22799",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.spaulders_of_the_grand_crusader",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23667",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.spire_of_twilight",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22801",
+    "source_name": {
+      "de": "Thaddius",
+      "en": "Thaddius"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.stormrage_s_talisman_of_seething",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23053",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.stygian_buckler",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23238",
+    "source_name": {
+      "de": "",
+      "en": ""
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.the_castigator",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22808",
+    "source_name": {
+      "de": "Thaddius",
+      "en": "Thaddius"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.the_end_of_dreams",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22988",
+    "source_name": {
+      "de": "Grobbulus",
+      "en": "Grobbulus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.the_eye_of_nerub",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23039",
+    "source_name": {
+      "de": "Loatheb",
+      "en": "Loatheb"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.the_face_of_death",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23043",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.the_hungering_cold",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23577",
+    "source_name": {
+      "de": "Kel'Thuzad",
+      "en": "Kel'Thuzad"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.the_plague_bearer",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22818",
+    "source_name": {
+      "de": "Flickwerk",
+      "en": "Patchwerk"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.the_restrained_essence_of_sapphiron",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23046",
+    "source_name": {
+      "de": "Saphiron",
+      "en": "Sapphiron"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.the_soul_harvester_s_bindings",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23021",
+    "source_name": {
+      "de": "Gothik der Seelenjäger",
+      "en": "Gothik the Harvester"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.the_widow_s_embrace",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22942",
+    "source_name": {
+      "de": "Großwitwe Faerlina",
+      "en": "Grand Widow Faerlina"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.totem_of_flowing_water",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23005",
+    "source_name": {
+      "de": "Noth der Seuchenfürst",
+      "en": "Noth the Plaguebringer"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.touch_of_frost",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22935",
+    "source_name": {
+      "de": "Anub'Rekhan",
+      "en": "Anub'Rekhan"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.toxin_injector",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22810",
+    "source_name": {
+      "de": "Grobbulus",
+      "en": "Grobbulus"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.veil_of_eclipse",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23017",
+    "source_name": {
+      "de": "Instrukteur Razuvious",
+      "en": "Instructor Razuvious"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.wand_of_fates",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22820",
+    "source_name": {
+      "de": "Flickwerk",
+      "en": "Patchwerk"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.wand_of_the_whispering_dead",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.23009",
+    "source_name": {
+      "de": "Instrukteur Razuvious",
+      "en": "Instructor Razuvious"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.widow_s_remorse",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22806",
+    "source_name": {
+      "de": "Großwitwe Faerlina",
+      "en": "Grand Widow Faerlina"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.wraith_blade",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22807",
+    "source_name": {
+      "de": "Maexxna",
+      "en": "Maexxna"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.naxxramas.wristguards_of_vengeance",
+    "instance_id": "instance.naxxramas",
+    "item_id": "item.22936",
+    "source_name": {
+      "de": "Anub'Rekhan",
+      "en": "Anub'Rekhan"
     },
     "mode": "normal",
     "season": "classic_era",
@@ -14230,6 +20398,78 @@
     "source_name": {
       "de": "Hexendoktor Zum'rah",
       "en": "Witch Doctor Zum'rah"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.zul_gurub.gri_lek_s_carver",
+    "instance_id": "instance.zul_gurub",
+    "item_id": "item.19962",
+    "source_name": {
+      "de": "Gri'lek",
+      "en": "Gri'lek"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.zul_gurub.gri_lek_s_grinder",
+    "instance_id": "instance.zul_gurub",
+    "item_id": "item.19961",
+    "source_name": {
+      "de": "Gri'lek",
+      "en": "Gri'lek"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.zul_gurub.hoodoo_hunting_bow",
+    "instance_id": "instance.zul_gurub",
+    "item_id": "item.19993",
+    "source_name": {
+      "de": "Wushoolay",
+      "en": "Wushoolay"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.zul_gurub.pitchfork_of_madness",
+    "instance_id": "instance.zul_gurub",
+    "item_id": "item.19963",
+    "source_name": {
+      "de": "Renataki",
+      "en": "Renataki"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.zul_gurub.renataki_s_soul_conduit",
+    "instance_id": "instance.zul_gurub",
+    "item_id": "item.19964",
+    "source_name": {
+      "de": "Renataki",
+      "en": "Renataki"
+    },
+    "mode": "normal",
+    "season": "classic_era",
+    "include_in_hardcore_quiz": true
+  },
+  {
+    "id": "drop.zul_gurub.wushoolay_s_poker",
+    "instance_id": "instance.zul_gurub",
+    "item_id": "item.19965",
+    "source_name": {
+      "de": "Wushoolay",
+      "en": "Wushoolay"
     },
     "mode": "normal",
     "season": "classic_era",

@@ -85,7 +85,8 @@ class QuestionRestorer:
             embed.set_footer(text="Klicke auf 'Antworten', um zu antworten.")
 
             view = AnswerButtonView(
-                area=area, correct_answers=correct_answers, cog=self.bot.quiz_cog
+                area=area, correct_answers=correct_answers, cog=self.bot.quiz_cog,
+                difficulty=qinfo.difficulty,
             )
             await msg.edit(embed=embed, view=view)
 
@@ -96,6 +97,7 @@ class QuestionRestorer:
                 answers=correct_answers,
                 frage=frage_text,
                 category=category,
+                difficulty=qinfo.difficulty,
             )
             self.bot.quiz_cog.answered_users[area].clear()
 

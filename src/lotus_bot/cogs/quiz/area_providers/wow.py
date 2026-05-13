@@ -5,10 +5,37 @@ from typing import Any
 from lotus_bot.log_setup import get_logger
 
 from ..utils import create_permutations_list
-from .base import DynamicQuestionProvider
+from .base import DynamicQuestionProvider, question_matches_context
 from .wow_audit import has_quality_flag
 
 logger = get_logger(__name__)
+
+# Weights ≈ sqrt of expected unique question pool per type.
+# Keeps small-pool types (race_faction=8 combos) from appearing as often as
+# large-pool types (drop_instance=1600+ combos), so no type repeats noticeably
+# faster than any other relative to its pool size.
+QUESTION_TYPE_WEIGHTS: dict[str, int] = {
+    "generate_race_faction": 1,
+    "generate_racial_trait_description": 3,
+    "generate_race_class_allowed": 4,
+    "generate_class_power_type": 1,
+    "generate_talent_tree": 8,
+    "generate_talent_class": 8,
+    "generate_talent_description": 6,
+    "generate_ability_class": 6,
+    "generate_ability_required_level": 5,
+    "generate_ability_description": 5,
+    "generate_zone_continent": 3,
+    "generate_zone_level_fit": 3,
+    "generate_zone_type": 3,
+    "generate_instance_level_fit": 2,
+    "generate_instance_players": 2,
+    "generate_instance_location": 2,
+    "generate_drop_instance": 12,
+    "generate_drop_source": 10,
+    "generate_item_subclass": 8,
+    "generate_item_required_level": 8,
+}
 
 
 QUALITY_LABELS = {
@@ -286,13 +313,25 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         return drops
 
     def generate(self, context: str = "scheduled"):
-        questions = self.generate_all_types(context=context)
-        if not questions:
-            logger.warning("[WoWQuestionProvider] No valid question generated.")
-            return None
-        question = random.choice(questions)
-        logger.info(f"[WoWQuestionProvider] Generated: {question['frage']}")
-        return question
+        names = self.question_generators
+        weights = [QUESTION_TYPE_WEIGHTS.get(name, 5) for name in names]
+        # Try types in weighted-random order (with replacement, up to len attempts).
+        # The outer QuestionGenerator retry loop handles "already asked" rejection.
+        ordered = random.choices(names, weights=weights, k=len(names))
+        for name in ordered:
+            func = getattr(self, name, None)
+            if func is None:
+                continue
+            try:
+                q = func()
+            except Exception as exc:
+                logger.warning("[WoWQuestionProvider] %s failed: %s", name, exc)
+                continue
+            if q and question_matches_context(q, context):
+                logger.info("[WoWQuestionProvider] Generated (%s): %s", name, q["frage"])
+                return q
+        logger.warning("[WoWQuestionProvider] No valid question generated.")
+        return None
 
     def generate_race_faction(self):
         records = [

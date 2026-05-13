@@ -47,9 +47,9 @@ except ZoneInfoNotFoundError:  # pragma: no cover - depends on host tzdata
     DIGEST_TIMEZONE = datetime.now().astimezone().tzinfo or timezone.utc
 MILESTONE_LEVELS = {30, 40, 50, 60}
 ITEM_LEVEL_MILESTONES = {50, 55, 60, 65, 70, 75}
-ITEM_LEVEL_MILESTONE_POINTS = {50: 1, 55: 1, 60: 2, 65: 3, 70: 5, 75: 8}
-CLAIMED_MILESTONE_POINTS = {30: 2, 40: 3, 50: 5, 60: 10}
-RARE_RECIPE_POINTS = 2
+ITEM_LEVEL_MILESTONE_POINTS = {50: 2, 55: 2, 60: 5, 65: 8, 70: 15, 75: 25}
+CLAIMED_MILESTONE_POINTS = {30: 5, 40: 10, 50: 20, 60: 50}
+RARE_RECIPE_POINTS = 3
 EPIC_RECIPE_POINTS = 5
 REPUTATION_EXALTED_POINTS = 5
 MAX_PRIMARY_PROFESSIONS = 2
@@ -92,26 +92,26 @@ RACE_NAMES_DE = {
     8: "Troll",
 }
 DIGEST_OPENERS = [
-    "🌿 **Black Lotus Tagesbericht**",
+    "🪷 **Black Lotus Tagesbericht**",
     "📜 **Was gestern bei Black Lotus passiert ist**",
     "🌅 **Guten Morgen, Black Lotus**",
     "🪷 **Neues aus der Gilde**",
-    "⚔️ **Unser Hardcore-Tag in Kurzform**",
+    "⚔️ **Unser Hardcore-Tag — kurz zusammengefasst**",
 ]
 DIGEST_POSITIVE_CLOSERS = [
-    "Glückwunsch an alle, die gestern Fortschritt gemacht haben. Weiter sichere Wege!",
-    "Stark gespielt. Mögen die nächsten Pulls sauber bleiben.",
+    "Glückwunsch an alle, die gestern Fortschritt gemacht haben. Weiter so — sichere Wege! 🪷",
+    "Stark gespielt. Mögen die nächsten Pulls genauso sauber laufen.",
     "Black Lotus gratuliert. Heute geht es weiter.",
 ]
 DIGEST_MIXED_CLOSERS = [
-    "Glückwunsch an die Aufsteiger, und Respekt für alle gefallenen Chars.",
-    "Hardcore bleibt gnadenlos. Passt heute gut auf euch auf.",
+    "Glückwunsch an die Aufsteiger — und Respekt für alle gefallenen Chars. 🕯️",
+    "Hardcore bleibt gnadenlos. Passt heute gut aufeinander auf.",
     "Fortschritt und Verluste liegen nah beieinander. Bleibt wachsam da draußen.",
 ]
 DIGEST_DEATH_CLOSERS = [
-    "Ruhe in Frieden. Der nächste Char trägt die Geschichte weiter.",
-    "Hardcore vergisst nichts. Passt heute gut auf euch auf.",
-    "Ein stiller Gruß an die gefallenen Chars.",
+    "Ruhe in Frieden. Der nächste Char trägt die Geschichte weiter. 🕯️",
+    "Hardcore vergisst nichts. Passt heute gut aufeinander auf.",
+    "Ein stiller Gruß an alle gefallenen Chars.",
 ]
 
 
@@ -243,6 +243,7 @@ class WoWCog(ManagedTaskCog):
             self.bot.add_view(WoWPanelView(self))
 
     async def _poll_loop(self) -> None:
+        await self.bot.wait_until_ready()
         while True:
             try:
                 if await self._scheduled_digest_due():
@@ -325,17 +326,17 @@ class WoWCog(ManagedTaskCog):
     def format_panel_content(self) -> str:
         return "\n".join(
             [
-                "**Black Lotus WoW-Hub**",
+                "**🪷 Black Lotus WoW-Hub**",
                 "",
                 (
-                    "Hier kannst du deine WoW-Charaktere verbinden, Berufe pflegen "
-                    "und Crafter in der Gilde finden."
+                    "Hier verbindest du deine Charaktere, pflegst Berufe "
+                    "und findest Crafter in der Gilde."
                 ),
                 "",
-                "**Char claimen** verbindet einen Black-Lotus-Char mit deinem Discord-User.",
-                "**Berufe pflegen** speichert Beruf, Skill und optional Spezialisierung.",
-                "**Rezepte pflegen** speichert gelernte Spezialrezepte.",
-                "**Crafter suchen** zeigt, wer ein Item herstellen kann.",
+                "**Char claimen** — verbinde deinen Black-Lotus-Char mit deinem Discord-Account.",
+                "**Berufe pflegen** — trage Beruf, Skill und Spezialisierung ein.",
+                "**Rezepte pflegen** — halte deine gelernten Spezialrezepte aktuell.",
+                "**Crafter suchen** — finde, wer in der Gilde ein bestimmtes Item herstellen kann.",
             ]
         )
 
@@ -689,11 +690,22 @@ class WoWCog(ManagedTaskCog):
         standing = str(reputation.get("standing") or "").casefold()
         return standing in {"exalted", "ehrfuerchtig", "ehrfürchtig"}
 
+    def _item_level_lookup(self) -> dict[int, int]:
+        if not hasattr(self, "_item_level_cache"):
+            self._item_level_cache: dict[int, int] = {
+                item["wowhead_id"]: item["item_level"]
+                for item in self._wow_records("items")
+                if isinstance(item.get("wowhead_id"), int)
+                and isinstance(item.get("item_level"), int)
+            }
+        return self._item_level_cache
+
     def _average_equipped_item_level(self, payload: dict) -> tuple[float | None, int]:
         for key in ("equipped_item_level", "average_item_level"):
             value = payload.get(key)
             if isinstance(value, int | float):
                 return float(value), 0
+        lookup = self._item_level_lookup()
         item_levels: list[int] = []
         for item in payload.get("equipped_items") or []:
             if not isinstance(item, dict):
@@ -702,14 +714,19 @@ class WoWCog(ManagedTaskCog):
             slot_type = str(slot.get("type") or slot.get("name") or "").casefold()
             if slot_type in {"shirt", "tabard"}:
                 continue
-            item_level = self._equipment_item_level(item)
+            item_level = self._equipment_item_level(item, lookup)
             if item_level is not None and item_level > 0:
                 item_levels.append(item_level)
         if not item_levels:
             return None, 0
         return sum(item_levels) / len(item_levels), len(item_levels)
 
-    def _equipment_item_level(self, item: dict) -> int | None:
+    def _equipment_item_level(self, item: dict, lookup: dict[int, int] | None = None) -> int | None:
+        blizzard_id = (item.get("item") or {}).get("id")
+        if isinstance(blizzard_id, int) and lookup is not None:
+            ilvl = lookup.get(blizzard_id)
+            if ilvl is not None:
+                return ilvl
         for key in ("item_level", "level"):
             value = item.get(key)
             if isinstance(value, int):
@@ -963,19 +980,18 @@ class WoWCog(ManagedTaskCog):
         gear = self._format_death_gear_suffix(death)
         if not death.confirmed:
             return (
-                f"**{character}** ist auf Level **{level}**{gear} aus dem Roster "
-                "verschwunden und nicht mehr auffindbar. Wahrscheinlich ist die "
-                "Hardcore-Reise hier geendet."
+                f"**{character}** ist auf Level **{level}**{gear} nicht mehr im Roster auffindbar. "
+                "Die Hardcore-Reise endet hier — wahrscheinlich."
             )
         return (
-            f"**{character}** ist auf Level **{level}**{gear} gestorben. "
-            "Ruhe in Frieden."
+            f"**{character}** ist auf Level **{level}**{gear} gefallen. "
+            "Ruhe in Frieden. 🕯️"
         )
 
     async def format_activity_digest(self, activity: ActivityDiff) -> str:
         lines = [random.choice(DIGEST_OPENERS), ""]
         if activity.new_members:
-            lines.append("**Wir wollen ganz herzlich die Neuzugaenge begruessen:**")
+            lines.append("**Herzlich willkommen in der Gilde** 👋")
             for member in sorted(
                 activity.new_members,
                 key=lambda item: (-item.level, item.name.casefold()),
@@ -991,9 +1007,7 @@ class WoWCog(ManagedTaskCog):
                 lines.append(f"- {line}")
             lines.append("")
         if activity.milestones:
-            lines.append(
-                "**Ausserdem haben folgende Charaktere einen Meilenstein erreicht:**"
-            )
+            lines.append("**Glückwunsch zu diesen Meilensteinen** 🏆")
             for milestone in sorted(
                 activity.milestones,
                 key=lambda item: (-item.level, item.member.name.casefold()),
@@ -1009,7 +1023,7 @@ class WoWCog(ManagedTaskCog):
                 lines.append(f"- {line}")
             lines.append("")
         if activity.recipe_events:
-            lines.append("**Folgende seltene Rezepte wurden gelernt:**")
+            lines.append("**Neue seltene Rezepte in der Gilde** 📖")
             for event in sorted(
                 activity.recipe_events,
                 key=lambda item: (
@@ -1022,14 +1036,13 @@ class WoWCog(ManagedTaskCog):
                 recipe_name = self._recipe_name(recipe) if recipe else event.spell_id
                 source = self._recipe_source_label(recipe)
                 lines.append(
-                    f"- **{event.character_name}**, "
-                    f"{self._profession_name(event.profession_id)}: "
-                    f"**{recipe_name}** ({event.rarity}, {source}, "
-                    f"+{event.points} Champion-Punkte)"
+                    f"- **{event.character_name}** ({self._profession_name(event.profession_id)}): "
+                    f"**{recipe_name}** *({event.rarity}, {source})* "
+                    f"— +{event.points} Champion-Punkte"
                 )
             lines.append("")
         if activity.reputation_events:
-            lines.append("**Folgende Ruf-Meilensteine wurden erreicht:**")
+            lines.append("**Ruf-Meilensteine** 🤝")
             for event in sorted(
                 activity.reputation_events,
                 key=lambda item: (
@@ -1043,32 +1056,30 @@ class WoWCog(ManagedTaskCog):
                     else ""
                 )
                 lines.append(
-                    f"- **{event.character_name}** ist bei "
-                    f"**{event.faction_name}** {event.standing}"
+                    f"- **{event.character_name}** hat bei **{event.faction_name}** "
+                    f"den Rang *{event.standing}* erreicht"
                     f"{mention} (+{event.points} Champion-Punkte)"
                 )
             lines.append("")
         if activity.gear_events:
-            lines.append("**Folgende Ausruestungs-Meilensteine wurden erreicht:**")
+            lines.append("**Ausrüstungs-Meilensteine** 🛡️")
             for event in sorted(
                 activity.gear_events,
                 key=lambda item: (-item.threshold, item.character_name.casefold()),
             ):
                 lines.append(
-                    f"- **{event.character_name}** hat ein Ø iLvl von "
+                    f"- **{event.character_name}** hat ein durchschnittliches Itemlevel von "
                     f"**{self._format_item_level(event.average_item_level)}** erreicht "
-                    f"(+{event.points} Champion-Punkte)."
+                    f"(+{event.points} Champion-Punkte)"
                 )
             lines.append("")
         if activity.deaths:
-            lines.append(
-                "**Wir mussten leider Verluste in Kauf nehmen. Gestorben sind:**"
-            )
+            lines.append("**Heute nehmen wir Abschied** 🕯️")
             for death in sorted(
                 activity.deaths,
                 key=lambda item: (-item.member.level, item.member.name.casefold()),
             ):
-                suffix = "" if death.confirmed else " - nicht mehr im Roster auffindbar"
+                suffix = "" if death.confirmed else " — *nicht mehr im Roster, wahrscheinlich auf Reise gegangen*"
                 gear = self._format_death_gear_suffix(death)
                 lines.append(
                     f"- {self._format_roster_line(death.member)}{gear}{suffix}"
@@ -1171,8 +1182,8 @@ class WoWCog(ManagedTaskCog):
 
     def format_claim_review(self, claim: CharacterClaim) -> str:
         return (
-            f"<@{claim.discord_user_id}> hat gerade den Char "
-            f"**{claim.character_name}** geclaimed."
+            f"<@{claim.discord_user_id}> möchte **{claim.character_name}** verbinden "
+            f"— bitte bestätigen oder ablehnen."
         )
 
     def _wow_records(self, table: str) -> list[dict]:
@@ -2522,11 +2533,11 @@ class PanelRecipeProfessionSelectView(discord.ui.View):
 
 class PanelCraftingSearchModal(discord.ui.Modal):
     def __init__(self, cog: WoWCog) -> None:
-        super().__init__(title="Crafter suchen")
+        super().__init__(title="Crafter in der Gilde suchen")
         self.cog = cog
         self.item = discord.ui.TextInput(
-            label="Item",
-            placeholder="z.B. Wuttrank",
+            label="Welches Item brauchst du?",
+            placeholder="z. B. Wuttrank, Klingenstein-Rüstung ...",
             min_length=2,
             max_length=80,
         )
@@ -2557,7 +2568,7 @@ class WoWPanelView(discord.ui.View):
         claims = await self.cog.data.claims_for_user(interaction.user.id)
         if not claims:
             await interaction.response.send_message(
-                "Du hast noch keinen Charakter verbunden. Nutze zuerst **Char claimen**.",
+                "Du hast noch keinen Char verbunden. Starte mit **Char claimen** — dauert nur einen Moment. 🔗",
                 ephemeral=True,
             )
             return
@@ -2591,11 +2602,12 @@ class WoWPanelView(discord.ui.View):
         claims = await self.cog.data.claims_for_user(interaction.user.id)
         if not claims:
             await interaction.response.send_message(
-                "Du hast noch keinen Charakter verbunden.", ephemeral=True
+                "Du hast noch keinen Char verbunden.", ephemeral=True
             )
             return
         lines = [
-            f"- **{claim.character_name}** ({'bestätigt' if claim.status == 'verified' else 'ungeprüft'})"
+            f"{'✅' if claim.status == 'verified' else '🕐'} **{claim.character_name}** "
+            f"*({'bestätigt' if claim.status == 'verified' else 'wartet auf Bestätigung'})*"
             for claim in claims
         ]
         await interaction.response.send_message("\n".join(lines), ephemeral=True)
@@ -2631,7 +2643,7 @@ class WoWPanelView(discord.ui.View):
         await interaction.response.send_modal(PanelCraftingSearchModal(self.cog))
 
     @discord.ui.button(
-        label="Hilfe",
+        label="Hilfe & Übersicht",
         style=discord.ButtonStyle.secondary,
         custom_id="wow_panel:help",
     )
@@ -2642,10 +2654,10 @@ class WoWPanelView(discord.ui.View):
             "\n".join(
                 [
                     "**Kurz erklärt**",
-                    "1. Verbinde zuerst deinen Char über **Char claimen**.",
-                    "2. Pflege danach Berufe und Skill über **Berufe pflegen**.",
-                    "3. Spezialrezepte ergänzt du über **Rezepte pflegen**.",
-                    "4. Über **Crafter suchen** findest du passende Gildenmitglieder.",
+                    "1. Starte mit **Char claimen** — so verbindest du deinen Charakter mit deinem Account.",
+                    "2. Danach trägst du Berufe und Skilllevel über **Berufe pflegen** ein.",
+                    "3. Gelernte Spezialrezepte ergänzt du unter **Rezepte pflegen**.",
+                    "4. Mit **Crafter suchen** findest du passende Gildenmitglieder für dein nächstes Item.",
                 ]
             ),
             ephemeral=True,
@@ -2656,26 +2668,25 @@ def _format_panel_claim_result(result: ClaimResult, requested_name: str) -> str:
     if result.reason == "not_found":
         return (
             f"**{requested_name}** wurde im aktuellen Black-Lotus-Roster "
-            "nicht gefunden."
+            "nicht gefunden. Stimmt die Schreibweise?"
         )
     if result.claim is None:
-        return "Der Charakter konnte nicht verbunden werden."
+        return "Der Charakter konnte gerade nicht verbunden werden. Versuch es gleich nochmal."
     if result.reason == "taken":
         return (
             f"**{result.claim.character_name}** ist bereits mit einem "
-            "Discord-User verbunden."
+            "anderen Discord-Account verbunden."
         )
     if result.reason == "already_own":
-        status = "bestätigt" if result.claim.status == "verified" else "ungeprüft"
+        status = "bestätigt ✅" if result.claim.status == "verified" else "wartet auf Bestätigung 🕐"
         return (
-            f"Du hast **{result.claim.character_name}** bereits verbunden ({status})."
+            f"**{result.claim.character_name}** hast du bereits verbunden — Status: *{status}*"
         )
     warning = (
         "" if result.review_posted else "\nOffi-Review konnte nicht gepostet werden."
     )
     return (
-        f"Gespeichert: **{result.claim.character_name}** ist jetzt mit dir "
-        f"verbunden.{warning}"
+        f"**{result.claim.character_name}** wurde verbunden und wartet auf Bestätigung durch einen Moderator. 🪷{warning}"
     )
 
 
