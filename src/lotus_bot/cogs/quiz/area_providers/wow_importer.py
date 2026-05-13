@@ -16,7 +16,6 @@ from unidecode import unidecode
 from lotus_bot.bot import load_json, load_wow_data
 from lotus_bot.cogs.quiz.area_providers.wow_validation import assert_valid_wow_data
 
-
 WOWHEAD_BASE = "https://www.wowhead.com/classic"
 DEFAULT_DATA_PATH = Path("data/wow/classic_hc")
 DEFAULT_CACHE_PATH = Path("data/pers/wow_import_cache")
@@ -1528,12 +1527,16 @@ def _tree_name(localized: dict[str, str], tree_slug: str) -> dict[str, str]:
     de_title = re.search(r"<title>Classic - (.*?) [^-]+ Talente", localized["de"])
     en_title = re.search(r"<title>Classic - (.*?) [^-]+ Talents", localized["en"])
     return {
-        "de": _clean_text(de_title.group(1))
-        if de_title
-        else tree_slug.replace("-", " ").title(),
-        "en": _clean_text(en_title.group(1))
-        if en_title
-        else tree_slug.replace("-", " ").title(),
+        "de": (
+            _clean_text(de_title.group(1))
+            if de_title
+            else tree_slug.replace("-", " ").title()
+        ),
+        "en": (
+            _clean_text(en_title.group(1))
+            if en_title
+            else tree_slug.replace("-", " ").title()
+        ),
     }
 
 

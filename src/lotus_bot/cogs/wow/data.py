@@ -125,16 +125,13 @@ class WoWData:
         if self._init_done:
             return
         db = await self._get_db()
-        await db.execute(
-            """
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
             )
-            """
-        )
-        await db.execute(
-            """
+            """)
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS roster_snapshot (
                 character_key TEXT PRIMARY KEY,
                 character_id INTEGER,
@@ -148,28 +145,22 @@ class WoWData:
                 is_ghost INTEGER NOT NULL DEFAULT 0,
                 updated_at TEXT NOT NULL
             )
-            """
-        )
-        await db.execute(
-            """
+            """)
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS milestone_events (
                 character_key TEXT NOT NULL,
                 level INTEGER NOT NULL,
                 announced_at TEXT NOT NULL,
                 PRIMARY KEY(character_key, level)
             )
-            """
-        )
-        await db.execute(
-            """
+            """)
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS death_events (
                 character_key TEXT PRIMARY KEY,
                 recorded_at TEXT NOT NULL
             )
-            """
-        )
-        await db.execute(
-            """
+            """)
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS character_claims (
                 character_key TEXT PRIMARY KEY,
                 character_name TEXT NOT NULL,
@@ -181,10 +172,8 @@ class WoWData:
                 verified_by INTEGER,
                 review_message_id INTEGER
             )
-            """
-        )
-        await db.execute(
-            """
+            """)
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS character_professions (
                 character_key TEXT NOT NULL,
                 profession_id TEXT NOT NULL,
@@ -193,10 +182,8 @@ class WoWData:
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY(character_key, profession_id)
             )
-            """
-        )
-        await db.execute(
-            """
+            """)
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS character_known_recipes (
                 character_key TEXT NOT NULL,
                 spell_id TEXT NOT NULL,
@@ -204,10 +191,8 @@ class WoWData:
                 learned_at TEXT NOT NULL,
                 PRIMARY KEY(character_key, spell_id)
             )
-            """
-        )
-        await db.execute(
-            """
+            """)
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS recipe_learning_events (
                 character_key TEXT NOT NULL,
                 spell_id TEXT NOT NULL,
@@ -219,10 +204,8 @@ class WoWData:
                 awarded_at TEXT,
                 PRIMARY KEY(character_key, spell_id)
             )
-            """
-        )
-        await db.execute(
-            """
+            """)
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS character_reputation_snapshot (
                 character_key TEXT NOT NULL,
                 faction_id INTEGER NOT NULL,
@@ -232,10 +215,8 @@ class WoWData:
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY(character_key, faction_id)
             )
-            """
-        )
-        await db.execute(
-            """
+            """)
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS reputation_events (
                 character_key TEXT NOT NULL,
                 faction_id INTEGER NOT NULL,
@@ -247,20 +228,16 @@ class WoWData:
                 awarded_at TEXT,
                 PRIMARY KEY(character_key, faction_id, standing)
             )
-            """
-        )
-        await db.execute(
-            """
+            """)
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS character_gear_snapshot (
                 character_key TEXT PRIMARY KEY,
                 average_item_level REAL NOT NULL,
                 item_count INTEGER NOT NULL,
                 updated_at TEXT NOT NULL
             )
-            """
-        )
-        await db.execute(
-            """
+            """)
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS gear_milestone_events (
                 character_key TEXT NOT NULL,
                 threshold INTEGER NOT NULL,
@@ -271,8 +248,7 @@ class WoWData:
                 awarded_at TEXT,
                 PRIMARY KEY(character_key, threshold)
             )
-            """
-        )
+            """)
         await self._ensure_column(
             "gear_milestone_events", "points", "INTEGER NOT NULL DEFAULT 0"
         )
@@ -319,13 +295,11 @@ class WoWData:
     async def get_snapshot(self) -> dict[str, RosterMember]:
         await self.init_db()
         db = await self._get_db()
-        cur = await db.execute(
-            """
+        cur = await db.execute("""
             SELECT character_key, character_id, name, realm_slug, level, class_id,
                    race_id, faction, guild_rank, is_ghost
               FROM roster_snapshot
-            """
-        )
+            """)
         rows = await cur.fetchall()
         return {
             row[0]: RosterMember(
@@ -838,16 +812,14 @@ class WoWData:
     async def pending_recipe_learning_events(self) -> list[RecipeLearningEvent]:
         await self.init_db()
         db = await self._get_db()
-        cur = await db.execute(
-            """
+        cur = await db.execute("""
             SELECT c.character_key, c.character_name, c.realm_slug, c.discord_user_id,
                    e.spell_id, e.profession_id, e.rarity, e.points, e.created_at
               FROM recipe_learning_events e
               JOIN character_claims c ON c.character_key = e.character_key
              WHERE e.announced_at IS NULL
              ORDER BY e.points DESC, e.created_at, lower(c.character_name)
-            """
-        )
+            """)
         rows = await cur.fetchall()
         return [_recipe_event_from_row(row) for row in rows]
 
@@ -989,8 +961,7 @@ class WoWData:
     async def pending_reputation_events(self) -> list[ReputationEvent]:
         await self.init_db()
         db = await self._get_db()
-        cur = await db.execute(
-            """
+        cur = await db.execute("""
             SELECT e.character_key,
                    COALESCE(c.character_name, s.name, e.character_key),
                    COALESCE(c.realm_slug, s.realm_slug, ''),
@@ -1001,8 +972,7 @@ class WoWData:
               LEFT JOIN roster_snapshot s ON s.character_key = e.character_key
              WHERE e.announced_at IS NULL
              ORDER BY e.created_at, lower(COALESCE(c.character_name, s.name, e.character_key))
-            """
-        )
+            """)
         rows = await cur.fetchall()
         return [_reputation_event_from_row(row) for row in rows]
 
@@ -1120,8 +1090,7 @@ class WoWData:
     async def pending_gear_milestone_events(self) -> list[GearMilestoneEvent]:
         await self.init_db()
         db = await self._get_db()
-        cur = await db.execute(
-            """
+        cur = await db.execute("""
             SELECT e.character_key,
                    COALESCE(c.character_name, s.name, e.character_key),
                    COALESCE(c.realm_slug, s.realm_slug, ''),
@@ -1135,8 +1104,7 @@ class WoWData:
               LEFT JOIN roster_snapshot s ON s.character_key = e.character_key
              WHERE e.announced_at IS NULL
              ORDER BY e.threshold DESC, e.created_at
-            """
-        )
+            """)
         rows = await cur.fetchall()
         return [_gear_event_from_row(row) for row in rows]
 

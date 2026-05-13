@@ -1,6 +1,5 @@
 from lotus_bot.log_setup import get_logger
 
-
 logger = get_logger(__name__)
 
 
@@ -20,9 +19,7 @@ class DuelCalculator:
         dmg_key = (
             "damage"
             if "damage" in stats
-            else "area_damage"
-            if "area_damage" in stats
-            else None
+            else "area_damage" if "area_damage" in stats else None
         )
         if dmg_key:
             result[dmg_key] = self.scale_stat(stats[dmg_key], level)
@@ -64,9 +61,7 @@ class DuelCalculator:
         dmg_key = (
             "damage"
             if "damage" in attacker_stats
-            else "area_damage"
-            if "area_damage" in attacker_stats
-            else None
+            else "area_damage" if "area_damage" in attacker_stats else None
         )
         if dmg_key is None:
             notes.append("verursacht keinen Schaden")

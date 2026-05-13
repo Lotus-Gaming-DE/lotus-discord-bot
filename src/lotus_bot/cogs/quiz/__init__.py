@@ -6,7 +6,6 @@ from .cog import QuizCog
 from .slash_commands import quiz_group
 from lotus_bot.utils.setup_helpers import register_cog_and_group
 
-
 logger = get_logger(__name__)
 
 

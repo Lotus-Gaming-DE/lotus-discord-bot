@@ -328,7 +328,9 @@ class WoWQuestionProvider(DynamicQuestionProvider):
                 logger.warning("[WoWQuestionProvider] %s failed: %s", name, exc)
                 continue
             if q and question_matches_context(q, context):
-                logger.info("[WoWQuestionProvider] Generated (%s): %s", name, q["frage"])
+                logger.info(
+                    "[WoWQuestionProvider] Generated (%s): %s", name, q["frage"]
+                )
                 return q
         logger.warning("[WoWQuestionProvider] No valid question generated.")
         return None

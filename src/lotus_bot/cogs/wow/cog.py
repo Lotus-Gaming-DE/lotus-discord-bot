@@ -721,7 +721,9 @@ class WoWCog(ManagedTaskCog):
             return None, 0
         return sum(item_levels) / len(item_levels), len(item_levels)
 
-    def _equipment_item_level(self, item: dict, lookup: dict[int, int] | None = None) -> int | None:
+    def _equipment_item_level(
+        self, item: dict, lookup: dict[int, int] | None = None
+    ) -> int | None:
         blizzard_id = (item.get("item") or {}).get("id")
         if isinstance(blizzard_id, int) and lookup is not None:
             ilvl = lookup.get(blizzard_id)
@@ -1079,7 +1081,11 @@ class WoWCog(ManagedTaskCog):
                 activity.deaths,
                 key=lambda item: (-item.member.level, item.member.name.casefold()),
             ):
-                suffix = "" if death.confirmed else " — *nicht mehr im Roster, wahrscheinlich auf Reise gegangen*"
+                suffix = (
+                    ""
+                    if death.confirmed
+                    else " — *nicht mehr im Roster, wahrscheinlich auf Reise gegangen*"
+                )
                 gear = self._format_death_gear_suffix(death)
                 lines.append(
                     f"- {self._format_roster_line(death.member)}{gear}{suffix}"
@@ -1632,12 +1638,20 @@ class WoWCog(ManagedTaskCog):
             names = [
                 recipe.spell_id,
                 self._recipe_name(static) if static else "",
-                self._localized_text(self._spell_for_recipe(static).get("name"), "de")
-                if static
-                else "",
-                self._localized_text(self._spell_for_recipe(static).get("name"), "en")
-                if static
-                else "",
+                (
+                    self._localized_text(
+                        self._spell_for_recipe(static).get("name"), "de"
+                    )
+                    if static
+                    else ""
+                ),
+                (
+                    self._localized_text(
+                        self._spell_for_recipe(static).get("name"), "en"
+                    )
+                    if static
+                    else ""
+                ),
             ]
             if needle in {_norm(name) for name in names if name}:
                 return recipe
@@ -2678,16 +2692,16 @@ def _format_panel_claim_result(result: ClaimResult, requested_name: str) -> str:
             "anderen Discord-Account verbunden."
         )
     if result.reason == "already_own":
-        status = "bestätigt ✅" if result.claim.status == "verified" else "wartet auf Bestätigung 🕐"
-        return (
-            f"**{result.claim.character_name}** hast du bereits verbunden — Status: *{status}*"
+        status = (
+            "bestätigt ✅"
+            if result.claim.status == "verified"
+            else "wartet auf Bestätigung 🕐"
         )
+        return f"**{result.claim.character_name}** hast du bereits verbunden — Status: *{status}*"
     warning = (
         "" if result.review_posted else "\nOffi-Review konnte nicht gepostet werden."
     )
-    return (
-        f"**{result.claim.character_name}** wurde verbunden und wartet auf Bestätigung durch einen Moderator. 🪷{warning}"
-    )
+    return f"**{result.claim.character_name}** wurde verbunden und wartet auf Bestätigung durch einen Moderator. 🪷{warning}"
 
 
 def _format_panel_profession_result(cog: WoWCog, result: CraftingProfileResult) -> str:

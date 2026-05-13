@@ -8,7 +8,6 @@ from typing import Any
 
 from .wow_validation import assert_valid_wow_data
 
-
 QA_TABLES = {
     "spells",
     "items",

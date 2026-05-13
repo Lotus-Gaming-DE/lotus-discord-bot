@@ -18,7 +18,9 @@ def _points_for_difficulty(difficulty: str | None) -> int:
 class AnswerModal(Modal, title="Antwort eingeben"):
     answer = TextInput(label="Deine Antwort")
 
-    def __init__(self, area: str, correct_answers: list[str], cog, difficulty: str | None = None) -> None:
+    def __init__(
+        self, area: str, correct_answers: list[str], cog, difficulty: str | None = None
+    ) -> None:
         """Modal asking a user for the answer to a quiz question."""
         super().__init__()
         self.area = area
@@ -44,7 +46,9 @@ class AnswerModal(Modal, title="Antwort eingeben"):
             points = _points_for_difficulty(self.difficulty)
             champion_cog = self.cog.bot.get_cog("ChampionCog")
             if champion_cog:
-                await champion_cog.update_user_score(user_id, points, f"Quiz: {self.area}")
+                await champion_cog.update_user_score(
+                    user_id, points, f"Quiz: {self.area}"
+                )
                 logger.info(
                     f"[Champion] {user.display_name} erhält {points} Punkt(e) für '{self.area}'."
                 )
@@ -79,7 +83,9 @@ class AnswerModal(Modal, title="Antwort eingeben"):
 
 
 class AnswerButtonView(View):
-    def __init__(self, area: str, correct_answers: list[str], cog, difficulty: str | None = None) -> None:
+    def __init__(
+        self, area: str, correct_answers: list[str], cog, difficulty: str | None = None
+    ) -> None:
         """Button view opening the ``AnswerModal``."""
         super().__init__(timeout=None)
         self.area = area

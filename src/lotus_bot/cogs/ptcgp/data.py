@@ -26,8 +26,7 @@ class PTCGPData:
         if self._init_done:
             return
         db = await self._get_db()
-        await db.execute(
-            """
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS cards (
                 id TEXT NOT NULL,
                 lang TEXT NOT NULL,
@@ -40,8 +39,7 @@ class PTCGPData:
                 set_name TEXT,
                 PRIMARY KEY(id, lang)
             );
-            """
-        )
+            """)
         await db.commit()
         self._init_done = True
         logger.info("[PTCGPData] SQLite database initialized.")

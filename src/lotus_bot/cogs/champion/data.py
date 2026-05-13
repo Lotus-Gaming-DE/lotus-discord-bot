@@ -31,16 +31,13 @@ class ChampionData:
             if self._init_done:
                 return
             db = await self._get_db()
-            await db.execute(
-                """
+            await db.execute("""
             CREATE TABLE IF NOT EXISTS points (
                 user_id TEXT PRIMARY KEY,
                 total INTEGER NOT NULL
             );
-            """
-            )
-            await db.execute(
-                """
+            """)
+            await db.execute("""
             CREATE TABLE IF NOT EXISTS history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT NOT NULL,
@@ -48,18 +45,15 @@ class ChampionData:
                 reason TEXT NOT NULL,
                 date TEXT NOT NULL
             );
-            """
-            )
-            await db.execute(
-                """
+            """)
+            await db.execute("""
             CREATE TABLE IF NOT EXISTS duel_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT NOT NULL,
                 result TEXT NOT NULL,
                 date TEXT NOT NULL
             );
-            """
-            )
+            """)
             await db.execute(
                 "CREATE INDEX IF NOT EXISTS idx_points_total ON points(total)"
             )
