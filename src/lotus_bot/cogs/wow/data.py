@@ -74,19 +74,6 @@ class RecipeLearningEvent:
 
 
 @dataclass
-class ReputationEvent:
-    character_key: str
-    character_name: str
-    realm_slug: str
-    discord_user_id: int | None
-    faction_id: int
-    faction_name: str
-    standing: str
-    points: int
-    created_at: str
-
-
-@dataclass
 class CharacterGearSnapshot:
     character_key: str
     average_item_level: float
@@ -205,30 +192,8 @@ class WoWData:
                 PRIMARY KEY(character_key, spell_id)
             )
             """)
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS character_reputation_snapshot (
-                character_key TEXT NOT NULL,
-                faction_id INTEGER NOT NULL,
-                faction_name TEXT NOT NULL,
-                standing TEXT NOT NULL,
-                value INTEGER,
-                updated_at TEXT NOT NULL,
-                PRIMARY KEY(character_key, faction_id)
-            )
-            """)
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS reputation_events (
-                character_key TEXT NOT NULL,
-                faction_id INTEGER NOT NULL,
-                faction_name TEXT NOT NULL,
-                standing TEXT NOT NULL,
-                points INTEGER NOT NULL,
-                created_at TEXT NOT NULL,
-                announced_at TEXT,
-                awarded_at TEXT,
-                PRIMARY KEY(character_key, faction_id, standing)
-            )
-            """)
+        await db.execute("DROP TABLE IF EXISTS character_reputation_snapshot")
+        await db.execute("DROP TABLE IF EXISTS reputation_events")
         await db.execute("""
             CREATE TABLE IF NOT EXISTS character_gear_snapshot (
                 character_key TEXT PRIMARY KEY,
@@ -429,6 +394,35 @@ class WoWData:
             guild_rank=row[8],
             is_ghost=bool(row[9]),
         )
+
+    async def unclaimed_roster_members(self) -> list[RosterMember]:
+        """Snapshot members without a claim, alphabetically sorted."""
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute("""
+            SELECT s.character_key, s.character_id, s.name, s.realm_slug, s.level,
+                   s.class_id, s.race_id, s.faction, s.guild_rank, s.is_ghost
+              FROM roster_snapshot s
+              LEFT JOIN character_claims c ON c.character_key = s.character_key
+             WHERE c.character_key IS NULL
+             ORDER BY lower(s.name)
+            """)
+        rows = await cur.fetchall()
+        return [
+            RosterMember(
+                character_key=row[0],
+                character_id=row[1],
+                name=row[2],
+                realm_slug=row[3],
+                level=row[4],
+                class_id=row[5],
+                race_id=row[6],
+                faction=row[7] or "",
+                guild_rank=row[8],
+                is_ghost=bool(row[9]),
+            )
+            for row in rows
+        ]
 
     async def get_claim(self, character_key: str) -> CharacterClaim | None:
         await self.init_db()
@@ -855,161 +849,6 @@ class WoWData:
         await db.commit()
         return cur.rowcount > 0
 
-    async def reputation_snapshot_exists(self, character_key: str) -> bool:
-        await self.init_db()
-        db = await self._get_db()
-        cur = await db.execute(
-            "SELECT 1 FROM character_reputation_snapshot WHERE character_key = ? LIMIT 1",
-            (character_key,),
-        )
-        return await cur.fetchone() is not None
-
-    async def replace_reputation_snapshot(
-        self, character_key: str, reputations: list[dict[str, Any]]
-    ) -> None:
-        await self.init_db()
-        db = await self._get_db()
-        now = datetime.utcnow().isoformat()
-        await db.execute(
-            "DELETE FROM character_reputation_snapshot WHERE character_key = ?",
-            (character_key,),
-        )
-        for rep in reputations:
-            await db.execute(
-                """
-                INSERT INTO character_reputation_snapshot(
-                    character_key, faction_id, faction_name, standing, value, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    character_key,
-                    int(rep["faction_id"]),
-                    str(rep["faction_name"]),
-                    str(rep["standing"]),
-                    rep.get("value"),
-                    now,
-                ),
-            )
-        await db.commit()
-
-    async def reputation_snapshot(
-        self, character_key: str
-    ) -> dict[int, dict[str, Any]]:
-        await self.init_db()
-        db = await self._get_db()
-        cur = await db.execute(
-            """
-            SELECT faction_id, faction_name, standing, value
-              FROM character_reputation_snapshot
-             WHERE character_key = ?
-            """,
-            (character_key,),
-        )
-        rows = await cur.fetchall()
-        return {
-            int(row[0]): {
-                "faction_id": int(row[0]),
-                "faction_name": row[1],
-                "standing": row[2],
-                "value": row[3],
-            }
-            for row in rows
-        }
-
-    async def reputation_event_exists(
-        self, character_key: str, faction_id: int, standing: str
-    ) -> bool:
-        await self.init_db()
-        db = await self._get_db()
-        cur = await db.execute(
-            """
-            SELECT 1 FROM reputation_events
-             WHERE character_key = ? AND faction_id = ? AND standing = ?
-            """,
-            (character_key, faction_id, standing),
-        )
-        return await cur.fetchone() is not None
-
-    async def record_reputation_event(
-        self,
-        character_key: str,
-        faction_id: int,
-        faction_name: str,
-        standing: str,
-        points: int,
-    ) -> bool:
-        await self.init_db()
-        db = await self._get_db()
-        cur = await db.execute(
-            """
-            INSERT OR IGNORE INTO reputation_events(
-                character_key, faction_id, faction_name, standing, points, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            (
-                character_key,
-                faction_id,
-                faction_name,
-                standing,
-                points,
-                datetime.utcnow().isoformat(),
-            ),
-        )
-        await db.commit()
-        return cur.rowcount > 0
-
-    async def pending_reputation_events(self) -> list[ReputationEvent]:
-        await self.init_db()
-        db = await self._get_db()
-        cur = await db.execute("""
-            SELECT e.character_key,
-                   COALESCE(c.character_name, s.name, e.character_key),
-                   COALESCE(c.realm_slug, s.realm_slug, ''),
-                   c.discord_user_id,
-                   e.faction_id, e.faction_name, e.standing, e.points, e.created_at
-              FROM reputation_events e
-              LEFT JOIN character_claims c ON c.character_key = e.character_key
-              LEFT JOIN roster_snapshot s ON s.character_key = e.character_key
-             WHERE e.announced_at IS NULL
-             ORDER BY e.created_at, lower(COALESCE(c.character_name, s.name, e.character_key))
-            """)
-        rows = await cur.fetchall()
-        return [_reputation_event_from_row(row) for row in rows]
-
-    async def mark_reputation_announced(
-        self, character_key: str, faction_id: int, standing: str
-    ) -> None:
-        await self.init_db()
-        db = await self._get_db()
-        await db.execute(
-            """
-            UPDATE reputation_events
-               SET announced_at = COALESCE(announced_at, ?)
-             WHERE character_key = ? AND faction_id = ? AND standing = ?
-            """,
-            (datetime.utcnow().isoformat(), character_key, faction_id, standing),
-        )
-        await db.commit()
-
-    async def mark_reputation_awarded(
-        self, character_key: str, faction_id: int, standing: str
-    ) -> bool:
-        await self.init_db()
-        db = await self._get_db()
-        cur = await db.execute(
-            """
-            UPDATE reputation_events
-               SET awarded_at = ?
-             WHERE character_key = ?
-               AND faction_id = ?
-               AND standing = ?
-               AND awarded_at IS NULL
-            """,
-            (datetime.utcnow().isoformat(), character_key, faction_id, standing),
-        )
-        await db.commit()
-        return cur.rowcount > 0
-
     async def gear_snapshot(self, character_key: str) -> CharacterGearSnapshot | None:
         await self.init_db()
         db = await self._get_db()
@@ -1261,20 +1100,6 @@ def _recipe_event_from_row(row: tuple[Any, ...]) -> RecipeLearningEvent:
         spell_id=row[4],
         profession_id=row[5],
         rarity=row[6],
-        points=row[7],
-        created_at=row[8],
-    )
-
-
-def _reputation_event_from_row(row: tuple[Any, ...]) -> ReputationEvent:
-    return ReputationEvent(
-        character_key=row[0],
-        character_name=row[1],
-        realm_slug=row[2],
-        discord_user_id=row[3],
-        faction_id=row[4],
-        faction_name=row[5],
-        standing=row[6],
         points=row[7],
         created_at=row[8],
     )

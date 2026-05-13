@@ -580,7 +580,7 @@ async def test_scan_dry_run_does_not_post_or_persist(tmp_path, patch_logged_task
     cog = await create_cog(tmp_path, patch_logged_task, channel=channel)
     await cog.data.replace_snapshot([member(level=49)])
 
-    async def fake_roster():
+    async def fake_roster(session=None):
         return [member(level=50)]
 
     cog.fetch_roster = fake_roster
@@ -622,7 +622,7 @@ async def test_digest_posts_one_message_for_multiple_events(
     await cog.set_announcement_channel(123)
     await cog.data.replace_snapshot([member(level=49)])
 
-    async def fake_roster():
+    async def fake_roster(session=None):
         return [
             member(level=50),
             member(key="id:2", name="Voidok", level=23, class_id=1, race_id=8),
@@ -688,25 +688,19 @@ async def test_gear_refresh_records_item_level_milestone(
 ):
     cog = await create_cog(tmp_path, patch_logged_task)
     lvl_60 = member(name="Voidok", level=60)
-    await cog.data.set_gear_snapshot(lvl_60.character_key, 59.8, 15)
+    await cog.data.set_gear_snapshot(lvl_60.character_key, 59.8, 0)
 
-    async def fake_equipment(*args, **kwargs):
-        return {
-            "equipped_items": [
-                {"slot": {"type": "HEAD"}, "level": {"value": 61}},
-                {"slot": {"type": "CHEST"}, "level": {"value": 60}},
-                {"slot": {"type": "TABARD"}, "level": {"value": 100}},
-            ]
-        }
+    async def fake_profile(*args, **kwargs):
+        return {"is_ghost": False, "equipped_item_level": 61}
 
-    monkeypatch.setattr(wow_cog_mod, "fetch_character_equipment", fake_equipment)
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", fake_profile)
 
-    await cog._refresh_gear_snapshots([lvl_60])
+    await cog._refresh_member_profiles([lvl_60])
     events = await cog.data.pending_gear_milestone_events()
 
     assert len(events) == 1
     assert events[0].threshold == 60
-    assert events[0].average_item_level == 60.5
+    assert events[0].average_item_level == 61.0
     assert events[0].points == 5
 
 
@@ -748,25 +742,20 @@ async def test_roster_ghost_death_uses_refreshed_item_level(
     await cog.set_announcement_channel(123)
     await cog.data.replace_snapshot([member(level=60, is_ghost=False)])
 
-    async def fake_roster():
+    async def fake_roster(session=None):
         return [member(level=60, is_ghost=True)]
 
-    async def fake_equipment(*args, **kwargs):
-        return {
-            "equipped_items": [
-                {"slot": {"type": "HEAD"}, "level": {"value": 68}},
-                {"slot": {"type": "CHEST"}, "level": {"value": 69}},
-            ]
-        }
+    async def fake_profile(*args, **kwargs):
+        return {"is_ghost": True, "equipped_item_level": 68}
 
-    monkeypatch.setattr(wow_cog_mod, "fetch_character_equipment", fake_equipment)
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", fake_profile)
     monkeypatch.setattr(wow_cog_mod.random, "choice", lambda seq: seq[0])
     cog.fetch_roster = fake_roster
 
     result = await cog.scan(post=True, persist=True)
 
     assert len(result.deaths) == 1
-    assert "Ø iLvl **68.5**" in channel.sent[0][0]
+    assert "Ø iLvl **68.0**" in channel.sent[0][0]
 
 
 @pytest.mark.asyncio
@@ -877,7 +866,7 @@ async def test_only_officer_notes_persist_without_public_channel(
     CREATED_COGS.append(cog)
     await cog.data.replace_snapshot([member(name="Voidok")])
 
-    async def fake_roster():
+    async def fake_roster(session=None):
         return []
 
     async def fake_profile(*args, **kwargs):
@@ -1212,51 +1201,6 @@ async def test_vendor_recipe_learning_does_not_create_reward_event(
 
 
 @pytest.mark.asyncio
-async def test_reputation_scan_baselines_then_records_new_exalted(
-    tmp_path, patch_logged_task, monkeypatch
-):
-    cog = await create_cog(tmp_path, patch_logged_task)
-    await cog.set_reputation_tracking_enabled(True)
-    calls = []
-
-    async def fake_reputations(*args, **kwargs):
-        calls.append(None)
-        standing = "Honored" if len(calls) == 1 else "Exalted"
-        return {
-            "reputations": [
-                {
-                    "faction": {"id": 529, "name": "Argent Dawn"},
-                    "standing": {"name": standing, "value": 42000},
-                }
-            ]
-        }
-
-    monkeypatch.setattr(wow_cog_mod, "fetch_character_reputations", fake_reputations)
-
-    assert await cog._detect_reputation_events([member(name="Voidok")]) == []
-    events = await cog._detect_reputation_events([member(name="Voidok")])
-
-    assert len(events) == 1
-    assert events[0].faction_name == "Argent Dawn"
-    assert events[0].standing == "Exalted"
-
-
-@pytest.mark.asyncio
-async def test_reputation_scan_api_error_is_nonfatal(
-    tmp_path, patch_logged_task, monkeypatch
-):
-    cog = await create_cog(tmp_path, patch_logged_task)
-    await cog.set_reputation_tracking_enabled(True)
-
-    async def fake_reputations(*args, **kwargs):
-        raise wow_cog_mod.WoWAPIError("forbidden", status=403)
-
-    monkeypatch.setattr(wow_cog_mod, "fetch_character_reputations", fake_reputations)
-
-    assert await cog._detect_reputation_events([member(name="Voidok")]) == []
-
-
-@pytest.mark.asyncio
 async def test_scan_missing_access_does_not_crash_or_persist(
     tmp_path, patch_logged_task
 ):
@@ -1264,7 +1208,7 @@ async def test_scan_missing_access_does_not_crash_or_persist(
     await cog.set_announcement_channel(123)
     await cog.data.replace_snapshot([member(level=49)])
 
-    async def fake_roster():
+    async def fake_roster(session=None):
         return [member(level=50)]
 
     cog.fetch_roster = fake_roster
@@ -1274,3 +1218,146 @@ async def test_scan_missing_access_does_not_crash_or_persist(
     assert result.posted == 0
     snapshot = await cog.data.get_snapshot()
     assert snapshot["id:1"].level == 49
+
+
+@pytest.mark.asyncio
+async def test_ghost_refresh_marks_dead_members_from_profile(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    alive = member(key="id:1", name="Alive", level=60)
+    dead = member(key="id:2", name="Dead", level=60)
+
+    async def fake_profile(realm, name, **kwargs):
+        return {"is_ghost": name.casefold() == "dead"}
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", fake_profile)
+
+    await cog._refresh_member_profiles([alive, dead])
+
+    assert alive.is_ghost is False
+    assert dead.is_ghost is True
+
+
+@pytest.mark.asyncio
+async def test_ghost_refresh_tolerates_api_failure(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    target = member(name="Voidok", level=60)
+
+    async def boom(*args, **kwargs):
+        raise wow_cog_mod.WoWAPIError("forbidden", status=403)
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", boom)
+
+    await cog._refresh_member_profiles([target])
+
+    assert target.is_ghost is False
+
+
+@pytest.mark.asyncio
+async def test_scan_detects_ghost_in_roster_via_profile(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    channel = DummyChannel()
+    cog = await create_cog(tmp_path, patch_logged_task, channel=channel)
+    await cog.set_announcement_channel(123)
+    await cog.data.replace_snapshot([member(name="Gorokhan", level=60)])
+
+    async def fake_roster(session=None):
+        return [member(name="Gorokhan", level=60)]
+
+    async def fake_profile(realm, name, **kwargs):
+        return {"is_ghost": True}
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", fake_profile)
+    monkeypatch.setattr(wow_cog_mod.random, "choice", lambda seq: seq[0])
+    cog.fetch_roster = fake_roster
+
+    result = await cog.scan(post=True, persist=True)
+
+    assert [d.member.name for d in result.deaths] == ["Gorokhan"]
+    assert result.deaths[0].confirmed is True
+
+
+@pytest.mark.asyncio
+async def test_recipe_digest_includes_user_mention(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    await cog.data.verify_claim(claim.character_key, 99)
+    claim = await cog.data.get_claim(claim.character_key)
+    await cog.save_known_recipes(claim, "alchemy", ["spell.2335"])
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        recipe_events=await cog.data.pending_recipe_learning_events(),
+    )
+
+    msg = await cog.format_activity_digest(activity)
+
+    assert "<@42>" in msg
+    assert "Swiftnesstrank" in msg
+    assert "+3 Champion-Punkte" in msg
+
+
+@pytest.mark.asyncio
+async def test_unclaimed_roster_members_excludes_claimed(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    a = member(key="id:1", name="Alpha", level=60)
+    b = member(key="id:2", name="Beta", level=60)
+    c = member(key="id:3", name="Charlie", level=60)
+    await cog.data.replace_snapshot([a, b, c])
+    await cog.data.create_claim(b, 42)
+
+    unclaimed = await cog.data.unclaimed_roster_members()
+
+    assert [m.name for m in unclaimed] == ["Alpha", "Charlie"]
+
+
+@pytest.mark.asyncio
+async def test_roster_response_unsafe_refuses_huge_drop():
+    previous = {f"id:{i}": member(key=f"id:{i}") for i in range(40)}
+    assert WoWCog._roster_response_unsafe(previous, []) is True
+    assert WoWCog._roster_response_unsafe(previous, [member(key="id:0")] * 5) is True
+    assert WoWCog._roster_response_unsafe(previous, [member()] * 30) is False
+
+
+@pytest.mark.asyncio
+async def test_roster_response_unsafe_ignores_small_guilds():
+    previous = {"id:1": member()}
+    assert WoWCog._roster_response_unsafe(previous, []) is False
+
+
+@pytest.mark.asyncio
+async def test_whois_embed_renders_claim_ilvl_and_professions(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    target = member(name="Voidok", level=60, class_id=5, race_id=5)
+    await cog.data.replace_snapshot([target])
+    claim, _ = await cog.data.create_claim(target, 42)
+    await cog.data.set_gear_snapshot(target.character_key, 68.0, 0)
+    claim = await cog.data.get_claim(target.character_key)
+    await cog.data.set_character_profession(claim, "alchemy", 225, None)
+
+    embed = await cog.build_whois_embed("Voidok")
+
+    assert embed is not None
+    assert "Voidok" in embed.title
+    assert "Level 60" in embed.title
+    field_values = {field.name: field.value for field in embed.fields}
+    assert field_values["Owner"] == "<@42>"
+    assert "Lebt" in field_values["Status"]
+    assert "68" in field_values["Ø iLvl"]
+    assert "Alchemie" in field_values["Berufe"]
+
+
+@pytest.mark.asyncio
+async def test_whois_embed_returns_none_for_unknown_char(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    assert await cog.build_whois_embed("Ghostly") is None

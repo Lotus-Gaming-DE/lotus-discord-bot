@@ -227,7 +227,6 @@ async def status(interaction: discord.Interaction):
                 f"Letzter Scan: {last_scan}",
                 f"Mitglieder im Snapshot: {info['member_count']}",
                 f"Recipe-Events: {info.get('recipe_events', 'aktiv')}",
-                f"Ruftracking: {info.get('reputation_tracking', 'inaktiv')}",
                 "Digest: täglich um 09:00 Uhr",
             ]
         ),
@@ -263,67 +262,26 @@ async def scan(interaction: discord.Interaction, post: bool = True):
     )
 
 
-reputation_group = app_commands.Group(
-    name="reputation",
-    description="WoW Ruftracking",
-    parent=wow_group,
+@wow_group.command(
+    name="whois",
+    description="Zeigt was wir über einen Char wissen (privat).",
 )
-
-
-@reputation_group.command(
-    name="probe",
-    description="Prueft, ob die Classic-API Rufdaten fuer einen Char liefert",
-)
-@moderator_only()
-@app_commands.default_permissions(manage_guild=True)
-@app_commands.describe(char="Name des geclaimten Charakters")
-@app_commands.autocomplete(char=all_claims_autocomplete)
-async def reputation_probe(interaction: discord.Interaction, char: str):
+@app_commands.describe(char="Charaktername aus dem Roster")
+@app_commands.autocomplete(char=roster_char_autocomplete)
+async def whois(interaction: discord.Interaction, char: str):
     cog: WoWCog | None = interaction.client.get_cog("WoWCog")
     if cog is None:
         await interaction.response.send_message(
-            "WoW-System nicht verfuegbar.", ephemeral=True
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
         )
         return
-    await interaction.response.defer(ephemeral=True, thinking=True)
-    result = await cog.probe_reputation_api(
-        interaction.user.id, char, is_mod=_is_mod(interaction)
-    )
-    if result.status == "not_claimed":
-        await interaction.followup.send(f"**{char}** ist nicht geclaimed.")
-        return
-    if result.status == "forbidden":
-        await interaction.followup.send(f"Du darfst **{char}** nicht pruefen.")
-        return
-    if result.status == "api_error":
-        await interaction.followup.send(
-            f"Ruf-API fuer **{result.claim.character_name}** nicht nutzbar: "
-            f"{result.error}"
-        )
-        return
-    exalted = ", ".join(result.exalted or []) or "keine"
-    await interaction.followup.send(
-        f"Ruf-API liefert Daten fuer **{result.claim.character_name}**: "
-        f"{result.count} Fraktionen, Ehrfuerchtig: {exalted}."
-    )
-
-
-@reputation_group.command(
-    name="enable", description="Aktiviert oder deaktiviert Ruftracking"
-)
-@moderator_only()
-@app_commands.default_permissions(manage_guild=True)
-@app_commands.describe(enabled="Ruftracking aktivieren")
-async def reputation_enable(interaction: discord.Interaction, enabled: bool):
-    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
-    if cog is None:
+    embed = await cog.build_whois_embed(char)
+    if embed is None:
         await interaction.response.send_message(
-            "WoW-System nicht verfuegbar.", ephemeral=True
+            f"**{char}** ist nicht im aktuellen Roster.", ephemeral=True
         )
         return
-    await cog.set_reputation_tracking_enabled(enabled)
-    state = "aktiviert" if enabled else "deaktiviert"
-    await interaction.response.send_message(f"Ruftracking {state}.", ephemeral=True)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 panel_group = app_commands.Group(

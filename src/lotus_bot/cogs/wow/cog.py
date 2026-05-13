@@ -16,10 +16,9 @@ from .api import (
     DEFAULT_LOCALE,
     DEFAULT_NAMESPACE,
     WoWAPIError,
-    fetch_character_equipment,
     fetch_character_profile,
-    fetch_character_reputations,
     fetch_guild_roster,
+    wow_api_session,
 )
 from .data import (
     CharacterClaim,
@@ -27,7 +26,6 @@ from .data import (
     CharacterProfession,
     GearMilestoneEvent,
     RecipeLearningEvent,
-    ReputationEvent,
     RosterMember,
     WoWData,
     parse_roster_member,
@@ -46,12 +44,12 @@ try:
 except ZoneInfoNotFoundError:  # pragma: no cover - depends on host tzdata
     DIGEST_TIMEZONE = datetime.now().astimezone().tzinfo or timezone.utc
 MILESTONE_LEVELS = {30, 40, 50, 60}
+GHOST_REFRESH_CONCURRENCY = 8
 ITEM_LEVEL_MILESTONES = {50, 55, 60, 65, 70, 75}
 ITEM_LEVEL_MILESTONE_POINTS = {50: 2, 55: 2, 60: 5, 65: 8, 70: 15, 75: 25}
 CLAIMED_MILESTONE_POINTS = {30: 5, 40: 10, 50: 20, 60: 50}
 RARE_RECIPE_POINTS = 3
 EPIC_RECIPE_POINTS = 5
-REPUTATION_EXALTED_POINTS = 5
 MAX_PRIMARY_PROFESSIONS = 2
 SECONDARY_CRAFTING_PROFESSIONS = {"cooking"}
 EXCLUDED_CRAFTING_PROFESSIONS = {"first-aid", "fishing"}
@@ -141,7 +139,6 @@ class ActivityDiff:
     deaths: list[DeathEvent]
     officer_notes: list[OfficerNote]
     recipe_events: list[RecipeLearningEvent] | None = None
-    reputation_events: list[ReputationEvent] | None = None
     gear_events: list[GearMilestoneEvent] | None = None
 
     @property
@@ -151,7 +148,6 @@ class ActivityDiff:
             + len(self.milestones)
             + len(self.deaths)
             + len(self.recipe_events or [])
-            + len(self.reputation_events or [])
             + len(self.gear_events or [])
         )
 
@@ -164,7 +160,6 @@ class ScanResult:
     deaths: list[DeathEvent] | None = None
     officer_notes: list[OfficerNote] | None = None
     recipe_events: list[RecipeLearningEvent] | None = None
-    reputation_events: list[ReputationEvent] | None = None
     gear_events: list[GearMilestoneEvent] | None = None
     posted: int = 0
 
@@ -211,15 +206,6 @@ class PanelPublishResult:
     channel_id: int
     message_id: int
     created: bool
-
-
-@dataclass
-class ReputationProbeResult:
-    status: str
-    claim: CharacterClaim | None = None
-    count: int = 0
-    exalted: list[str] | None = None
-    error: str = ""
 
 
 class WoWCog(ManagedTaskCog):
@@ -340,12 +326,13 @@ class WoWCog(ManagedTaskCog):
             ]
         )
 
-    async def fetch_roster(self) -> list[RosterMember]:
+    async def fetch_roster(self, session=None) -> list[RosterMember]:
         raw_members = await fetch_guild_roster(
             self.realm_slug,
             self.guild_slug,
             namespace=self.namespace,
             locale=self.locale,
+            session=session,
         )
         members = [parse_roster_member(raw) for raw in raw_members]
         return [member for member in members if member is not None]
@@ -354,9 +341,28 @@ class WoWCog(ManagedTaskCog):
         """Fetch the roster, detect activity, optionally post and persist it."""
         async with self._scan_lock:
             previous = await self.data.get_snapshot()
-            current = await self.fetch_roster()
-            await self._refresh_gear_snapshots(current)
-            activity = await self._detect_activity(previous, current)
+            async with wow_api_session() as session:
+                current = await self.fetch_roster(session=session)
+                if self._roster_response_unsafe(previous, current):
+                    logger.warning(
+                        "[WoWCog] Roster-Response unplausibel (%d → %d). Scan ohne Persistenz.",
+                        len(previous),
+                        len(current),
+                    )
+                    return ScanResult(
+                        member_count=len(previous),
+                        milestones=[],
+                        new_members=[],
+                        deaths=[],
+                        officer_notes=[],
+                        recipe_events=[],
+                        gear_events=[],
+                        posted=0,
+                    )
+                await self._refresh_member_profiles(current, session=session)
+                activity = await self._detect_activity(
+                    previous, current, session=session
+                )
             posted = 0
 
             if post and activity.public_count:
@@ -380,15 +386,34 @@ class WoWCog(ManagedTaskCog):
                 deaths=activity.deaths,
                 officer_notes=activity.officer_notes,
                 recipe_events=activity.recipe_events or [],
-                reputation_events=activity.reputation_events or [],
                 gear_events=activity.gear_events or [],
                 posted=posted,
             )
+
+    @staticmethod
+    def _roster_response_unsafe(
+        previous: dict[str, RosterMember], current: list[RosterMember]
+    ) -> bool:
+        """Reject obviously broken roster responses to protect the snapshot.
+
+        Blizzard occasionally returns a partial or empty member list during
+        outages — overwriting the snapshot with that would mark everyone as
+        new on the next scan. The guard only kicks in for guilds of a real
+        size (>5 previous members), so small test rosters and edge cases
+        (last member leaves a 2-person guild) aren't blocked.
+        """
+        if len(previous) <= 5:
+            return False
+        if not current:
+            return True
+        return len(current) < len(previous) // 2
 
     async def _detect_activity(
         self,
         previous: dict[str, RosterMember],
         current: list[RosterMember],
+        *,
+        session=None,
     ) -> ActivityDiff:
         current_by_key = {member.character_key: member for member in current}
         new_members = [
@@ -397,11 +422,10 @@ class WoWCog(ManagedTaskCog):
         milestones = await self._detect_milestones(previous, current)
         deaths = await self._detect_roster_deaths(previous, current)
         missing_deaths, officer_notes = await self._inspect_missing_members(
-            previous, current_by_key
+            previous, current_by_key, session=session
         )
         deaths.extend(missing_deaths)
         recipe_events = await self.data.pending_recipe_learning_events()
-        reputation_events = await self._detect_reputation_events(current)
         gear_events = await self.data.pending_gear_milestone_events()
         return ActivityDiff(
             new_members=new_members,
@@ -409,47 +433,67 @@ class WoWCog(ManagedTaskCog):
             deaths=deaths,
             officer_notes=officer_notes,
             recipe_events=recipe_events,
-            reputation_events=reputation_events,
             gear_events=gear_events,
         )
 
-    async def _refresh_gear_snapshots(self, members: list[RosterMember]) -> None:
-        for member in members:
-            if member.level < 60:
-                continue
-            await self._refresh_member_gear(member)
+    async def _refresh_member_profiles(
+        self, members: list[RosterMember], *, session=None
+    ) -> None:
+        """Patch ghost state and gear from the per-character profile endpoint.
 
-    async def _refresh_member_gear(self, member: RosterMember) -> None:
-        try:
-            payload = await fetch_character_equipment(
-                member.realm_slug,
-                member.name,
-                namespace=self.namespace,
-                locale=self.locale,
-            )
-        except WoWAPIError as exc:
-            logger.info(
-                "[WoWCog] Equipment API unavailable for %s: %s",
-                member.name,
-                exc,
-            )
+        The guild roster endpoint omits ``is_ghost`` and gear info, so we hit
+        the profile endpoint per member with bounded concurrency. One call
+        gives us both the death signal and ``equipped_item_level`` — no
+        equipment endpoint or local item-id lookup needed. Per-member failures
+        are logged but never block the scan; affected members keep their
+        roster defaults (alive, no fresh gear snapshot).
+        """
+        if not members:
             return
-        except Exception as exc:
-            logger.info(
-                "[WoWCog] Equipment scan failed for %s: %s",
-                member.name,
-                exc,
-                exc_info=True,
-            )
-            return
+        semaphore = asyncio.Semaphore(GHOST_REFRESH_CONCURRENCY)
 
-        average_item_level, item_count = self._average_equipped_item_level(payload)
-        if average_item_level is None:
+        async def refresh_one(member: RosterMember) -> None:
+            async with semaphore:
+                try:
+                    profile = await fetch_character_profile(
+                        member.realm_slug,
+                        member.name,
+                        namespace=self.namespace,
+                        locale=self.locale,
+                        session=session,
+                    )
+                except WoWAPIError as exc:
+                    logger.info(
+                        "[WoWCog] Profile für %s nicht abrufbar: %s",
+                        member.name,
+                        exc,
+                    )
+                    return
+                except Exception as exc:
+                    logger.info(
+                        "[WoWCog] Profile-Abfrage für %s fehlgeschlagen: %s",
+                        member.name,
+                        exc,
+                    )
+                    return
+                if not isinstance(profile, dict):
+                    return
+                if profile.get("is_ghost"):
+                    member.is_ghost = True
+                if member.level >= 60:
+                    await self._apply_gear_from_profile(member, profile)
+
+        await asyncio.gather(*(refresh_one(member) for member in members))
+
+    async def _apply_gear_from_profile(
+        self, member: RosterMember, profile: dict
+    ) -> None:
+        raw = profile.get("equipped_item_level")
+        if not isinstance(raw, (int, float)):
             return
+        average_item_level = float(raw)
         previous = await self.data.gear_snapshot(member.character_key)
-        await self.data.set_gear_snapshot(
-            member.character_key, average_item_level, item_count
-        )
+        await self.data.set_gear_snapshot(member.character_key, average_item_level, 0)
         if previous is None or member.is_ghost:
             return
         for threshold in sorted(ITEM_LEVEL_MILESTONES):
@@ -465,75 +509,6 @@ class WoWCog(ManagedTaskCog):
                     average_item_level,
                     ITEM_LEVEL_MILESTONE_POINTS.get(threshold, 0),
                 )
-
-    async def _reputation_tracking_enabled(self) -> bool:
-        value = await self.data.get_setting("wow_reputation_tracking_enabled")
-        return str(value or "").casefold() in {"1", "true", "yes", "on", "enabled"}
-
-    async def set_reputation_tracking_enabled(self, enabled: bool) -> None:
-        await self.data.set_setting(
-            "wow_reputation_tracking_enabled", "1" if enabled else "0"
-        )
-
-    async def _detect_reputation_events(
-        self, members: list[RosterMember]
-    ) -> list[ReputationEvent]:
-        if not await self._reputation_tracking_enabled():
-            return []
-        for member in members:
-            await self._refresh_member_reputations(member)
-        return await self.data.pending_reputation_events()
-
-    async def _refresh_member_reputations(self, member: RosterMember) -> None:
-        try:
-            payload = await fetch_character_reputations(
-                member.realm_slug,
-                member.name,
-                namespace=self.namespace,
-                locale=self.locale,
-            )
-        except WoWAPIError as exc:
-            logger.info(
-                "[WoWCog] Reputation API unavailable for %s: %s",
-                member.name,
-                exc,
-            )
-            return
-        except Exception as exc:
-            logger.info(
-                "[WoWCog] Reputation scan failed for %s: %s",
-                member.name,
-                exc,
-                exc_info=True,
-            )
-            return
-
-        reputations = self._parse_reputations(payload)
-        if not reputations:
-            return
-        had_baseline = await self.data.reputation_snapshot_exists(member.character_key)
-        previous = await self.data.reputation_snapshot(member.character_key)
-        if had_baseline:
-            for reputation in reputations:
-                if not self._is_exalted_reputation(reputation):
-                    continue
-                old = previous.get(int(reputation["faction_id"]))
-                if old and self._is_exalted_reputation(old):
-                    continue
-                exists = await self.data.reputation_event_exists(
-                    member.character_key,
-                    int(reputation["faction_id"]),
-                    str(reputation["standing"]),
-                )
-                if not exists:
-                    await self.data.record_reputation_event(
-                        member.character_key,
-                        int(reputation["faction_id"]),
-                        str(reputation["faction_name"]),
-                        str(reputation["standing"]),
-                        REPUTATION_EXALTED_POINTS,
-                    )
-        await self.data.replace_reputation_snapshot(member.character_key, reputations)
 
     async def _detect_milestones(
         self,
@@ -582,6 +557,8 @@ class WoWCog(ManagedTaskCog):
         self,
         previous: dict[str, RosterMember],
         current_by_key: dict[str, RosterMember],
+        *,
+        session=None,
     ) -> tuple[list[DeathEvent], list[OfficerNote]]:
         deaths: list[DeathEvent] = []
         notes: list[OfficerNote] = []
@@ -590,7 +567,7 @@ class WoWCog(ManagedTaskCog):
                 continue
             if await self.data.death_exists(member.character_key):
                 continue
-            state = await self._profile_life_state(member)
+            state = await self._profile_life_state(member, session=session)
             average_item_level = await self._member_average_item_level(
                 member.character_key
             )
@@ -619,13 +596,14 @@ class WoWCog(ManagedTaskCog):
         snapshot = await self.data.gear_snapshot(character_key)
         return snapshot.average_item_level if snapshot else None
 
-    async def _profile_life_state(self, member: RosterMember) -> str:
+    async def _profile_life_state(self, member: RosterMember, *, session=None) -> str:
         try:
             profile = await fetch_character_profile(
                 member.realm_slug,
                 member.name,
                 namespace=self.namespace,
                 locale=self.locale,
+                session=session,
             )
         except WoWAPIError as exc:
             logger.info(
@@ -651,93 +629,6 @@ class WoWCog(ManagedTaskCog):
             or profile.get("dead")
             or profile.get("ghost")
         )
-
-    def _parse_reputations(self, payload: dict) -> list[dict[str, object]]:
-        raw_reputations = payload.get("reputations") or []
-        if not isinstance(raw_reputations, list):
-            return []
-        parsed: list[dict[str, object]] = []
-        for raw in raw_reputations:
-            if not isinstance(raw, dict):
-                continue
-            faction = raw.get("faction") or {}
-            standing = raw.get("standing") or raw.get("standing_name") or {}
-            faction_id = faction.get("id") or raw.get("faction_id")
-            faction_name = faction.get("name") or raw.get("faction_name")
-            if isinstance(standing, dict):
-                standing_name = (
-                    standing.get("name")
-                    or standing.get("type")
-                    or standing.get("display_string")
-                )
-                value = standing.get("value")
-            else:
-                standing_name = str(standing)
-                value = raw.get("value")
-            if faction_id is None or not faction_name or not standing_name:
-                continue
-            parsed.append(
-                {
-                    "faction_id": int(faction_id),
-                    "faction_name": str(faction_name),
-                    "standing": str(standing_name),
-                    "value": int(value) if value is not None else None,
-                }
-            )
-        return parsed
-
-    def _is_exalted_reputation(self, reputation: dict[str, object]) -> bool:
-        standing = str(reputation.get("standing") or "").casefold()
-        return standing in {"exalted", "ehrfuerchtig", "ehrfürchtig"}
-
-    def _item_level_lookup(self) -> dict[int, int]:
-        if not hasattr(self, "_item_level_cache"):
-            self._item_level_cache: dict[int, int] = {
-                item["wowhead_id"]: item["item_level"]
-                for item in self._wow_records("items")
-                if isinstance(item.get("wowhead_id"), int)
-                and isinstance(item.get("item_level"), int)
-            }
-        return self._item_level_cache
-
-    def _average_equipped_item_level(self, payload: dict) -> tuple[float | None, int]:
-        for key in ("equipped_item_level", "average_item_level"):
-            value = payload.get(key)
-            if isinstance(value, int | float):
-                return float(value), 0
-        lookup = self._item_level_lookup()
-        item_levels: list[int] = []
-        for item in payload.get("equipped_items") or []:
-            if not isinstance(item, dict):
-                continue
-            slot = item.get("slot") or {}
-            slot_type = str(slot.get("type") or slot.get("name") or "").casefold()
-            if slot_type in {"shirt", "tabard"}:
-                continue
-            item_level = self._equipment_item_level(item, lookup)
-            if item_level is not None and item_level > 0:
-                item_levels.append(item_level)
-        if not item_levels:
-            return None, 0
-        return sum(item_levels) / len(item_levels), len(item_levels)
-
-    def _equipment_item_level(
-        self, item: dict, lookup: dict[int, int] | None = None
-    ) -> int | None:
-        blizzard_id = (item.get("item") or {}).get("id")
-        if isinstance(blizzard_id, int) and lookup is not None:
-            ilvl = lookup.get(blizzard_id)
-            if ilvl is not None:
-                return ilvl
-        for key in ("item_level", "level"):
-            value = item.get(key)
-            if isinstance(value, int):
-                return value
-            if isinstance(value, dict):
-                nested = value.get("value")
-                if isinstance(nested, int):
-                    return nested
-        return None
 
     async def _post_activity_digest(self, activity: ActivityDiff) -> int:
         channel_id = await self.get_announcement_channel_id()
@@ -806,11 +697,6 @@ class WoWCog(ManagedTaskCog):
                 event.character_key, event.spell_id
             )
             await self._award_recipe_learning_points(event)
-        for event in activity.reputation_events or []:
-            await self.data.mark_reputation_announced(
-                event.character_key, event.faction_id, event.standing
-            )
-            await self._award_reputation_points(event)
         for event in activity.gear_events or []:
             await self.data.mark_gear_milestone_announced(
                 event.character_key, event.threshold
@@ -861,33 +747,6 @@ class WoWCog(ManagedTaskCog):
         except Exception as exc:  # pragma: no cover - defensive integration logging
             logger.warning(
                 "[WoWCog] Could not award recipe learning points: %s",
-                exc,
-                exc_info=True,
-            )
-
-    async def _award_reputation_points(self, event: ReputationEvent) -> None:
-        if event.points <= 0 or event.discord_user_id is None:
-            return
-        get_cog = getattr(self.bot, "get_cog", None)
-        champion = get_cog("ChampionCog") if get_cog else None
-        if champion is None or not hasattr(champion, "update_user_score"):
-            logger.info("[WoWCog] ChampionCog not available for reputation bonus.")
-            return
-        if not await self.data.mark_reputation_awarded(
-            event.character_key, event.faction_id, event.standing
-        ):
-            return
-        reason = (
-            f"WoW-Ruf: {event.character_name} erreicht {event.standing} "
-            f"bei {event.faction_name}"
-        )
-        try:
-            await champion.update_user_score(
-                event.discord_user_id, event.points, reason
-            )
-        except Exception as exc:  # pragma: no cover - defensive integration logging
-            logger.warning(
-                "[WoWCog] Could not award reputation points: %s",
                 exc,
                 exc_info=True,
             )
@@ -947,7 +806,6 @@ class WoWCog(ManagedTaskCog):
             activity.new_members
             or activity.milestones
             or (activity.recipe_events or [])
-            or (activity.reputation_events or [])
             or (activity.gear_events or [])
         )
         has_deaths = bool(activity.deaths)
@@ -1037,30 +895,15 @@ class WoWCog(ManagedTaskCog):
                 recipe = self._recipe_by_spell_id(event.spell_id)
                 recipe_name = self._recipe_name(recipe) if recipe else event.spell_id
                 source = self._recipe_source_label(recipe)
-                lines.append(
-                    f"- **{event.character_name}** ({self._profession_name(event.profession_id)}): "
-                    f"**{recipe_name}** *({event.rarity}, {source})* "
-                    f"— +{event.points} Champion-Punkte"
-                )
-            lines.append("")
-        if activity.reputation_events:
-            lines.append("**Ruf-Meilensteine** 🤝")
-            for event in sorted(
-                activity.reputation_events,
-                key=lambda item: (
-                    item.faction_name.casefold(),
-                    item.character_name.casefold(),
-                ),
-            ):
                 mention = (
                     f" - <@{event.discord_user_id}>"
                     if event.discord_user_id is not None
                     else ""
                 )
                 lines.append(
-                    f"- **{event.character_name}** hat bei **{event.faction_name}** "
-                    f"den Rang *{event.standing}* erreicht"
-                    f"{mention} (+{event.points} Champion-Punkte)"
+                    f"- **{event.character_name}** ({self._profession_name(event.profession_id)}): "
+                    f"**{recipe_name}** *({event.rarity}, {source})*{mention} "
+                    f"(+{event.points} Champion-Punkte)"
                 )
             lines.append("")
         if activity.gear_events:
@@ -1156,6 +999,49 @@ class WoWCog(ManagedTaskCog):
             reason="created",
             review_posted=review_posted,
         )
+
+    async def build_whois_embed(self, char_name: str) -> discord.Embed | None:
+        """Render an ephemeral profile card for the named character.
+
+        Returns ``None`` if no matching roster member exists. Uses only
+        existing DB helpers — no extra Blizzard API calls.
+        """
+        member = await self.data.find_roster_member_by_name(char_name)
+        if member is None:
+            return None
+        claim = await self.data.get_claim(member.character_key)
+        gear = await self.data.gear_snapshot(member.character_key)
+        professions = await self.data.professions_for_character(member.character_key)
+
+        class_name = CLASS_NAMES_DE.get(member.class_id) or "Klasse?"
+        race_name = RACE_NAMES_DE.get(member.race_id) or ""
+        title = f"{member.name} — Level {member.level} {race_name} {class_name}".strip()
+
+        embed = discord.Embed(
+            title=title, color=0x9B59B6 if member.is_ghost else 0x2ECC71
+        )
+        embed.add_field(
+            name="Owner",
+            value=(f"<@{claim.discord_user_id}>" if claim else "Nicht geclaimed"),
+            inline=True,
+        )
+        embed.add_field(
+            name="Status",
+            value="🕯️ Tot (Geist)" if member.is_ghost else "🟢 Lebt",
+            inline=True,
+        )
+        embed.add_field(
+            name="Ø iLvl",
+            value=(self._format_item_level(gear.average_item_level) if gear else "—"),
+            inline=True,
+        )
+        if professions:
+            embed.add_field(
+                name="Berufe",
+                value=self.format_profession_slots(professions),
+                inline=False,
+            )
+        return embed
 
     async def _post_claim_review(self, claim: CharacterClaim) -> bool:
         channel_id = await self.get_claim_review_channel_id()
@@ -1838,47 +1724,6 @@ class WoWCog(ManagedTaskCog):
             )
         await interaction.response.edit_message(content=content, view=None)
 
-    async def probe_reputation_api(
-        self,
-        discord_user_id: int,
-        char_name: str,
-        *,
-        is_mod: bool = False,
-    ) -> ReputationProbeResult:
-        claim = await self.data.get_claim_by_name(char_name)
-        if not claim:
-            return ReputationProbeResult("not_claimed")
-        if not is_mod and claim.discord_user_id != discord_user_id:
-            return ReputationProbeResult("forbidden", claim=claim)
-        try:
-            payload = await fetch_character_reputations(
-                claim.realm_slug,
-                claim.character_name,
-                namespace=self.namespace,
-                locale=self.locale,
-            )
-        except WoWAPIError as exc:
-            return ReputationProbeResult(
-                "api_error", claim=claim, error=f"HTTP {exc.status}: {exc}"
-            )
-        except Exception as exc:
-            logger.warning(
-                "[WoWCog] Reputation probe failed for %s: %s",
-                claim.character_name,
-                exc,
-                exc_info=True,
-            )
-            return ReputationProbeResult("api_error", claim=claim, error=str(exc))
-        reputations = self._parse_reputations(payload)
-        exalted = [
-            str(rep["faction_name"])
-            for rep in reputations
-            if self._is_exalted_reputation(rep)
-        ]
-        return ReputationProbeResult(
-            "ok", claim=claim, count=len(reputations), exalted=sorted(exalted)
-        )
-
     async def status(self) -> dict[str, object]:
         channel_id = await self.get_announcement_channel_id()
         panel_channel_id = await self.data.get_setting("panel_channel_id")
@@ -1894,9 +1739,6 @@ class WoWCog(ManagedTaskCog):
             "member_count": await self.data.member_count(),
             "poll_interval": self.poll_interval,
             "recipe_events": "aktiv",
-            "reputation_tracking": (
-                "aktiv" if await self._reputation_tracking_enabled() else "inaktiv"
-            ),
         }
 
     def cog_unload(self) -> None:
@@ -2571,6 +2413,78 @@ class PanelCraftingSearchModal(discord.ui.Modal):
         )
 
 
+class PanelUnclaimedCharSelectView(discord.ui.View):
+    """Ephemeral picker shown when a user clicks 'Char claimen'.
+
+    Lists up to 25 unclaimed roster members alphabetically and offers the
+    free-text search modal as a fallback for cases where the desired char
+    isn't in the visible slice.
+    """
+
+    def __init__(
+        self,
+        cog: WoWCog,
+        owner_user_id: int,
+        members: list[RosterMember],
+    ) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.owner_user_id = owner_user_id
+        if members:
+            self.add_item(PanelUnclaimedCharSelect(self, members))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.owner_user_id:
+            return True
+        await interaction.response.send_message(
+            "Diese Auswahl gehört nicht dir.", ephemeral=True
+        )
+        return False
+
+    @discord.ui.button(
+        label="🔎 Char nicht in der Liste? Suchen…",
+        style=discord.ButtonStyle.secondary,
+    )
+    async def search(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        await interaction.response.send_modal(PanelCharacterSearchModal(self.cog))
+
+
+class PanelUnclaimedCharSelect(discord.ui.Select):
+    def __init__(
+        self,
+        parent: PanelUnclaimedCharSelectView,
+        members: list[RosterMember],
+    ) -> None:
+        self.parent_view = parent
+        super().__init__(
+            placeholder="Deinen Char auswählen",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(
+                    label=member.name[:100],
+                    value=member.name,
+                    description=(
+                        f"Level {member.level} "
+                        f"- {parent.cog._display_character(member)}"
+                    )[:100],
+                )
+                for member in members[:25]
+            ],
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        result = await self.parent_view.cog.claim_character(
+            interaction.user.id, self.values[0]
+        )
+        await interaction.response.edit_message(
+            content=_format_panel_claim_result(result, self.values[0]),
+            view=None,
+        )
+
+
 class WoWPanelView(discord.ui.View):
     def __init__(self, cog: WoWCog) -> None:
         super().__init__(timeout=None)
@@ -2603,7 +2517,21 @@ class WoWPanelView(discord.ui.View):
     async def claim(
         self, interaction: discord.Interaction, _: discord.ui.Button
     ) -> None:
-        await interaction.response.send_modal(PanelCharacterSearchModal(self.cog))
+        members = await self.cog.data.unclaimed_roster_members()
+        if not members:
+            await interaction.response.send_modal(PanelCharacterSearchModal(self.cog))
+            return
+        view = PanelUnclaimedCharSelectView(self.cog, interaction.user.id, members)
+        intro = (
+            "Wähle deinen Char aus der Liste. "
+            "Wenn er nicht dabei ist, klicke unten auf **Suchen…**."
+            if len(members) <= 25
+            else (
+                f"Es gibt **{len(members)}** noch nicht geclaimte Chars — "
+                "die ersten 25 sind unten. Falls deiner fehlt, klicke auf **Suchen…**."
+            )
+        )
+        await interaction.response.send_message(intro, view=view, ephemeral=True)
 
     @discord.ui.button(
         label="Meine Chars",
