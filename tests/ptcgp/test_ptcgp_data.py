@@ -2,7 +2,6 @@ import pytest
 
 from lotus_bot.cogs.ptcgp.data import PTCGPData
 
-
 CARD_EN = {
     "id": "1",
     "name": "Pikachu",

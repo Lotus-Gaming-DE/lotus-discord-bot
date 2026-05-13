@@ -18,7 +18,6 @@ from lotus_bot.cogs.quiz.area_providers.wow_importer import (
     run_import,
 )
 
-
 DE_PAGE = """
 <html>
 <head><title>Testhöhle - Zone - World of Warcraft: Classic</title></head>

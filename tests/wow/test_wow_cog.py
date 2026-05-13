@@ -8,7 +8,6 @@ from lotus_bot.cogs.wow.data import RosterMember, WoWData
 import lotus_bot.cogs.wow.cog as wow_cog_mod
 import lotus_bot.log_setup as log_setup
 
-
 CREATED_COGS = []
 
 

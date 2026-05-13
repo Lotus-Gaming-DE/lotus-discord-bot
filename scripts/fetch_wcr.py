@@ -2,6 +2,7 @@
 
 Usage: python scripts/fetch_wcr.py [--url URL]
 """
+
 import argparse
 import asyncio
 import os
