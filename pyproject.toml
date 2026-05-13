@@ -1,0 +1,18 @@
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E203", "E501", "E302", "E303", "E305", "E306"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+omit = [
+    "src/lotus_bot/cogs/*/slash_commands.py",
+    "scripts/*",
+    "src/lotus_bot/cogs/quiz/area_providers/wow_importer.py",
+    "src/lotus_bot/cogs/wcr/*",
+]

@@ -1,6 +1,6 @@
-pytest
-pytest-asyncio
-pytest-cov
-pytest-timeout
-pre-commit
-pip-audit
+pytest>=9,<10
+pytest-asyncio>=1,<2
+pytest-cov>=7,<8
+pytest-timeout>=2,<3
+pre-commit>=4,<5
+pip-audit>=2,<3
