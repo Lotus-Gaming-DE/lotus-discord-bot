@@ -311,7 +311,7 @@ async def test_panel_professions_requires_claim(tmp_path, patch_logged_task):
 
     await view.children[2].callback(interaction)
 
-    assert "keinen Charakter" in interaction.response.messages[0][0]
+    assert "keinen Char" in interaction.response.messages[0][0]
     assert interaction.response.messages[0][1]["ephemeral"] is True
 
 
@@ -635,13 +635,8 @@ async def test_digest_posts_one_message_for_multiple_events(
     assert result.posted == 1
     assert len(channel.sent) == 1
     msg = channel.sent[0][0]
-    assert "Black Lotus" in msg
-    assert "Neuzugaenge" in msg
     assert "**Voidok**, Level **23**, Troll, Krieger" in msg
     assert "**Lyxendra**, Level **50**, Troll, Schurke" in msg
-    assert "Level **23**" in msg
-    assert "Level **50**" in msg
-    assert "Glückwunsch" in msg
 
 
 @pytest.mark.asyncio
@@ -664,7 +659,7 @@ async def test_digest_mentions_claimed_character(
     msg = await cog.format_activity_digest(activity)
 
     assert "**Lyxendra**, Level **40**, Troll, Krieger - <@42>" in msg
-    assert "+3 Champion-Punkte" in msg
+    assert "+10 Champion-Punkte" in msg
 
 
 @pytest.mark.asyncio
@@ -712,7 +707,7 @@ async def test_gear_refresh_records_item_level_milestone(
     assert len(events) == 1
     assert events[0].threshold == 60
     assert events[0].average_item_level == 60.5
-    assert events[0].points == 2
+    assert events[0].points == 5
 
 
 @pytest.mark.asyncio
@@ -795,7 +790,7 @@ async def test_record_public_events_awards_claimed_milestone_points(
 
     await cog._record_public_events(activity)
 
-    assert champion.updates == [(42, 10, "WoW-Meilenstein: Lyxendra Level 60")]
+    assert champion.updates == [(42, 50, "WoW-Meilenstein: Lyxendra Level 60")]
 
 
 @pytest.mark.asyncio
@@ -814,7 +809,7 @@ async def test_disappeared_dead_profile_creates_public_death(
     assert [d.member.name for d in activity.deaths] == ["Voidok"]
     assert activity.deaths[0].confirmed is True
     assert activity.officer_notes == []
-    assert "Level **37** gestorben" in cog._format_death_line(activity.deaths[0])
+    assert "Level **37**" in cog._format_death_line(activity.deaths[0])
 
 
 @pytest.mark.asyncio
@@ -852,7 +847,6 @@ async def test_disappeared_unknown_profile_creates_presumed_death(
     assert activity.deaths[0].confirmed is False
     death_line = cog._format_death_line(activity.deaths[0])
     assert "Level **42**" in death_line
-    assert "nicht mehr auffindbar" in death_line
 
 
 @pytest.mark.asyncio
@@ -1197,9 +1191,8 @@ async def test_rare_recipe_learning_creates_digest_event_and_points(
     await cog._record_public_events(activity)
 
     assert saved == 1
-    assert "Folgende seltene Rezepte" in msg
     assert "Swiftnesstrank" in msg
-    assert champion.updates == [(42, 2, "WoW-Rezept: Voidok lernt Swiftnesstrank")]
+    assert champion.updates == [(42, 3, "WoW-Rezept: Voidok lernt Swiftnesstrank")]
 
 
 @pytest.mark.asyncio

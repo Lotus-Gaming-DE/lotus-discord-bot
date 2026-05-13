@@ -36,10 +36,36 @@ scripts/                One-off utility scripts (WoW data import, etc.)
 
 ## Tooling
 
-- Formatter: **black 26.3.1** — run `python -m black src/` after every change
+- Formatter: **black 26.3.1** — pinned, must match `.pre-commit-config.yaml`
 - Linter: **ruff** — configured in `pyproject.toml`
 - Tests: `pytest` — run from project root
 - Pre-commit: all hooks defined in `.pre-commit-config.yaml`
+
+## Definition of Done — MANDATORY before reporting work as complete
+
+The user (gs3rr4) does **not** code and pushes via GitHub Desktop. They cannot fix CI failures themselves. Every red CI run = back to an agent = wasted tokens. So:
+
+**Run these locally before saying "done" — every time, no exceptions:**
+
+```
+python -m black src/ tests/ scripts/
+python -m black --check src/ tests/ scripts/   # must report 0 changes
+python -m pytest -q                            # must be all green
+```
+
+If `black` reformats anything, those changes are part of your work — include them.
+If a test fails because **you intentionally changed behavior**, update the test to match the new intent. Don't push and hope.
+
+**Writing new tests — avoid brittle assertions:**
+
+- ❌ `assert "Folgende seltene Rezepte" in msg` — breaks on any copy tweak
+- ❌ `assert "Level **37** gestorben" in line` — breaks on any wording change
+- ✅ `assert event.points == 3` — encodes a real design decision
+- ✅ `assert "Voidok" in msg and "Level **40**" in msg` — structural facts
+
+Test what the code is *supposed to guarantee*, not the exact German wording. Copy gets tweaked all the time; behaviour shouldn't break tests.
+
+**Temp paths on Windows:** never pass `--basetemp=C:\...` through Bash — the backslashes get eaten and pytest creates a `C__...` directory inside the repo. Use forward slashes or omit the flag.
 
 ## Environment Variables
 

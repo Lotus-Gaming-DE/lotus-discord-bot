@@ -5,6 +5,12 @@ __pycache__/
 .env
 *.pyc
 
+# test / coverage artefacts
+.coverage
+.pytest_cache/
+Temppytest_tmp/
+htmlcov/
+
 # ignore everything under logs …
 logs/*
 
