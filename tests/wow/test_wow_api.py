@@ -118,3 +118,15 @@ async def test_fetch_character_reputations_uses_reputation_endpoint():
     args, kwargs = FakeSession.get_calls[0]
     assert args[0].endswith("/profile/wow/character/soulseeker/voidok/reputations")
     assert kwargs["params"]["namespace"] == api.DEFAULT_NAMESPACE
+
+
+@pytest.mark.asyncio
+async def test_fetch_character_equipment_uses_equipment_endpoint():
+    FakeSession.get_response = FakeResponse(payload={"equipped_items": []})
+
+    result = await api.fetch_character_equipment("soulseeker", "Voidok")
+
+    assert result == {"equipped_items": []}
+    args, kwargs = FakeSession.get_calls[0]
+    assert args[0].endswith("/profile/wow/character/soulseeker/voidok/equipment")
+    assert kwargs["params"]["namespace"] == api.DEFAULT_NAMESPACE

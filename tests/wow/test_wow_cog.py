@@ -1,7 +1,7 @@
 import pytest
 import discord
 import pytest_asyncio
-from datetime import datetime, timezone
+from datetime import datetime
 
 from lotus_bot.cogs.wow.cog import WoWCog
 from lotus_bot.cogs.wow.data import RosterMember, WoWData
@@ -509,11 +509,30 @@ async def test_crafting_search_suggestion_select_runs_selected_search(
 async def test_daily_digest_sleep_targets_next_9am(tmp_path, patch_logged_task):
     cog = await create_cog(tmp_path, patch_logged_task)
 
-    before_9 = datetime(2026, 5, 12, 8, 30, tzinfo=timezone.utc)
-    after_9 = datetime(2026, 5, 12, 9, 30, tzinfo=timezone.utc)
+    before_9 = datetime(2026, 5, 12, 8, 30, tzinfo=wow_cog_mod.DIGEST_TIMEZONE)
+    after_9 = datetime(2026, 5, 12, 9, 30, tzinfo=wow_cog_mod.DIGEST_TIMEZONE)
 
     assert cog._seconds_until_next_digest(before_9) == 30 * 60
     assert cog._seconds_until_next_digest(after_9) == 23.5 * 60 * 60
+
+
+@pytest.mark.asyncio
+async def test_daily_digest_due_catches_up_after_9am(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    now = datetime(2026, 5, 12, 9, 40, tzinfo=wow_cog_mod.DIGEST_TIMEZONE)
+
+    assert await cog._scheduled_digest_due(now)
+
+    await cog.data.set_setting("last_scan_at", "2026-05-12T07:05:00")
+    assert not await cog._scheduled_digest_due(now)
+
+
+@pytest.mark.asyncio
+async def test_daily_digest_not_due_before_9am(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    now = datetime(2026, 5, 12, 8, 40, tzinfo=wow_cog_mod.DIGEST_TIMEZONE)
+
+    assert not await cog._scheduled_digest_due(now)
 
 
 @pytest.mark.asyncio
@@ -647,6 +666,113 @@ async def test_digest_mentions_claimed_character(
 
     assert "**Lyxendra**, Level **40**, Troll, Krieger - <@42>" in msg
     assert "+3 Champion-Punkte" in msg
+
+
+@pytest.mark.asyncio
+async def test_level_60_new_member_digest_includes_item_level(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    newcomer = member(name="Voidok", level=60, class_id=1, race_id=8)
+    await cog.data.set_gear_snapshot(newcomer.character_key, 63.4, 15)
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[newcomer],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+    )
+    monkeypatch.setattr(wow_cog_mod.random, "choice", lambda seq: seq[0])
+
+    msg = await cog.format_activity_digest(activity)
+
+    assert "**Voidok**, Level **60**, Troll, Krieger, Ø iLvl **63.4**" in msg
+
+
+@pytest.mark.asyncio
+async def test_gear_refresh_records_item_level_milestone(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    lvl_60 = member(name="Voidok", level=60)
+    await cog.data.set_gear_snapshot(lvl_60.character_key, 59.8, 15)
+
+    async def fake_equipment(*args, **kwargs):
+        return {
+            "equipped_items": [
+                {"slot": {"type": "HEAD"}, "level": {"value": 61}},
+                {"slot": {"type": "CHEST"}, "level": {"value": 60}},
+                {"slot": {"type": "TABARD"}, "level": {"value": 100}},
+            ]
+        }
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_equipment", fake_equipment)
+
+    await cog._refresh_gear_snapshots([lvl_60])
+    events = await cog.data.pending_gear_milestone_events()
+
+    assert len(events) == 1
+    assert events[0].threshold == 60
+    assert events[0].average_item_level == 60.5
+    assert events[0].points == 2
+
+
+@pytest.mark.asyncio
+async def test_record_public_events_awards_gear_milestone_points(
+    tmp_path, patch_logged_task
+):
+    champion = DummyChampionCog()
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(ChampionBot(champion=champion))
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+    claimed = member(name="Voidok", level=60)
+    await cog.data.replace_snapshot([claimed])
+    await cog.data.create_claim(claimed, 42)
+    await cog.data.record_gear_milestone(claimed.character_key, 65, 66.4, 3)
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        gear_events=await cog.data.pending_gear_milestone_events(),
+    )
+    msg = await cog.format_activity_digest(activity)
+
+    await cog._record_public_events(activity)
+    await cog._record_public_events(activity)
+
+    assert "+3 Champion-Punkte" in msg
+    assert champion.updates == [(42, 3, "WoW-iLvl-Meilenstein: Voidok Ø iLvl 65")]
+
+
+@pytest.mark.asyncio
+async def test_roster_ghost_death_uses_refreshed_item_level(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    channel = DummyChannel()
+    cog = await create_cog(tmp_path, patch_logged_task, channel=channel)
+    await cog.set_announcement_channel(123)
+    await cog.data.replace_snapshot([member(level=60, is_ghost=False)])
+
+    async def fake_roster():
+        return [member(level=60, is_ghost=True)]
+
+    async def fake_equipment(*args, **kwargs):
+        return {
+            "equipped_items": [
+                {"slot": {"type": "HEAD"}, "level": {"value": 68}},
+                {"slot": {"type": "CHEST"}, "level": {"value": 69}},
+            ]
+        }
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_equipment", fake_equipment)
+    monkeypatch.setattr(wow_cog_mod.random, "choice", lambda seq: seq[0])
+    cog.fetch_roster = fake_roster
+
+    result = await cog.scan(post=True, persist=True)
+
+    assert len(result.deaths) == 1
+    assert "Ø iLvl **68.5**" in channel.sent[0][0]
 
 
 @pytest.mark.asyncio

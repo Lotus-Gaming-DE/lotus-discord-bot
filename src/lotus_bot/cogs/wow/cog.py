@@ -4,7 +4,8 @@ import asyncio
 import difflib
 import random
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import discord
 from discord.ext import commands
 
@@ -15,6 +16,7 @@ from .api import (
     DEFAULT_LOCALE,
     DEFAULT_NAMESPACE,
     WoWAPIError,
+    fetch_character_equipment,
     fetch_character_profile,
     fetch_character_reputations,
     fetch_guild_roster,
@@ -23,6 +25,7 @@ from .data import (
     CharacterClaim,
     CharacterKnownRecipe,
     CharacterProfession,
+    GearMilestoneEvent,
     RecipeLearningEvent,
     ReputationEvent,
     RosterMember,
@@ -38,7 +41,13 @@ DEFAULT_GUILD_NAME = "Black Lotus"
 DEFAULT_POLL_INTERVAL = 3 * 60 * 60
 DEFAULT_CLAIM_REVIEW_CHANNEL_ID = 1184115540822855772
 DEFAULT_DIGEST_HOUR = 9
+try:
+    DIGEST_TIMEZONE = ZoneInfo("Europe/Berlin")
+except ZoneInfoNotFoundError:  # pragma: no cover - depends on host tzdata
+    DIGEST_TIMEZONE = datetime.now().astimezone().tzinfo or timezone.utc
 MILESTONE_LEVELS = {30, 40, 50, 60}
+ITEM_LEVEL_MILESTONES = {50, 55, 60, 65, 70, 75}
+ITEM_LEVEL_MILESTONE_POINTS = {50: 1, 55: 1, 60: 2, 65: 3, 70: 5, 75: 8}
 CLAIMED_MILESTONE_POINTS = {30: 2, 40: 3, 50: 5, 60: 10}
 RARE_RECIPE_POINTS = 2
 EPIC_RECIPE_POINTS = 5
@@ -116,6 +125,7 @@ class Milestone:
 class DeathEvent:
     member: RosterMember
     confirmed: bool = True
+    average_item_level: float | None = None
 
 
 @dataclass
@@ -132,6 +142,7 @@ class ActivityDiff:
     officer_notes: list[OfficerNote]
     recipe_events: list[RecipeLearningEvent] | None = None
     reputation_events: list[ReputationEvent] | None = None
+    gear_events: list[GearMilestoneEvent] | None = None
 
     @property
     def public_count(self) -> int:
@@ -141,6 +152,7 @@ class ActivityDiff:
             + len(self.deaths)
             + len(self.recipe_events or [])
             + len(self.reputation_events or [])
+            + len(self.gear_events or [])
         )
 
 
@@ -153,6 +165,7 @@ class ScanResult:
     officer_notes: list[OfficerNote] | None = None
     recipe_events: list[RecipeLearningEvent] | None = None
     reputation_events: list[ReputationEvent] | None = None
+    gear_events: list[GearMilestoneEvent] | None = None
     posted: int = 0
 
 
@@ -231,24 +244,52 @@ class WoWCog(ManagedTaskCog):
 
     async def _poll_loop(self) -> None:
         while True:
-            await asyncio.sleep(self._seconds_until_next_digest())
             try:
-                channel_id = await self.data.get_setting("announcement_channel_id")
-                if channel_id:
-                    await self.scan(post=True, persist=True)
+                if await self._scheduled_digest_due():
+                    await self._run_scheduled_digest()
             except asyncio.CancelledError:
                 raise
             except Exception as exc:  # pragma: no cover - defensive logging
                 logger.error("[WoWCog] Polling failed: %s", exc, exc_info=True)
+            await asyncio.sleep(self._seconds_until_next_digest())
 
     def _seconds_until_next_digest(self, now: datetime | None = None) -> float:
-        now = now or datetime.now().astimezone()
+        now = self._digest_now(now)
         target = now.replace(
             hour=DEFAULT_DIGEST_HOUR, minute=0, second=0, microsecond=0
         )
         if now >= target:
             target += timedelta(days=1)
         return max((target - now).total_seconds(), 1)
+
+    def _digest_now(self, now: datetime | None = None) -> datetime:
+        if now is None:
+            return datetime.now(DIGEST_TIMEZONE)
+        if now.tzinfo is None:
+            return now.replace(tzinfo=timezone.utc).astimezone(DIGEST_TIMEZONE)
+        return now.astimezone(DIGEST_TIMEZONE)
+
+    async def _scheduled_digest_due(self, now: datetime | None = None) -> bool:
+        now = self._digest_now(now)
+        target = now.replace(
+            hour=DEFAULT_DIGEST_HOUR, minute=0, second=0, microsecond=0
+        )
+        if now < target:
+            return False
+        last_scan_at = await self.data.last_scan_at()
+        if not last_scan_at:
+            return True
+        try:
+            last_scan = datetime.fromisoformat(last_scan_at)
+        except ValueError:
+            return True
+        last_scan = self._digest_now(last_scan)
+        return last_scan < target
+
+    async def _run_scheduled_digest(self) -> None:
+        channel_id = await self.data.get_setting("announcement_channel_id")
+        if channel_id:
+            await self.scan(post=True, persist=True)
 
     async def set_announcement_channel(self, channel_id: int) -> None:
         await self.data.set_setting("announcement_channel_id", str(channel_id))
@@ -313,6 +354,7 @@ class WoWCog(ManagedTaskCog):
         async with self._scan_lock:
             previous = await self.data.get_snapshot()
             current = await self.fetch_roster()
+            await self._refresh_gear_snapshots(current)
             activity = await self._detect_activity(previous, current)
             posted = 0
 
@@ -338,6 +380,7 @@ class WoWCog(ManagedTaskCog):
                 officer_notes=activity.officer_notes,
                 recipe_events=activity.recipe_events or [],
                 reputation_events=activity.reputation_events or [],
+                gear_events=activity.gear_events or [],
                 posted=posted,
             )
 
@@ -358,6 +401,7 @@ class WoWCog(ManagedTaskCog):
         deaths.extend(missing_deaths)
         recipe_events = await self.data.pending_recipe_learning_events()
         reputation_events = await self._detect_reputation_events(current)
+        gear_events = await self.data.pending_gear_milestone_events()
         return ActivityDiff(
             new_members=new_members,
             milestones=milestones,
@@ -365,7 +409,61 @@ class WoWCog(ManagedTaskCog):
             officer_notes=officer_notes,
             recipe_events=recipe_events,
             reputation_events=reputation_events,
+            gear_events=gear_events,
         )
+
+    async def _refresh_gear_snapshots(self, members: list[RosterMember]) -> None:
+        for member in members:
+            if member.level < 60:
+                continue
+            await self._refresh_member_gear(member)
+
+    async def _refresh_member_gear(self, member: RosterMember) -> None:
+        try:
+            payload = await fetch_character_equipment(
+                member.realm_slug,
+                member.name,
+                namespace=self.namespace,
+                locale=self.locale,
+            )
+        except WoWAPIError as exc:
+            logger.info(
+                "[WoWCog] Equipment API unavailable for %s: %s",
+                member.name,
+                exc,
+            )
+            return
+        except Exception as exc:
+            logger.info(
+                "[WoWCog] Equipment scan failed for %s: %s",
+                member.name,
+                exc,
+                exc_info=True,
+            )
+            return
+
+        average_item_level, item_count = self._average_equipped_item_level(payload)
+        if average_item_level is None:
+            return
+        previous = await self.data.gear_snapshot(member.character_key)
+        await self.data.set_gear_snapshot(
+            member.character_key, average_item_level, item_count
+        )
+        if previous is None or member.is_ghost:
+            return
+        for threshold in sorted(ITEM_LEVEL_MILESTONES):
+            if (
+                previous.average_item_level < threshold <= average_item_level
+                and not await self.data.gear_milestone_exists(
+                    member.character_key, threshold
+                )
+            ):
+                await self.data.record_gear_milestone(
+                    member.character_key,
+                    threshold,
+                    average_item_level,
+                    ITEM_LEVEL_MILESTONE_POINTS.get(threshold, 0),
+                )
 
     async def _reputation_tracking_enabled(self) -> bool:
         value = await self.data.get_setting("wow_reputation_tracking_enabled")
@@ -469,7 +567,14 @@ class WoWCog(ManagedTaskCog):
                 and (old is None or not old.is_ghost)
                 and not await self.data.death_exists(member.character_key)
             ):
-                deaths.append(DeathEvent(member))
+                deaths.append(
+                    DeathEvent(
+                        member,
+                        average_item_level=await self._member_average_item_level(
+                            member.character_key
+                        ),
+                    )
+                )
         return deaths
 
     async def _inspect_missing_members(
@@ -485,8 +590,15 @@ class WoWCog(ManagedTaskCog):
             if await self.data.death_exists(member.character_key):
                 continue
             state = await self._profile_life_state(member)
+            average_item_level = await self._member_average_item_level(
+                member.character_key
+            )
             if state == "dead":
-                deaths.append(DeathEvent(member, confirmed=True))
+                deaths.append(
+                    DeathEvent(
+                        member, confirmed=True, average_item_level=average_item_level
+                    )
+                )
             elif state == "alive":
                 notes.append(
                     OfficerNote(
@@ -495,8 +607,16 @@ class WoWCog(ManagedTaskCog):
                     )
                 )
             else:
-                deaths.append(DeathEvent(member, confirmed=False))
+                deaths.append(
+                    DeathEvent(
+                        member, confirmed=False, average_item_level=average_item_level
+                    )
+                )
         return deaths, notes
+
+    async def _member_average_item_level(self, character_key: str) -> float | None:
+        snapshot = await self.data.gear_snapshot(character_key)
+        return snapshot.average_item_level if snapshot else None
 
     async def _profile_life_state(self, member: RosterMember) -> str:
         try:
@@ -568,6 +688,37 @@ class WoWCog(ManagedTaskCog):
     def _is_exalted_reputation(self, reputation: dict[str, object]) -> bool:
         standing = str(reputation.get("standing") or "").casefold()
         return standing in {"exalted", "ehrfuerchtig", "ehrfürchtig"}
+
+    def _average_equipped_item_level(self, payload: dict) -> tuple[float | None, int]:
+        for key in ("equipped_item_level", "average_item_level"):
+            value = payload.get(key)
+            if isinstance(value, int | float):
+                return float(value), 0
+        item_levels: list[int] = []
+        for item in payload.get("equipped_items") or []:
+            if not isinstance(item, dict):
+                continue
+            slot = item.get("slot") or {}
+            slot_type = str(slot.get("type") or slot.get("name") or "").casefold()
+            if slot_type in {"shirt", "tabard"}:
+                continue
+            item_level = self._equipment_item_level(item)
+            if item_level is not None and item_level > 0:
+                item_levels.append(item_level)
+        if not item_levels:
+            return None, 0
+        return sum(item_levels) / len(item_levels), len(item_levels)
+
+    def _equipment_item_level(self, item: dict) -> int | None:
+        for key in ("item_level", "level"):
+            value = item.get(key)
+            if isinstance(value, int):
+                return value
+            if isinstance(value, dict):
+                nested = value.get("value")
+                if isinstance(nested, int):
+                    return nested
+        return None
 
     async def _post_activity_digest(self, activity: ActivityDiff) -> int:
         channel_id = await self.get_announcement_channel_id()
@@ -641,6 +792,11 @@ class WoWCog(ManagedTaskCog):
                 event.character_key, event.faction_id, event.standing
             )
             await self._award_reputation_points(event)
+        for event in activity.gear_events or []:
+            await self.data.mark_gear_milestone_announced(
+                event.character_key, event.threshold
+            )
+            await self._award_gear_milestone_points(event)
 
     async def _award_claimed_milestone_points(self, milestone: Milestone) -> None:
         claim = await self.data.get_claim(milestone.member.character_key)
@@ -717,6 +873,32 @@ class WoWCog(ManagedTaskCog):
                 exc_info=True,
             )
 
+    async def _award_gear_milestone_points(self, event: GearMilestoneEvent) -> None:
+        if event.points <= 0 or event.discord_user_id is None:
+            return
+        get_cog = getattr(self.bot, "get_cog", None)
+        champion = get_cog("ChampionCog") if get_cog else None
+        if champion is None or not hasattr(champion, "update_user_score"):
+            logger.info("[WoWCog] ChampionCog not available for gear bonus.")
+            return
+        if not await self.data.mark_gear_milestone_awarded(
+            event.character_key, event.threshold
+        ):
+            return
+        reason = (
+            f"WoW-iLvl-Meilenstein: {event.character_name} " f"Ø iLvl {event.threshold}"
+        )
+        try:
+            await champion.update_user_score(
+                event.discord_user_id, event.points, reason
+            )
+        except Exception as exc:  # pragma: no cover - defensive integration logging
+            logger.warning(
+                "[WoWCog] Could not award gear milestone points: %s",
+                exc,
+                exc_info=True,
+            )
+
     def format_milestone(self, milestone: Milestone) -> str:
         return self._format_milestone_line(milestone, None)
 
@@ -747,6 +929,7 @@ class WoWCog(ManagedTaskCog):
             or activity.milestones
             or (activity.recipe_events or [])
             or (activity.reputation_events or [])
+            or (activity.gear_events or [])
         )
         has_deaths = bool(activity.deaths)
         if has_deaths and has_good_news:
@@ -777,14 +960,16 @@ class WoWCog(ManagedTaskCog):
     def _format_death_line(self, death: DeathEvent) -> str:
         character = self._display_character(death.member)
         level = death.member.level
+        gear = self._format_death_gear_suffix(death)
         if not death.confirmed:
             return (
-                f"**{character}** ist auf Level **{level}** aus dem Roster "
+                f"**{character}** ist auf Level **{level}**{gear} aus dem Roster "
                 "verschwunden und nicht mehr auffindbar. Wahrscheinlich ist die "
                 "Hardcore-Reise hier geendet."
             )
         return (
-            f"**{character}** ist auf Level **{level}** gestorben. " "Ruhe in Frieden."
+            f"**{character}** ist auf Level **{level}**{gear} gestorben. "
+            "Ruhe in Frieden."
         )
 
     async def format_activity_digest(self, activity: ActivityDiff) -> str:
@@ -795,7 +980,15 @@ class WoWCog(ManagedTaskCog):
                 activity.new_members,
                 key=lambda item: (-item.level, item.name.casefold()),
             ):
-                lines.append(f"- {self._format_roster_line(member)}")
+                line = self._format_roster_line(member)
+                if member.level >= 60:
+                    snapshot = await self.data.gear_snapshot(member.character_key)
+                    if snapshot:
+                        line = (
+                            f"{line}, Ø iLvl "
+                            f"**{self._format_item_level(snapshot.average_item_level)}**"
+                        )
+                lines.append(f"- {line}")
             lines.append("")
         if activity.milestones:
             lines.append(
@@ -855,6 +1048,18 @@ class WoWCog(ManagedTaskCog):
                     f"{mention} (+{event.points} Champion-Punkte)"
                 )
             lines.append("")
+        if activity.gear_events:
+            lines.append("**Folgende Ausruestungs-Meilensteine wurden erreicht:**")
+            for event in sorted(
+                activity.gear_events,
+                key=lambda item: (-item.threshold, item.character_name.casefold()),
+            ):
+                lines.append(
+                    f"- **{event.character_name}** hat ein Ø iLvl von "
+                    f"**{self._format_item_level(event.average_item_level)}** erreicht "
+                    f"(+{event.points} Champion-Punkte)."
+                )
+            lines.append("")
         if activity.deaths:
             lines.append(
                 "**Wir mussten leider Verluste in Kauf nehmen. Gestorben sind:**"
@@ -864,7 +1069,10 @@ class WoWCog(ManagedTaskCog):
                 key=lambda item: (-item.member.level, item.member.name.casefold()),
             ):
                 suffix = "" if death.confirmed else " - nicht mehr im Roster auffindbar"
-                lines.append(f"- {self._format_roster_line(death.member)}{suffix}")
+                gear = self._format_death_gear_suffix(death)
+                lines.append(
+                    f"- {self._format_roster_line(death.member)}{gear}{suffix}"
+                )
             lines.append("")
         lines.append(self._digest_closer(activity))
         return "\n".join(lines)
@@ -880,6 +1088,14 @@ class WoWCog(ManagedTaskCog):
         if class_name:
             parts.append(class_name)
         return ", ".join(parts)
+
+    def _format_item_level(self, average_item_level: float) -> str:
+        return f"{average_item_level:.1f}"
+
+    def _format_death_gear_suffix(self, death: DeathEvent) -> str:
+        if death.member.level < 60 or death.average_item_level is None:
+            return ""
+        return f", Ø iLvl **{self._format_item_level(death.average_item_level)}**"
 
     def _display_character(self, member: RosterMember) -> str:
         parts = []

@@ -86,6 +86,26 @@ class ReputationEvent:
     created_at: str
 
 
+@dataclass
+class CharacterGearSnapshot:
+    character_key: str
+    average_item_level: float
+    item_count: int
+    updated_at: str
+
+
+@dataclass
+class GearMilestoneEvent:
+    character_key: str
+    character_name: str
+    realm_slug: str
+    discord_user_id: int | None
+    average_item_level: float
+    threshold: int
+    created_at: str
+    points: int
+
+
 class WoWData:
     """SQLite storage for WoW guild settings, snapshots, and milestones."""
 
@@ -229,6 +249,34 @@ class WoWData:
             )
             """
         )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS character_gear_snapshot (
+                character_key TEXT PRIMARY KEY,
+                average_item_level REAL NOT NULL,
+                item_count INTEGER NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+        await db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS gear_milestone_events (
+                character_key TEXT NOT NULL,
+                threshold INTEGER NOT NULL,
+                average_item_level REAL NOT NULL,
+                points INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                announced_at TEXT,
+                awarded_at TEXT,
+                PRIMARY KEY(character_key, threshold)
+            )
+            """
+        )
+        await self._ensure_column(
+            "gear_milestone_events", "points", "INTEGER NOT NULL DEFAULT 0"
+        )
+        await self._ensure_column("gear_milestone_events", "awarded_at", "TEXT")
         await self._ensure_column(
             "roster_snapshot", "is_ghost", "INTEGER NOT NULL DEFAULT 0"
         )
@@ -992,6 +1040,139 @@ class WoWData:
         await db.commit()
         return cur.rowcount > 0
 
+    async def gear_snapshot(self, character_key: str) -> CharacterGearSnapshot | None:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT character_key, average_item_level, item_count, updated_at
+              FROM character_gear_snapshot
+             WHERE character_key = ?
+            """,
+            (character_key,),
+        )
+        row = await cur.fetchone()
+        return _gear_snapshot_from_row(row) if row else None
+
+    async def set_gear_snapshot(
+        self, character_key: str, average_item_level: float, item_count: int
+    ) -> None:
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute(
+            """
+            INSERT INTO character_gear_snapshot(
+                character_key, average_item_level, item_count, updated_at
+            ) VALUES (?, ?, ?, ?)
+            ON CONFLICT(character_key)
+            DO UPDATE SET
+                average_item_level = excluded.average_item_level,
+                item_count = excluded.item_count,
+                updated_at = excluded.updated_at
+            """,
+            (
+                character_key,
+                float(average_item_level),
+                int(item_count),
+                datetime.utcnow().isoformat(),
+            ),
+        )
+        await db.commit()
+
+    async def gear_milestone_exists(self, character_key: str, threshold: int) -> bool:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT 1 FROM gear_milestone_events
+             WHERE character_key = ? AND threshold = ?
+            """,
+            (character_key, threshold),
+        )
+        return await cur.fetchone() is not None
+
+    async def record_gear_milestone(
+        self,
+        character_key: str,
+        threshold: int,
+        average_item_level: float,
+        points: int,
+    ) -> bool:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            INSERT OR IGNORE INTO gear_milestone_events(
+                character_key, threshold, average_item_level, points, created_at
+            ) VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                character_key,
+                int(threshold),
+                float(average_item_level),
+                int(points),
+                datetime.utcnow().isoformat(),
+            ),
+        )
+        await db.commit()
+        return cur.rowcount > 0
+
+    async def pending_gear_milestone_events(self) -> list[GearMilestoneEvent]:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT e.character_key,
+                   COALESCE(c.character_name, s.name, e.character_key),
+                   COALESCE(c.realm_slug, s.realm_slug, ''),
+                   c.discord_user_id,
+                   e.average_item_level,
+                   e.threshold,
+                   e.created_at,
+                   e.points
+              FROM gear_milestone_events e
+              LEFT JOIN character_claims c ON c.character_key = e.character_key
+              LEFT JOIN roster_snapshot s ON s.character_key = e.character_key
+             WHERE e.announced_at IS NULL
+             ORDER BY e.threshold DESC, e.created_at
+            """
+        )
+        rows = await cur.fetchall()
+        return [_gear_event_from_row(row) for row in rows]
+
+    async def mark_gear_milestone_announced(
+        self, character_key: str, threshold: int
+    ) -> None:
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute(
+            """
+            UPDATE gear_milestone_events
+               SET announced_at = COALESCE(announced_at, ?)
+             WHERE character_key = ? AND threshold = ?
+            """,
+            (datetime.utcnow().isoformat(), character_key, threshold),
+        )
+        await db.commit()
+
+    async def mark_gear_milestone_awarded(
+        self, character_key: str, threshold: int
+    ) -> bool:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            UPDATE gear_milestone_events
+               SET awarded_at = ?
+             WHERE character_key = ?
+               AND threshold = ?
+               AND awarded_at IS NULL
+            """,
+            (datetime.utcnow().isoformat(), character_key, threshold),
+        )
+        await db.commit()
+        return cur.rowcount > 0
+
     async def remove_known_recipe(self, character_key: str, spell_id: str) -> bool:
         await self.init_db()
         db = await self._get_db()
@@ -1128,6 +1309,28 @@ def _reputation_event_from_row(row: tuple[Any, ...]) -> ReputationEvent:
         standing=row[6],
         points=row[7],
         created_at=row[8],
+    )
+
+
+def _gear_snapshot_from_row(row: tuple[Any, ...]) -> CharacterGearSnapshot:
+    return CharacterGearSnapshot(
+        character_key=row[0],
+        average_item_level=float(row[1]),
+        item_count=int(row[2]),
+        updated_at=row[3],
+    )
+
+
+def _gear_event_from_row(row: tuple[Any, ...]) -> GearMilestoneEvent:
+    return GearMilestoneEvent(
+        character_key=row[0],
+        character_name=row[1],
+        realm_slug=row[2],
+        discord_user_id=row[3],
+        average_item_level=float(row[4]),
+        threshold=int(row[5]),
+        created_at=row[6],
+        points=int(row[7]),
     )
 
 

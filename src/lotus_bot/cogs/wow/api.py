@@ -136,3 +136,36 @@ async def fetch_character_reputations(
             data = await resp.json()
 
     return data if isinstance(data, dict) else {}
+
+
+async def fetch_character_equipment(
+    realm_slug: str,
+    character_name: str,
+    *,
+    namespace: str = DEFAULT_NAMESPACE,
+    locale: str = DEFAULT_LOCALE,
+) -> dict[str, Any]:
+    """Fetch a character's equipped items.
+
+    Classic profile detail endpoints are not guaranteed to be available. Callers
+    should treat failures as missing gear data.
+    """
+    token = await fetch_access_token()
+    url = (
+        f"{API_BASE}/profile/wow/character/"
+        f"{realm_slug}/{character_name.lower()}/equipment"
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+    params = {"namespace": namespace, "locale": locale}
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers, params=params) as resp:
+            if resp.status != 200:
+                text = await resp.text()
+                raise WoWAPIError(
+                    f"Character equipment request failed: HTTP {resp.status} {text}",
+                    status=resp.status,
+                )
+            data = await resp.json()
+
+    return data if isinstance(data, dict) else {}
