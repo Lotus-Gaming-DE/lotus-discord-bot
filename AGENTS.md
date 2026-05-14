@@ -51,7 +51,15 @@ The user (gs3rr4) does **not** code and pushes via GitHub Desktop. They cannot f
 python -m black src/ tests/ scripts/
 python -m black --check src/ tests/ scripts/   # must report 0 changes
 python -m pytest -q                            # must be all green
+pre-commit run --all-files                     # catches EOL / whitespace / YAML
+                                               # hooks that would otherwise burn
+                                               # a CI cycle on an unrelated file
 ```
+
+The `pre-commit` step matters even if your diff is small: hooks run with
+`--all-files` in CI and will flag historical files (missing trailing newline,
+stray tabs) that have nothing to do with your change. Running it locally first
+means a one-line fix is in your commit instead of a separate red-CI roundtrip.
 
 If `black` reformats anything, those changes are part of your work — include them.
 If a test fails because **you intentionally changed behavior**, update the test to match the new intent. Don't push and hope.

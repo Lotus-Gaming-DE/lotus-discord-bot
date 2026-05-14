@@ -93,6 +93,32 @@ class GearMilestoneEvent:
     points: int
 
 
+@dataclass
+class ProfessionSkillEvent:
+    character_key: str
+    character_name: str
+    realm_slug: str
+    discord_user_id: int | None
+    profession_id: str
+    threshold: int
+    skill_level: int
+    points: int
+    created_at: str
+
+
+@dataclass
+class Cooldown:
+    character_key: str
+    character_name: str
+    realm_slug: str
+    discord_user_id: int | None
+    cooldown_group: str
+    last_spell_id: str
+    last_spell_name: str
+    used_at: str
+    ready_at: str
+
+
 class WoWData:
     """SQLite storage for WoW guild settings, snapshots, and milestones."""
 
@@ -218,6 +244,30 @@ class WoWData:
                 announced_at TEXT,
                 awarded_at TEXT,
                 PRIMARY KEY(character_key, threshold)
+            )
+            """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS profession_skill_milestone_events (
+                character_key TEXT NOT NULL,
+                profession_id TEXT NOT NULL,
+                threshold INTEGER NOT NULL,
+                skill_level INTEGER NOT NULL,
+                points INTEGER NOT NULL,
+                created_at TEXT NOT NULL,
+                announced_at TEXT,
+                awarded_at TEXT,
+                PRIMARY KEY(character_key, profession_id, threshold)
+            )
+            """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS profession_cooldowns (
+                character_key TEXT NOT NULL,
+                cooldown_group TEXT NOT NULL,
+                last_spell_id TEXT NOT NULL,
+                last_spell_name TEXT NOT NULL,
+                used_at TEXT NOT NULL,
+                ready_at TEXT NOT NULL,
+                PRIMARY KEY(character_key, cooldown_group)
             )
             """)
         await self._ensure_column(
@@ -1007,6 +1057,229 @@ class WoWData:
         await db.commit()
         return cur.rowcount > 0
 
+    # ---- profession-skill milestones ----
+
+    async def skill_milestone_exists(
+        self, character_key: str, profession_id: str, threshold: int
+    ) -> bool:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT 1 FROM profession_skill_milestone_events
+             WHERE character_key = ? AND profession_id = ? AND threshold = ?
+            """,
+            (character_key, profession_id, int(threshold)),
+        )
+        return await cur.fetchone() is not None
+
+    async def record_skill_milestone(
+        self,
+        character_key: str,
+        profession_id: str,
+        threshold: int,
+        skill_level: int,
+        points: int,
+    ) -> bool:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            INSERT OR IGNORE INTO profession_skill_milestone_events(
+                character_key, profession_id, threshold, skill_level, points, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                character_key,
+                profession_id,
+                int(threshold),
+                int(skill_level),
+                int(points),
+                datetime.utcnow().isoformat(),
+            ),
+        )
+        await db.commit()
+        return cur.rowcount > 0
+
+    async def pending_skill_milestone_events(self) -> list[ProfessionSkillEvent]:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute("""
+            SELECT e.character_key,
+                   COALESCE(c.character_name, s.name, e.character_key),
+                   COALESCE(c.realm_slug, s.realm_slug, ''),
+                   c.discord_user_id,
+                   e.profession_id,
+                   e.threshold,
+                   e.skill_level,
+                   e.points,
+                   e.created_at
+              FROM profession_skill_milestone_events e
+              LEFT JOIN character_claims c ON c.character_key = e.character_key
+              LEFT JOIN roster_snapshot s ON s.character_key = e.character_key
+             WHERE e.announced_at IS NULL
+             ORDER BY e.threshold DESC, e.created_at
+            """)
+        rows = await cur.fetchall()
+        return [_skill_event_from_row(row) for row in rows]
+
+    async def mark_skill_milestone_announced(
+        self, character_key: str, profession_id: str, threshold: int
+    ) -> None:
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute(
+            """
+            UPDATE profession_skill_milestone_events
+               SET announced_at = COALESCE(announced_at, ?)
+             WHERE character_key = ? AND profession_id = ? AND threshold = ?
+            """,
+            (
+                datetime.utcnow().isoformat(),
+                character_key,
+                profession_id,
+                int(threshold),
+            ),
+        )
+        await db.commit()
+
+    async def mark_skill_milestone_awarded(
+        self, character_key: str, profession_id: str, threshold: int
+    ) -> bool:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            UPDATE profession_skill_milestone_events
+               SET awarded_at = ?
+             WHERE character_key = ?
+               AND profession_id = ?
+               AND threshold = ?
+               AND awarded_at IS NULL
+            """,
+            (
+                datetime.utcnow().isoformat(),
+                character_key,
+                profession_id,
+                int(threshold),
+            ),
+        )
+        await db.commit()
+        return cur.rowcount > 0
+
+    # ---- profession cooldowns ----
+
+    async def set_cooldown(
+        self,
+        character_key: str,
+        cooldown_group: str,
+        last_spell_id: str,
+        last_spell_name: str,
+        used_at: str,
+        ready_at: str,
+    ) -> None:
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute(
+            """
+            INSERT INTO profession_cooldowns(
+                character_key, cooldown_group, last_spell_id, last_spell_name,
+                used_at, ready_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(character_key, cooldown_group)
+            DO UPDATE SET
+                last_spell_id = excluded.last_spell_id,
+                last_spell_name = excluded.last_spell_name,
+                used_at = excluded.used_at,
+                ready_at = excluded.ready_at
+            """,
+            (
+                character_key,
+                cooldown_group,
+                last_spell_id,
+                last_spell_name,
+                used_at,
+                ready_at,
+            ),
+        )
+        await db.commit()
+
+    async def cooldowns_for_character(self, character_key: str) -> list[Cooldown]:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT cd.character_key,
+                   COALESCE(c.character_name, s.name, cd.character_key),
+                   COALESCE(c.realm_slug, s.realm_slug, ''),
+                   c.discord_user_id,
+                   cd.cooldown_group,
+                   cd.last_spell_id,
+                   cd.last_spell_name,
+                   cd.used_at,
+                   cd.ready_at
+              FROM profession_cooldowns cd
+              LEFT JOIN character_claims c ON c.character_key = cd.character_key
+              LEFT JOIN roster_snapshot s ON s.character_key = cd.character_key
+             WHERE cd.character_key = ?
+             ORDER BY cd.ready_at
+            """,
+            (character_key,),
+        )
+        rows = await cur.fetchall()
+        return [_cooldown_from_row(row) for row in rows]
+
+    async def cooldowns_for_user(self, discord_user_id: int) -> list[Cooldown]:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT cd.character_key,
+                   c.character_name,
+                   c.realm_slug,
+                   c.discord_user_id,
+                   cd.cooldown_group,
+                   cd.last_spell_id,
+                   cd.last_spell_name,
+                   cd.used_at,
+                   cd.ready_at
+              FROM profession_cooldowns cd
+              JOIN character_claims c ON c.character_key = cd.character_key
+             WHERE c.discord_user_id = ?
+             ORDER BY cd.ready_at
+            """,
+            (int(discord_user_id),),
+        )
+        rows = await cur.fetchall()
+        return [_cooldown_from_row(row) for row in rows]
+
+    async def cooldowns_ready_in_window(
+        self, start_iso: str, end_iso: str
+    ) -> list[Cooldown]:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT cd.character_key,
+                   COALESCE(c.character_name, s.name, cd.character_key),
+                   COALESCE(c.realm_slug, s.realm_slug, ''),
+                   c.discord_user_id,
+                   cd.cooldown_group,
+                   cd.last_spell_id,
+                   cd.last_spell_name,
+                   cd.used_at,
+                   cd.ready_at
+              FROM profession_cooldowns cd
+              LEFT JOIN character_claims c ON c.character_key = cd.character_key
+              LEFT JOIN roster_snapshot s ON s.character_key = cd.character_key
+             WHERE cd.ready_at >= ? AND cd.ready_at < ?
+             ORDER BY cd.ready_at
+            """,
+            (start_iso, end_iso),
+        )
+        rows = await cur.fetchall()
+        return [_cooldown_from_row(row) for row in rows]
+
     async def remove_known_recipe(self, character_key: str, spell_id: str) -> bool:
         await self.init_db()
         db = await self._get_db()
@@ -1151,6 +1424,34 @@ def _gear_event_from_row(row: tuple[Any, ...]) -> GearMilestoneEvent:
         threshold=int(row[5]),
         created_at=row[6],
         points=int(row[7]),
+    )
+
+
+def _skill_event_from_row(row: tuple[Any, ...]) -> ProfessionSkillEvent:
+    return ProfessionSkillEvent(
+        character_key=row[0],
+        character_name=row[1],
+        realm_slug=row[2],
+        discord_user_id=row[3],
+        profession_id=row[4],
+        threshold=int(row[5]),
+        skill_level=int(row[6]),
+        points=int(row[7]),
+        created_at=row[8],
+    )
+
+
+def _cooldown_from_row(row: tuple[Any, ...]) -> Cooldown:
+    return Cooldown(
+        character_key=row[0],
+        character_name=row[1],
+        realm_slug=row[2],
+        discord_user_id=row[3],
+        cooldown_group=row[4],
+        last_spell_id=row[5],
+        last_spell_name=row[6],
+        used_at=row[7],
+        ready_at=row[8],
     )
 
 

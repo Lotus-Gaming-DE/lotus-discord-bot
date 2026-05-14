@@ -1666,3 +1666,235 @@ async def test_gear_event_mentions_claimed_owner_and_shows_points(
     msg = await cog.format_activity_digest(activity)
     assert "<@555>" in msg
     assert "+8 Champion-Punkte" in msg
+
+
+# ---- Profession skill milestones ----
+
+
+@pytest.mark.asyncio
+async def test_skill_milestone_awarded_on_single_threshold_cross(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    target = member(name="Voidok")
+    claim, _ = await cog.data.create_claim(target, 42)
+
+    await cog._record_skill_milestones(claim.character_key, "alchemy", 50, 80)
+
+    events = await cog.data.pending_skill_milestone_events()
+    assert [(e.threshold, e.points) for e in events] == [(75, 3)]
+    assert events[0].profession_id == "alchemy"
+    assert events[0].skill_level == 80
+
+
+@pytest.mark.asyncio
+async def test_skill_milestone_cumulative_on_big_jump(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    target = member(name="Voidok")
+    claim, _ = await cog.data.create_claim(target, 42)
+
+    await cog._record_skill_milestones(claim.character_key, "alchemy", 0, 300)
+
+    events = await cog.data.pending_skill_milestone_events()
+    crossed = sorted((e.threshold, e.points) for e in events)
+    assert crossed == [(75, 3), (150, 6), (225, 12), (300, 25)]
+
+
+@pytest.mark.asyncio
+async def test_skill_milestone_idempotent_on_resave(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    target = member(name="Voidok")
+    claim, _ = await cog.data.create_claim(target, 42)
+
+    await cog._record_skill_milestones(claim.character_key, "alchemy", 0, 80)
+    await cog._record_skill_milestones(claim.character_key, "alchemy", 0, 80)
+
+    events = await cog.data.pending_skill_milestone_events()
+    assert len(events) == 1
+
+
+@pytest.mark.asyncio
+async def test_skill_milestone_digest_section_renders(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    target = member(name="Voidok")
+    claim, _ = await cog.data.create_claim(target, 42)
+    await cog._record_skill_milestones(claim.character_key, "alchemy", 0, 160)
+
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        skill_events=await cog.data.pending_skill_milestone_events(),
+    )
+
+    msg = await cog.format_activity_digest(activity)
+    assert "Berufsskill-Meilensteine" in msg
+    assert "Alchemie" in msg
+    assert "Skill **75**" in msg
+    assert "Skill **150**" in msg
+    assert "<@42>" in msg
+    assert "+3 Champion-Punkte" in msg
+    assert "+6 Champion-Punkte" in msg
+
+
+@pytest.mark.asyncio
+async def test_skill_milestone_awards_via_champion_cog(tmp_path, patch_logged_task):
+    champion = DummyChampionCog()
+    bot = ChampionBot(channel=DummyChannel(), champion=champion)
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(bot)
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+    cog.bot.data = {"wow": crafting_data()}
+    target = member(name="Voidok")
+    claim, _ = await cog.data.create_claim(target, 42)
+    await cog._record_skill_milestones(claim.character_key, "alchemy", 200, 230)
+
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        skill_events=await cog.data.pending_skill_milestone_events(),
+    )
+    await cog._record_public_events(activity)
+
+    assert champion.updates == [
+        (42, 12, "WoW-Berufsskill: Voidok (Alchemie) Skill 225"),
+    ]
+
+
+# ---- Cooldown tracking ----
+
+
+@pytest.mark.asyncio
+async def test_cooldown_log_propagates_to_group(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    target = member(name="Voidok")
+    claim, _ = await cog.data.create_claim(target, 42)
+    # User must have learned a transmute spell for the log to succeed.
+    await cog.data.add_known_recipes(claim.character_key, "alchemy", ["spell.17187"])
+
+    status, cooldown = await cog.log_cooldown(42, claim.character_key, "spell.17187")
+    assert status == "ok"
+    assert cooldown is not None
+    assert cooldown.cooldown_group == "alchemy_transmute"
+
+    # Logging Iron-to-Gold (same group) overwrites the existing row.
+    await cog.data.add_known_recipes(claim.character_key, "alchemy", ["spell.11479"])
+    status2, _ = await cog.log_cooldown(42, claim.character_key, "spell.11479")
+    assert status2 == "ok"
+    rows = await cog.data.cooldowns_for_character(claim.character_key)
+    # Still one row — group is shared.
+    assert len(rows) == 1
+    assert rows[0].last_spell_id == "spell.11479"
+
+
+@pytest.mark.asyncio
+async def test_cooldown_log_requires_known_recipe(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    target = member(name="Voidok")
+    claim, _ = await cog.data.create_claim(target, 42)
+    # No recipe learned — must fail.
+
+    status, cooldown = await cog.log_cooldown(42, claim.character_key, "spell.17187")
+    assert status == "recipe_missing"
+    assert cooldown is None
+    assert await cog.data.cooldowns_for_character(claim.character_key) == []
+
+
+@pytest.mark.asyncio
+async def test_cooldown_ready_window_filter(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    target = member(name="Voidok")
+    claim, _ = await cog.data.create_claim(target, 42)
+    now = datetime(2026, 5, 14, 12, 0, 0, tzinfo=__import__("datetime").timezone.utc)
+    in_12h = now + __import__("datetime").timedelta(hours=12)
+    in_30h = now + __import__("datetime").timedelta(hours=30)
+    await cog.data.set_cooldown(
+        claim.character_key,
+        "alchemy_transmute",
+        "spell.17187",
+        "Transmute: Arcanite",
+        now.isoformat(),
+        in_12h.isoformat(),
+    )
+    other = member(key="id:2", name="Other")
+    other_claim, _ = await cog.data.create_claim(other, 99)
+    await cog.data.set_cooldown(
+        other_claim.character_key,
+        "tailoring_mooncloth",
+        "spell.18560",
+        "Mooncloth",
+        now.isoformat(),
+        in_30h.isoformat(),
+    )
+
+    in_window = await cog.data.cooldowns_ready_in_window(
+        now.isoformat(),
+        (now + __import__("datetime").timedelta(hours=24)).isoformat(),
+    )
+    assert [cd.character_name for cd in in_window] == ["Voidok"]
+
+
+@pytest.mark.asyncio
+async def test_cooldown_digest_section_renders_with_mention(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    target = member(name="Voidok")
+    claim, _ = await cog.data.create_claim(target, 42)
+    in_two_hours = datetime.now(__import__("datetime").timezone.utc) + __import__(
+        "datetime"
+    ).timedelta(hours=2)
+    cd = wow_cog_mod.Cooldown(
+        character_key=claim.character_key,
+        character_name="Voidok",
+        realm_slug="soulseeker",
+        discord_user_id=42,
+        cooldown_group="alchemy_transmute",
+        last_spell_id="spell.17187",
+        last_spell_name="Transmute: Arcanite",
+        used_at=datetime.now(__import__("datetime").timezone.utc).isoformat(),
+        ready_at=in_two_hours.isoformat(),
+    )
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        cooldowns_ready=[cd],
+    )
+
+    msg = await cog.format_activity_digest(activity)
+    assert "Cooldowns bereit in den nächsten 24h" in msg
+    assert "Voidok" in msg
+    assert "Transmutationen" in msg
+    assert "Transmute: Arcanite" in msg
+    assert "<@42>" in msg
+
+
+@pytest.mark.asyncio
+async def test_cooldown_eligible_options_filters_by_known_recipes(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    target = member(name="Voidok")
+    claim, _ = await cog.data.create_claim(target, 42)
+    other_char = member(key="id:2", name="Otherchar")
+    other_claim, _ = await cog.data.create_claim(other_char, 42)
+
+    # Voidok learns Arcanite; Otherchar learns nothing.
+    await cog.data.add_known_recipes(claim.character_key, "alchemy", ["spell.17187"])
+
+    eligible = await cog.cooldown_eligible_options(42)
+
+    assert [(c.character_name, sid) for c, sid, _, _ in eligible] == [
+        ("Voidok", "spell.17187")
+    ]

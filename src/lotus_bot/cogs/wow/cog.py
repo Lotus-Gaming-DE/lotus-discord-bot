@@ -24,7 +24,9 @@ from .data import (
     CharacterClaim,
     CharacterKnownRecipe,
     CharacterProfession,
+    Cooldown,
     GearMilestoneEvent,
+    ProfessionSkillEvent,
     RecipeLearningEvent,
     RosterMember,
     WoWData,
@@ -63,6 +65,45 @@ RECIPE_SKILL_BRACKETS = [
     (0, 1.0),
 ]
 EPIC_RECIPE_BASE_POINTS = 10  # special hand-curated spell IDs
+# Profession-skill milestones (cumulative): each threshold crossed awards
+# the points once. Total for a 1→300 run is 46 points.
+PROFESSION_SKILL_MILESTONES = {75: 3, 150: 6, 225: 12, 300: 25}
+# Hardcoded craft-cooldown groups for WoW Classic Era 1.x. Add new entries
+# here if a content patch introduces more (e.g. Spellcloth in TBC).
+COOLDOWN_GROUPS: dict[str, dict] = {
+    "alchemy_transmute": {
+        "label": "Transmutationen",
+        "hours": 48,
+        "spell_ids": frozenset(
+            {
+                "spell.17187",  # Transmute: Arcanite
+                "spell.11479",  # Transmute: Iron to Gold
+                "spell.11480",  # Transmute: Mithril to Truesilver
+                "spell.17559",  # Transmute: Air to Fire
+                "spell.17560",  # Transmute: Fire to Earth
+                "spell.17561",  # Transmute: Earth to Water
+                "spell.17562",  # Transmute: Water to Air
+                "spell.17563",  # Transmute: Undeath to Water
+                "spell.17564",  # Transmute: Water to Undeath
+                "spell.17565",  # Transmute: Life to Earth
+                "spell.17566",  # Transmute: Earth to Life
+                "spell.25146",  # Transmute: Elemental Fire
+            }
+        ),
+    },
+    "tailoring_mooncloth": {
+        "label": "Mondstoff",
+        "hours": 96,
+        "spell_ids": frozenset({"spell.18560"}),
+    },
+}
+# Reverse-lookup: spell_id → (group_key, group_config). Built once at
+# module load — every COOLDOWN_GROUPS edit is reflected automatically.
+COOLDOWN_SPELL_TO_GROUP: dict[str, tuple[str, dict]] = {
+    spell_id: (group_key, group)
+    for group_key, group in COOLDOWN_GROUPS.items()
+    for spell_id in group["spell_ids"]
+}
 MAX_PRIMARY_PROFESSIONS = 2
 SECONDARY_CRAFTING_PROFESSIONS = {"cooking"}
 EXCLUDED_CRAFTING_PROFESSIONS = {"first-aid", "fishing"}
@@ -152,6 +193,8 @@ class ActivityDiff:
     officer_notes: list[OfficerNote]
     recipe_events: list[RecipeLearningEvent] | None = None
     gear_events: list[GearMilestoneEvent] | None = None
+    skill_events: list[ProfessionSkillEvent] | None = None
+    cooldowns_ready: list[Cooldown] | None = None
 
     @property
     def public_count(self) -> int:
@@ -161,6 +204,8 @@ class ActivityDiff:
             + len(self.deaths)
             + len(self.recipe_events or [])
             + len(self.gear_events or [])
+            + len(self.skill_events or [])
+            + len(self.cooldowns_ready or [])
         )
 
 
@@ -173,6 +218,8 @@ class ScanResult:
     officer_notes: list[OfficerNote] | None = None
     recipe_events: list[RecipeLearningEvent] | None = None
     gear_events: list[GearMilestoneEvent] | None = None
+    skill_events: list[ProfessionSkillEvent] | None = None
+    cooldowns_ready: list[Cooldown] | None = None
     posted: int = 0
 
 
@@ -369,6 +416,8 @@ class WoWCog(ManagedTaskCog):
                         officer_notes=[],
                         recipe_events=[],
                         gear_events=[],
+                        skill_events=[],
+                        cooldowns_ready=[],
                         posted=0,
                     )
                 await self._refresh_member_profiles(current, session=session)
@@ -399,6 +448,8 @@ class WoWCog(ManagedTaskCog):
                 officer_notes=activity.officer_notes,
                 recipe_events=activity.recipe_events or [],
                 gear_events=activity.gear_events or [],
+                skill_events=activity.skill_events or [],
+                cooldowns_ready=activity.cooldowns_ready or [],
                 posted=posted,
             )
 
@@ -439,6 +490,8 @@ class WoWCog(ManagedTaskCog):
         deaths.extend(missing_deaths)
         recipe_events = await self.data.pending_recipe_learning_events()
         gear_events = await self.data.pending_gear_milestone_events()
+        skill_events = await self.data.pending_skill_milestone_events()
+        cooldowns_ready = await self._cooldowns_ready_in_next_24h()
         return ActivityDiff(
             new_members=new_members,
             milestones=milestones,
@@ -446,6 +499,21 @@ class WoWCog(ManagedTaskCog):
             officer_notes=officer_notes,
             recipe_events=recipe_events,
             gear_events=gear_events,
+            skill_events=skill_events,
+            cooldowns_ready=cooldowns_ready,
+        )
+
+    async def _cooldowns_ready_in_next_24h(self) -> list[Cooldown]:
+        """Cooldowns that fire from now until 24h ahead.
+
+        Used for the daily digest. Window starts at "now" so freshly-ready
+        CDs still appear on the day they unlock; ends 24h later so we don't
+        spam multi-day previews.
+        """
+        now = datetime.now(timezone.utc)
+        end = now + timedelta(hours=24)
+        return await self.data.cooldowns_ready_in_window(
+            now.isoformat(), end.isoformat()
         )
 
     async def _refresh_member_profiles(
@@ -726,6 +794,12 @@ class WoWCog(ManagedTaskCog):
                 event.character_key, event.threshold
             )
             await self._award_gear_milestone_points(event)
+        for event in activity.skill_events or []:
+            await self.data.mark_skill_milestone_announced(
+                event.character_key, event.profession_id, event.threshold
+            )
+            await self._award_skill_milestone_points(event)
+        # Cooldowns are read-only in the digest — no DB write needed here.
 
     async def _award_claimed_milestone_points(self, milestone: Milestone) -> None:
         claim = await self.data.get_claim(milestone.member.character_key)
@@ -801,6 +875,101 @@ class WoWCog(ManagedTaskCog):
                 exc_info=True,
             )
 
+    async def cooldown_eligible_options(
+        self, discord_user_id: int
+    ) -> list[tuple[CharacterClaim, str, str, str]]:
+        """Return (claim, spell_id, spell_name, group_label) per eligible (char, CD-spell).
+
+        A spell is eligible if the user's claimed character has explicitly
+        learned it AND it's in the cooldown spell-to-group lookup.
+        """
+        eligible: list[tuple[CharacterClaim, str, str, str]] = []
+        for claim in await self.data.claims_for_user(discord_user_id):
+            known = await self.data.known_recipe_spell_ids(claim.character_key)
+            for spell_id in sorted(known):
+                if spell_id not in COOLDOWN_SPELL_TO_GROUP:
+                    continue
+                _, group = COOLDOWN_SPELL_TO_GROUP[spell_id]
+                recipe = self._recipe_by_spell_id(spell_id)
+                spell_name = self._recipe_name(recipe) if recipe else spell_id
+                eligible.append((claim, spell_id, spell_name, group["label"]))
+        return eligible
+
+    async def log_cooldown(
+        self,
+        discord_user_id: int,
+        character_key: str,
+        spell_id: str,
+    ) -> tuple[str, Cooldown | None]:
+        """Persist a cooldown for the given user's character + spell.
+
+        Returns ``(status, cooldown)``. Status codes:
+        * ``"ok"`` — saved.
+        * ``"not_owner"`` — claim belongs to someone else.
+        * ``"unknown_spell"`` — spell isn't a tracked CD recipe.
+        * ``"recipe_missing"`` — char hasn't learned that recipe.
+        """
+        if spell_id not in COOLDOWN_SPELL_TO_GROUP:
+            return "unknown_spell", None
+        claim = await self.data.get_claim(character_key)
+        if not claim or claim.discord_user_id != discord_user_id:
+            return "not_owner", None
+        known = await self.data.known_recipe_spell_ids(character_key)
+        if spell_id not in known:
+            return "recipe_missing", None
+        group_key, group = COOLDOWN_SPELL_TO_GROUP[spell_id]
+        recipe = self._recipe_by_spell_id(spell_id)
+        spell_name = self._recipe_name(recipe) if recipe else spell_id
+        now = datetime.now(timezone.utc)
+        ready = now + timedelta(hours=int(group["hours"]))
+        await self.data.set_cooldown(
+            character_key,
+            group_key,
+            spell_id,
+            spell_name,
+            now.isoformat(),
+            ready.isoformat(),
+        )
+        return "ok", Cooldown(
+            character_key=character_key,
+            character_name=claim.character_name,
+            realm_slug=claim.realm_slug,
+            discord_user_id=claim.discord_user_id,
+            cooldown_group=group_key,
+            last_spell_id=spell_id,
+            last_spell_name=spell_name,
+            used_at=now.isoformat(),
+            ready_at=ready.isoformat(),
+        )
+
+    async def _award_skill_milestone_points(self, event: ProfessionSkillEvent) -> None:
+        if event.points <= 0 or event.discord_user_id is None:
+            return
+        get_cog = getattr(self.bot, "get_cog", None)
+        champion = get_cog("ChampionCog") if get_cog else None
+        if champion is None or not hasattr(champion, "update_user_score"):
+            logger.info("[WoWCog] ChampionCog not available for skill bonus.")
+            return
+        if not await self.data.mark_skill_milestone_awarded(
+            event.character_key, event.profession_id, event.threshold
+        ):
+            return
+        profession_name = self._profession_name(event.profession_id)
+        reason = (
+            f"WoW-Berufsskill: {event.character_name} ({profession_name}) "
+            f"Skill {event.threshold}"
+        )
+        try:
+            await champion.update_user_score(
+                event.discord_user_id, event.points, reason
+            )
+        except Exception as exc:  # pragma: no cover - defensive integration logging
+            logger.warning(
+                "[WoWCog] Could not award skill milestone points: %s",
+                exc,
+                exc_info=True,
+            )
+
     def format_milestone(self, milestone: Milestone) -> str:
         return self._format_milestone_line(milestone, None)
 
@@ -831,6 +1000,8 @@ class WoWCog(ManagedTaskCog):
             or activity.milestones
             or (activity.recipe_events or [])
             or (activity.gear_events or [])
+            or (activity.skill_events or [])
+            or (activity.cooldowns_ready or [])
         )
         has_deaths = bool(activity.deaths)
         if has_deaths and has_good_news:
@@ -969,6 +1140,43 @@ class WoWCog(ManagedTaskCog):
                 )
             sections.append(("**Ausrüstungs-Meilensteine** 🛡️", body))
 
+        if activity.skill_events:
+            body = []
+            for event in sorted(
+                activity.skill_events,
+                key=lambda item: (-item.threshold, item.character_name.casefold()),
+            ):
+                tail_parts: list[str] = []
+                if event.discord_user_id is not None:
+                    tail_parts.append(f"<@{event.discord_user_id}>")
+                    if event.points > 0:
+                        tail_parts.append(f"(+{event.points} Champion-Punkte)")
+                tail = f" - {' '.join(tail_parts)}" if tail_parts else ""
+                body.append(
+                    f"- **{event.character_name}** "
+                    f"({self._profession_name(event.profession_id)}): "
+                    f"hat Skill **{event.threshold}** erreicht{tail}"
+                )
+            sections.append(("**Berufsskill-Meilensteine** 🧪", body))
+
+        if activity.cooldowns_ready:
+            body = []
+            now = datetime.now(timezone.utc)
+            for cd in sorted(activity.cooldowns_ready, key=lambda c: c.ready_at):
+                ready_label = self._format_cooldown_ready_label(cd.ready_at, now)
+                group = COOLDOWN_GROUPS.get(cd.cooldown_group, {})
+                group_label = group.get("label", cd.cooldown_group)
+                mention = (
+                    f" - <@{cd.discord_user_id}>"
+                    if cd.discord_user_id is not None
+                    else ""
+                )
+                body.append(
+                    f"- **{cd.character_name}** ({group_label} — "
+                    f"{cd.last_spell_name}): {ready_label}{mention}"
+                )
+            sections.append(("**Cooldowns bereit in den nächsten 24h** ⏳", body))
+
         if activity.deaths:
             body = []
             for death in sorted(
@@ -1022,6 +1230,37 @@ class WoWCog(ManagedTaskCog):
 
     def _format_item_level(self, average_item_level: float) -> str:
         return f"{average_item_level:.1f}"
+
+    def _format_cooldown_ready_label(
+        self, ready_at_iso: str, now: datetime | None = None
+    ) -> str:
+        """Render ``ready_at`` as 'ab heute HH:MM' / 'ab morgen HH:MM' / 'jetzt'.
+
+        Times are shown in the digest timezone so users see local clock time.
+        """
+        now = now or datetime.now(timezone.utc)
+        try:
+            ready = datetime.fromisoformat(ready_at_iso)
+        except ValueError:
+            return "Zeitpunkt unklar"
+        if ready.tzinfo is None:
+            ready = ready.replace(tzinfo=timezone.utc)
+        ready_local = ready.astimezone(DIGEST_TIMEZONE)
+        now_local = now.astimezone(DIGEST_TIMEZONE)
+        if ready <= now:
+            return "ready **jetzt**"
+        today = now_local.date()
+        target = ready_local.date()
+        when = (
+            "heute"
+            if target == today
+            else (
+                "morgen"
+                if target == today + timedelta(days=1)
+                else target.strftime("%d.%m.")
+            )
+        )
+        return f"ab {when} **{ready_local.strftime('%H:%M')}**"
 
     def _format_death_gear_suffix(self, death: DeathEvent) -> str:
         if death.member.level < 60 or death.average_item_level is None:
@@ -1437,10 +1676,48 @@ class WoWCog(ManagedTaskCog):
             and primary_count >= MAX_PRIMARY_PROFESSIONS
         ):
             return CraftingProfileResult(None, claim=claim, reason="primary_limit")
+        previous = await self.data.get_character_profession(
+            claim.character_key, profession_id
+        )
+        old_skill = int(previous.skill_level) if previous else 0
         profession = await self.data.set_character_profession(
             claim, profession_id, skill_level, specialization
         )
+        await self._record_skill_milestones(
+            claim.character_key, profession_id, old_skill, int(skill_level)
+        )
         return CraftingProfileResult(profession, claim=claim, reason="saved")
+
+    async def _record_skill_milestones(
+        self,
+        character_key: str,
+        profession_id: str,
+        old_skill: int,
+        new_skill: int,
+    ) -> None:
+        """Record milestone events for every threshold crossed in this update.
+
+        Cumulative: a jump from 50 to 250 awards 75 and 150 and 225 in one go.
+        Idempotent via the table's primary key (character_key, profession_id,
+        threshold) plus an explicit ``skill_milestone_exists`` guard so we
+        only ever count the same crossing once.
+        """
+        if new_skill <= old_skill:
+            return
+        for threshold in sorted(PROFESSION_SKILL_MILESTONES):
+            if not (old_skill < threshold <= new_skill):
+                continue
+            if await self.data.skill_milestone_exists(
+                character_key, profession_id, threshold
+            ):
+                continue
+            await self.data.record_skill_milestone(
+                character_key,
+                profession_id,
+                threshold,
+                new_skill,
+                PROFESSION_SKILL_MILESTONES[threshold],
+            )
 
     async def remove_crafting_profile(
         self,
@@ -2512,6 +2789,90 @@ class PanelCraftingSearchModal(discord.ui.Modal):
         )
 
 
+class PanelCooldownStartView(discord.ui.View):
+    """Ephemeral picker for logging a craft-cooldown.
+
+    Each option is a (char, CD-spell) pair derived from the user's
+    explicitly-learned recipes. Click → "now" is persisted via
+    :meth:`WoWCog.log_cooldown` and the user gets a confirmation with the
+    computed ready-at time.
+    """
+
+    def __init__(
+        self,
+        cog: WoWCog,
+        owner_user_id: int,
+        options: list[tuple[CharacterClaim, str, str, str]],
+    ) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.owner_user_id = owner_user_id
+        self.options = options
+        self.add_item(PanelCooldownStartSelect(self))
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.owner_user_id:
+            return True
+        await interaction.response.send_message(
+            "Diese Auswahl gehört nicht dir.", ephemeral=True
+        )
+        return False
+
+
+class PanelCooldownStartSelect(discord.ui.Select):
+    def __init__(self, parent: PanelCooldownStartView) -> None:
+        self.parent_view = parent
+        # Each value encodes "<character_key>|<spell_id>" so the callback
+        # knows both pieces without juggling extra state.
+        select_options = []
+        for claim, spell_id, spell_name, group_label in parent.options[:25]:
+            label = f"{claim.character_name}: {spell_name}"[:100]
+            description = f"{group_label} CD"[:100]
+            select_options.append(
+                discord.SelectOption(
+                    label=label,
+                    value=f"{claim.character_key}|{spell_id}",
+                    description=description,
+                )
+            )
+        super().__init__(
+            placeholder="Cooldown auswählen",
+            min_values=1,
+            max_values=1,
+            options=select_options,
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        character_key, spell_id = self.values[0].split("|", 1)
+        status, cooldown = await self.parent_view.cog.log_cooldown(
+            interaction.user.id, character_key, spell_id
+        )
+        if status != "ok" or cooldown is None:
+            error_messages = {
+                "not_owner": "Dieser Char gehört nicht dir.",
+                "unknown_spell": "Unbekannter Cooldown-Spell.",
+                "recipe_missing": (
+                    "Dieser Char hat das Rezept nicht als gelernt eingetragen."
+                ),
+            }
+            await interaction.response.edit_message(
+                content=error_messages.get(status, "Speichern fehlgeschlagen."),
+                view=None,
+            )
+            return
+        ready_label = self.parent_view.cog._format_cooldown_ready_label(
+            cooldown.ready_at
+        )
+        await interaction.response.edit_message(
+            content=(
+                f"✅ **{cooldown.character_name}** hat "
+                f"**{cooldown.last_spell_name}** eingesetzt. "
+                f"Wieder verfügbar {ready_label}."
+            ),
+            view=None,
+        )
+
+
 class PanelUnclaimedCharSelectView(discord.ui.View):
     """Ephemeral picker shown when a user clicks 'Char claimen'.
 
@@ -2682,6 +3043,29 @@ class WoWPanelView(discord.ui.View):
         self, interaction: discord.Interaction, _: discord.ui.Button
     ) -> None:
         await interaction.response.send_modal(PanelCraftingSearchModal(self.cog))
+
+    @discord.ui.button(
+        label="⏳ Cooldown loggen",
+        style=discord.ButtonStyle.secondary,
+        custom_id="wow_panel:cooldown_log",
+    )
+    async def cooldown_log(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        eligible = await self.cog.cooldown_eligible_options(interaction.user.id)
+        if not eligible:
+            await interaction.response.send_message(
+                "Keiner deiner Chars hat ein Rezept mit Cooldown gelernt. "
+                "Trag das passende Rezept zuerst unter **Rezepte pflegen** ein.",
+                ephemeral=True,
+            )
+            return
+        view = PanelCooldownStartView(self.cog, interaction.user.id, eligible)
+        await interaction.response.send_message(
+            "Welchen Cooldown willst du eintragen?",
+            view=view,
+            ephemeral=True,
+        )
 
     @discord.ui.button(
         label="Hilfe & Übersicht",

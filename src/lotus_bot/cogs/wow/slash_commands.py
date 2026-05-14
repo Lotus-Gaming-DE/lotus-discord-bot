@@ -480,6 +480,40 @@ async def claims_list(interaction: discord.Interaction, status: str = "all"):
     )
 
 
+cooldowns_group = app_commands.Group(
+    name="cooldowns",
+    description="WoW Craft-Cooldowns (Transmute, Mooncloth, ...)",
+    parent=wow_group,
+)
+
+
+@cooldowns_group.command(
+    name="mine",
+    description="Zeigt deine aktiven Craft-Cooldowns.",
+)
+async def cooldowns_mine(interaction: discord.Interaction):
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
+        )
+        return
+    cooldowns = await cog.data.cooldowns_for_user(interaction.user.id)
+    if not cooldowns:
+        await interaction.response.send_message(
+            "Du hast aktuell keine Cooldowns eingetragen. "
+            "Trag einen über das Panel → **⏳ Cooldown loggen** ein, sobald "
+            "du z.B. eine Transmutation oder Mondstoff produziert hast.",
+            ephemeral=True,
+        )
+        return
+    lines = []
+    for cd in cooldowns:
+        ready_label = cog._format_cooldown_ready_label(cd.ready_at)
+        lines.append(f"- **{cd.character_name}** ({cd.last_spell_name}): {ready_label}")
+    await interaction.response.send_message("\n".join(lines), ephemeral=True)
+
+
 crafting_group = app_commands.Group(
     name="crafting",
     description="WoW Crafting Profile und Suche",
