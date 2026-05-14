@@ -1898,3 +1898,210 @@ async def test_cooldown_eligible_options_filters_by_known_recipes(
     assert [(c.character_name, sid) for c, sid, _, _ in eligible] == [
         ("Voidok", "spell.17187")
     ]
+
+
+# ---- Award retry on ChampionCog failure ----
+
+
+class FlakyChampionCog:
+    """ChampionCog stub that fails the next ``fail_next`` calls.
+
+    Used to simulate a transient DB-lock / network hiccup so we can verify
+    the cog's retry path picks the event up on the following scan.
+    """
+
+    def __init__(self, fail_next: int = 0) -> None:
+        self.updates: list[tuple[int, int, str]] = []
+        self.fail_next = fail_next
+
+    async def update_user_score(self, user_id, delta, reason):
+        if self.fail_next > 0:
+            self.fail_next -= 1
+            raise RuntimeError("Simulated transient ChampionCog failure")
+        self.updates.append((user_id, delta, reason))
+        return delta
+
+
+async def _recipe_retry_setup(tmp_path, patch_logged_task, fail_next):
+    champion = FlakyChampionCog(fail_next=fail_next)
+    bot = ChampionBot(channel=DummyChannel(), champion=champion)
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(bot)
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+    cog.bot.data = {"wow": crafting_data()}
+    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    await cog.data.verify_claim(claim.character_key, 99)
+    claim = await cog.data.get_claim(claim.character_key)
+    await cog.save_known_recipes(claim, "alchemy", ["spell.2335"])
+    return cog, champion
+
+
+@pytest.mark.asyncio
+async def test_recipe_award_retry_after_failed_champion_call(
+    tmp_path, patch_logged_task
+):
+    """ChampionCog fails once → row stays in retry pool → next scan funds it."""
+    # fail_next=2: normal call + same-scan retry both throw → next scan recovers.
+    cog, champion = await _recipe_retry_setup(tmp_path, patch_logged_task, fail_next=2)
+
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        recipe_events=await cog.data.pending_recipe_learning_events(),
+    )
+    await cog._record_public_events(activity)
+
+    # First pass: champion threw, retry loop with the still-broken champion
+    # also threw, awarded_at was rolled back both times. Row stays queued.
+    assert champion.updates == []
+    retries = await cog.data.pending_award_retries_recipe_learning()
+    assert len(retries) == 1
+
+    # Second pass with a healthy champion drains the pool.
+    await cog._retry_unawarded_pending_events()
+    assert champion.updates == [(42, 2, "WoW-Rezept: Voidok lernt Swiftnesstrank")]
+    assert await cog.data.pending_award_retries_recipe_learning() == []
+
+
+@pytest.mark.asyncio
+async def test_recipe_award_does_not_double_fire(tmp_path, patch_logged_task):
+    """Repeat _record_public_events with the same activity → exactly one award."""
+    cog, champion = await _recipe_retry_setup(tmp_path, patch_logged_task, fail_next=0)
+
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        recipe_events=await cog.data.pending_recipe_learning_events(),
+    )
+    await cog._record_public_events(activity)
+    await cog._record_public_events(activity)
+
+    assert len(champion.updates) == 1
+    assert await cog.data.pending_award_retries_recipe_learning() == []
+
+
+@pytest.mark.asyncio
+async def test_gear_award_retry_after_failed_champion_call(tmp_path, patch_logged_task):
+    # fail_next=2: the normal-flow call AND the same-scan retry both fail.
+    # The "second scan" (separate _retry_unawarded_pending_events call) then
+    # succeeds with a fresh fail_next=0.
+    champion = FlakyChampionCog(fail_next=2)
+    bot = ChampionBot(channel=DummyChannel(), champion=champion)
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(bot)
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+    target = member(name="Voidok", level=60)
+    await cog.data.replace_snapshot([target])
+    claim, _ = await cog.data.create_claim(target, 42)
+    await cog.data.verify_claim(claim.character_key, 99)
+    await cog.data.record_gear_milestone(claim.character_key, 65, 65.0, 8)
+
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        gear_events=await cog.data.pending_gear_milestone_events(),
+    )
+    await cog._record_public_events(activity)
+
+    assert champion.updates == []
+    assert len(await cog.data.pending_award_retries_gear_milestone()) == 1
+
+    await cog._retry_unawarded_pending_events()
+    assert len(champion.updates) == 1
+    assert await cog.data.pending_award_retries_gear_milestone() == []
+
+
+@pytest.mark.asyncio
+async def test_gear_award_success_clears_retry_pool(tmp_path, patch_logged_task):
+    champion = FlakyChampionCog(fail_next=0)
+    bot = ChampionBot(channel=DummyChannel(), champion=champion)
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(bot)
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+    target = member(name="Voidok", level=60)
+    await cog.data.replace_snapshot([target])
+    claim, _ = await cog.data.create_claim(target, 42)
+    await cog.data.verify_claim(claim.character_key, 99)
+    await cog.data.record_gear_milestone(claim.character_key, 65, 65.0, 8)
+
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        gear_events=await cog.data.pending_gear_milestone_events(),
+    )
+    await cog._record_public_events(activity)
+
+    assert len(champion.updates) == 1
+    assert await cog.data.pending_award_retries_gear_milestone() == []
+
+
+@pytest.mark.asyncio
+async def test_skill_award_retry_after_failed_champion_call(
+    tmp_path, patch_logged_task
+):
+    # fail_next=2: the normal-flow call AND the same-scan retry both fail.
+    # The "second scan" (separate _retry_unawarded_pending_events call) then
+    # succeeds with a fresh fail_next=0.
+    champion = FlakyChampionCog(fail_next=2)
+    bot = ChampionBot(channel=DummyChannel(), champion=champion)
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(bot)
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+    cog.bot.data = {"wow": crafting_data()}
+    target = member(name="Voidok")
+    claim, _ = await cog.data.create_claim(target, 42)
+    await cog._record_skill_milestones(claim.character_key, "alchemy", 0, 80)
+
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        skill_events=await cog.data.pending_skill_milestone_events(),
+    )
+    await cog._record_public_events(activity)
+
+    assert champion.updates == []
+    assert len(await cog.data.pending_award_retries_skill_milestone()) == 1
+
+    await cog._retry_unawarded_pending_events()
+    assert len(champion.updates) == 1
+    assert await cog.data.pending_award_retries_skill_milestone() == []
+
+
+@pytest.mark.asyncio
+async def test_skill_award_success_clears_retry_pool(tmp_path, patch_logged_task):
+    champion = FlakyChampionCog(fail_next=0)
+    bot = ChampionBot(channel=DummyChannel(), champion=champion)
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(bot)
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+    cog.bot.data = {"wow": crafting_data()}
+    target = member(name="Voidok")
+    claim, _ = await cog.data.create_claim(target, 42)
+    await cog._record_skill_milestones(claim.character_key, "alchemy", 0, 80)
+
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        skill_events=await cog.data.pending_skill_milestone_events(),
+    )
+    await cog._record_public_events(activity)
+
+    assert len(champion.updates) == 1
+    assert await cog.data.pending_award_retries_skill_milestone() == []

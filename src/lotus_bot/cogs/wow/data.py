@@ -894,6 +894,29 @@ class WoWData:
         rows = await cur.fetchall()
         return [_recipe_event_from_row(row) for row in rows]
 
+    async def pending_award_retries_recipe_learning(
+        self,
+    ) -> list[RecipeLearningEvent]:
+        """Recipe events that were announced but never awarded.
+
+        Used by the scan's retry loop so a single ChampionCog hiccup doesn't
+        cost a user their points permanently.
+        """
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute("""
+            SELECT c.character_key, c.character_name, c.realm_slug, c.discord_user_id,
+                   e.spell_id, e.profession_id, e.rarity, e.points, e.created_at
+              FROM recipe_learning_events e
+              JOIN character_claims c ON c.character_key = e.character_key
+             WHERE e.announced_at IS NOT NULL
+               AND e.awarded_at IS NULL
+               AND e.points > 0
+             ORDER BY e.created_at
+            """)
+        rows = await cur.fetchall()
+        return [_recipe_event_from_row(row) for row in rows]
+
     async def mark_recipe_learning_announced(
         self, character_key: str, spell_id: str
     ) -> None:
@@ -925,6 +948,27 @@ class WoWData:
         )
         await db.commit()
         return cur.rowcount > 0
+
+    async def unmark_recipe_learning_awarded(
+        self, character_key: str, spell_id: str
+    ) -> None:
+        """Roll back awarded_at so a failed ChampionCog call can be retried.
+
+        Pairs with :meth:`mark_recipe_learning_awarded` — the cog reserves
+        the slot via CAS-mark, attempts the Champion-update, and unmarks
+        on failure so the next scan's retry loop picks the row up again.
+        """
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute(
+            """
+            UPDATE recipe_learning_events
+               SET awarded_at = NULL
+             WHERE character_key = ? AND spell_id = ?
+            """,
+            (character_key, spell_id),
+        )
+        await db.commit()
 
     async def gear_snapshot(self, character_key: str) -> CharacterGearSnapshot | None:
         await self.init_db()
@@ -1024,6 +1068,33 @@ class WoWData:
         rows = await cur.fetchall()
         return [_gear_event_from_row(row) for row in rows]
 
+    async def pending_award_retries_gear_milestone(
+        self,
+    ) -> list[GearMilestoneEvent]:
+        """Gear-milestone events that were announced but never awarded."""
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute("""
+            SELECT e.character_key,
+                   COALESCE(c.character_name, s.name, e.character_key),
+                   COALESCE(c.realm_slug, s.realm_slug, ''),
+                   c.discord_user_id,
+                   e.average_item_level,
+                   e.threshold,
+                   e.created_at,
+                   e.points
+              FROM gear_milestone_events e
+              LEFT JOIN character_claims c ON c.character_key = e.character_key
+              LEFT JOIN roster_snapshot s ON s.character_key = e.character_key
+             WHERE e.announced_at IS NOT NULL
+               AND e.awarded_at IS NULL
+               AND e.points > 0
+               AND c.discord_user_id IS NOT NULL
+             ORDER BY e.created_at
+            """)
+        rows = await cur.fetchall()
+        return [_gear_event_from_row(row) for row in rows]
+
     async def mark_gear_milestone_announced(
         self, character_key: str, threshold: int
     ) -> None:
@@ -1056,6 +1127,22 @@ class WoWData:
         )
         await db.commit()
         return cur.rowcount > 0
+
+    async def unmark_gear_milestone_awarded(
+        self, character_key: str, threshold: int
+    ) -> None:
+        """Roll back awarded_at so a failed ChampionCog call can be retried."""
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute(
+            """
+            UPDATE gear_milestone_events
+               SET awarded_at = NULL
+             WHERE character_key = ? AND threshold = ?
+            """,
+            (character_key, threshold),
+        )
+        await db.commit()
 
     # ---- profession-skill milestones ----
 
@@ -1123,6 +1210,34 @@ class WoWData:
         rows = await cur.fetchall()
         return [_skill_event_from_row(row) for row in rows]
 
+    async def pending_award_retries_skill_milestone(
+        self,
+    ) -> list[ProfessionSkillEvent]:
+        """Skill-milestone events that were announced but never awarded."""
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute("""
+            SELECT e.character_key,
+                   COALESCE(c.character_name, s.name, e.character_key),
+                   COALESCE(c.realm_slug, s.realm_slug, ''),
+                   c.discord_user_id,
+                   e.profession_id,
+                   e.threshold,
+                   e.skill_level,
+                   e.points,
+                   e.created_at
+              FROM profession_skill_milestone_events e
+              LEFT JOIN character_claims c ON c.character_key = e.character_key
+              LEFT JOIN roster_snapshot s ON s.character_key = e.character_key
+             WHERE e.announced_at IS NOT NULL
+               AND e.awarded_at IS NULL
+               AND e.points > 0
+               AND c.discord_user_id IS NOT NULL
+             ORDER BY e.created_at
+            """)
+        rows = await cur.fetchall()
+        return [_skill_event_from_row(row) for row in rows]
+
     async def mark_skill_milestone_announced(
         self, character_key: str, profession_id: str, threshold: int
     ) -> None:
@@ -1166,6 +1281,24 @@ class WoWData:
         )
         await db.commit()
         return cur.rowcount > 0
+
+    async def unmark_skill_milestone_awarded(
+        self, character_key: str, profession_id: str, threshold: int
+    ) -> None:
+        """Roll back awarded_at so a failed ChampionCog call can be retried."""
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute(
+            """
+            UPDATE profession_skill_milestone_events
+               SET awarded_at = NULL
+             WHERE character_key = ?
+               AND profession_id = ?
+               AND threshold = ?
+            """,
+            (character_key, profession_id, int(threshold)),
+        )
+        await db.commit()
 
     # ---- profession cooldowns ----
 

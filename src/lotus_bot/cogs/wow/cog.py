@@ -800,6 +800,25 @@ class WoWCog(ManagedTaskCog):
             )
             await self._award_skill_milestone_points(event)
         # Cooldowns are read-only in the digest — no DB write needed here.
+        await self._retry_unawarded_pending_events()
+
+    async def _retry_unawarded_pending_events(self) -> None:
+        """Re-fund events that were announced but never landed Champion points.
+
+        A row stuck in "announced, not awarded" means a previous
+        ``champion.update_user_score()`` call failed (e.g. SQLite-lock). The
+        row is invisible to the digest's ``pending_*_events`` filter because
+        ``announced_at`` is already set, so without this loop the points
+        would be permanently lost. Each ``_award_*_points`` call is
+        idempotent — successful retries mark ``awarded_at`` and exit the
+        retry pool; persistent failures stay queued for the next scan.
+        """
+        for event in await self.data.pending_award_retries_recipe_learning():
+            await self._award_recipe_learning_points(event)
+        for event in await self.data.pending_award_retries_gear_milestone():
+            await self._award_gear_milestone_points(event)
+        for event in await self.data.pending_award_retries_skill_milestone():
+            await self._award_skill_milestone_points(event)
 
     async def _award_claimed_milestone_points(self, milestone: Milestone) -> None:
         claim = await self.data.get_claim(milestone.member.character_key)
@@ -831,6 +850,9 @@ class WoWCog(ManagedTaskCog):
         if champion is None or not hasattr(champion, "update_user_score"):
             logger.info("[WoWCog] ChampionCog not available for recipe bonus.")
             return
+        # CAS-reserve the slot first (`awarded_at IS NULL` guard). If
+        # somebody already awarded this event (e.g. a previous scan or a
+        # concurrent retry pass), exit silently — no double-vote possible.
         if not await self.data.mark_recipe_learning_awarded(
             event.character_key, event.spell_id
         ):
@@ -847,6 +869,11 @@ class WoWCog(ManagedTaskCog):
                 "[WoWCog] Could not award recipe learning points: %s",
                 exc,
                 exc_info=True,
+            )
+            # Roll back the CAS so the next scan's retry loop can pick
+            # it up again. Without this the points would be lost forever.
+            await self.data.unmark_recipe_learning_awarded(
+                event.character_key, event.spell_id
             )
 
     async def _award_gear_milestone_points(self, event: GearMilestoneEvent) -> None:
@@ -873,6 +900,9 @@ class WoWCog(ManagedTaskCog):
                 "[WoWCog] Could not award gear milestone points: %s",
                 exc,
                 exc_info=True,
+            )
+            await self.data.unmark_gear_milestone_awarded(
+                event.character_key, event.threshold
             )
 
     async def cooldown_eligible_options(
@@ -968,6 +998,9 @@ class WoWCog(ManagedTaskCog):
                 "[WoWCog] Could not award skill milestone points: %s",
                 exc,
                 exc_info=True,
+            )
+            await self.data.unmark_skill_milestone_awarded(
+                event.character_key, event.profession_id, event.threshold
             )
 
     def format_milestone(self, milestone: Milestone) -> str:
