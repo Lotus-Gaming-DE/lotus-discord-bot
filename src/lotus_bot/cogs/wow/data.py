@@ -148,6 +148,12 @@ class WoWData:
             )
             """)
         await db.execute("""
+            CREATE TABLE IF NOT EXISTS officer_note_events (
+                character_key TEXT PRIMARY KEY,
+                recorded_at TEXT NOT NULL
+            )
+            """)
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS character_claims (
                 character_key TEXT PRIMARY KEY,
                 character_name TEXT NOT NULL,
@@ -347,6 +353,27 @@ class WoWData:
         await db.execute(
             """
             INSERT OR IGNORE INTO death_events(character_key, recorded_at)
+            VALUES (?, ?)
+            """,
+            (character_key, datetime.utcnow().isoformat()),
+        )
+        await db.commit()
+
+    async def officer_note_exists(self, character_key: str) -> bool:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            "SELECT 1 FROM officer_note_events WHERE character_key = ?",
+            (character_key,),
+        )
+        return await cur.fetchone() is not None
+
+    async def record_officer_note(self, character_key: str) -> None:
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute(
+            """
+            INSERT OR IGNORE INTO officer_note_events(character_key, recorded_at)
             VALUES (?, ?)
             """,
             (character_key, datetime.utcnow().isoformat()),

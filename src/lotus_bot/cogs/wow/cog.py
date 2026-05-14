@@ -567,6 +567,10 @@ class WoWCog(ManagedTaskCog):
                 continue
             if await self.data.death_exists(member.character_key):
                 continue
+            if await self.data.officer_note_exists(member.character_key):
+                # Already announced as "left guild" — don't re-notify even if
+                # the snapshot wasn't replaced (e.g. previous digest failed).
+                continue
             state = await self._profile_life_state(member, session=session)
             average_item_level = await self._member_average_item_level(
                 member.character_key
@@ -640,23 +644,28 @@ class WoWCog(ManagedTaskCog):
             logger.warning("[WoWCog] Announcement channel %s not found.", channel_id)
             return 0
 
-        try:
-            await channel.send(await self.format_activity_digest(activity))
-        except discord.Forbidden:
-            logger.warning(
-                "[WoWCog] Missing access to announcement channel %s.",
-                channel_id,
-            )
-            return 0
-        except discord.HTTPException as exc:
-            logger.warning(
-                "[WoWCog] Could not post activity digest to channel %s: %s",
-                channel_id,
-                exc,
-                exc_info=True,
-            )
-            return 0
-        return 1
+        sections = await self._digest_sections(activity)
+        chunks = _pack_digest_sections_into_chunks(sections)
+        posted = 0
+        for chunk in chunks:
+            try:
+                await channel.send(chunk)
+            except discord.Forbidden:
+                logger.warning(
+                    "[WoWCog] Missing access to announcement channel %s.",
+                    channel_id,
+                )
+                return posted
+            except discord.HTTPException as exc:
+                logger.warning(
+                    "[WoWCog] Could not post activity digest chunk to channel %s: %s",
+                    channel_id,
+                    exc,
+                    exc_info=True,
+                )
+                return posted
+            posted += 1
+        return posted
 
     async def _post_milestones(self, milestones: list[Milestone]) -> int:
         activity = ActivityDiff(
@@ -681,6 +690,9 @@ class WoWCog(ManagedTaskCog):
                     exc,
                 )
                 break
+            # Persist immediately so a later scan failure can't cause a
+            # duplicate "X ist nicht mehr Teil von …" message.
+            await self.data.record_officer_note(note.member.character_key)
             posted += 1
         return posted
 
@@ -848,10 +860,21 @@ class WoWCog(ManagedTaskCog):
             "Ruhe in Frieden. 🕯️"
         )
 
-    async def format_activity_digest(self, activity: ActivityDiff) -> str:
-        lines = [random.choice(DIGEST_OPENERS), ""]
+    async def _digest_sections(
+        self, activity: ActivityDiff
+    ) -> list[tuple[str | None, list[str]]]:
+        """Return the digest as ordered (header, body_lines) sections.
+
+        ``header`` is ``None`` for headerless blocks (opener, closer).
+        Blank-line separators between sections are NOT included — the
+        chunker inserts them only where sections actually end up adjacent.
+        """
+        sections: list[tuple[str | None, list[str]]] = [
+            (None, [random.choice(DIGEST_OPENERS)])
+        ]
+
         if activity.new_members:
-            lines.append("**Herzlich willkommen in der Gilde** 👋")
+            body: list[str] = []
             for member in sorted(
                 activity.new_members,
                 key=lambda item: (-item.level, item.name.casefold()),
@@ -864,10 +887,11 @@ class WoWCog(ManagedTaskCog):
                             f"{line}, Ø iLvl "
                             f"**{self._format_item_level(snapshot.average_item_level)}**"
                         )
-                lines.append(f"- {line}")
-            lines.append("")
+                body.append(f"- {line}")
+            sections.append(("**Herzlich willkommen in der Gilde** 👋", body))
+
         if activity.milestones:
-            lines.append("**Glückwunsch zu diesen Meilensteinen** 🏆")
+            body = []
             for milestone in sorted(
                 activity.milestones,
                 key=lambda item: (-item.level, item.member.name.casefold()),
@@ -880,10 +904,11 @@ class WoWCog(ManagedTaskCog):
                         f"{line} - <@{claim.discord_user_id}> "
                         f"(+{points} Champion-Punkte)"
                     )
-                lines.append(f"- {line}")
-            lines.append("")
+                body.append(f"- {line}")
+            sections.append(("**Glückwunsch zu diesen Meilensteinen** 🏆", body))
+
         if activity.recipe_events:
-            lines.append("**Neue seltene Rezepte in der Gilde** 📖")
+            body = []
             for event in sorted(
                 activity.recipe_events,
                 key=lambda item: (
@@ -900,26 +925,28 @@ class WoWCog(ManagedTaskCog):
                     if event.discord_user_id is not None
                     else ""
                 )
-                lines.append(
+                body.append(
                     f"- **{event.character_name}** ({self._profession_name(event.profession_id)}): "
                     f"**{recipe_name}** *({event.rarity}, {source})*{mention} "
                     f"(+{event.points} Champion-Punkte)"
                 )
-            lines.append("")
+            sections.append(("**Neue seltene Rezepte in der Gilde** 📖", body))
+
         if activity.gear_events:
-            lines.append("**Ausrüstungs-Meilensteine** 🛡️")
+            body = []
             for event in sorted(
                 activity.gear_events,
                 key=lambda item: (-item.threshold, item.character_name.casefold()),
             ):
-                lines.append(
+                body.append(
                     f"- **{event.character_name}** hat ein durchschnittliches Itemlevel von "
                     f"**{self._format_item_level(event.average_item_level)}** erreicht "
                     f"(+{event.points} Champion-Punkte)"
                 )
-            lines.append("")
+            sections.append(("**Ausrüstungs-Meilensteine** 🛡️", body))
+
         if activity.deaths:
-            lines.append("**Heute nehmen wir Abschied** 🕯️")
+            body = []
             for death in sorted(
                 activity.deaths,
                 key=lambda item: (-item.member.level, item.member.name.casefold()),
@@ -930,12 +957,28 @@ class WoWCog(ManagedTaskCog):
                     else " — *nicht mehr im Roster, wahrscheinlich auf Reise gegangen*"
                 )
                 gear = self._format_death_gear_suffix(death)
-                lines.append(
-                    f"- {self._format_roster_line(death.member)}{gear}{suffix}"
-                )
-            lines.append("")
-        lines.append(self._digest_closer(activity))
-        return "\n".join(lines)
+                body.append(f"- {self._format_roster_line(death.member)}{gear}{suffix}")
+            sections.append(("**Heute nehmen wir Abschied** 🕯️", body))
+
+        sections.append((None, [self._digest_closer(activity)]))
+        return sections
+
+    async def format_activity_digest(self, activity: ActivityDiff) -> str:
+        """Render the digest as a single joined string.
+
+        The wire path uses ``_digest_sections`` directly via the chunker;
+        this method exists for callers (tests, manual inspection) that
+        want the full text in one piece.
+        """
+        sections = await self._digest_sections(activity)
+        parts: list[str] = []
+        for idx, (header, body) in enumerate(sections):
+            if idx > 0:
+                parts.append("")
+            if header is not None:
+                parts.append(header)
+            parts.extend(body)
+        return "\n".join(parts)
 
     def _format_roster_line(
         self, member: RosterMember, level: int | None = None
@@ -2604,6 +2647,94 @@ class WoWPanelView(discord.ui.View):
             ),
             ephemeral=True,
         )
+
+
+DISCORD_MESSAGE_LIMIT = 1900  # Below Discord's 2000-char baseline for safety.
+CONTINUATION_SUFFIX = " *(Forts.)*"
+
+
+def _pack_digest_sections_into_chunks(
+    sections: list[tuple[str | None, list[str]]],
+    limit: int = DISCORD_MESSAGE_LIMIT,
+) -> list[str]:
+    """Pack ordered digest sections into Discord-postable message chunks.
+
+    Each section is ``(header, body_lines)``. ``header=None`` marks a
+    headerless block (opener, closer) whose body is emitted verbatim.
+
+    Rules:
+    * A section is kept together in one chunk if it fits.
+    * Multiple small sections may share a chunk, separated by a blank line.
+    * A section larger than ``limit`` is split internally — every
+      continuation chunk repeats the header with ``" *(Forts.)*"`` appended,
+      so readers always know what section they're looking at.
+    * The chunker never splits a single line.
+    """
+
+    def _section_lines(header: str | None, body: list[str]) -> list[str]:
+        return ([header] if header is not None else []) + list(body)
+
+    def _cost(lines: list[str]) -> int:
+        # Each joined line contributes len(line) + 1 (the \n separator).
+        return sum(len(line) + 1 for line in lines)
+
+    # Pass 1: expand any oversized section into multiple fitting sub-sections,
+    # marking continuations with the Forts. suffix.
+    expanded: list[tuple[str | None, list[str]]] = []
+    for header, body in sections:
+        if _cost(_section_lines(header, body)) <= limit:
+            expanded.append((header, list(body)))
+            continue
+        if header is None:
+            # Headerless block — break body into runs that each fit.
+            current_body: list[str] = []
+            current_size = 0
+            for line in body:
+                line_cost = len(line) + 1
+                if current_body and current_size + line_cost > limit:
+                    expanded.append((None, current_body))
+                    current_body = []
+                    current_size = 0
+                current_body.append(line)
+                current_size += line_cost
+            if current_body:
+                expanded.append((None, current_body))
+            continue
+        cont_header = f"{header}{CONTINUATION_SUFFIX}"
+        first_part = True
+        current_body = []
+        current_size = len(header) + 1
+        for line in body:
+            line_cost = len(line) + 1
+            if current_body and current_size + line_cost > limit:
+                expanded.append((header if first_part else cont_header, current_body))
+                first_part = False
+                current_body = []
+                current_size = len(cont_header) + 1
+            current_body.append(line)
+            current_size += line_cost
+        if current_body:
+            expanded.append((header if first_part else cont_header, current_body))
+
+    # Pass 2: pack expanded sections into chunks, separating with a blank line.
+    chunks: list[str] = []
+    current_lines: list[str] = []
+    current_size = 0
+    for header, body in expanded:
+        section_lines = _section_lines(header, body)
+        prefix = [""] if current_lines else []
+        added_cost = _cost(prefix + section_lines)
+        if current_size + added_cost <= limit:
+            current_lines.extend(prefix + section_lines)
+            current_size += added_cost
+        else:
+            if current_lines:
+                chunks.append("\n".join(current_lines))
+            current_lines = list(section_lines)
+            current_size = _cost(section_lines)
+    if current_lines:
+        chunks.append("\n".join(current_lines))
+    return chunks
 
 
 def _format_panel_claim_result(result: ClaimResult, requested_name: str) -> str:

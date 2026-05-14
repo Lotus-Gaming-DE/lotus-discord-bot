@@ -1361,3 +1361,147 @@ async def test_whois_embed_renders_claim_ilvl_and_professions(
 async def test_whois_embed_returns_none_for_unknown_char(tmp_path, patch_logged_task):
     cog = await create_cog(tmp_path, patch_logged_task)
     assert await cog.build_whois_embed("Ghostly") is None
+
+
+def test_pack_sections_keeps_short_digest_in_one_chunk():
+    sections = [
+        (None, ["🪷 Tagesbericht"]),
+        ("**Meilensteine** 🏆", ["- Voidok Level 40"]),
+        (None, ["Glückwunsch."]),
+    ]
+    chunks = wow_cog_mod._pack_digest_sections_into_chunks(sections, limit=1900)
+    assert len(chunks) == 1
+    assert "🪷 Tagesbericht" in chunks[0]
+    assert "**Meilensteine** 🏆" in chunks[0]
+    assert "Glückwunsch." in chunks[0]
+
+
+def test_pack_sections_groups_small_sections_into_one_chunk():
+    sections = [
+        (None, ["Opener"]),
+        ("**A**", ["- a1", "- a2"]),
+        ("**B**", ["- b1", "- b2"]),
+        (None, ["Closer"]),
+    ]
+    chunks = wow_cog_mod._pack_digest_sections_into_chunks(sections, limit=1900)
+    assert len(chunks) == 1
+    # Sections are separated by a blank line.
+    assert "\n\n**A**\n" in chunks[0]
+    assert "\n\n**B**\n" in chunks[0]
+
+
+def test_pack_sections_starts_new_chunk_when_full():
+    big_body = [f"- line {i:03d} {'x' * 40}" for i in range(20)]
+    sections = [
+        ("**Section A** 🏆", big_body),
+        ("**Section B** 📖", big_body),
+    ]
+    chunks = wow_cog_mod._pack_digest_sections_into_chunks(sections, limit=400)
+    # Two separate chunks, each starting with its own header.
+    assert len(chunks) >= 2
+    assert chunks[0].startswith("**Section A** 🏆")
+    # No chunk contains both headers — sections aren't sliced together
+    # halfway through.
+    for chunk in chunks:
+        assert not ("**Section A** 🏆" in chunk and "**Section B** 📖" in chunk)
+
+
+def test_pack_sections_splits_oversized_section_with_forts_marker():
+    body = [f"- line {i:03d} {'x' * 30}" for i in range(40)]
+    sections = [("**Meilensteine** 🏆", body)]
+    chunks = wow_cog_mod._pack_digest_sections_into_chunks(sections, limit=300)
+    assert len(chunks) >= 2
+    # First chunk has the original header.
+    assert chunks[0].startswith("**Meilensteine** 🏆\n")
+    # Continuation chunks repeat the header with the Forts. suffix.
+    for chunk in chunks[1:]:
+        assert chunk.startswith("**Meilensteine** 🏆 *(Forts.)*\n")
+    # All body lines are accounted for and no chunk exceeds the limit.
+    rejoined = "\n".join(chunk for chunk in chunks)
+    for line in body:
+        assert line in rejoined
+    assert all(len(chunk) <= 300 for chunk in chunks)
+
+
+@pytest.mark.asyncio
+async def test_digest_post_chunks_long_digest_across_sections(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    channel = DummyChannel()
+    cog = await create_cog(tmp_path, patch_logged_task, channel=channel)
+    await cog.set_announcement_channel(123)
+
+    async def synthetic_sections(_activity):
+        body_a = [f"- entry A{i:03d} {'x' * 60}" for i in range(40)]
+        body_b = [f"- entry B{i:03d} {'x' * 60}" for i in range(40)]
+        return [
+            (None, ["🪷 Tagesbericht"]),
+            ("**Section A** 🏆", body_a),
+            ("**Section B** 📖", body_b),
+            (None, ["Glückwunsch."]),
+        ]
+
+    monkeypatch.setattr(cog, "_digest_sections", synthetic_sections)
+
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[member()], milestones=[], deaths=[], officer_notes=[]
+    )
+    posted = await cog._post_activity_digest(activity)
+
+    assert posted >= 2
+    sent_messages = [msg for msg, _ in channel.sent]
+    assert all(len(msg) <= 2000 for msg in sent_messages)
+    # No section header appears split mid-line.
+    for msg in sent_messages:
+        for header in ("**Section A** 🏆", "**Section B** 📖"):
+            if header in msg:
+                # Header must appear at the start of a line (not glued to
+                # the previous line's content).
+                idx = msg.find(header)
+                assert idx == 0 or msg[idx - 1] == "\n"
+
+
+@pytest.mark.asyncio
+async def test_officer_note_does_not_refire_after_persist_failure(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    """Reproduces the bug seen in prod: digest fails → persist=False → snapshot
+    stays old → officer note for departed member re-fires on next scan."""
+    officer = DummyChannel()
+    bot = MultiChannelBot(public_channel=ForbiddenChannel(), officer_channel=officer)
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(bot)
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+    await cog.set_announcement_channel(123)
+    # Seed: 6 members so the empty-roster guard doesn't trip; then 5 of them
+    # leave so we get exactly one officer note (Frostj) plus a milestone for
+    # Voidok that forces public_count > 0 (which triggers persist=False on
+    # failed post).
+    members = [member(key=f"id:{i}", name=f"M{i}", level=10) for i in range(5)]
+    members.append(member(key="id:frostj", name="Frostj", level=10))
+    members.append(member(key="id:voidok", name="Voidok", level=39))
+    await cog.data.replace_snapshot(members)
+
+    async def fake_roster(session=None):
+        # Frostj is gone, Voidok hit 40, the rest stay.
+        return [
+            *members[:5],
+            member(key="id:voidok", name="Voidok", level=40),
+        ]
+
+    async def fake_profile(realm, name, **kwargs):
+        return {"is_ghost": False}
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", fake_profile)
+    cog.fetch_roster = fake_roster
+
+    await cog.scan(post=True, persist=True)
+    await cog.scan(post=True, persist=True)
+
+    # Only one Frostj note total despite two scans where the public digest
+    # failed and snapshot was not replaced.
+    frostj_notes = [
+        msg for msg, _ in officer.sent if "Frostj" in msg and "nicht mehr Teil" in msg
+    ]
+    assert len(frostj_notes) == 1
