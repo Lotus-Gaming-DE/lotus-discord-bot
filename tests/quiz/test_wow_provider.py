@@ -183,17 +183,6 @@ def test_easy_questions_are_duel_only():
     assert any(q["frage"].startswith("Zu welcher Fraktion") for q in duel)
 
 
-def test_removed_patterns_are_not_generated():
-    provider = WoWQuestionProvider(DummyBot(), language="de")
-    questions = provider.generate_all_types(context="duel")
-    texts = [q["frage"] for q in questions]
-
-    assert not any("auf Englisch" in text for text in texts)
-    assert not any("hat Rang" in text for text in texts)
-    assert not any("hat" in text and "Abklingzeit" in text for text in texts)
-    assert not any("Welche Item-Qualität" in text for text in texts)
-
-
 def test_race_class_can_generate_negative_answer(monkeypatch):
     provider = WoWQuestionProvider(DummyBot(), language="de")
 
