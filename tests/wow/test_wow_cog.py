@@ -1181,7 +1181,8 @@ async def test_rare_recipe_learning_creates_digest_event_and_points(
 
     assert saved == 1
     assert "Swiftnesstrank" in msg
-    assert champion.updates == [(42, 3, "WoW-Rezept: Voidok lernt Swiftnesstrank")]
+    # Swiftness Potion: drop source (base 2) × skill 60 (multiplier 1.0) = 2 points.
+    assert champion.updates == [(42, 2, "WoW-Rezept: Voidok lernt Swiftnesstrank")]
 
 
 @pytest.mark.asyncio
@@ -1301,7 +1302,9 @@ async def test_recipe_digest_includes_user_mention(tmp_path, patch_logged_task):
 
     assert "<@42>" in msg
     assert "Swiftnesstrank" in msg
-    assert "+3 Champion-Punkte" in msg
+    # Swiftness Potion: drop, skill 60 → 2 points.
+    assert "+2 Champion-Punkte" in msg
+    assert "ab Skill 60" in msg
 
 
 @pytest.mark.asyncio
@@ -1505,3 +1508,161 @@ async def test_officer_note_does_not_refire_after_persist_failure(
         msg for msg, _ in officer.sent if "Frostj" in msg and "nicht mehr Teil" in msg
     ]
     assert len(frostj_notes) == 1
+
+
+def test_recipe_reward_trainer_returns_zero():
+    cog = WoWCog.__new__(WoWCog)
+    assert cog.recipe_learning_reward(
+        {"learned_from": "trainer", "required_skill": 250}
+    ) == ("common", 0)
+
+
+def test_recipe_reward_vendor_only_returns_zero():
+    cog = WoWCog.__new__(WoWCog)
+    assert cog.recipe_learning_reward(
+        {
+            "learned_from": "recipe",
+            "required_skill": 200,
+            "recipe_item_sources": ["vendor"],
+        }
+    ) == ("common", 0)
+
+
+def test_recipe_reward_scales_with_skill_bracket():
+    cog = WoWCog.__new__(WoWCog)
+    # drop base = 2; brackets: skill 50 → ×1, 150 → ×1.5, 250 → ×2, 290 → ×3
+    cases = [
+        (50, 2),
+        (150, 3),
+        (250, 4),
+        (290, 6),
+    ]
+    for skill, expected in cases:
+        rarity, points = cog.recipe_learning_reward(
+            {
+                "learned_from": "recipe",
+                "required_skill": skill,
+                "recipe_item_sources": ["drop"],
+            }
+        )
+        assert (rarity, points) == ("rare", expected), f"skill={skill}"
+
+
+def test_recipe_reward_world_drop_beats_regular_drop():
+    cog = WoWCog.__new__(WoWCog)
+    # world_drop base = 4, drop base = 2; the best source wins.
+    _, points = cog.recipe_learning_reward(
+        {
+            "learned_from": "recipe",
+            "required_skill": 200,
+            "recipe_item_sources": ["drop", "world_drop"],
+        }
+    )
+    # 4 × 1.5 = 6
+    assert points == 6
+
+
+def test_recipe_reward_epic_spell_id_scales_with_skill():
+    cog = WoWCog.__new__(WoWCog)
+    epic_spell = next(iter(wow_cog_mod.EPIC_RECIPE_SPELL_IDS))
+    rarity, points = cog.recipe_learning_reward(
+        {
+            "spell_id": epic_spell,
+            "learned_from": "recipe",
+            "required_skill": 290,
+            "recipe_item_sources": ["drop"],
+        }
+    )
+    # Epic base 10 × bracket 3.0 = 30
+    assert rarity == "epic"
+    assert points == 30
+
+
+@pytest.mark.asyncio
+async def test_new_member_digest_mentions_claimed_owner(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    newcomer = member(key="id:99", name="Lyra", level=12)
+    await cog.data.replace_snapshot([newcomer])
+    await cog.data.create_claim(newcomer, 777)
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[newcomer], milestones=[], deaths=[], officer_notes=[]
+    )
+    msg = await cog.format_activity_digest(activity)
+    assert "<@777>" in msg
+
+
+@pytest.mark.asyncio
+async def test_death_digest_mentions_claimed_owner(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    fallen = member(key="id:42", name="Gorokhan", level=60)
+    await cog.data.replace_snapshot([fallen])
+    await cog.data.create_claim(fallen, 1234)
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[wow_cog_mod.DeathEvent(fallen, confirmed=True)],
+        officer_notes=[],
+    )
+    msg = await cog.format_activity_digest(activity)
+    assert "Gorokhan" in msg
+    assert "<@1234>" in msg
+
+
+@pytest.mark.asyncio
+async def test_gear_event_omits_points_when_not_claimed(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    target = member(key="id:1", name="Naked60", level=60)
+    await cog.data.replace_snapshot([target])
+    # Pretend a gear milestone fired for an unclaimed char (discord_user_id None).
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        gear_events=[
+            wow_cog_mod.GearMilestoneEvent(
+                character_key=target.character_key,
+                character_name=target.name,
+                realm_slug=target.realm_slug,
+                discord_user_id=None,
+                average_item_level=65.0,
+                threshold=65,
+                created_at="2026-01-01T00:00:00",
+                points=8,
+            )
+        ],
+    )
+    msg = await cog.format_activity_digest(activity)
+    assert "Naked60" in msg
+    assert "Champion-Punkte" not in msg
+    assert "<@" not in msg
+
+
+@pytest.mark.asyncio
+async def test_gear_event_mentions_claimed_owner_and_shows_points(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    target = member(key="id:1", name="Owned60", level=60)
+    await cog.data.replace_snapshot([target])
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        gear_events=[
+            wow_cog_mod.GearMilestoneEvent(
+                character_key=target.character_key,
+                character_name=target.name,
+                realm_slug=target.realm_slug,
+                discord_user_id=555,
+                average_item_level=65.0,
+                threshold=65,
+                created_at="2026-01-01T00:00:00",
+                points=8,
+            )
+        ],
+    )
+    msg = await cog.format_activity_digest(activity)
+    assert "<@555>" in msg
+    assert "+8 Champion-Punkte" in msg

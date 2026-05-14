@@ -48,12 +48,24 @@ GHOST_REFRESH_CONCURRENCY = 8
 ITEM_LEVEL_MILESTONES = {50, 55, 60, 65, 70, 75}
 ITEM_LEVEL_MILESTONE_POINTS = {50: 2, 55: 2, 60: 5, 65: 8, 70: 15, 75: 25}
 CLAIMED_MILESTONE_POINTS = {30: 5, 40: 10, 50: 20, 60: 50}
-RARE_RECIPE_POINTS = 3
-EPIC_RECIPE_POINTS = 5
+# Recipe rewards scale with two axes: how the recipe is acquired (source)
+# and how skilled the crafter has to be (required_skill bracket).
+RECIPE_POINTS_BY_SOURCE = {
+    "world_drop": 4,  # rare BoE world drops
+    "pickpocketed": 3,  # rogue-exclusive
+    "drop": 2,  # regular mob/boss drops (incl. drop+vendor)
+    "quest": 1,  # deterministic quest reward
+}
+RECIPE_SKILL_BRACKETS = [
+    (276, 3.0),  # endgame
+    (201, 2.0),
+    (101, 1.5),
+    (0, 1.0),
+]
+EPIC_RECIPE_BASE_POINTS = 10  # special hand-curated spell IDs
 MAX_PRIMARY_PROFESSIONS = 2
 SECONDARY_CRAFTING_PROFESSIONS = {"cooking"}
 EXCLUDED_CRAFTING_PROFESSIONS = {"first-aid", "fishing"}
-RARE_RECIPE_SOURCES = {"drop", "world_drop", "pickpocketed"}
 EPIC_RECIPE_SPELL_IDS = {
     "spell.22749",  # Enchant Weapon - Spell Power
     "spell.22750",  # Enchant Weapon - Healing Power
@@ -887,6 +899,9 @@ class WoWCog(ManagedTaskCog):
                             f"{line}, Ø iLvl "
                             f"**{self._format_item_level(snapshot.average_item_level)}**"
                         )
+                claim = await self.data.get_claim(member.character_key)
+                if claim:
+                    line = f"{line} - <@{claim.discord_user_id}>"
                 body.append(f"- {line}")
             sections.append(("**Herzlich willkommen in der Gilde** 👋", body))
 
@@ -920,15 +935,18 @@ class WoWCog(ManagedTaskCog):
                 recipe = self._recipe_by_spell_id(event.spell_id)
                 recipe_name = self._recipe_name(recipe) if recipe else event.spell_id
                 source = self._recipe_source_label(recipe)
-                mention = (
-                    f" - <@{event.discord_user_id}>"
-                    if event.discord_user_id is not None
-                    else ""
-                )
+                required_skill = int(recipe.get("required_skill") or 0) if recipe else 0
+                skill_label = f", ab Skill {required_skill}" if required_skill else ""
+                tail_parts = []
+                if event.discord_user_id is not None:
+                    tail_parts.append(f"<@{event.discord_user_id}>")
+                    if event.points > 0:
+                        tail_parts.append(f"(+{event.points} Champion-Punkte)")
+                tail = f" - {' '.join(tail_parts)}" if tail_parts else ""
                 body.append(
-                    f"- **{event.character_name}** ({self._profession_name(event.profession_id)}): "
-                    f"**{recipe_name}** *({event.rarity}, {source})*{mention} "
-                    f"(+{event.points} Champion-Punkte)"
+                    f"- **{event.character_name}** "
+                    f"({self._profession_name(event.profession_id)}{skill_label}): "
+                    f"**{recipe_name}** *({event.rarity}, {source})*{tail}"
                 )
             sections.append(("**Neue seltene Rezepte in der Gilde** 📖", body))
 
@@ -938,10 +956,16 @@ class WoWCog(ManagedTaskCog):
                 activity.gear_events,
                 key=lambda item: (-item.threshold, item.character_name.casefold()),
             ):
+                tail_parts: list[str] = []
+                if event.discord_user_id is not None:
+                    tail_parts.append(f"<@{event.discord_user_id}>")
+                    if event.points > 0:
+                        tail_parts.append(f"(+{event.points} Champion-Punkte)")
+                tail = f" - {' '.join(tail_parts)}" if tail_parts else ""
                 body.append(
-                    f"- **{event.character_name}** hat ein durchschnittliches Itemlevel von "
-                    f"**{self._format_item_level(event.average_item_level)}** erreicht "
-                    f"(+{event.points} Champion-Punkte)"
+                    f"- **{event.character_name}** hat ein durchschnittliches Itemlevel "
+                    f"von **{self._format_item_level(event.average_item_level)}** "
+                    f"erreicht{tail}"
                 )
             sections.append(("**Ausrüstungs-Meilensteine** 🛡️", body))
 
@@ -957,7 +981,11 @@ class WoWCog(ManagedTaskCog):
                     else " — *nicht mehr im Roster, wahrscheinlich auf Reise gegangen*"
                 )
                 gear = self._format_death_gear_suffix(death)
-                body.append(f"- {self._format_roster_line(death.member)}{gear}{suffix}")
+                claim = await self.data.get_claim(death.member.character_key)
+                mention = f" - <@{claim.discord_user_id}>" if claim else ""
+                body.append(
+                    f"- {self._format_roster_line(death.member)}{gear}{mention}{suffix}"
+                )
             sections.append(("**Heute nehmen wir Abschied** 🕯️", body))
 
         sections.append((None, [self._digest_closer(activity)]))
@@ -1214,18 +1242,46 @@ class WoWCog(ManagedTaskCog):
         return ", ".join(labels.get(source, source) for source in sources)
 
     def recipe_learning_reward(self, recipe: dict) -> tuple[str, int]:
+        """Return ``(rarity, points)`` for a recipe.
+
+        Points scale with two factors:
+        * **Source**: World-drops > pickpocketed > regular drops > quest.
+          Vendor-only or trainer recipes don't trigger an event (0 points).
+        * **Skill bracket**: required_skill 276-300 → ×3, 201-275 → ×2,
+          101-200 → ×1.5, 1-100 → ×1.
+
+        Hand-curated "epic" recipes (Crusader enchant, Arcanite gear, etc.)
+        start at a 10-point base and still scale with the skill multiplier.
+        """
         if not recipe or recipe.get("learned_from") == "trainer":
             return "common", 0
         spell_id = str(recipe.get("spell_id") or "")
-        if spell_id in EPIC_RECIPE_SPELL_IDS:
-            return "epic", EPIC_RECIPE_POINTS
         sources = {str(source) for source in recipe.get("recipe_item_sources") or []}
         required_skill = int(recipe.get("required_skill") or 0)
-        if sources & RARE_RECIPE_SOURCES:
-            return "rare", RARE_RECIPE_POINTS
-        if required_skill >= 275 and sources != {"vendor"}:
-            return "rare", RARE_RECIPE_POINTS
-        return "common", 0
+
+        if spell_id in EPIC_RECIPE_SPELL_IDS:
+            base = EPIC_RECIPE_BASE_POINTS
+            rarity = "epic"
+        else:
+            base = max(
+                (
+                    RECIPE_POINTS_BY_SOURCE[src]
+                    for src in sources
+                    if src in RECIPE_POINTS_BY_SOURCE
+                ),
+                default=0,
+            )
+            if base == 0:
+                return "common", 0
+            rarity = "rare"
+
+        multiplier = next(
+            mult
+            for threshold, mult in RECIPE_SKILL_BRACKETS
+            if required_skill >= threshold
+        )
+        points = max(1, int(round(base * multiplier)))
+        return rarity, points
 
     def _recipe_search_text(self, recipe: dict) -> str:
         spell = self._spell_for_recipe(recipe)
