@@ -300,10 +300,10 @@ async def test_panel_publish_updates_existing_message(tmp_path, patch_logged_tas
 
 
 @pytest.mark.asyncio
-async def test_panel_hub_layout_has_four_sections(tmp_path, patch_logged_task):
-    """V2 hub: one Container with four Sections (Deine Chars, Suchen,
-    Cooldown, Hilfe). Each Section's accessory is a clickable Button with
-    a stable custom_id so persistence survives bot restarts."""
+async def test_panel_hub_layout_has_five_sections(tmp_path, patch_logged_task):
+    """V2 hub: one Container with five Sections (Deine Chars, Suchen,
+    Cooldown, Hilfe, Champion). Each Section's accessory is a clickable
+    Button with a stable custom_id so persistence survives bot restarts."""
     cog = await create_cog(tmp_path, patch_logged_task)
     hub = wow_cog_mod.WoWPanelLayoutView(cog)
 
@@ -311,13 +311,14 @@ async def test_panel_hub_layout_has_four_sections(tmp_path, patch_logged_task):
     container = hub.children[0]
     assert isinstance(container, discord.ui.Container)
     sections = [c for c in container.children if isinstance(c, discord.ui.Section)]
-    assert len(sections) == 4
+    assert len(sections) == 5
     custom_ids = {section.accessory.custom_id for section in sections}
     assert custom_ids == {
         "wow_panel_v2:chars",
         "wow_panel_v2:search",
         "wow_panel_v2:cooldown",
         "wow_panel_v2:help",
+        "wow_panel_v2:champion",
     }
 
 
@@ -348,9 +349,9 @@ async def test_my_chars_view_empty_state(tmp_path, patch_logged_task):
     assert kwargs["ephemeral"] is True
     embed = kwargs["embed"]
     assert "noch keinen" in embed.description
-    # Only "Neuen Char claimen" stays clickable in the empty state.
+    # Empty state: "Neuen Char claimen" + global "✖ Schließen" dismiss button.
     labels = [c.label for c in view.children if isinstance(c, discord.ui.Button)]
-    assert labels == ["➕ Neuen Char claimen"]
+    assert labels == ["➕ Neuen Char claimen", "✖ Schließen"]
 
 
 @pytest.mark.asyncio
