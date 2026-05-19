@@ -444,6 +444,13 @@ class WoWData:
         await self.set_setting("last_scan_at", datetime.utcnow().isoformat())
 
     async def find_roster_member_by_name(self, name: str) -> RosterMember | None:
+        """Lookup by name, preferring living characters over ghosts.
+
+        After a HC death + reroll, both an old (ghost) and a new (alive)
+        character with the same name can sit in the snapshot. The
+        ``ORDER BY is_ghost ASC`` sorts the alive one to the top so
+        ``/wow whois`` and the claim flow always pick the active char.
+        """
         await self.init_db()
         db = await self._get_db()
         cur = await db.execute(
@@ -452,6 +459,7 @@ class WoWData:
                    race_id, faction, guild_rank, is_ghost
               FROM roster_snapshot
              WHERE lower(name) = lower(?)
+             ORDER BY is_ghost ASC, character_id DESC
              LIMIT 1
             """,
             (name.strip(),),
@@ -517,14 +525,28 @@ class WoWData:
         return _claim_from_row(row) if row else None
 
     async def get_claim_by_name(self, name: str) -> CharacterClaim | None:
+        """Lookup by name, preferring claims for currently-alive characters.
+
+        After HC death + reroll, two claims with the same name can exist
+        (old key for the dead char, new key for the reroll). We rank the
+        claims so the alive one wins:
+            1. char has no ``death_events`` entry AND is not ghost in roster
+            2. fallback: most recently claimed
+        """
         await self.init_db()
         db = await self._get_db()
         cur = await db.execute(
             """
-            SELECT character_key, character_name, realm_slug, discord_user_id, status,
-                   claimed_at, verified_at, verified_by, review_message_id
-              FROM character_claims
-             WHERE lower(character_name) = lower(?)
+            SELECT c.character_key, c.character_name, c.realm_slug, c.discord_user_id,
+                   c.status, c.claimed_at, c.verified_at, c.verified_by,
+                   c.review_message_id
+              FROM character_claims c
+              LEFT JOIN roster_snapshot rs ON rs.character_key = c.character_key
+              LEFT JOIN death_events d ON d.character_key = c.character_key
+             WHERE lower(c.character_name) = lower(?)
+             ORDER BY (d.character_key IS NULL
+                       AND COALESCE(rs.is_ghost, 0) = 0) DESC,
+                      c.claimed_at DESC
              LIMIT 1
             """,
             (name.strip(),),
@@ -798,6 +820,13 @@ class WoWData:
     async def find_crafters(
         self, profession_id: str, minimum_skill: int
     ) -> list[CharacterProfession]:
+        """Active crafters for the given profession with at least the skill.
+
+        Excludes characters that are flagged ghost in the current roster
+        snapshot OR have a row in ``death_events`` — those are dead and
+        can't actually craft anything. Professions stay isolated by
+        ``character_key`` so a reroll with the same name starts fresh.
+        """
         await self.init_db()
         db = await self._get_db()
         cur = await db.execute(
@@ -806,7 +835,11 @@ class WoWData:
                    p.profession_id, p.skill_level, p.specialization, p.updated_at
               FROM character_professions p
               JOIN character_claims c ON c.character_key = p.character_key
+              JOIN roster_snapshot rs ON rs.character_key = p.character_key
+              LEFT JOIN death_events d ON d.character_key = p.character_key
              WHERE p.profession_id = ? AND p.skill_level >= ?
+               AND rs.is_ghost = 0
+               AND d.character_key IS NULL
              ORDER BY p.skill_level DESC, lower(c.character_name)
             """,
             (profession_id, minimum_skill),
@@ -1465,6 +1498,11 @@ class WoWData:
         minimum_skill: int,
         spell_id: str,
     ) -> list[CharacterProfession]:
+        """Active crafters who explicitly learned ``spell_id``.
+
+        Same death/ghost filter as :meth:`find_crafters` — dead chars
+        don't show up even if their old data still references the recipe.
+        """
         await self.init_db()
         db = await self._get_db()
         cur = await db.execute(
@@ -1476,7 +1514,11 @@ class WoWData:
               JOIN character_known_recipes r
                 ON r.character_key = p.character_key
                AND r.spell_id = ?
+              JOIN roster_snapshot rs ON rs.character_key = p.character_key
+              LEFT JOIN death_events d ON d.character_key = p.character_key
              WHERE p.profession_id = ? AND p.skill_level >= ?
+               AND rs.is_ghost = 0
+               AND d.character_key IS NULL
              ORDER BY p.skill_level DESC, lower(c.character_name)
             """,
             (spell_id, profession_id, minimum_skill),

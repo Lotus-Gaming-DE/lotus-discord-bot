@@ -285,7 +285,7 @@ class WoWCog(ManagedTaskCog):
         self._track_task(self._poll_loop())
         if hasattr(self.bot, "add_view"):
             self.bot.add_view(ClaimReviewView(self))
-            self.bot.add_view(WoWPanelView(self))
+            self.bot.add_view(WoWPanelLayoutView(self))
 
     async def _poll_loop(self) -> None:
         await self.bot.wait_until_ready()
@@ -349,13 +349,20 @@ class WoWCog(ManagedTaskCog):
         return int(value) if value else DEFAULT_CLAIM_REVIEW_CHANNEL_ID
 
     async def publish_panel(self, channel: discord.TextChannel) -> PanelPublishResult:
-        content = self.format_panel_content()
-        view = WoWPanelView(self)
+        """Send or update the Components-V2 hub message.
+
+        Discord requires V2 messages to have no ``content`` — all visible
+        text lives inside the ``LayoutView``'s ``TextDisplay`` items.
+        Editing an existing classic-V1 panel into a V2 LayoutView works
+        in discord.py 2.6+; if the old message can't be edited (deleted,
+        wrong permissions, etc.) we fall back to a fresh send.
+        """
+        view = WoWPanelLayoutView(self)
         message_id_value = await self.data.get_setting("panel_message_id")
         if message_id_value:
             try:
                 message = await channel.fetch_message(int(message_id_value))
-                await message.edit(content=content, view=view)
+                await message.edit(content=None, view=view)
                 await self.data.set_setting("panel_channel_id", str(channel.id))
                 return PanelPublishResult(channel.id, message.id, created=False)
             except (discord.NotFound, discord.Forbidden, discord.HTTPException):
@@ -363,12 +370,15 @@ class WoWCog(ManagedTaskCog):
             except AttributeError:
                 logger.info("[WoWCog] Channel does not support fetching panel message.")
 
-        message = await channel.send(content, view=view)
+        message = await channel.send(view=view)
         await self.data.set_setting("panel_channel_id", str(channel.id))
         await self.data.set_setting("panel_message_id", str(message.id))
         return PanelPublishResult(channel.id, message.id, created=True)
 
     def format_panel_content(self) -> str:
+        # Legacy helper retained for any callers/tests; the V2 hub builds
+        # its own TextDisplays inside WoWPanelLayoutView. Kept here so
+        # existing imports don't break.
         return "\n".join(
             [
                 "**🪷 Black Lotus WoW-Hub**",
@@ -784,6 +794,15 @@ class WoWCog(ManagedTaskCog):
             await self._award_claimed_milestone_points(milestone)
         for death in activity.deaths:
             await self.data.record_death(death.member.character_key)
+            # Auto-release the dead char's claim so the owner can claim a
+            # re-rolled character with the same name without first having
+            # to manually release. The owner already learns about the
+            # death via the digest's @mention.
+            claim = await self.data.get_claim(death.member.character_key)
+            if claim:
+                await self.data.release_claim(
+                    death.member.character_key, claim.discord_user_id
+                )
         for event in activity.recipe_events or []:
             await self.data.mark_recipe_learning_announced(
                 event.character_key, event.spell_id
@@ -1341,6 +1360,114 @@ class WoWCog(ManagedTaskCog):
             created=True,
             reason="created",
             review_posted=review_posted,
+        )
+
+    # ---- "Meine Chars" detail view action handlers ----
+
+    async def _my_chars_profession(
+        self, interaction: discord.Interaction, view: "PanelMyCharsView"
+    ) -> None:
+        claim = view.selected_claim
+        if claim is None:
+            await view.refresh(interaction)
+            return
+        profiles = await self.data.professions_for_character(claim.character_key)
+        sub_view = PanelProfessionSelectView(self, interaction.user.id, claim, profiles)
+        await interaction.response.edit_message(
+            content=(
+                f"Berufe für **{claim.character_name}**:\n"
+                f"{self.format_profession_slots(profiles)}\n\n"
+                "Welchen Beruf möchtest du pflegen?"
+            ),
+            embed=None,
+            view=sub_view,
+        )
+
+    async def _my_chars_recipes(
+        self, interaction: discord.Interaction, view: "PanelMyCharsView"
+    ) -> None:
+        claim = view.selected_claim
+        if claim is None:
+            await view.refresh(interaction)
+            return
+        profiles = await self.data.professions_for_character(claim.character_key)
+        if not profiles:
+            await interaction.response.edit_message(
+                content=(
+                    f"Für **{claim.character_name}** sind noch keine Berufe gepflegt. "
+                    "Nutze zuerst **Berufe pflegen**."
+                ),
+                embed=None,
+                view=None,
+            )
+            return
+        sub_view = PanelRecipeProfessionSelectView(
+            self, interaction.user.id, claim, profiles
+        )
+        await interaction.response.edit_message(
+            content="Für welchen Beruf möchtest du Spezialrezepte pflegen?",
+            embed=None,
+            view=sub_view,
+        )
+
+    async def _my_chars_cooldown(
+        self, interaction: discord.Interaction, view: "PanelMyCharsView"
+    ) -> None:
+        claim = view.selected_claim
+        if claim is None:
+            await view.refresh(interaction)
+            return
+        all_eligible = await self.cooldown_eligible_options(interaction.user.id)
+        eligible = [
+            option
+            for option in all_eligible
+            if option[0].character_key == claim.character_key
+        ]
+        if not eligible:
+            await interaction.response.edit_message(
+                content=(
+                    f"**{claim.character_name}** hat kein Rezept mit Cooldown "
+                    "gelernt. Trag das passende Rezept zuerst unter **Rezepte "
+                    "pflegen** ein."
+                ),
+                embed=None,
+                view=None,
+            )
+            return
+        sub_view = PanelCooldownStartView(self, interaction.user.id, eligible)
+        await interaction.response.edit_message(
+            content="Welchen Cooldown willst du eintragen?",
+            embed=None,
+            view=sub_view,
+        )
+
+    async def _my_chars_release(
+        self, interaction: discord.Interaction, view: "PanelMyCharsView"
+    ) -> None:
+        claim = view.selected_claim
+        if claim is None:
+            await view.refresh(interaction)
+            return
+        await self.data.release_claim(claim.character_key, claim.discord_user_id)
+        view.selected_claim = None
+        await view.refresh(interaction)
+
+    async def _my_chars_claim_new(
+        self, interaction: discord.Interaction, view: "PanelMyCharsView"
+    ) -> None:
+        members = await self.data.unclaimed_roster_members()
+        sub_view = PanelUnclaimedCharSelectView(self, interaction.user.id, members)
+        intro = (
+            "Wähle deinen Char aus der Liste. Wenn er nicht dabei ist, "
+            "klicke unten auf **Suchen…**."
+            if members
+            else (
+                "Aktuell sind keine Chars zum Claimen frei. Wenn du sicher "
+                "bist, dass deiner da sein müsste, klicke **Suchen…**."
+            )
+        )
+        await interaction.response.edit_message(
+            content=intro, embed=None, view=sub_view
         )
 
     async def build_whois_embed(self, char_name: str) -> discord.Embed | None:
@@ -2810,16 +2937,18 @@ class PanelCraftingSearchModal(discord.ui.Modal):
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
         result = await self.cog.search_crafting(str(self.item.value).strip())
-        view = None
+        content = self.cog.format_crafting_search_result(result)
+        # discord.py's send_message uses MISSING as the "no view" sentinel
+        # and does ``not view.is_finished()`` on whatever else is passed —
+        # explicitly passing ``view=None`` raises AttributeError. Only
+        # forward ``view=...`` when we actually have a View instance.
         if result.status == "ambiguous_item":
             view = CraftingSearchSuggestionView(
                 self.cog, interaction.user.id, result.candidates or []
             )
-        await interaction.response.send_message(
-            self.cog.format_crafting_search_result(result),
-            view=view,
-            ephemeral=True,
-        )
+            await interaction.response.send_message(content, view=view, ephemeral=True)
+        else:
+            await interaction.response.send_message(content, ephemeral=True)
 
 
 class PanelCooldownStartView(discord.ui.View):
@@ -2978,118 +3107,128 @@ class PanelUnclaimedCharSelect(discord.ui.Select):
         )
 
 
-class WoWPanelView(discord.ui.View):
+PANEL_HUB_TEXT = (
+    "## 🪷 Black Lotus WoW-Hub\n"
+    "Hier verbindest du deine Chars, pflegst Berufe, loggst Cooldowns und "
+    "findest Crafter in der Gilde. Wähle einen Bereich aus."
+)
+PANEL_HELP_TEXT = (
+    "**Kurzanleitung**\n\n"
+    "**👤 Deine Chars** — verbinde Black-Lotus-Charaktere mit deinem "
+    "Discord-Account, pflege Berufe & Spezialrezepte, schau dir aktive "
+    "Cooldowns an und gib Claims frei.\n\n"
+    "**🔎 In der Gilde suchen** — finde, wer ein bestimmtes Item craften "
+    "kann, oder schlag einen Char nach (Owner, Berufe, Status).\n\n"
+    "**⏳ Cooldown loggen** — wenn du als Alchemist eine Transmute oder "
+    "als Schneider Mondstoff machst, trag das hier ein. Der Bot erinnert "
+    "im täglichen Digest, sobald sie wieder bereit sind.\n\n"
+    "**Daily Digest** — jeden Morgen um **09:00 Berlin** postet der Bot "
+    "Aufstiege, Tode, neue Crafts, Berufsskill-Meilensteine und "
+    "bereitstehende Cooldowns. Geclaimte Chars werden gepingt.\n\n"
+    "Power-User: alle Funktionen gibt's auch als `/wow ...` Slash-Command."
+)
+
+
+class WoWPanelLayoutView(discord.ui.LayoutView):
+    """Components-V2 hub for the WoW cog.
+
+    Layout: a single ``Container`` with a header ``TextDisplay`` followed
+    by four ``Section`` blocks — one per top-level concern. Each section
+    has an accessory button that opens a classic-V1 sub-flow (claim
+    select, char-detail view, cooldown picker, etc.). All sub-flows are
+    ephemeral so the public hub message stays stable.
+
+    Persistence: the LayoutView is registered via ``bot.add_view`` at
+    cog-load so buttons survive bot restarts. Old V1-panel custom_ids
+    are obsolete after this migration; a single ``/wow panel publish``
+    re-issues the message with the new layout.
+    """
+
     def __init__(self, cog: WoWCog) -> None:
         super().__init__(timeout=None)
         self.cog = cog
 
-    async def _send_claim_select(
-        self, interaction: discord.Interaction, mode: str
-    ) -> None:
-        claims = await self.cog.data.claims_for_user(interaction.user.id)
-        if not claims:
-            await interaction.response.send_message(
-                "Du hast noch keinen Char verbunden. Starte mit **Char claimen** — dauert nur einen Moment. 🔗",
-                ephemeral=True,
-            )
-            return
-        view = PanelOwnedCharacterSelectView(
-            self.cog, interaction.user.id, claims, mode
+        chars_btn = discord.ui.Button(
+            label="Öffnen",
+            style=discord.ButtonStyle.primary,
+            custom_id="wow_panel_v2:chars",
         )
+        chars_btn.callback = self._open_my_chars
+
+        search_btn = discord.ui.Button(
+            label="Suchen",
+            style=discord.ButtonStyle.secondary,
+            custom_id="wow_panel_v2:search",
+        )
+        search_btn.callback = self._open_search
+
+        cooldown_btn = discord.ui.Button(
+            label="Loggen",
+            style=discord.ButtonStyle.secondary,
+            custom_id="wow_panel_v2:cooldown",
+        )
+        cooldown_btn.callback = self._open_cooldown_log
+
+        help_btn = discord.ui.Button(
+            label="Anzeigen",
+            style=discord.ButtonStyle.secondary,
+            custom_id="wow_panel_v2:help",
+        )
+        help_btn.callback = self._open_help
+
+        container = discord.ui.Container(
+            discord.ui.TextDisplay(PANEL_HUB_TEXT),
+            discord.ui.Separator(),
+            discord.ui.Section(
+                discord.ui.TextDisplay(
+                    "### 👤 Deine Chars\n"
+                    "Claimen, Berufe & Rezepte pflegen, Cooldowns ansehen, "
+                    "Claim freigeben."
+                ),
+                accessory=chars_btn,
+            ),
+            discord.ui.Separator(),
+            discord.ui.Section(
+                discord.ui.TextDisplay(
+                    "### 🔎 In der Gilde suchen\n"
+                    "Wer kann was craften? Wer steckt hinter dem Char?"
+                ),
+                accessory=search_btn,
+            ),
+            discord.ui.Separator(),
+            discord.ui.Section(
+                discord.ui.TextDisplay(
+                    "### ⏳ Cooldown loggen\n"
+                    "Transmute oder Mondstoff gemacht? Hier eintragen, "
+                    "Bot meldet sich wenn wieder bereit."
+                ),
+                accessory=cooldown_btn,
+            ),
+            discord.ui.Separator(),
+            discord.ui.Section(
+                discord.ui.TextDisplay("### ❓ Hilfe & Übersicht"),
+                accessory=help_btn,
+            ),
+        )
+        self.add_item(container)
+
+    async def _open_my_chars(self, interaction: discord.Interaction) -> None:
+        view = PanelMyCharsView(self.cog, interaction.user.id)
+        await view.send(interaction)
+
+    async def _open_search(self, interaction: discord.Interaction) -> None:
+        view = PanelSearchSubView(self.cog)
         await interaction.response.send_message(
-            "Bitte wähle deinen Charakter aus.",
-            view=view,
-            ephemeral=True,
+            "Was suchst du?", view=view, ephemeral=True
         )
 
-    @discord.ui.button(
-        label="Char claimen",
-        style=discord.ButtonStyle.primary,
-        custom_id="wow_panel:claim",
-    )
-    async def claim(
-        self, interaction: discord.Interaction, _: discord.ui.Button
-    ) -> None:
-        members = await self.cog.data.unclaimed_roster_members()
-        if not members:
-            await interaction.response.send_modal(PanelCharacterSearchModal(self.cog))
-            return
-        view = PanelUnclaimedCharSelectView(self.cog, interaction.user.id, members)
-        intro = (
-            "Wähle deinen Char aus der Liste. "
-            "Wenn er nicht dabei ist, klicke unten auf **Suchen…**."
-            if len(members) <= 25
-            else (
-                f"Es gibt **{len(members)}** noch nicht geclaimte Chars — "
-                "die ersten 25 sind unten. Falls deiner fehlt, klicke auf **Suchen…**."
-            )
-        )
-        await interaction.response.send_message(intro, view=view, ephemeral=True)
-
-    @discord.ui.button(
-        label="Meine Chars",
-        style=discord.ButtonStyle.secondary,
-        custom_id="wow_panel:my_chars",
-    )
-    async def my_chars(
-        self, interaction: discord.Interaction, _: discord.ui.Button
-    ) -> None:
-        claims = await self.cog.data.claims_for_user(interaction.user.id)
-        if not claims:
-            await interaction.response.send_message(
-                "Du hast noch keinen Char verbunden.", ephemeral=True
-            )
-            return
-        lines = [
-            f"{'✅' if claim.status == 'verified' else '🕐'} **{claim.character_name}** "
-            f"*({'bestätigt' if claim.status == 'verified' else 'wartet auf Bestätigung'})*"
-            for claim in claims
-        ]
-        await interaction.response.send_message("\n".join(lines), ephemeral=True)
-
-    @discord.ui.button(
-        label="Berufe pflegen",
-        style=discord.ButtonStyle.secondary,
-        custom_id="wow_panel:professions",
-    )
-    async def professions(
-        self, interaction: discord.Interaction, _: discord.ui.Button
-    ) -> None:
-        await self._send_claim_select(interaction, "profession")
-
-    @discord.ui.button(
-        label="Rezepte pflegen",
-        style=discord.ButtonStyle.secondary,
-        custom_id="wow_panel:recipes",
-    )
-    async def recipes(
-        self, interaction: discord.Interaction, _: discord.ui.Button
-    ) -> None:
-        await self._send_claim_select(interaction, "recipes")
-
-    @discord.ui.button(
-        label="Crafter suchen",
-        style=discord.ButtonStyle.secondary,
-        custom_id="wow_panel:crafting_search",
-    )
-    async def crafting_search(
-        self, interaction: discord.Interaction, _: discord.ui.Button
-    ) -> None:
-        await interaction.response.send_modal(PanelCraftingSearchModal(self.cog))
-
-    @discord.ui.button(
-        label="⏳ Cooldown loggen",
-        style=discord.ButtonStyle.secondary,
-        custom_id="wow_panel:cooldown_log",
-    )
-    async def cooldown_log(
-        self, interaction: discord.Interaction, _: discord.ui.Button
-    ) -> None:
+    async def _open_cooldown_log(self, interaction: discord.Interaction) -> None:
         eligible = await self.cog.cooldown_eligible_options(interaction.user.id)
         if not eligible:
             await interaction.response.send_message(
                 "Keiner deiner Chars hat ein Rezept mit Cooldown gelernt. "
-                "Trag das passende Rezept zuerst unter **Rezepte pflegen** ein.",
+                "Trag das passende Rezept zuerst über **Deine Chars → Rezepte "
+                "pflegen** ein.",
                 ephemeral=True,
             )
             return
@@ -3100,25 +3239,265 @@ class WoWPanelView(discord.ui.View):
             ephemeral=True,
         )
 
-    @discord.ui.button(
-        label="Hilfe & Übersicht",
-        style=discord.ButtonStyle.secondary,
-        custom_id="wow_panel:help",
-    )
-    async def help(
+    async def _open_help(self, interaction: discord.Interaction) -> None:
+        await interaction.response.send_message(PANEL_HELP_TEXT, ephemeral=True)
+
+
+class PanelSearchSubView(discord.ui.View):
+    """Sub-menu for the 🔎 Search section: crafter lookup or char-whois."""
+
+    def __init__(self, cog: WoWCog) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+
+    @discord.ui.button(label="Crafter suchen", style=discord.ButtonStyle.primary)
+    async def crafter(
         self, interaction: discord.Interaction, _: discord.ui.Button
     ) -> None:
+        await interaction.response.send_modal(PanelCraftingSearchModal(self.cog))
+
+    @discord.ui.button(label="Char nachschlagen", style=discord.ButtonStyle.secondary)
+    async def whois(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        await interaction.response.send_modal(PanelWhoisModal(self.cog))
+
+
+class PanelWhoisModal(discord.ui.Modal):
+    """Free-text wrapper around ``build_whois_embed`` — same payload as
+    ``/wow whois`` but reachable from the panel hub."""
+
+    def __init__(self, cog: WoWCog) -> None:
+        super().__init__(title="Char nachschlagen")
+        self.cog = cog
+        self.query = discord.ui.TextInput(
+            label="Charaktername",
+            placeholder="z. B. Voidok",
+            min_length=2,
+            max_length=32,
+        )
+        self.add_item(self.query)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        embed = await self.cog.build_whois_embed(str(self.query.value).strip())
+        if embed is None:
+            await interaction.response.send_message(
+                f"**{self.query.value}** ist nicht im aktuellen Roster.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
+class PanelMyCharsView(discord.ui.View):
+    """Ephemeral overview-and-control panel for the user's claimed chars.
+
+    Replaces the old "Meine Chars" plain-text response with an embed +
+    char-select + inline action buttons. Consolidates what previously
+    required five separate slash commands (``/wow claims mine``,
+    ``/wow crafting mine``, ``/wow crafting learned``, ``/wow cooldowns
+    mine``, ``/wow claim-release``) into one surface.
+    """
+
+    def __init__(self, cog: WoWCog, owner_user_id: int) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.owner_user_id = owner_user_id
+        self.claims: list[CharacterClaim] = []
+        self.selected_claim: CharacterClaim | None = None
+        self._char_select: discord.ui.Select | None = None
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.owner_user_id:
+            return True
         await interaction.response.send_message(
-            "\n".join(
-                [
-                    "**Kurz erklärt**",
-                    "1. Starte mit **Char claimen** — so verbindest du deinen Charakter mit deinem Account.",
-                    "2. Danach trägst du Berufe und Skilllevel über **Berufe pflegen** ein.",
-                    "3. Gelernte Spezialrezepte ergänzt du unter **Rezepte pflegen**.",
-                    "4. Mit **Crafter suchen** findest du passende Gildenmitglieder für dein nächstes Item.",
+            "Diese Ansicht gehört nicht dir.", ephemeral=True
+        )
+        return False
+
+    async def _load(self) -> None:
+        self.claims = await self.cog.data.claims_for_user(self.owner_user_id)
+        if self.claims:
+            if (
+                self.selected_claim is None
+                or self.selected_claim.character_key
+                not in {c.character_key for c in self.claims}
+            ):
+                self.selected_claim = self.claims[0]
+        else:
+            self.selected_claim = None
+
+    def _rebuild(self) -> None:
+        """Recreate items based on the current claim list + selection."""
+        self.clear_items()
+        if len(self.claims) > 1:
+            self._char_select = _MyCharsSelect(self, self.claims)
+            self.add_item(self._char_select)
+        if self.selected_claim is not None:
+            self.add_item(_MyCharsActionButton(self, "profession", "🛠️ Berufe pflegen"))
+            self.add_item(_MyCharsActionButton(self, "recipes", "📖 Rezepte pflegen"))
+            self.add_item(_MyCharsActionButton(self, "cooldown", "⏳ Cooldown loggen"))
+            self.add_item(
+                _MyCharsActionButton(
+                    self,
+                    "release",
+                    "🗑️ Claim freigeben",
+                    style=discord.ButtonStyle.danger,
+                )
+            )
+        self.add_item(
+            _MyCharsActionButton(
+                self,
+                "claim_new",
+                "➕ Neuen Char claimen",
+                style=discord.ButtonStyle.success,
+            )
+        )
+
+    async def _build_embed(self) -> discord.Embed:
+        if not self.claims:
+            return discord.Embed(
+                title="Deine Chars",
+                description=(
+                    "Du hast noch keinen Black-Lotus-Char verbunden. "
+                    "Klick **Neuen Char claimen** unten."
+                ),
+                color=0x9B59B6,
+            )
+        embed = discord.Embed(title="🪷 Deine Chars", color=0x2ECC71)
+        for claim in self.claims:
+            member = await self.cog.data.find_roster_member_by_name(
+                claim.character_name
+            )
+            lines: list[str] = []
+            if member is not None:
+                race = RACE_NAMES_DE.get(member.race_id, "")
+                klass = CLASS_NAMES_DE.get(member.class_id, "")
+                lines.append(f"Level **{member.level}** {race} {klass}".strip())
+                if member.is_ghost:
+                    lines.append("🕯️ Tot (Geist)")
+            lines.append(
+                "✅ bestätigt"
+                if claim.status == "verified"
+                else "🕐 wartet auf Bestätigung"
+            )
+            gear = await self.cog.data.gear_snapshot(claim.character_key)
+            if gear is not None:
+                lines.append(
+                    f"Ø iLvl **{self.cog._format_item_level(gear.average_item_level)}**"
+                )
+            professions = await self.cog.data.professions_for_character(
+                claim.character_key
+            )
+            if professions:
+                prof_lines = [
+                    f"{self.cog._profession_name(p.profession_id)} **{p.skill_level}**"
+                    for p in professions
                 ]
-            ),
-            ephemeral=True,
+                lines.append("Berufe: " + ", ".join(prof_lines))
+            cooldowns = await self.cog.data.cooldowns_for_character(claim.character_key)
+            if cooldowns:
+                now = datetime.now(timezone.utc)
+                cd_lines = []
+                for cd in cooldowns:
+                    try:
+                        ready = datetime.fromisoformat(cd.ready_at)
+                    except ValueError:
+                        continue
+                    if ready.tzinfo is None:
+                        ready = ready.replace(tzinfo=timezone.utc)
+                    if ready <= now:
+                        cd_lines.append(f"⏳ {cd.last_spell_name}: **jetzt bereit**")
+                    else:
+                        delta = ready - now
+                        hours = int(delta.total_seconds() // 3600)
+                        minutes = int((delta.total_seconds() % 3600) // 60)
+                        cd_lines.append(
+                            f"⏳ {cd.last_spell_name}: ready in {hours}h {minutes:02d}m"
+                        )
+                lines.extend(cd_lines)
+            marker = (
+                "▶ "
+                if (
+                    self.selected_claim is not None
+                    and claim.character_key == self.selected_claim.character_key
+                    and len(self.claims) > 1
+                )
+                else ""
+            )
+            embed.add_field(
+                name=f"{marker}{claim.character_name}",
+                value="\n".join(lines) or "—",
+                inline=False,
+            )
+        if self.selected_claim is not None and len(self.claims) > 1:
+            embed.set_footer(
+                text=f"Aktionen wirken auf {self.selected_claim.character_name}."
+            )
+        return embed
+
+    async def send(self, interaction: discord.Interaction) -> None:
+        await self._load()
+        self._rebuild()
+        embed = await self._build_embed()
+        await interaction.response.send_message(embed=embed, view=self, ephemeral=True)
+
+    async def refresh(self, interaction: discord.Interaction) -> None:
+        await self._load()
+        self._rebuild()
+        embed = await self._build_embed()
+        await interaction.response.edit_message(embed=embed, view=self)
+
+
+class _MyCharsSelect(discord.ui.Select):
+    def __init__(self, parent: PanelMyCharsView, claims: list[CharacterClaim]) -> None:
+        self.parent_view = parent
+        options = []
+        for claim in claims[:25]:
+            options.append(
+                discord.SelectOption(
+                    label=claim.character_name[:100],
+                    value=claim.character_key,
+                    default=(
+                        parent.selected_claim is not None
+                        and claim.character_key == parent.selected_claim.character_key
+                    ),
+                )
+            )
+        super().__init__(
+            placeholder="Char auswählen",
+            min_values=1,
+            max_values=1,
+            options=options,
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        new_key = self.values[0]
+        match = next(
+            (c for c in self.parent_view.claims if c.character_key == new_key), None
+        )
+        if match is None:
+            await self.parent_view.refresh(interaction)
+            return
+        self.parent_view.selected_claim = match
+        await self.parent_view.refresh(interaction)
+
+
+class _MyCharsActionButton(discord.ui.Button):
+    def __init__(
+        self,
+        parent: PanelMyCharsView,
+        action: str,
+        label: str,
+        style: discord.ButtonStyle = discord.ButtonStyle.secondary,
+    ) -> None:
+        super().__init__(label=label, style=style)
+        self.parent_view = parent
+        self.action = action
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        await getattr(self.parent_view.cog, f"_my_chars_{self.action}")(
+            interaction, self.parent_view
         )
 
 

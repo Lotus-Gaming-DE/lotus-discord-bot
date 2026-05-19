@@ -24,7 +24,9 @@ class DummyChannel:
         self.sent = []
         self.next_message_id = 555
 
-    async def send(self, msg, **kwargs):
+    async def send(self, msg=None, **kwargs):
+        # Real discord.TextChannel.send() makes content optional — a V2
+        # LayoutView is sent without any text body. Mirror that here.
         self.sent.append((msg, kwargs))
         return type("Message", (), {"id": self.next_message_id})()
 
@@ -123,7 +125,9 @@ class DummyReviewResponse:
         self.edits = []
         self.modals = []
 
-    async def send_message(self, msg, **kwargs):
+    async def send_message(self, msg=None, **kwargs):
+        # Real interaction.response.send_message takes ``content`` as an
+        # optional keyword; embed-only or view-only sends omit it.
         self.messages.append((msg, kwargs))
 
     async def edit_message(self, **kwargs):
@@ -268,8 +272,11 @@ async def test_panel_publish_creates_and_stores_message(tmp_path, patch_logged_t
     assert result.created is True
     assert result.channel_id == channel.id
     assert result.message_id == 555
-    assert "Black Lotus WoW-Hub" in channel.sent[0][0]
-    assert channel.sent[0][1]["view"] is not None
+    # V2 hub message has no text content — everything lives inside the
+    # LayoutView's TextDisplay items.
+    sent_content, sent_kwargs = channel.sent[0]
+    assert sent_content is None
+    assert isinstance(sent_kwargs["view"], wow_cog_mod.WoWPanelLayoutView)
     assert await cog.data.get_setting("panel_channel_id") == str(channel.id)
     assert await cog.data.get_setting("panel_message_id") == "555"
 
@@ -286,47 +293,158 @@ async def test_panel_publish_updates_existing_message(tmp_path, patch_logged_tas
     assert result.created is False
     assert channel.fetches == [777]
     assert channel.sent == []
-    assert "Black Lotus WoW-Hub" in existing.edits[0]["content"]
-    assert existing.edits[0]["view"] is not None
+    # Edit drops the old content (V1→V2 migration) and swaps in the new
+    # LayoutView; that's how Discord lets us upgrade a classic message.
+    assert existing.edits[0]["content"] is None
+    assert isinstance(existing.edits[0]["view"], wow_cog_mod.WoWPanelLayoutView)
 
 
 @pytest.mark.asyncio
-async def test_panel_claim_button_opens_search_modal(tmp_path, patch_logged_task):
+async def test_panel_hub_layout_has_four_sections(tmp_path, patch_logged_task):
+    """V2 hub: one Container with four Sections (Deine Chars, Suchen,
+    Cooldown, Hilfe). Each Section's accessory is a clickable Button with
+    a stable custom_id so persistence survives bot restarts."""
     cog = await create_cog(tmp_path, patch_logged_task)
-    view = wow_cog_mod.WoWPanelView(cog)
+    hub = wow_cog_mod.WoWPanelLayoutView(cog)
+
+    assert hub.is_persistent()
+    container = hub.children[0]
+    assert isinstance(container, discord.ui.Container)
+    sections = [c for c in container.children if isinstance(c, discord.ui.Section)]
+    assert len(sections) == 4
+    custom_ids = {section.accessory.custom_id for section in sections}
+    assert custom_ids == {
+        "wow_panel_v2:chars",
+        "wow_panel_v2:search",
+        "wow_panel_v2:cooldown",
+        "wow_panel_v2:help",
+    }
+
+
+@pytest.mark.asyncio
+async def test_panel_hub_help_button_sends_overview(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    hub = wow_cog_mod.WoWPanelLayoutView(cog)
     interaction = DummyReviewInteraction(DummyUser(42))
 
-    await view.children[0].callback(interaction)
+    await hub._open_help(interaction)
 
+    text = interaction.response.messages[0][0]
+    assert "Deine Chars" in text
+    assert "Cooldown" in text
+    assert "Daily Digest" in text
+    assert interaction.response.messages[0][1]["ephemeral"] is True
+
+
+@pytest.mark.asyncio
+async def test_my_chars_view_empty_state(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    view = wow_cog_mod.PanelMyCharsView(cog, owner_user_id=42)
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await view.send(interaction)
+
+    msg, kwargs = interaction.response.messages[0]
+    assert kwargs["ephemeral"] is True
+    embed = kwargs["embed"]
+    assert "noch keinen" in embed.description
+    # Only "Neuen Char claimen" stays clickable in the empty state.
+    labels = [c.label for c in view.children if isinstance(c, discord.ui.Button)]
+    assert labels == ["➕ Neuen Char claimen"]
+
+
+@pytest.mark.asyncio
+async def test_my_chars_view_renders_claim_details(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    voidok = member(name="Voidok", level=60)
+    await cog.data.replace_snapshot([voidok])
+    claim, _ = await cog.data.create_claim(voidok, 42)
+    await cog.data.set_character_profession(claim, "alchemy", 270)
+    view = wow_cog_mod.PanelMyCharsView(cog, owner_user_id=42)
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await view.send(interaction)
+
+    embed = interaction.response.messages[0][1]["embed"]
+    field = next(f for f in embed.fields if "Voidok" in f.name)
+    assert "Level **60**" in field.value
+    assert "Alchemie" in field.value
+    # With a claim active, all four per-char action buttons appear plus
+    # the global "claim new" button.
+    labels = [c.label for c in view.children if isinstance(c, discord.ui.Button)]
+    assert "🛠️ Berufe pflegen" in labels
+    assert "📖 Rezepte pflegen" in labels
+    assert "⏳ Cooldown loggen" in labels
+    assert "🗑️ Claim freigeben" in labels
+    assert "➕ Neuen Char claimen" in labels
+
+
+@pytest.mark.asyncio
+async def test_my_chars_release_drops_claim_and_refreshes(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    voidok = member(name="Voidok")
+    await cog.data.replace_snapshot([voidok])
+    await cog.data.create_claim(voidok, 42)
+    view = wow_cog_mod.PanelMyCharsView(cog, owner_user_id=42)
+    interaction = DummyReviewInteraction(DummyUser(42))
+    await view.send(interaction)
+    interaction.response.edits.clear()
+
+    await cog._my_chars_release(interaction, view)
+
+    assert await cog.data.claims_for_user(42) == []
+    # Refresh edited the message back to the empty state.
+    assert interaction.response.edits, "release should refresh the view"
+    refreshed_embed = interaction.response.edits[0]["embed"]
+    assert "noch keinen" in refreshed_embed.description
+
+
+@pytest.mark.asyncio
+async def test_panel_search_submenu_routes_to_correct_modal(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    sub = wow_cog_mod.PanelSearchSubView(cog)
+
+    crafter_interaction = DummyReviewInteraction(DummyUser(42))
+    await sub.children[0].callback(crafter_interaction)
     assert isinstance(
-        interaction.response.modals[0], wow_cog_mod.PanelCharacterSearchModal
+        crafter_interaction.response.modals[0],
+        wow_cog_mod.PanelCraftingSearchModal,
     )
 
-
-@pytest.mark.asyncio
-async def test_panel_professions_requires_claim(tmp_path, patch_logged_task):
-    cog = await create_cog(tmp_path, patch_logged_task)
-    view = wow_cog_mod.WoWPanelView(cog)
-    interaction = DummyReviewInteraction(DummyUser(42))
-
-    await view.children[2].callback(interaction)
-
-    assert "keinen Char" in interaction.response.messages[0][0]
-    assert interaction.response.messages[0][1]["ephemeral"] is True
+    whois_interaction = DummyReviewInteraction(DummyUser(42))
+    await sub.children[1].callback(whois_interaction)
+    assert isinstance(whois_interaction.response.modals[0], wow_cog_mod.PanelWhoisModal)
 
 
 @pytest.mark.asyncio
-async def test_panel_my_chars_lists_claims(tmp_path, patch_logged_task):
+async def test_panel_whois_modal_renders_existing_char(tmp_path, patch_logged_task):
     cog = await create_cog(tmp_path, patch_logged_task)
-    await cog.data.replace_snapshot([member(name="Voidok")])
-    await cog.data.create_claim(member(name="Voidok"), 42)
-    view = wow_cog_mod.WoWPanelView(cog)
+    await cog.data.replace_snapshot([member(name="Voidok", level=42)])
+    modal = wow_cog_mod.PanelWhoisModal(cog)
+    modal.query._value = "Voidok"
     interaction = DummyReviewInteraction(DummyUser(42))
 
-    await view.children[1].callback(interaction)
+    await modal.on_submit(interaction)
 
-    assert "Voidok" in interaction.response.messages[0][0]
-    assert interaction.response.messages[0][1]["ephemeral"] is True
+    _, kwargs = interaction.response.messages[0]
+    assert kwargs["ephemeral"] is True
+    assert "Voidok" in kwargs["embed"].title
+
+
+@pytest.mark.asyncio
+async def test_panel_whois_modal_handles_missing_char(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    modal = wow_cog_mod.PanelWhoisModal(cog)
+    modal.query._value = "Ghostly"
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await modal.on_submit(interaction)
+
+    msg, _ = interaction.response.messages[0]
+    assert "nicht im aktuellen Roster" in msg
 
 
 @pytest.mark.asyncio
@@ -490,7 +608,11 @@ async def test_crafting_search_suggestion_select_runs_selected_search(
 ):
     cog = await create_cog(tmp_path, patch_logged_task)
     cog.bot.data = {"wow": crafting_data()}
-    claim, _ = await cog.data.create_claim(member(name="Voidok"), 42)
+    voidok = member(name="Voidok")
+    # find_crafters now requires the char to be in the live roster (not
+    # ghost, not in death_events) — so seed the snapshot here too.
+    await cog.data.replace_snapshot([voidok])
+    claim, _ = await cog.data.create_claim(voidok, 42)
     await cog.data.set_character_profession(claim, "alchemy", 75)
     result = await cog.search_crafting("Schwacher")
     view = wow_cog_mod.CraftingSearchSuggestionView(cog, 42, result.candidates)
@@ -2105,3 +2227,205 @@ async def test_skill_award_success_clears_retry_pool(tmp_path, patch_logged_task
 
     assert len(champion.updates) == 1
     assert await cog.data.pending_award_retries_skill_milestone() == []
+
+
+# ---- Death + reroll with same name ----
+
+
+@pytest.mark.asyncio
+async def test_death_auto_releases_claim(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task, channel=DummyChannel())
+    target = member(key="id:1", name="Zêah", level=60)
+    await cog.data.replace_snapshot([target])
+    claim, _ = await cog.data.create_claim(target, 42)
+    assert await cog.data.get_claim(target.character_key) is not None
+
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[wow_cog_mod.DeathEvent(member=target, confirmed=True)],
+        officer_notes=[],
+    )
+    await cog._record_public_events(activity)
+
+    # Claim is gone after the death is recorded.
+    assert await cog.data.get_claim(target.character_key) is None
+    # User's "my chars" list no longer references the dead char.
+    assert await cog.data.claims_for_user(42) == []
+
+
+@pytest.mark.asyncio
+async def test_death_without_claim_does_not_crash(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task, channel=DummyChannel())
+    target = member(key="id:5", name="Solo", level=20)
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[wow_cog_mod.DeathEvent(member=target, confirmed=False)],
+        officer_notes=[],
+    )
+    # Should not raise even though no claim exists for the dead char.
+    await cog._record_public_events(activity)
+    assert await cog.data.death_exists(target.character_key)
+
+
+@pytest.mark.asyncio
+async def test_find_roster_member_by_name_prefers_alive(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    old_zeah = member(key="id:1", name="Zêah", level=60, is_ghost=True)
+    old_zeah.character_id = 1
+    new_zeah = member(key="id:2", name="Zêah", level=8, is_ghost=False)
+    new_zeah.character_id = 2
+    await cog.data.replace_snapshot([old_zeah, new_zeah])
+
+    found = await cog.data.find_roster_member_by_name("Zêah")
+
+    assert found is not None
+    assert found.character_key == "id:2"
+    assert found.is_ghost is False
+
+
+@pytest.mark.asyncio
+async def test_get_claim_by_name_prefers_alive(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    old_zeah = member(key="id:1", name="Zêah", level=60, is_ghost=True)
+    new_zeah = member(key="id:2", name="Zêah", level=8, is_ghost=False)
+    await cog.data.replace_snapshot([old_zeah, new_zeah])
+    await cog.data.create_claim(old_zeah, 42)
+    await cog.data.create_claim(new_zeah, 42)
+
+    found = await cog.data.get_claim_by_name("Zêah")
+
+    assert found is not None
+    assert found.character_key == "id:2"
+
+
+@pytest.mark.asyncio
+async def test_find_crafters_excludes_dead_and_ghost(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    alive = member(key="id:1", name="Alive", level=60, is_ghost=False)
+    ghost = member(key="id:2", name="Ghosting", level=60, is_ghost=True)
+    dead = member(key="id:3", name="Buried", level=60, is_ghost=False)
+    await cog.data.replace_snapshot([alive, ghost, dead])
+    for char in (alive, ghost, dead):
+        claim, _ = await cog.data.create_claim(char, 42)
+        await cog.data.set_character_profession(claim, "tailoring", 290)
+    await cog.data.record_death("id:3")
+
+    crafters = await cog.data.find_crafters("tailoring", 290)
+
+    assert [c.character_name for c in crafters] == ["Alive"]
+
+
+@pytest.mark.asyncio
+async def test_find_crafters_with_known_recipe_excludes_dead(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    alive = member(key="id:1", name="Alive", level=60)
+    dead = member(key="id:3", name="Buried", level=60)
+    await cog.data.replace_snapshot([alive, dead])
+    for char in (alive, dead):
+        claim, _ = await cog.data.create_claim(char, 42)
+        await cog.data.set_character_profession(claim, "tailoring", 290)
+        await cog.data.add_known_recipes(
+            char.character_key, "tailoring", ["spell.18560"]
+        )
+    await cog.data.record_death("id:3")
+
+    crafters = await cog.data.find_crafters_with_known_recipe(
+        "tailoring", 290, "spell.18560"
+    )
+
+    assert [c.character_name for c in crafters] == ["Alive"]
+
+
+@pytest.mark.asyncio
+async def test_reroll_after_death_can_claim_same_name(tmp_path, patch_logged_task):
+    """End-to-end: char dies → claim released → reroll appears → new claim works."""
+    cog = await create_cog(tmp_path, patch_logged_task, channel=DummyChannel())
+    old_zeah = member(key="id:1", name="Zêah", level=60)
+    await cog.data.replace_snapshot([old_zeah])
+    await cog.data.create_claim(old_zeah, 42)
+
+    # Death event records the death and auto-releases the claim.
+    await cog._record_public_events(
+        wow_cog_mod.ActivityDiff(
+            new_members=[],
+            milestones=[],
+            deaths=[wow_cog_mod.DeathEvent(member=old_zeah, confirmed=True)],
+            officer_notes=[],
+        )
+    )
+    assert await cog.data.claims_for_user(42) == []
+
+    # New Zêah is added to the roster (alongside the still-ghost old one).
+    new_zeah = member(key="id:2", name="Zêah", level=8, is_ghost=False)
+    old_zeah.is_ghost = True
+    await cog.data.replace_snapshot([old_zeah, new_zeah])
+
+    # User claims again — find_roster_member_by_name returns the alive one,
+    # create_claim creates a fresh claim against the new character_key.
+    result = await cog.claim_character(42, "Zêah")
+    assert result.created is True
+    assert result.claim is not None
+    assert result.claim.character_key == "id:2"
+
+
+# ---- PanelCraftingSearchModal: never pass view=None to send_message ----
+
+
+@pytest.mark.asyncio
+async def test_panel_crafting_search_modal_handles_unambiguous_match(
+    tmp_path, patch_logged_task
+):
+    """Regression: send_message(..., view=None) raises AttributeError inside
+    discord.py — that's the production crash we hit ~6× the week of 15. May.
+    For unambiguous matches we must omit ``view`` entirely.
+    """
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    voidok = member(name="Voidok")
+    await cog.data.replace_snapshot([voidok])
+    claim, _ = await cog.data.create_claim(voidok, 42)
+    await cog.data.set_character_profession(claim, "alchemy", 75)
+
+    modal = wow_cog_mod.PanelCraftingSearchModal(cog)
+    # Unambiguous: "Swiftnesstrank" matches exactly item.2459.
+    modal.item._value = "Swiftnesstrank"
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    # Would have raised AttributeError before the fix.
+    await modal.on_submit(interaction)
+
+    assert len(interaction.response.messages) == 1
+    msg, kwargs = interaction.response.messages[0]
+    assert "Swiftnesstrank" in msg
+    # The crash was caused by passing view=None; the fix must omit it.
+    assert "view" not in kwargs
+    assert kwargs.get("ephemeral") is True
+
+
+@pytest.mark.asyncio
+async def test_panel_crafting_search_modal_offers_view_for_ambiguous_match(
+    tmp_path, patch_logged_task
+):
+    """Ambiguous matches still get the suggestion view — fix must not break."""
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    voidok = member(name="Voidok")
+    await cog.data.replace_snapshot([voidok])
+    claim, _ = await cog.data.create_claim(voidok, 42)
+    await cog.data.set_character_profession(claim, "alchemy", 75)
+
+    modal = wow_cog_mod.PanelCraftingSearchModal(cog)
+    # "Schwacher" matches both Schwacher Heiltrank and Schwacher Manatrank.
+    modal.item._value = "Schwacher"
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await modal.on_submit(interaction)
+
+    assert len(interaction.response.messages) == 1
+    _, kwargs = interaction.response.messages[0]
+    assert isinstance(kwargs.get("view"), wow_cog_mod.CraftingSearchSuggestionView)
+    assert kwargs.get("ephemeral") is True
