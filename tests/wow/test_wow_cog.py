@@ -229,6 +229,13 @@ def crafting_data():
                     "en": "Swiftness Potion",
                 },
             },
+            {
+                "id": "spell.2331",
+                "name": {
+                    "de": "Schwacher Manatrank herstellen",
+                    "en": "Minor Mana Potion",
+                },
+            },
         ],
         "profession_recipes": [
             {
@@ -248,6 +255,15 @@ def crafting_data():
                 "required_skill": 60,
                 "learned_from": "recipe",
                 "recipe_item_sources": ["drop"],
+                "hardcore_valid": True,
+            },
+            {
+                "id": "recipe.minor_mana_potion",
+                "profession_id": "alchemy",
+                "spell_id": "spell.2331",
+                "creates_item_id": "item.999",
+                "required_skill": 1,
+                "learned_from": "trainer",
                 "hardcore_valid": True,
             },
         ],
@@ -371,14 +387,14 @@ async def test_my_chars_view_renders_claim_details(tmp_path, patch_logged_task):
     field = next(f for f in embed.fields if "Voidok" in f.name)
     assert "Level **60**" in field.value
     assert "Alchemie" in field.value
-    # With a claim active, all four per-char action buttons appear plus
-    # the global "claim new" button.
+    # With a claim active, per-char action buttons appear plus the
+    # global "claim new" button. Cooldown logging moved to the hub.
     labels = [c.label for c in view.children if isinstance(c, discord.ui.Button)]
     assert "🛠️ Berufe pflegen" in labels
     assert "📖 Rezepte pflegen" in labels
-    assert "⏳ Cooldown loggen" in labels
     assert "🗑️ Claim freigeben" in labels
     assert "➕ Neuen Char claimen" in labels
+    assert "⏳ Cooldown loggen" not in labels
 
 
 @pytest.mark.asyncio
@@ -432,7 +448,12 @@ async def test_panel_whois_modal_renders_existing_char(tmp_path, patch_logged_ta
 
     _, kwargs = interaction.response.messages[0]
     assert kwargs["ephemeral"] is True
-    assert "Voidok" in kwargs["embed"].title
+    view = kwargs["view"]
+    assert isinstance(view, wow_cog_mod._WhoisLayoutView)
+    container = view.children[0]
+    title = container.children[0].content
+    assert "Voidok" in title
+    assert "Level 42" in title
 
 
 @pytest.mark.asyncio
@@ -1459,7 +1480,7 @@ async def test_roster_response_unsafe_ignores_small_guilds():
 
 
 @pytest.mark.asyncio
-async def test_whois_embed_renders_claim_ilvl_and_professions(
+async def test_whois_view_renders_claim_ilvl_and_professions(
     tmp_path, patch_logged_task
 ):
     cog = await create_cog(tmp_path, patch_logged_task)
@@ -1471,22 +1492,32 @@ async def test_whois_embed_renders_claim_ilvl_and_professions(
     claim = await cog.data.get_claim(target.character_key)
     await cog.data.set_character_profession(claim, "alchemy", 225, None)
 
-    embed = await cog.build_whois_embed("Voidok")
+    view = await cog.build_whois_view("Voidok", viewer_id=42)
 
-    assert embed is not None
-    assert "Voidok" in embed.title
-    assert "Level 60" in embed.title
-    field_values = {field.name: field.value for field in embed.fields}
-    assert field_values["Owner"] == "<@42>"
-    assert "Lebt" in field_values["Status"]
-    assert "68" in field_values["Ø iLvl"]
-    assert "Alchemie" in field_values["Berufe"]
+    assert view is not None
+    container = view.children[0]
+    texts = [
+        c.content for c in container.children if isinstance(c, discord.ui.TextDisplay)
+    ]
+    # Sections (e.g. Berufe when viewer is owner) wrap a TextDisplay
+    for child in container.children:
+        if isinstance(child, discord.ui.Section):
+            for inner in child.children:
+                if isinstance(inner, discord.ui.TextDisplay):
+                    texts.append(inner.content)
+    blob = "\n".join(texts)
+    assert "Voidok" in blob
+    assert "Level 60" in blob
+    assert "<@42>" in blob
+    assert "Lebt" in blob
+    assert "68" in blob
+    assert "Alchemie" in blob
 
 
 @pytest.mark.asyncio
-async def test_whois_embed_returns_none_for_unknown_char(tmp_path, patch_logged_task):
+async def test_whois_view_returns_none_for_unknown_char(tmp_path, patch_logged_task):
     cog = await create_cog(tmp_path, patch_logged_task)
-    assert await cog.build_whois_embed("Ghostly") is None
+    assert await cog.build_whois_view("Ghostly", viewer_id=42) is None
 
 
 def test_pack_sections_keeps_short_digest_in_one_chunk():

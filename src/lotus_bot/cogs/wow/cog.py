@@ -132,6 +132,17 @@ CLASS_NAMES_DE = {
     9: "Hexenmeister",
     11: "Druide",
 }
+CLASS_EMOJI_NAMES = {
+    1: "wow_warrior",
+    2: "wow_paladin",
+    3: "wow_hunter",
+    4: "wow_rogue",
+    5: "wow_priest",
+    7: "wow_shaman",
+    8: "wow_mage",
+    9: "wow_warlock",
+    11: "wow_druid",
+}
 RACE_NAMES_DE = {
     1: "Mensch",
     2: "Orc",
@@ -1410,37 +1421,6 @@ class WoWCog(ManagedTaskCog):
             view=sub_view,
         )
 
-    async def _my_chars_cooldown(
-        self, interaction: discord.Interaction, view: "PanelMyCharsView"
-    ) -> None:
-        claim = view.selected_claim
-        if claim is None:
-            await view.refresh(interaction)
-            return
-        all_eligible = await self.cooldown_eligible_options(interaction.user.id)
-        eligible = [
-            option
-            for option in all_eligible
-            if option[0].character_key == claim.character_key
-        ]
-        if not eligible:
-            await interaction.response.edit_message(
-                content=(
-                    f"**{claim.character_name}** hat kein Rezept mit Cooldown "
-                    "gelernt. Trag das passende Rezept zuerst unter **Rezepte "
-                    "pflegen** ein."
-                ),
-                embed=None,
-                view=None,
-            )
-            return
-        sub_view = PanelCooldownStartView(self, interaction.user.id, eligible)
-        await interaction.response.edit_message(
-            content="Welchen Cooldown willst du eintragen?",
-            embed=None,
-            view=sub_view,
-        )
-
     async def _my_chars_release(
         self, interaction: discord.Interaction, view: "PanelMyCharsView"
     ) -> None:
@@ -1455,23 +1435,13 @@ class WoWCog(ManagedTaskCog):
     async def _my_chars_claim_new(
         self, interaction: discord.Interaction, view: "PanelMyCharsView"
     ) -> None:
-        members = await self.data.unclaimed_roster_members()
-        sub_view = PanelUnclaimedCharSelectView(self, interaction.user.id, members)
-        intro = (
-            "Wähle deinen Char aus der Liste. Wenn er nicht dabei ist, "
-            "klicke unten auf **Suchen…**."
-            if members
-            else (
-                "Aktuell sind keine Chars zum Claimen frei. Wenn du sicher "
-                "bist, dass deiner da sein müsste, klicke **Suchen…**."
-            )
-        )
-        await interaction.response.edit_message(
-            content=intro, embed=None, view=sub_view
-        )
+        # Direct text-modal: a 25-char dropdown was useless for larger guilds.
+        await interaction.response.send_modal(PanelCharacterSearchModal(self))
 
-    async def build_whois_embed(self, char_name: str) -> discord.Embed | None:
-        """Render an ephemeral profile card for the named character.
+    async def build_whois_view(
+        self, char_name: str, viewer_id: int
+    ) -> "discord.ui.LayoutView | None":
+        """Render an ephemeral Components-V2 profile card.
 
         Returns ``None`` if no matching roster member exists. Uses only
         existing DB helpers — no extra Blizzard API calls.
@@ -1483,35 +1453,15 @@ class WoWCog(ManagedTaskCog):
         gear = await self.data.gear_snapshot(member.character_key)
         professions = await self.data.professions_for_character(member.character_key)
 
-        class_name = CLASS_NAMES_DE.get(member.class_id) or "Klasse?"
-        race_name = RACE_NAMES_DE.get(member.race_id) or ""
-        title = f"{member.name} — Level {member.level} {race_name} {class_name}".strip()
+        twins: list[CharacterClaim] = []
+        if claim is not None:
+            all_claims = await self.data.claims_for_user(claim.discord_user_id)
+            twins = [c for c in all_claims if c.character_key != claim.character_key]
 
-        embed = discord.Embed(
-            title=title, color=0x9B59B6 if member.is_ghost else 0x2ECC71
+        viewer_is_owner = claim is not None and claim.discord_user_id == viewer_id
+        return _WhoisLayoutView(
+            self, member, claim, gear, professions, twins, viewer_id, viewer_is_owner
         )
-        embed.add_field(
-            name="Owner",
-            value=(f"<@{claim.discord_user_id}>" if claim else "Nicht geclaimed"),
-            inline=True,
-        )
-        embed.add_field(
-            name="Status",
-            value="🕯️ Tot (Geist)" if member.is_ghost else "🟢 Lebt",
-            inline=True,
-        )
-        embed.add_field(
-            name="Ø iLvl",
-            value=(self._format_item_level(gear.average_item_level) if gear else "—"),
-            inline=True,
-        )
-        if professions:
-            embed.add_field(
-                name="Berufe",
-                value=self.format_profession_slots(professions),
-                inline=False,
-            )
-        return embed
 
     async def _post_claim_review(self, claim: CharacterClaim) -> bool:
         channel_id = await self.get_claim_review_channel_id()
@@ -1797,6 +1747,35 @@ class WoWCog(ManagedTaskCog):
         )
         if cooking:
             lines.append(f"Kochen: {self.format_profession(cooking)}")
+        else:
+            lines.append("Kochen: frei")
+        return "\n".join(lines)
+
+    def format_profession_slots_short(self, profiles: list[CharacterProfession]) -> str:
+        primary_profiles = [
+            profile
+            for profile in profiles
+            if self._is_primary_profession(profile.profession_id)
+        ]
+        primary_profiles.sort(
+            key=lambda profile: self._profession_name(profile.profession_id)
+        )
+        lines = []
+        for index in range(MAX_PRIMARY_PROFESSIONS):
+            if index < len(primary_profiles):
+                profile = primary_profiles[index]
+                lines.append(
+                    f"Hauptberuf {index + 1}: {self.format_profession_short(profile)}"
+                )
+            else:
+                lines.append(f"Hauptberuf {index + 1}: frei")
+
+        cooking = next(
+            (profile for profile in profiles if profile.profession_id == "cooking"),
+            None,
+        )
+        if cooking:
+            lines.append(f"Kochen: {self.format_profession_short(cooking)}")
         else:
             lines.append("Kochen: frei")
         return "\n".join(lines)
@@ -2089,9 +2068,20 @@ class WoWCog(ManagedTaskCog):
         matches = self._match_items(item_name)
         if not matches:
             return CraftingSearchResult("item_not_found")
-        if len(matches) > 1:
-            return CraftingSearchResult("ambiguous_item", candidates=matches[:5])
-        return await self._search_crafting_for_item(matches[0])
+        # Filter: keep only items that are the output of some profession recipe.
+        # Drops recipe-teaching items ("Rezept: ...") and other non-craftable
+        # matches that the fuzzy name search returned.
+        craftable_ids = {
+            str(r.get("creates_item_id"))
+            for r in self._wow_records("profession_recipes")
+            if r.get("creates_item_id")
+        }
+        craftable = [m for m in matches if str(m.get("id")) in craftable_ids]
+        if not craftable:
+            return CraftingSearchResult("item_not_found")
+        if len(craftable) > 1:
+            return CraftingSearchResult("ambiguous_item", candidates=craftable[:5])
+        return await self._search_crafting_for_item(craftable[0])
 
     async def search_crafting_by_item_id(self, item_id: str) -> CraftingSearchResult:
         item = self._get_static_record("items", item_id)
@@ -2207,15 +2197,20 @@ class WoWCog(ManagedTaskCog):
             f"{profile.skill_level}{specialization}"
         )
 
+    def format_profession_short(self, profile: CharacterProfession) -> str:
+        specialization = (
+            f" ({profile.specialization})" if profile.specialization else ""
+        )
+        return (
+            f"{self._profession_name(profile.profession_id)} "
+            f"{profile.skill_level}{specialization}"
+        )
+
     def format_crafting_search_result(self, result: CraftingSearchResult) -> str:
         if result.status == "item_not_found":
             return "Dieses Item wurde in den WoW-Daten nicht gefunden."
         if result.status == "ambiguous_item":
-            names = [
-                f"- {self._localized_text(item.get('name'))}"
-                for item in result.candidates or []
-            ]
-            return "Mehrere Items gefunden. Bitte genauer suchen:\n" + "\n".join(names)
+            return "Mehrere Items gefunden — bitte aus dem Menü wählen."
         item_name = self._localized_text((result.item or {}).get("name"))
         if result.status == "recipe_not_found":
             return f"Für **{item_name}** wurde kein Crafting-Rezept gefunden."
@@ -3036,78 +3031,6 @@ class PanelCooldownStartSelect(discord.ui.Select):
         )
 
 
-class PanelUnclaimedCharSelectView(discord.ui.View):
-    """Ephemeral picker shown when a user clicks 'Char claimen'.
-
-    Lists up to 25 unclaimed roster members alphabetically and offers the
-    free-text search modal as a fallback for cases where the desired char
-    isn't in the visible slice.
-    """
-
-    def __init__(
-        self,
-        cog: WoWCog,
-        owner_user_id: int,
-        members: list[RosterMember],
-    ) -> None:
-        super().__init__(timeout=300)
-        self.cog = cog
-        self.owner_user_id = owner_user_id
-        if members:
-            self.add_item(PanelUnclaimedCharSelect(self, members))
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user.id == self.owner_user_id:
-            return True
-        await interaction.response.send_message(
-            "Diese Auswahl gehört nicht dir.", ephemeral=True
-        )
-        return False
-
-    @discord.ui.button(
-        label="🔎 Char nicht in der Liste? Suchen…",
-        style=discord.ButtonStyle.secondary,
-    )
-    async def search(
-        self, interaction: discord.Interaction, _: discord.ui.Button
-    ) -> None:
-        await interaction.response.send_modal(PanelCharacterSearchModal(self.cog))
-
-
-class PanelUnclaimedCharSelect(discord.ui.Select):
-    def __init__(
-        self,
-        parent: PanelUnclaimedCharSelectView,
-        members: list[RosterMember],
-    ) -> None:
-        self.parent_view = parent
-        super().__init__(
-            placeholder="Deinen Char auswählen",
-            min_values=1,
-            max_values=1,
-            options=[
-                discord.SelectOption(
-                    label=member.name[:100],
-                    value=member.name,
-                    description=(
-                        f"Level {member.level} "
-                        f"- {parent.cog._display_character(member)}"
-                    )[:100],
-                )
-                for member in members[:25]
-            ],
-        )
-
-    async def callback(self, interaction: discord.Interaction) -> None:
-        result = await self.parent_view.cog.claim_character(
-            interaction.user.id, self.values[0]
-        )
-        await interaction.response.edit_message(
-            content=_format_panel_claim_result(result, self.values[0]),
-            view=None,
-        )
-
-
 _PANEL_CHANNEL_OVERVIEW = (
     "**WoW Channels im Überblick**\n"
     "**#wow-info** — Infos & dieses Panel\n"
@@ -3131,8 +3054,8 @@ PANEL_HELP_TEXT = (
     "**🔎 In der Gilde suchen** — finde, wer ein bestimmtes Item craften "
     "kann, oder schlag einen Char nach (Owner, Berufe, Status).\n\n"
     "**⏳ Cooldown loggen** — wenn du als Alchemist eine Transmute oder "
-    "als Schneider Mondstoff machst, trag das hier ein. Der Bot erinnert "
-    "im täglichen Digest, sobald sie wieder bereit sind.\n\n"
+    "als Schneider Mondstoff machst, trag das hier über den Hub-Button ein. "
+    "Der Bot erinnert im täglichen Digest, sobald sie wieder bereit sind.\n\n"
     "**Daily Digest** — jeden Morgen um **09:00 Berlin** postet der Bot "
     "Aufstiege, Tode, neue Crafts, Berufsskill-Meilensteine und "
     "bereitstehende Cooldowns. Geclaimte Chars werden gepingt.\n\n"
@@ -3357,7 +3280,7 @@ class PanelSearchSubView(discord.ui.View):
 
 
 class PanelWhoisModal(discord.ui.Modal):
-    """Free-text wrapper around ``build_whois_embed`` — same payload as
+    """Free-text wrapper around ``build_whois_view`` — same payload as
     ``/wow whois`` but reachable from the panel hub."""
 
     def __init__(self, cog: WoWCog) -> None:
@@ -3372,14 +3295,128 @@ class PanelWhoisModal(discord.ui.Modal):
         self.add_item(self.query)
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
-        embed = await self.cog.build_whois_embed(str(self.query.value).strip())
-        if embed is None:
+        name = str(self.query.value).strip()
+        view = await self.cog.build_whois_view(name, interaction.user.id)
+        if view is None:
             await interaction.response.send_message(
-                f"**{self.query.value}** ist nicht im aktuellen Roster.",
+                f"**{name}** ist nicht im aktuellen Roster.",
                 ephemeral=True,
             )
             return
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(view=view, ephemeral=True)
+
+
+class _WhoisLayoutView(discord.ui.LayoutView):
+    """Components-V2 profile card for a roster char.
+
+    Layout: a single ``Container`` with title, info, professions, and
+    (if claimed) twin links. The twin buttons swap the view in-place
+    via ``edit_message`` so the user navigates without spawning more
+    ephemerals.
+    """
+
+    def __init__(
+        self,
+        cog: "WoWCog",
+        member: RosterMember,
+        claim: "CharacterClaim | None",
+        gear,
+        professions: list[CharacterProfession],
+        twins: list["CharacterClaim"],
+        viewer_id: int,
+        viewer_is_owner: bool,
+    ) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.viewer_id = viewer_id
+        self._member_key = member.character_key
+
+        emoji_name = CLASS_EMOJI_NAMES.get(member.class_id, "")
+        class_emoji = cog.bot.data.get("emojis", {}).get(emoji_name, "")
+        class_name = CLASS_NAMES_DE.get(member.class_id) or "Klasse?"
+        race_name = RACE_NAMES_DE.get(member.race_id) or ""
+        title_line = (
+            f"## {class_emoji} **{member.name}** — "
+            f"Level {member.level} {race_name} {class_name}"
+        ).strip()
+
+        owner_str = f"<@{claim.discord_user_id}>" if claim else "_Nicht geclaimed_"
+        status_str = "🕯️ Tot (Geist)" if member.is_ghost else "🟢 Lebt"
+        ilvl_str = cog._format_item_level(gear.average_item_level) if gear else "—"
+        info_line = (
+            f"**Owner:** {owner_str}  ·  **Status:** {status_str}  ·  "
+            f"**Ø iLvl:** {ilvl_str}"
+        )
+
+        items: list[discord.ui.Item] = [
+            discord.ui.TextDisplay(title_line),
+            discord.ui.Separator(),
+            discord.ui.TextDisplay(info_line),
+        ]
+
+        if professions:
+            berufe_text = "**Berufe:**\n" + cog.format_profession_slots_short(
+                professions
+            )
+            items.append(discord.ui.Separator())
+            if viewer_is_owner:
+                pflegen_btn = discord.ui.Button(
+                    label="🛠️ Berufe pflegen",
+                    style=discord.ButtonStyle.primary,
+                )
+                pflegen_btn.callback = self._open_professions
+                items.append(
+                    discord.ui.Section(
+                        discord.ui.TextDisplay(berufe_text),
+                        accessory=pflegen_btn,
+                    )
+                )
+            else:
+                items.append(discord.ui.TextDisplay(berufe_text))
+
+        if twins:
+            items.append(discord.ui.Separator())
+            owner_mention = f"<@{claim.discord_user_id}>"
+            twin_header = f"**Andere Chars von {owner_mention}:**"
+            if len(twins) > 5:
+                twin_header += f"  _(5 von {len(twins)})_"
+            items.append(discord.ui.TextDisplay(twin_header))
+
+        self.add_item(discord.ui.Container(*items))
+
+        for twin in twins[:5]:
+            twin_btn = discord.ui.Button(
+                label=twin.character_name[:80],
+                style=discord.ButtonStyle.secondary,
+            )
+            twin_btn.callback = self._make_twin_callback(twin.character_name)
+            self.add_item(twin_btn)
+
+        _add_dismiss_button(self)
+
+    def _make_twin_callback(self, char_name: str):
+        async def cb(interaction: discord.Interaction) -> None:
+            new_view = await self.cog.build_whois_view(char_name, self.viewer_id)
+            if new_view is None:
+                await interaction.response.edit_message(
+                    content=f"**{char_name}** ist nicht im aktuellen Roster.",
+                    view=None,
+                )
+                return
+            await interaction.response.edit_message(view=new_view)
+
+        return cb
+
+    async def _open_professions(self, interaction: discord.Interaction) -> None:
+        view = PanelMyCharsView(self.cog, interaction.user.id)
+        await view._load()
+        for c in view.claims:
+            if c.character_key == self._member_key:
+                view.selected_claim = c
+                break
+        view._rebuild()
+        embed = await view._build_embed()
+        await interaction.response.edit_message(content=None, embed=embed, view=view)
 
 
 class PanelMyCharsView(discord.ui.View):
@@ -3429,7 +3466,6 @@ class PanelMyCharsView(discord.ui.View):
         if self.selected_claim is not None:
             self.add_item(_MyCharsActionButton(self, "profession", "🛠️ Berufe pflegen"))
             self.add_item(_MyCharsActionButton(self, "recipes", "📖 Rezepte pflegen"))
-            self.add_item(_MyCharsActionButton(self, "cooldown", "⏳ Cooldown loggen"))
             self.add_item(
                 _MyCharsActionButton(
                     self,

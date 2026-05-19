@@ -275,13 +275,13 @@ async def whois(interaction: discord.Interaction, char: str):
             "❌ WoW-System nicht verfügbar.", ephemeral=True
         )
         return
-    embed = await cog.build_whois_embed(char)
-    if embed is None:
+    view = await cog.build_whois_view(char, interaction.user.id)
+    if view is None:
         await interaction.response.send_message(
             f"**{char}** ist nicht im aktuellen Roster.", ephemeral=True
         )
         return
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    await interaction.response.send_message(view=view, ephemeral=True)
 
 
 panel_group = app_commands.Group(
