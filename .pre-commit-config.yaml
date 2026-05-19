@@ -12,7 +12,12 @@ repos:
     hooks:
       - id: check-yaml
       - id: end-of-file-fixer
+        # tests/data/ holds JSON fixtures that test code overwrites via
+        # ``json.dump`` (no trailing newline). The fixer "fixed" them on
+        # every CI run, failing the build over generated noise. Skip them.
+        exclude: ^tests/data/.*\.json$
       - id: trailing-whitespace
+        exclude: ^tests/data/.*\.json$
   - repo: https://github.com/pypa/pip-audit
     rev: v2.9.0
     hooks:
