@@ -2971,6 +2971,7 @@ class PanelCooldownStartView(discord.ui.View):
         self.owner_user_id = owner_user_id
         self.options = options
         self.add_item(PanelCooldownStartSelect(self))
+        _add_dismiss_button(self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id == self.owner_user_id:
@@ -3107,6 +3108,16 @@ class PanelUnclaimedCharSelect(discord.ui.Select):
         )
 
 
+_PANEL_CHANNEL_OVERVIEW = (
+    "**WoW Channels im Überblick**\n"
+    "**#wow-info** — Infos & dieses Panel\n"
+    "**#wow-general** — Allgemeiner WoW-Chat\n"
+    "**#wow-dungeons** — Dungeon- & Raid-Runs (Raid Helper: `/create`)\n"
+    "**#wow-classic-news** — Aktuelle News zu WoW Classic\n"
+    "**#wow-content** — Streams, Videos & Clips\n"
+    "**#wow-classes** — Klassen, Builds, Talente, Spielweise\n"
+    "**#wow-welcome** — Neu im WoW-Bereich? Hier starten!"
+)
 PANEL_HUB_TEXT = (
     "## 🪷 Black Lotus WoW-Hub\n"
     "Hier verbindest du deine Chars, pflegst Berufe, loggst Cooldowns und "
@@ -3125,8 +3136,36 @@ PANEL_HELP_TEXT = (
     "**Daily Digest** — jeden Morgen um **09:00 Berlin** postet der Bot "
     "Aufstiege, Tode, neue Crafts, Berufsskill-Meilensteine und "
     "bereitstehende Cooldowns. Geclaimte Chars werden gepingt.\n\n"
-    "Power-User: alle Funktionen gibt's auch als `/wow ...` Slash-Command."
+    "**🏆 Champion-System** — serverweites Punkte-System. Punkte gibt es "
+    "automatisch für WoW-Aktivitäten (Chars claimen, Levelaufstiege, "
+    "Berufs-Meilensteine, Rezepte). Commands: `/champion score` · "
+    "`/champion rank` · `/champion leaderboard` · `/champion myhistory`\n\n"
+    "Power-User: alle Funktionen gibt's auch als `/wow ...` Slash-Command.\n\n"
+    "──────────────────────\n" + _PANEL_CHANNEL_OVERVIEW
 )
+
+
+def _add_dismiss_button(view: discord.ui.View) -> None:
+    """Adds a ✖ Schließen button that deletes the ephemeral message."""
+    btn = discord.ui.Button(label="✖ Schließen", style=discord.ButtonStyle.secondary)
+
+    async def _close(interaction: discord.Interaction) -> None:
+        await interaction.response.defer()
+        try:
+            await interaction.delete_original_response()
+        except discord.NotFound:
+            pass
+
+    btn.callback = _close
+    view.add_item(btn)
+
+
+class _PanelTextView(discord.ui.View):
+    """Minimal view for ephemeral text-only panel responses."""
+
+    def __init__(self) -> None:
+        super().__init__(timeout=300)
+        _add_dismiss_button(self)
 
 
 class WoWPanelLayoutView(discord.ui.LayoutView):
@@ -3176,6 +3215,13 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         )
         help_btn.callback = self._open_help
 
+        champion_btn = discord.ui.Button(
+            label="Anzeigen",
+            style=discord.ButtonStyle.secondary,
+            custom_id="wow_panel_v2:champion",
+        )
+        champion_btn.callback = self._open_champion
+
         container = discord.ui.Container(
             discord.ui.TextDisplay(PANEL_HUB_TEXT),
             discord.ui.Separator(),
@@ -3206,8 +3252,19 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
             ),
             discord.ui.Separator(),
             discord.ui.Section(
-                discord.ui.TextDisplay("### ❓ Hilfe & Übersicht"),
+                discord.ui.TextDisplay(
+                    "### ❓ Hilfe & Übersicht\n"
+                    "Kanal-Übersicht und Bot-Kurzanleitung."
+                ),
                 accessory=help_btn,
+            ),
+            discord.ui.Separator(),
+            discord.ui.Section(
+                discord.ui.TextDisplay(
+                    "### 🏆 Mein Champion-Rang\n"
+                    "Dein Punktestand & Rang im serverweiten Champion-System."
+                ),
+                accessory=champion_btn,
             ),
         )
         self.add_item(container)
@@ -3240,7 +3297,42 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         )
 
     async def _open_help(self, interaction: discord.Interaction) -> None:
-        await interaction.response.send_message(PANEL_HELP_TEXT, ephemeral=True)
+        await interaction.response.send_message(
+            PANEL_HELP_TEXT, view=_PanelTextView(), ephemeral=True
+        )
+
+    async def _open_champion(self, interaction: discord.Interaction) -> None:
+        champion = interaction.client.get_cog("ChampionCog")
+        if champion is None or not hasattr(champion, "data"):
+            await interaction.response.send_message(
+                "Champion-System nicht verfügbar.", ephemeral=True
+            )
+            return
+        user_id_str = str(interaction.user.id)
+        total = await champion.data.get_total(user_id_str)
+        rank_result = await champion.data.get_rank(user_id_str)
+        role = champion.get_current_role(total)
+
+        if total == 0:
+            text = (
+                "**🏆 Champion-Status**\n\n"
+                "Du hast noch keine Punkte gesammelt.\n\n"
+                "Punkte gibt es automatisch für WoW-Aktivitäten: Chars claimen, "
+                "Levelaufstiege, Berufs-Meilensteine, Spezialrezepte und mehr."
+            )
+        else:
+            role_text = f"**{role.name}**" if role else "Champion"
+            rank_text = f"Rang **#{rank_result[0]}**" if rank_result else "kein Rang"
+            text = (
+                f"**🏆 Champion-Status**\n\n"
+                f"Rolle: {role_text}\n"
+                f"Punkte: **{total}**  ·  {rank_text}\n\n"
+                f"`/champion score` · `/champion rank`\n"
+                f"`/champion leaderboard` · `/champion myhistory`"
+            )
+        await interaction.response.send_message(
+            text, view=_PanelTextView(), ephemeral=True
+        )
 
 
 class PanelSearchSubView(discord.ui.View):
@@ -3249,6 +3341,7 @@ class PanelSearchSubView(discord.ui.View):
     def __init__(self, cog: WoWCog) -> None:
         super().__init__(timeout=300)
         self.cog = cog
+        _add_dismiss_button(self)
 
     @discord.ui.button(label="Crafter suchen", style=discord.ButtonStyle.primary)
     async def crafter(
@@ -3353,6 +3446,7 @@ class PanelMyCharsView(discord.ui.View):
                 style=discord.ButtonStyle.success,
             )
         )
+        _add_dismiss_button(self)
 
     async def _build_embed(self) -> discord.Embed:
         if not self.claims:
