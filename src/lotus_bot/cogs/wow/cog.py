@@ -3384,15 +3384,35 @@ class _WhoisLayoutView(discord.ui.LayoutView):
 
         self.add_item(discord.ui.Container(*items))
 
-        for twin in twins[:5]:
-            twin_btn = discord.ui.Button(
-                label=twin.character_name[:80],
-                style=discord.ButtonStyle.secondary,
-            )
-            twin_btn.callback = self._make_twin_callback(twin.character_name)
-            self.add_item(twin_btn)
+        # V2 LayoutView only accepts layout-type items at the top level
+        # (ActionRow, Section, Container, TextDisplay, …). Plain Buttons
+        # must be wrapped in an ActionRow.
+        if twins:
+            twin_row = discord.ui.ActionRow()
+            for twin in twins[:5]:
+                twin_btn = discord.ui.Button(
+                    label=twin.character_name[:80],
+                    style=discord.ButtonStyle.secondary,
+                )
+                twin_btn.callback = self._make_twin_callback(twin.character_name)
+                twin_row.add_item(twin_btn)
+            self.add_item(twin_row)
 
-        _add_dismiss_button(self)
+        dismiss_row = discord.ui.ActionRow()
+        close_btn = discord.ui.Button(
+            label="✖ Schließen", style=discord.ButtonStyle.secondary
+        )
+
+        async def _close(interaction: discord.Interaction) -> None:
+            await interaction.response.defer()
+            try:
+                await interaction.delete_original_response()
+            except discord.NotFound:
+                pass
+
+        close_btn.callback = _close
+        dismiss_row.add_item(close_btn)
+        self.add_item(dismiss_row)
 
     def _make_twin_callback(self, char_name: str):
         async def cb(interaction: discord.Interaction) -> None:
