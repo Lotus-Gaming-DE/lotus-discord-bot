@@ -59,6 +59,5 @@ class CommunityCog(ManagedTaskCog):
         await self.data.set_setting("panel_message_id", str(message.id))
         logger.info("[CommunityCog] Panel erstellt (Message %s).", message.id)
 
-    async def cog_unload(self) -> None:
-        await self.data.close()
+    def cog_unload(self) -> None:
         super().cog_unload()

@@ -13,7 +13,7 @@ PANEL_RULES = (
     "🔞 **NSFW ist tabu** — Pornografie, Gewalt oder verstörende Inhalte sind verboten.\n"
     "🔒 **Schütze deine Privatsphäre** — Keine realen Daten, Telefonnummern, Adressen usw.\n"
     "⚖️ **Keine illegalen Inhalte** — Cheats, Hacks, Account-Handel o. Ä. sind verboten.\n"
-    "🎙️ **Folge dem Team** — Unsere @Community Mods halten den Server fair & freundlich.\n"
+    "🎙️ **Folge dem Team** — Unsere Community Mods halten den Server fair & freundlich.\n"
     "💖 **Have fun & be nice!** — Wir wollen eine gute Zeit haben – und zwar zusammen 🪷"
 )
 

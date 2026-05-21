@@ -20,7 +20,6 @@ from lotus_bot.cogs.wow.slash_commands import (
     crafting_remove,
     crafting_search,
     crafting_set,
-    panel_publish,
     recipes_profession_autocomplete,
     roster_char_autocomplete,
     scan,
@@ -47,7 +46,6 @@ class DummyCog:
         self.known_recipes_result = None
         self.remove_known_recipe_result = None
         self.panel_publish_calls = []
-        self.panel_publish_result = None
         self.data = DummyData()
 
     async def set_announcement_channel(self, channel_id):
@@ -359,23 +357,6 @@ async def test_status_command_reports_state():
     msg, kwargs = inter.response.messages[0]
     assert "Black Lotus" in msg
     assert "<#123>" in msg
-    assert kwargs.get("ephemeral")
-
-
-async def test_panel_publish_command_publishes_panel():
-    cog = DummyCog()
-    cog.panel_publish_result = type(
-        "Result",
-        (),
-        {"channel_id": 123, "message_id": 555, "created": True},
-    )()
-    inter = DummyInteraction(cog, manage_guild=True)
-
-    await panel_publish.callback(inter, DummyChannel())
-
-    assert cog.panel_publish_calls == [123]
-    msg, kwargs = inter.response.messages[0]
-    assert "WoW-Panel erstellt" in msg
     assert kwargs.get("ephemeral")
 
 
