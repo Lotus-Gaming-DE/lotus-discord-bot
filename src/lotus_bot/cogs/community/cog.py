@@ -40,7 +40,7 @@ class CommunityCog(ManagedTaskCog):
 
     async def publish_panel(self, channel: discord.TextChannel) -> None:
         """Postet oder editiert das Info-Panel im angegebenen Channel."""
-        view = ServerInfoLayoutView()
+        view = ServerInfoLayoutView(self.bot.data.get("emojis", {}))
         message_id_value = await self.data.get_setting("panel_message_id")
         if message_id_value:
             try:
