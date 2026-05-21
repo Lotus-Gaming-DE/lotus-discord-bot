@@ -7,33 +7,6 @@ PANEL_HEADER = (
     "Alles Wichtige über unsere Community auf einen Blick."
 )
 
-PANEL_RULES = (
-    "### 🛡️ Regeln – kurz & klar\n"
-    "✅ Sei respektvoll — keine Beleidigungen, keine Diskriminierung.\n"
-    "🚫 Kein Spam, keine Eigenwerbung ohne Freigabe.\n"
-    "🗂️ Nutze die richtigen Channels — jedes Spiel hat seinen eigenen Bereich.\n"
-    "🔞 Kein NSFW-Content.\n"
-    "🔒 Keine persönlichen Daten teilen (Nummern, Adressen usw.).\n"
-    "⚖️ Keine illegalen Inhalte — Cheats, Hacks, Account-Handel o. Ä.\n"
-    "🎙️ Folge dem Team — <@&1053266596417785886> halten den Server fair & freundlich.\n"
-    "💖 Have fun & be nice! 🪷\n\n"
-    "Verstoß gesehen? Schreib einem Mod-Team-Mitglied direkt."
-)
-
-PANEL_ONBOARDING = (
-    "### 🔧 Server einrichten\n"
-    "Beim Beitritt wirst du automatisch gefragt, welche Spiele dich interessieren – "
-    "die passenden Channels schalten sich direkt frei. "
-    "Jederzeit anpassen: **<id:customize>**\n\n"
-    "**Verfügbare Game-Bereiche:**\n"
-    "WoW · WCR · LoL · Diablo 4 · Apex · Overwatch · Dead by Daylight · "
-    "Summoners War · Pokémon TCG Pocket · MTG · PoE · Warcraft Rumble · Fellowship\n\n"
-    "**Ping-Benachrichtigungen** (ebenfalls in <id:customize>):\n"
-    "🔔 **@event** — Community-Events & Challenges\n"
-    "🏆 **@tournament** — Turnier-Ankündigungen\n"
-    "📺 **@Listener** — Ping wenn Gerrit auf Twitch live geht"
-)
-
 PANEL_COMMANDS = (
     "### 🤖 Bot-Commands\n"
     "**🏆 /champion** — Deinen Rang, Punkte & History abrufen\n"
@@ -48,10 +21,10 @@ PANEL_NITRO = (
     "### 💎 Server Boosts & Lotus Tag\n"
     "**Warum boosten?** Mehr Boosts = höhere Server-Level = mehr für alle: "
     "größeres Upload-Limit, bessere Audioqualität, mehr Emoji- & Sticker-Slots, animierter Banner.\n\n"
-    "**Boost-Ziel:** <id:guide> → Server Boosts\n\n"
+    "**Unser Ziel: Level 3** (33 Boosts) — damit aktivieren wir "
+    "**discord.gg/LotusGaming** wieder. Jeder Boost zählt!\n\n"
     "**Lotus Tag:** Zeig der Welt, dass du Teil der Community bist! "
-    "Aktivieren: Eigenes Profil → Server Tag → **Lotus Gaming**.\n\n"
-    "Jeder sichtbare Tag und jeder Boost hilft der ganzen Community. 🌸"
+    "Eigenes Profil → Server Tag → **Lotus Gaming**."
 )
 
 
@@ -59,12 +32,49 @@ def _e(emojis: dict[str, str], key: str) -> str:
     return emojis.get(key, "")
 
 
+def _build_rules_text(emojis: dict[str, str]) -> str:
+    mod = _e(emojis, "lotusmod")
+    return (
+        "### 🛡️ Regeln – kurz & klar\n"
+        "✅ Sei respektvoll — keine Beleidigungen, keine Diskriminierung.\n"
+        "🚫 Kein Spam, keine Eigenwerbung ohne Freigabe.\n"
+        "🗂️ Nutze die richtigen Channels — jedes Spiel hat seinen eigenen Bereich.\n"
+        "🔞 Kein NSFW-Content.\n"
+        "🔒 Keine persönlichen Daten teilen (Nummern, Adressen usw.).\n"
+        "⚖️ Keine illegalen Inhalte — Cheats, Hacks, Account-Handel o. Ä.\n"
+        f"🎙️ Folge dem Team — {mod} <@&1053266596417785886> halten den Server fair & freundlich.\n"
+        "💖 Have fun & be nice! 🪷\n\n"
+        "Verstoß gesehen? Schreib einem Mod-Team-Mitglied direkt."
+    )
+
+
+def _build_roles_channels_text(emojis: dict[str, str]) -> str:
+    booster = _e(emojis, "booster")
+    member = emojis.get("lotus", "🪷")
+    return (
+        "### 🎭 Rollen & Channels\n"
+        "Jedes Spiel hat eine eigene Rolle, die dir die passenden Channels freischaltet. "
+        "Beim Beitritt wirst du direkt gefragt was dich interessiert — "
+        "alles jederzeit anpassbar: **<id:customize>**\n\n"
+        "**Ping-Rollen:**\n"
+        "🥳 <@&1298576659213189130> — Community-Events & Challenges\n"
+        "🏆 <@&1364876802337800214> — Turnier-Ankündigungen\n"
+        "📺 <@&1109760546028388372> — Ping wenn Gerrit live auf Twitch geht\n\n"
+        "**Besondere Rollen:**\n"
+        f"🎨 <@&1184891060749615205> — Prestige-Rolle für den monatlichen Banner-Battle-Gewinner\n"
+        f"🎖️ <@&1297596121631162479> — Prestige-Rolle für besondere Leistungen & Event-Sieger\n"
+        f"{booster} <@&1088442794546319421> — Wird beim Server-Boost automatisch vergeben 💜\n"
+        f"{member} <@&1225564224999133305> — Nach ein paar Nachrichten automatisch vergeben"
+    )
+
+
 def _build_champion_text(emojis: dict[str, str]) -> str:
+    mod = _e(emojis, "lotusmod")
     return (
         "### 🏆 Champion-System\n"
-        f"**Freie Rolle** — <@&1288423084839403582> {_e(emojis, 'challenger_0')} für jeden!\n"
+        f"**Freie Rolle** — <@&1288423084839403582> {_e(emojis, 'challenger_0')}\n"
         "Wer aktiv hilft, Fragen beantwortet und die Community bereichert, "
-        "kann die Rolle bei einem Mod-Team-Mitglied beantragen. "
+        f"kann diese Rolle bei einem {mod} Mod-Team-Mitglied beantragen. "
         "Als Champion wirst du bei wichtigen Community-Fragen gepingt.\n\n"
         "**Verdiente Stufen** — Durch Aktivität auf dem Server sammelst du automatisch Punkte:\n"
         f"{_e(emojis, 'challenger_1')} <@&1288423580043837503>\n"
@@ -76,23 +86,13 @@ def _build_champion_text(emojis: dict[str, str]) -> str:
     )
 
 
-def _build_banner_text(emojis: dict[str, str]) -> str:
+def _build_banner_text() -> str:
     return (
         "### 🎨 Banner Battle\n"
-        "Jeden Monat treten Community-Mitglieder im Banner-Battle-Forum gegeneinander an – "
-        "das Community-Voting entscheidet!\n"
-        f"Das beste Banner gewinnt die Prestige-Rolle {_e(emojis, 'art')} <@&1184891060749615205> **Virtuoso**.\n"
+        "Zeig deine Kreativität! Jeden Monat erstellen Community-Mitglieder einen Server-Banner "
+        "und treten damit gegeneinander an — das Community-Voting entscheidet.\n"
+        "Das beste Banner gewinnt die Prestige-Rolle 🎨 <@&1184891060749615205> **Virtuoso**.\n"
         "Mitmachen: <#1184877204807635006>"
-    )
-
-
-def _build_roles_text(emojis: dict[str, str]) -> str:
-    return (
-        "### 🎭 Besondere Rollen\n"
-        f"{_e(emojis, 'art')} <@&1184891060749615205> **Virtuoso** — Prestige-Rolle für den monatlichen Banner-Battle-Gewinner.\n"
-        f"{_e(emojis, 'military_medal')} <@&1297596121631162479> **Maestro** — Prestige-Rolle für besondere Leistungen oder Event-Sieger.\n"
-        "**Booster** 💜 — Vergibt sich automatisch beim Server-Boost — danke!\n"
-        "**Member** — Spam-Schutz: kommt automatisch nach ein paar Nachrichten und schaltet das Posten von Links frei."
     )
 
 
@@ -116,28 +116,36 @@ class ServerInfoLayoutView(discord.ui.LayoutView):
             emoji="🟣",
         )
 
+        boost_btn = discord.ui.Button(
+            label="Nitro & Boosts",
+            url="https://support.discord.com/hc/de/articles/360028038352",
+            style=discord.ButtonStyle.link,
+            emoji="💜",
+        )
+
         container = discord.ui.Container(
             discord.ui.TextDisplay(PANEL_HEADER),
             discord.ui.Separator(),
-            discord.ui.TextDisplay(PANEL_RULES),
+            discord.ui.TextDisplay(_build_rules_text(emojis)),
             discord.ui.Separator(),
             discord.ui.Section(
-                discord.ui.TextDisplay(PANEL_ONBOARDING),
+                discord.ui.TextDisplay(_build_roles_channels_text(emojis)),
                 accessory=twitch_btn,
             ),
             discord.ui.Separator(),
             discord.ui.TextDisplay(_build_champion_text(emojis)),
             discord.ui.Separator(),
             discord.ui.Section(
-                discord.ui.TextDisplay(_build_banner_text(emojis)),
+                discord.ui.TextDisplay(_build_banner_text()),
                 accessory=youtube_btn,
             ),
             discord.ui.Separator(),
-            discord.ui.TextDisplay(_build_roles_text(emojis)),
+            discord.ui.Section(
+                discord.ui.TextDisplay(PANEL_NITRO),
+                accessory=boost_btn,
+            ),
             discord.ui.Separator(),
             discord.ui.TextDisplay(PANEL_COMMANDS),
-            discord.ui.Separator(),
-            discord.ui.TextDisplay(PANEL_NITRO),
             accent_color=LOTUS_PINK,
         )
         self.add_item(container)
