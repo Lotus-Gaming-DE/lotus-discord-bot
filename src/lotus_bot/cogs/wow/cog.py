@@ -40,6 +40,7 @@ DEFAULT_GUILD_SLUG = "black-lotus"
 DEFAULT_GUILD_NAME = "Black Lotus"
 DEFAULT_POLL_INTERVAL = 3 * 60 * 60
 DEFAULT_CLAIM_REVIEW_CHANNEL_ID = 1184115540822855772
+DEFAULT_PANEL_CHANNEL_ID = 1463577361562992807
 DEFAULT_DIGEST_HOUR = 9
 try:
     DIGEST_TIMEZONE = ZoneInfo("Europe/Berlin")
@@ -300,6 +301,7 @@ class WoWCog(ManagedTaskCog):
 
     async def _poll_loop(self) -> None:
         await self.bot.wait_until_ready()
+        await self._auto_publish_panel()
         while True:
             try:
                 if await self._scheduled_digest_due():
@@ -347,6 +349,24 @@ class WoWCog(ManagedTaskCog):
         channel_id = await self.data.get_setting("announcement_channel_id")
         if channel_id:
             await self.scan(post=True, persist=True)
+
+    async def _auto_publish_panel(self) -> None:
+        channel = self.bot.get_channel(DEFAULT_PANEL_CHANNEL_ID)
+        if not isinstance(channel, discord.TextChannel):
+            logger.warning(
+                "[WoWCog] Panel-Channel %s nicht gefunden.", DEFAULT_PANEL_CHANNEL_ID
+            )
+            return
+        try:
+            result = await self.publish_panel(channel)
+            action = "erstellt" if result.created else "aktualisiert"
+            logger.info(
+                "[WoWCog] WoW-Panel beim Start %s (Message %s).",
+                action,
+                result.message_id,
+            )
+        except Exception as exc:
+            logger.error("[WoWCog] Auto-Publish fehlgeschlagen: %s", exc, exc_info=True)
 
     async def set_announcement_channel(self, channel_id: int) -> None:
         await self.data.set_setting("announcement_channel_id", str(channel_id))
@@ -3418,9 +3438,11 @@ class _WhoisLayoutView(discord.ui.LayoutView):
         async def cb(interaction: discord.Interaction) -> None:
             new_view = await self.cog.build_whois_view(char_name, self.viewer_id)
             if new_view is None:
-                await interaction.response.edit_message(
-                    content=f"**{char_name}** ist nicht im aktuellen Roster.",
-                    view=None,
+                # V2 messages can't carry plain content via edit_message;
+                # spawn a fresh ephemeral for the error.
+                await interaction.response.send_message(
+                    f"**{char_name}** ist nicht im aktuellen Roster.",
+                    ephemeral=True,
                 )
                 return
             await interaction.response.edit_message(view=new_view)
@@ -3428,6 +3450,9 @@ class _WhoisLayoutView(discord.ui.LayoutView):
         return cb
 
     async def _open_professions(self, interaction: discord.Interaction) -> None:
+        # PanelMyCharsView is a V1 view with an embed; we can't edit the
+        # whois LayoutView message to a V1 payload (Discord locks the V2
+        # flag on the message). Open as a fresh ephemeral instead.
         view = PanelMyCharsView(self.cog, interaction.user.id)
         await view._load()
         for c in view.claims:
@@ -3436,7 +3461,7 @@ class _WhoisLayoutView(discord.ui.LayoutView):
                 break
         view._rebuild()
         embed = await view._build_embed()
-        await interaction.response.edit_message(content=None, embed=embed, view=view)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
 class PanelMyCharsView(discord.ui.View):

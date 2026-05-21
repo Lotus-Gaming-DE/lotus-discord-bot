@@ -284,44 +284,6 @@ async def whois(interaction: discord.Interaction, char: str):
     await interaction.response.send_message(view=view, ephemeral=True)
 
 
-panel_group = app_commands.Group(
-    name="panel",
-    description="WoW Info-Panel",
-    parent=wow_group,
-)
-
-
-@panel_group.command(
-    name="publish",
-    description="Erstellt oder aktualisiert das WoW-Info-Panel",
-)
-@moderator_only()
-@app_commands.default_permissions(manage_guild=True)
-@app_commands.describe(channel="Channel fuer das WoW-Info-Panel")
-async def panel_publish(interaction: discord.Interaction, channel: discord.TextChannel):
-    logger.info(f"/wow panel publish by {interaction.user} channel={channel.id}")
-    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
-    if cog is None:
-        await interaction.response.send_message(
-            "WoW-System nicht verfuegbar.", ephemeral=True
-        )
-        return
-    try:
-        result = await cog.publish_panel(channel)
-    except (discord.Forbidden, discord.HTTPException) as exc:
-        logger.warning("[WoWCommands] Panel publish failed: %s", exc, exc_info=True)
-        await interaction.response.send_message(
-            "Panel konnte nicht gepostet werden. Bitte Bot-Rechte im Channel pruefen.",
-            ephemeral=True,
-        )
-        return
-    action = "erstellt" if result.created else "aktualisiert"
-    await interaction.response.send_message(
-        f"WoW-Panel {action}: <#{result.channel_id}> (`{result.message_id}`).",
-        ephemeral=True,
-    )
-
-
 @wow_group.command(name="claim", description="Claimt einen Black-Lotus-Charakter")
 @app_commands.describe(char="Name des Charakters im Black-Lotus-Roster")
 @app_commands.autocomplete(char=roster_char_autocomplete)
