@@ -44,7 +44,12 @@ async def dev_roles(interaction: discord.Interaction) -> None:
     lines = [f"**Rollen ({len(roles)})**\n{_SEP}"]
     for role in roles:
         indicator = "🔴" if role.color.value else "⚪"
-        icon = f" {role.emoji}" if role.emoji else ""
+        display = role.display_icon
+        icon = (
+            f" {display}"
+            if display is not None and not isinstance(display, discord.Asset)
+            else ""
+        )
         lines.append(f"{indicator} `{role.id}`  @{role.name}{icon}")
 
     body = "\n".join(lines)
