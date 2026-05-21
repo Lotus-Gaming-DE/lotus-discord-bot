@@ -200,7 +200,7 @@ class MyBot(commands.Bot):
         load_quiz_config(self)
 
         # Cogs importieren & registrieren
-        from lotus_bot.cogs import quiz, wcr, champion, ptcgp, wow, community
+        from lotus_bot.cogs import quiz, wcr, champion, ptcgp, wow, community, dev
 
         await quiz.setup(self)
         await wcr.setup(self)
@@ -208,6 +208,7 @@ class MyBot(commands.Bot):
         await ptcgp.setup(self)
         await wow.setup(self)
         await community.setup(self)
+        await dev.setup(self)
 
         await self.tree.sync(guild=self.main_guild)
 

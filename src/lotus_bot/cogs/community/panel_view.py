@@ -9,14 +9,14 @@ PANEL_HEADER = (
 
 PANEL_RULES = (
     "### 🛡️ Regeln – kurz & klar\n"
-    "✅ **Sei respektvoll** — Kein Platz für Beleidigungen, Diskriminierung oder Toxizität.\n"
-    "🚫 **Kein Spam / Keine Eigenwerbung** — Keine Massennachrichten oder Werbung ohne Freigabe.\n"
-    "🗂️ **Nutze passende Channels** — Jedes Spiel hat seinen eigenen Bereich.\n"
-    "🔞 **NSFW ist tabu** — Pornografie, Gewalt oder verstörende Inhalte sind verboten.\n"
-    "🔒 **Schütze deine Privatsphäre** — Keine realen Daten, Telefonnummern, Adressen usw.\n"
-    "⚖️ **Keine illegalen Inhalte** — Cheats, Hacks, Account-Handel o. Ä. sind verboten.\n"
-    "🎙️ **Folge dem Team** — Unsere Community Mods <@&1053266596417785886> halten den Server fair & freundlich.\n"
-    "💖 **Have fun & be nice!** — Wir wollen eine gute Zeit haben – und zwar zusammen 🪷\n\n"
+    "✅ Sei respektvoll — keine Beleidigungen, keine Diskriminierung.\n"
+    "🚫 Kein Spam, keine Eigenwerbung ohne Freigabe.\n"
+    "🗂️ Nutze die richtigen Channels — jedes Spiel hat seinen eigenen Bereich.\n"
+    "🔞 Kein NSFW-Content.\n"
+    "🔒 Keine persönlichen Daten teilen (Nummern, Adressen usw.).\n"
+    "⚖️ Keine illegalen Inhalte — Cheats, Hacks, Account-Handel o. Ä.\n"
+    "🎙️ Folge dem Team — <@&1053266596417785886> halten den Server fair & freundlich.\n"
+    "💖 Have fun & be nice! 🪷\n\n"
     "Verstoß gesehen? Schreib einem Mod-Team-Mitglied direkt."
 )
 
@@ -67,11 +67,11 @@ def _build_champion_text(emojis: dict[str, str]) -> str:
         "kann die Rolle bei einem Mod-Team-Mitglied beantragen. "
         "Als Champion wirst du bei wichtigen Community-Fragen gepingt.\n\n"
         "**Verdiente Stufen** — Durch Aktivität auf dem Server sammelst du automatisch Punkte:\n"
-        f"{_e(emojis, 'challenger_1')} <@&1288423580043837503> Emerging Champion\n"
-        f"{_e(emojis, 'challenger_2')} <@&1288423705231495202> Seasoned Champion\n"
-        f"{_e(emojis, 'challenger_3')} <@&1313206485685370910> Renowned Champion\n"
-        f"{_e(emojis, 'challenger_4')} <@&1313206531684302900> Epic Champion\n"
-        f"{_e(emojis, 'challenger_5')} <@&1313206585186848860> Ultimate Champion\n\n"
+        f"{_e(emojis, 'challenger_1')} <@&1288423580043837503>\n"
+        f"{_e(emojis, 'challenger_2')} <@&1288423705231495202>\n"
+        f"{_e(emojis, 'challenger_3')} <@&1313206485685370910>\n"
+        f"{_e(emojis, 'challenger_4')} <@&1313206531684302900>\n"
+        f"{_e(emojis, 'challenger_5')} <@&1313206585186848860>\n\n"
         "`/champion score` · `/champion leaderboard` · `/champion myhistory`"
     )
 
