@@ -21,6 +21,7 @@ from .api import (
     wow_api_session,
 )
 from .data import (
+    BankCharacter,
     CharacterClaim,
     CharacterKnownRecipe,
     CharacterProfession,
@@ -1482,6 +1483,68 @@ class WoWCog(ManagedTaskCog):
         return _WhoisLayoutView(
             self, member, claim, gear, professions, twins, viewer_id, viewer_is_owner
         )
+
+    async def submit_gbank_request(
+        self,
+        requester: discord.abc.User,
+        requester_char_name: str,
+        bank_character_key: str,
+        bank_character_name: str,
+        request_text: str,
+    ) -> None:
+        """Deliver a guild-bank request to the bank char's owner.
+
+        Tries a DM to the claiming owner first; on failure (DMs closed)
+        or if the bank char is unclaimed, posts to the officer channel so
+        nothing is lost. The requester always sees success.
+        """
+        claim = await self.data.get_claim(bank_character_key)
+        body = (
+            f"🏦 **Neue Gildenbank-Anfrage** von **{requester_char_name}** "
+            f"(von {requester.mention})\n"
+            f'„{request_text}"\n'
+            f"Die Items liegen auf dem Bank-Char **{bank_character_name}**."
+        )
+
+        if claim is not None:
+            owner = self.bot.get_user(claim.discord_user_id)
+            if owner is None:
+                try:
+                    owner = await self.bot.fetch_user(claim.discord_user_id)
+                except discord.HTTPException:
+                    owner = None
+            if owner is not None:
+                try:
+                    await owner.send(body)
+                    return
+                except (discord.Forbidden, discord.HTTPException) as exc:
+                    logger.info(
+                        "[WoWCog] gbank DM to %s failed: %s",
+                        claim.discord_user_id,
+                        exc,
+                    )
+
+        reason = (
+            "Bank-Char ist nicht geclaimed"
+            if claim is None
+            else "DM an den Owner fehlgeschlagen"
+        )
+        await self._post_gbank_to_officer_channel(f"_({reason})_\n{body}")
+
+    async def _post_gbank_to_officer_channel(self, content: str) -> None:
+        channel_id = await self.get_claim_review_channel_id()
+        channel = self.bot.get_channel(channel_id)
+        if not channel:
+            logger.warning("[WoWCog] gbank officer channel %s not found.", channel_id)
+            return
+        try:
+            await channel.send(content)
+        except (discord.Forbidden, discord.HTTPException) as exc:
+            logger.warning(
+                "[WoWCog] Could not post gbank request to channel %s: %s",
+                channel_id,
+                exc,
+            )
 
     async def _post_claim_review(self, claim: CharacterClaim) -> bool:
         channel_id = await self.get_claim_review_channel_id()
@@ -3115,15 +3178,14 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
     """Components-V2 hub for the WoW cog.
 
     Layout: a single ``Container`` with a header ``TextDisplay`` followed
-    by four ``Section`` blocks — one per top-level concern. Each section
-    has an accessory button that opens a classic-V1 sub-flow (claim
-    select, char-detail view, cooldown picker, etc.). All sub-flows are
-    ephemeral so the public hub message stays stable.
+    by ``Section`` blocks — one per top-level concern. Each section has an
+    accessory button that opens a classic-V1 sub-flow (claim select,
+    char-detail view, cooldown picker, etc.). All sub-flows are ephemeral
+    so the public hub message stays stable.
 
     Persistence: the LayoutView is registered via ``bot.add_view`` at
-    cog-load so buttons survive bot restarts. Old V1-panel custom_ids
-    are obsolete after this migration; a single ``/wow panel publish``
-    re-issues the message with the new layout.
+    cog-load so buttons survive bot restarts. The hub message itself is
+    re-issued automatically on startup via ``_auto_publish_panel``.
     """
 
     def __init__(self, cog: WoWCog) -> None:
@@ -3143,6 +3205,13 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
             custom_id="wow_panel_v2:search",
         )
         search_btn.callback = self._open_search
+
+        gbank_btn = discord.ui.Button(
+            label="Anfragen",
+            style=discord.ButtonStyle.secondary,
+            custom_id="wow_panel_v2:gbank",
+        )
+        gbank_btn.callback = self._open_gbank_request
 
         cooldown_btn = discord.ui.Button(
             label="Loggen",
@@ -3187,6 +3256,22 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
             discord.ui.Separator(),
             discord.ui.Section(
                 discord.ui.TextDisplay(
+                    "### 🏦 Gildenbank-Anfrage\n"
+                    "Etwas aus der Gildenbank gebraucht? Anfrage stellen — "
+                    "der Verwalter des Bank-Chars bekommt eine DM."
+                ),
+                accessory=gbank_btn,
+            ),
+            discord.ui.Separator(),
+            discord.ui.TextDisplay(
+                "### 📅 Event erstellen\n"
+                "Erstelle ein Raid- oder Dungeon-Event mit "
+                "</create:885023455739777079>. Du bekommst danach eine "
+                "private Nachricht von Raid-Helper mit den weiteren Schritten."
+            ),
+            discord.ui.Separator(),
+            discord.ui.Section(
+                discord.ui.TextDisplay(
                     "### ⏳ Cooldown loggen\n"
                     "Transmute oder Mondstoff gemacht? Hier eintragen, "
                     "Bot meldet sich wenn wieder bereit."
@@ -3221,6 +3306,18 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         await interaction.response.send_message(
             "Was suchst du?", view=view, ephemeral=True
         )
+
+    async def _open_gbank_request(self, interaction: discord.Interaction) -> None:
+        claims = await self.cog.data.claims_for_user(interaction.user.id)
+        if not claims:
+            await interaction.response.send_message(
+                "Du musst zuerst einen Char claimen, bevor du eine "
+                "Gildenbank-Anfrage stellen kannst. Nutze **Deine Chars → "
+                "Neuen Char claimen**.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.send_modal(GBankRequestModal(self.cog))
 
     async def _open_cooldown_log(self, interaction: discord.Interaction) -> None:
         eligible = await self.cog.cooldown_eligible_options(interaction.user.id)
@@ -3462,6 +3559,184 @@ class _WhoisLayoutView(discord.ui.LayoutView):
         view._rebuild()
         embed = await view._build_embed()
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+
+class GBankRequestModal(discord.ui.Modal):
+    """Step 1 of a guild-bank request: free-text 'what do you need?'."""
+
+    def __init__(self, cog: WoWCog) -> None:
+        super().__init__(title="Gildenbank-Anfrage")
+        self.cog = cog
+        self.request = discord.ui.TextInput(
+            label="Was wird angefragt?",
+            placeholder="z. B. 20x Runenstoff, Mondstoff, ...",
+            style=discord.TextStyle.paragraph,
+            min_length=2,
+            max_length=300,
+        )
+        self.add_item(self.request)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        bank_chars = await self.cog.data.list_bank_characters()
+        if not bank_chars:
+            await interaction.response.send_message(
+                "Aktuell sind keine Gildenbank-Chars eingetragen. Bitte wende "
+                "dich an einen Mod.",
+                ephemeral=True,
+            )
+            return
+        view = GBankBankCharSelectView(
+            self.cog,
+            interaction.user.id,
+            str(self.request.value).strip(),
+            bank_chars,
+        )
+        await interaction.response.send_message(
+            "Auf welchem Bank-Char liegen die Items?",
+            view=view,
+            ephemeral=True,
+        )
+
+
+class GBankBankCharSelectView(discord.ui.View):
+    """Step 2: pick the bank char that holds the requested items."""
+
+    def __init__(
+        self,
+        cog: WoWCog,
+        requester_id: int,
+        request_text: str,
+        bank_chars: list["BankCharacter"],
+    ) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.requester_id = requester_id
+        self.request_text = request_text
+        self.bank_chars = bank_chars
+        self.add_item(GBankBankCharSelect(self))
+        _add_dismiss_button(self)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.requester_id:
+            return True
+        await interaction.response.send_message(
+            "Diese Auswahl gehört nicht dir.", ephemeral=True
+        )
+        return False
+
+
+class GBankBankCharSelect(discord.ui.Select):
+    def __init__(self, parent: GBankBankCharSelectView) -> None:
+        self.parent_view = parent
+        options = [
+            discord.SelectOption(
+                label=bank.character_name[:100], value=bank.character_key
+            )
+            for bank in parent.bank_chars[:25]
+        ]
+        super().__init__(
+            placeholder="Bank-Char auswählen",
+            min_values=1,
+            max_values=1,
+            options=options,
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        bank_key = self.values[0]
+        bank_name = next(
+            (
+                bank.character_name
+                for bank in self.parent_view.bank_chars
+                if bank.character_key == bank_key
+            ),
+            bank_key,
+        )
+        claims = await self.parent_view.cog.data.claims_for_user(
+            self.parent_view.requester_id
+        )
+        if len(claims) == 1:
+            await self.parent_view.cog.submit_gbank_request(
+                interaction.user,
+                claims[0].character_name,
+                bank_key,
+                bank_name,
+                self.parent_view.request_text,
+            )
+            await interaction.response.edit_message(
+                content="✅ Anfrage gesendet.", view=None
+            )
+            return
+        view = GBankOwnCharSelectView(
+            self.parent_view.cog,
+            self.parent_view.requester_id,
+            self.parent_view.request_text,
+            bank_key,
+            bank_name,
+            claims,
+        )
+        await interaction.response.edit_message(
+            content="Für welchen deiner Chars ist die Anfrage?", view=view
+        )
+
+
+class GBankOwnCharSelectView(discord.ui.View):
+    """Step 3 (only if requester has multiple claims): pick own char."""
+
+    def __init__(
+        self,
+        cog: WoWCog,
+        requester_id: int,
+        request_text: str,
+        bank_key: str,
+        bank_name: str,
+        claims: list[CharacterClaim],
+    ) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.requester_id = requester_id
+        self.request_text = request_text
+        self.bank_key = bank_key
+        self.bank_name = bank_name
+        self.claims = claims
+        self.add_item(GBankOwnCharSelect(self))
+        _add_dismiss_button(self)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id == self.requester_id:
+            return True
+        await interaction.response.send_message(
+            "Diese Auswahl gehört nicht dir.", ephemeral=True
+        )
+        return False
+
+
+class GBankOwnCharSelect(discord.ui.Select):
+    def __init__(self, parent: GBankOwnCharSelectView) -> None:
+        self.parent_view = parent
+        options = [
+            discord.SelectOption(
+                label=claim.character_name[:100], value=claim.character_name
+            )
+            for claim in parent.claims[:25]
+        ]
+        super().__init__(
+            placeholder="Dein Char",
+            min_values=1,
+            max_values=1,
+            options=options,
+        )
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        await self.parent_view.cog.submit_gbank_request(
+            interaction.user,
+            self.values[0],
+            self.parent_view.bank_key,
+            self.parent_view.bank_name,
+            self.parent_view.request_text,
+        )
+        await interaction.response.edit_message(
+            content="✅ Anfrage gesendet.", view=None
+        )
 
 
 class PanelMyCharsView(discord.ui.View):

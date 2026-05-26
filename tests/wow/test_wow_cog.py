@@ -108,6 +108,39 @@ class MultiChannelBot(DummyBot):
         return self.public_channel
 
 
+class DummyDMUser:
+    """A user whose .send() either records the DM or raises Forbidden."""
+
+    def __init__(self, uid, raise_forbidden=False):
+        self.id = uid
+        self.mention = f"<@{uid}>"
+        self.sent = []
+        self._raise_forbidden = raise_forbidden
+
+    async def send(self, content):
+        if self._raise_forbidden:
+            response = type("Response", (), {"status": 403, "reason": "Forbidden"})()
+            raise discord.Forbidden(
+                response,
+                {"message": "Cannot send messages to this user", "code": 50007},
+            )
+        self.sent.append(content)
+
+
+class GBankBot(MultiChannelBot):
+    """Bot with DM support + officer channel for gbank request tests."""
+
+    def __init__(self, officer_channel=None, dm_user=None):
+        super().__init__(public_channel=None, officer_channel=officer_channel)
+        self.dm_user = dm_user
+
+    def get_user(self, uid):
+        return self.dm_user
+
+    async def fetch_user(self, uid):
+        return self.dm_user
+
+
 class DummyPermissions:
     def __init__(self, manage_guild=False):
         self.manage_guild = manage_guild
@@ -116,6 +149,7 @@ class DummyPermissions:
 class DummyUser:
     def __init__(self, uid, manage_guild=False):
         self.id = uid
+        self.mention = f"<@{uid}>"
         self.guild_permissions = DummyPermissions(manage_guild)
 
 
@@ -316,10 +350,12 @@ async def test_panel_publish_updates_existing_message(tmp_path, patch_logged_tas
 
 
 @pytest.mark.asyncio
-async def test_panel_hub_layout_has_five_sections(tmp_path, patch_logged_task):
-    """V2 hub: one Container with five Sections (Deine Chars, Suchen,
-    Cooldown, Hilfe, Champion). Each Section's accessory is a clickable
-    Button with a stable custom_id so persistence survives bot restarts."""
+async def test_panel_hub_layout_has_six_sections(tmp_path, patch_logged_task):
+    """V2 hub: one Container with six Sections (Deine Chars, Suchen,
+    Gildenbank, Cooldown, Hilfe, Champion). Each Section's accessory is a
+    clickable Button with a stable custom_id so persistence survives bot
+    restarts. (The 'Event erstellen' block is a plain TextDisplay with an
+    inline command mention, not a Section.)"""
     cog = await create_cog(tmp_path, patch_logged_task)
     hub = wow_cog_mod.WoWPanelLayoutView(cog)
 
@@ -327,15 +363,200 @@ async def test_panel_hub_layout_has_five_sections(tmp_path, patch_logged_task):
     container = hub.children[0]
     assert isinstance(container, discord.ui.Container)
     sections = [c for c in container.children if isinstance(c, discord.ui.Section)]
-    assert len(sections) == 5
+    assert len(sections) == 6
     custom_ids = {section.accessory.custom_id for section in sections}
     assert custom_ids == {
         "wow_panel_v2:chars",
         "wow_panel_v2:search",
+        "wow_panel_v2:gbank",
         "wow_panel_v2:cooldown",
         "wow_panel_v2:help",
         "wow_panel_v2:champion",
     }
+
+
+@pytest.mark.asyncio
+async def test_bank_character_crud(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    await cog.data.add_bank_character("id:1", "Lotusrocks", 42)
+
+    assert await cog.data.is_bank_character("id:1") is True
+    banks = await cog.data.list_bank_characters()
+    assert [b.character_name for b in banks] == ["Lotusrocks"]
+    assert banks[0].added_by == 42
+
+    # Re-adding updates the name, stays a single row.
+    await cog.data.add_bank_character("id:1", "Lotusbank", 7)
+    banks = await cog.data.list_bank_characters()
+    assert [b.character_name for b in banks] == ["Lotusbank"]
+
+    assert await cog.data.remove_bank_character("id:1") is True
+    assert await cog.data.is_bank_character("id:1") is False
+    assert await cog.data.remove_bank_character("id:1") is False
+
+
+async def _seed_bank_request(cog, *, bank_owner_id=None, requester_ids=None):
+    """Snapshot a bank char + optional requester chars, mark the bank char."""
+    members = [member(key="id:1", name="Lotusrocks")]
+    requester_ids = requester_ids or []
+    for idx, _ in enumerate(requester_ids, start=2):
+        members.append(member(key=f"id:{idx}", name=f"Reqchar{idx}"))
+    await cog.data.replace_snapshot(members)
+    if bank_owner_id is not None:
+        await cog.data.create_claim(
+            member(key="id:1", name="Lotusrocks"), bank_owner_id
+        )
+    for idx, uid in enumerate(requester_ids, start=2):
+        await cog.data.create_claim(member(key=f"id:{idx}", name=f"Reqchar{idx}"), uid)
+    await cog.data.add_bank_character("id:1", "Lotusrocks", 1)
+
+
+@pytest.mark.asyncio
+async def test_gbank_request_dms_owner(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    owner = DummyDMUser(99)
+    cog.bot = GBankBot(officer_channel=DummyChannel(), dm_user=owner)
+    await _seed_bank_request(cog, bank_owner_id=99)
+
+    requester = DummyDMUser(42)
+    await cog.submit_gbank_request(
+        requester, "Voidok", "id:1", "Lotusrocks", "20x Runenstoff"
+    )
+
+    assert len(owner.sent) == 1
+    assert "Runenstoff" in owner.sent[0]
+    assert "Lotusrocks" in owner.sent[0]
+    assert "Voidok" in owner.sent[0]
+    # No officer-channel fallback when the DM succeeds.
+    assert cog.bot.officer_channel.sent == []
+
+
+@pytest.mark.asyncio
+async def test_gbank_request_falls_back_to_officer_on_dm_failure(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    owner = DummyDMUser(99, raise_forbidden=True)
+    officer = DummyChannel()
+    cog.bot = GBankBot(officer_channel=officer, dm_user=owner)
+    await _seed_bank_request(cog, bank_owner_id=99)
+
+    requester = DummyDMUser(42)
+    await cog.submit_gbank_request(
+        requester, "Voidok", "id:1", "Lotusrocks", "Mondstoff"
+    )
+
+    assert owner.sent == []
+    assert len(officer.sent) == 1
+    assert "fehlgeschlagen" in officer.sent[0][0]
+    assert "Mondstoff" in officer.sent[0][0]
+
+
+@pytest.mark.asyncio
+async def test_gbank_request_unclaimed_goes_to_officer(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    officer = DummyChannel()
+    cog.bot = GBankBot(officer_channel=officer, dm_user=None)
+    await _seed_bank_request(cog, bank_owner_id=None)
+
+    requester = DummyDMUser(42)
+    await cog.submit_gbank_request(
+        requester, "Voidok", "id:1", "Lotusrocks", "Runenstoff"
+    )
+
+    assert len(officer.sent) == 1
+    assert "nicht geclaimed" in officer.sent[0][0]
+
+
+@pytest.mark.asyncio
+async def test_open_gbank_request_requires_a_claim(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    hub = wow_cog_mod.WoWPanelLayoutView(cog)
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await hub._open_gbank_request(interaction)
+
+    # No modal — user is told to claim a char first.
+    assert interaction.response.modals == []
+    msg, _ = interaction.response.messages[0]
+    assert "claimen" in msg
+
+
+@pytest.mark.asyncio
+async def test_open_gbank_request_opens_modal_with_claim(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    await _seed_bank_request(cog, requester_ids=[42])
+    hub = wow_cog_mod.WoWPanelLayoutView(cog)
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await hub._open_gbank_request(interaction)
+
+    assert isinstance(interaction.response.modals[0], wow_cog_mod.GBankRequestModal)
+
+
+@pytest.mark.asyncio
+async def test_gbank_bank_select_single_claim_finalizes(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    owner = DummyDMUser(99)
+    cog.bot = GBankBot(officer_channel=DummyChannel(), dm_user=owner)
+    # Bank char owned by 99; requester 42 has exactly one char (Reqchar2).
+    await _seed_bank_request(cog, bank_owner_id=99, requester_ids=[42])
+
+    bank_chars = await cog.data.list_bank_characters()
+    view = wow_cog_mod.GBankBankCharSelectView(cog, 42, "Runenstoff", bank_chars)
+    select = view.children[0]
+    select._values = ["id:1"]
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await select.callback(interaction)
+
+    assert len(owner.sent) == 1
+    assert "Reqchar2" in owner.sent[0]
+    assert interaction.response.edits[0]["content"] == "✅ Anfrage gesendet."
+
+
+@pytest.mark.asyncio
+async def test_gbank_bank_select_multi_claim_shows_own_char(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot = GBankBot(officer_channel=DummyChannel(), dm_user=DummyDMUser(99))
+    # Requester 42 has two chars → must pick one.
+    await _seed_bank_request(cog, bank_owner_id=99, requester_ids=[42, 42])
+
+    bank_chars = await cog.data.list_bank_characters()
+    view = wow_cog_mod.GBankBankCharSelectView(cog, 42, "Runenstoff", bank_chars)
+    select = view.children[0]
+    select._values = ["id:1"]
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await select.callback(interaction)
+
+    assert isinstance(
+        interaction.response.edits[0]["view"], wow_cog_mod.GBankOwnCharSelectView
+    )
+
+
+@pytest.mark.asyncio
+async def test_gbank_own_char_select_finalizes(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    owner = DummyDMUser(99)
+    cog.bot = GBankBot(officer_channel=DummyChannel(), dm_user=owner)
+    await _seed_bank_request(cog, bank_owner_id=99, requester_ids=[42, 42])
+
+    claims = await cog.data.claims_for_user(42)
+    view = wow_cog_mod.GBankOwnCharSelectView(
+        cog, 42, "Runenstoff", "id:1", "Lotusrocks", claims
+    )
+    select = view.children[0]
+    select._values = [claims[0].character_name]
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await select.callback(interaction)
+
+    assert len(owner.sent) == 1
+    assert claims[0].character_name in owner.sent[0]
+    assert interaction.response.edits[0]["content"] == "✅ Anfrage gesendet."
 
 
 @pytest.mark.asyncio

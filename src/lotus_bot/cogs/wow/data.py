@@ -38,6 +38,14 @@ class CharacterClaim:
 
 
 @dataclass
+class BankCharacter:
+    character_key: str
+    character_name: str
+    added_by: int
+    added_at: str
+
+
+@dataclass
 class CharacterProfession:
     character_key: str
     character_name: str
@@ -268,6 +276,14 @@ class WoWData:
                 used_at TEXT NOT NULL,
                 ready_at TEXT NOT NULL,
                 PRIMARY KEY(character_key, cooldown_group)
+            )
+            """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS bank_characters (
+                character_key TEXT PRIMARY KEY,
+                character_name TEXT NOT NULL,
+                added_by INTEGER NOT NULL,
+                added_at TEXT NOT NULL
             )
             """)
         await self._ensure_column(
@@ -679,6 +695,60 @@ class WoWData:
         cur = await db.execute(query, params)
         rows = await cur.fetchall()
         return [_claim_from_row(row) for row in rows]
+
+    async def add_bank_character(
+        self, character_key: str, character_name: str, added_by: int
+    ) -> None:
+        await self.init_db()
+        db = await self._get_db()
+        await db.execute(
+            """
+            INSERT INTO bank_characters (character_key, character_name, added_by, added_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(character_key) DO UPDATE SET
+                character_name = excluded.character_name
+            """,
+            (character_key, character_name, added_by, datetime.utcnow().isoformat()),
+        )
+        await db.commit()
+
+    async def remove_bank_character(self, character_key: str) -> bool:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            "DELETE FROM bank_characters WHERE character_key = ?",
+            (character_key,),
+        )
+        await db.commit()
+        return cur.rowcount > 0
+
+    async def list_bank_characters(self) -> list[BankCharacter]:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute("""
+            SELECT character_key, character_name, added_by, added_at
+              FROM bank_characters
+             ORDER BY lower(character_name)
+            """)
+        rows = await cur.fetchall()
+        return [
+            BankCharacter(
+                character_key=row[0],
+                character_name=row[1],
+                added_by=row[2],
+                added_at=row[3],
+            )
+            for row in rows
+        ]
+
+    async def is_bank_character(self, character_key: str) -> bool:
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            "SELECT 1 FROM bank_characters WHERE character_key = ?",
+            (character_key,),
+        )
+        return await cur.fetchone() is not None
 
     async def set_character_profession(
         self,

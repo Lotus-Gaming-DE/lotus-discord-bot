@@ -119,6 +119,20 @@ async def claim_char_autocomplete(
     return await user_claim_autocomplete(interaction, current)
 
 
+async def bank_char_autocomplete(
+    interaction: discord.Interaction, current: str
+) -> list[app_commands.Choice[str]]:
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        return []
+    bank_chars = await cog.data.list_bank_characters()
+    return [
+        app_commands.Choice(name=bank.character_name[:100], value=bank.character_name)
+        for bank in bank_chars
+        if _match_choice_text(bank.character_name, current)
+    ][:25]
+
+
 async def recipes_profession_autocomplete(
     interaction: discord.Interaction, current: str
 ) -> list[app_commands.Choice[str]]:
@@ -381,6 +395,120 @@ async def claim_remove(interaction: discord.Interaction, char: str):
     await cog.data.remove_claim(existing.character_key)
     await interaction.response.send_message(
         f"✅ Claim für **{existing.character_name}** wurde entfernt.", ephemeral=True
+    )
+
+
+gbank_group = app_commands.Group(
+    name="gbank",
+    description="Verwaltet Gildenbank-Chars",
+    parent=wow_group,
+)
+
+
+@gbank_group.command(name="add", description="Markiert einen Char als Gildenbank-Char")
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+@app_commands.describe(char="Name des Chars im Black-Lotus-Roster")
+@app_commands.autocomplete(char=roster_char_autocomplete)
+async def gbank_add(interaction: discord.Interaction, char: str):
+    logger.info(f"/wow gbank add by {interaction.user} char={char}")
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    member = await cog.data.find_roster_member_by_name(char)
+    if member is None:
+        await interaction.response.send_message(
+            f"❌ **{char}** wurde im aktuellen Black-Lotus-Roster nicht gefunden.",
+            ephemeral=True,
+        )
+        return
+
+    await cog.data.add_bank_character(
+        member.character_key, member.name, interaction.user.id
+    )
+    claim = await cog.data.get_claim(member.character_key)
+    warning = (
+        ""
+        if claim
+        else (
+            "\n⚠️ Dieser Char ist noch nicht geclaimed — Anfragen landen "
+            "vorerst nur im Officer-Channel, bis ihn jemand claimed."
+        )
+    )
+    await interaction.response.send_message(
+        f"✅ **{member.name}** ist jetzt ein Gildenbank-Char.{warning}",
+        ephemeral=True,
+    )
+
+
+@gbank_group.command(
+    name="remove", description="Entfernt einen Char aus den Gildenbank-Chars"
+)
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+@app_commands.describe(char="Name des Gildenbank-Chars")
+@app_commands.autocomplete(char=bank_char_autocomplete)
+async def gbank_remove(interaction: discord.Interaction, char: str):
+    logger.info(f"/wow gbank remove by {interaction.user} char={char}")
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    member = await cog.data.find_roster_member_by_name(char)
+    character_key = member.character_key if member else None
+    if character_key is None:
+        # Fall back to matching by name among registered bank chars.
+        for bank in await cog.data.list_bank_characters():
+            if bank.character_name.casefold() == char.casefold():
+                character_key = bank.character_key
+                break
+
+    removed = (
+        await cog.data.remove_bank_character(character_key) if character_key else False
+    )
+    if not removed:
+        await interaction.response.send_message(
+            f"ℹ️ **{char}** ist aktuell kein Gildenbank-Char.", ephemeral=True
+        )
+        return
+    await interaction.response.send_message(
+        f"✅ **{char}** ist kein Gildenbank-Char mehr.", ephemeral=True
+    )
+
+
+@gbank_group.command(name="list", description="Listet alle Gildenbank-Chars")
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+async def gbank_list(interaction: discord.Interaction):
+    logger.info(f"/wow gbank list by {interaction.user}")
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    bank_chars = await cog.data.list_bank_characters()
+    if not bank_chars:
+        await interaction.response.send_message(
+            "📭 Es sind keine Gildenbank-Chars eingetragen.", ephemeral=True
+        )
+        return
+
+    lines = []
+    for bank in bank_chars:
+        claim = await cog.data.get_claim(bank.character_key)
+        owner = f"<@{claim.discord_user_id}>" if claim else "_nicht geclaimed_"
+        lines.append(f"- **{bank.character_name}** — {owner}")
+    await interaction.response.send_message(
+        "🏦 **Gildenbank-Chars:**\n" + "\n".join(lines), ephemeral=True
     )
 
 
