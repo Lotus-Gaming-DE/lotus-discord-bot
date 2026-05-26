@@ -3655,15 +3655,16 @@ class GBankBankCharSelect(discord.ui.Select):
             self.parent_view.requester_id
         )
         if len(claims) == 1:
+            # Respond first (3s interaction window), then do the slow DM work.
+            await interaction.response.edit_message(
+                content="✅ Anfrage gesendet.", view=None
+            )
             await self.parent_view.cog.submit_gbank_request(
                 interaction.user,
                 claims[0].character_name,
                 bank_key,
                 bank_name,
                 self.parent_view.request_text,
-            )
-            await interaction.response.edit_message(
-                content="✅ Anfrage gesendet.", view=None
             )
             return
         view = GBankOwnCharSelectView(
@@ -3727,15 +3728,16 @@ class GBankOwnCharSelect(discord.ui.Select):
         )
 
     async def callback(self, interaction: discord.Interaction) -> None:
+        # Respond first (3s interaction window), then do the slow DM work.
+        await interaction.response.edit_message(
+            content="✅ Anfrage gesendet.", view=None
+        )
         await self.parent_view.cog.submit_gbank_request(
             interaction.user,
             self.values[0],
             self.parent_view.bank_key,
             self.parent_view.bank_name,
             self.parent_view.request_text,
-        )
-        await interaction.response.edit_message(
-            content="✅ Anfrage gesendet.", view=None
         )
 
 
