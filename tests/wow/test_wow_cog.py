@@ -2108,11 +2108,41 @@ async def test_skill_milestone_digest_section_renders(tmp_path, patch_logged_tas
     msg = await cog.format_activity_digest(activity)
     assert "Berufsskill-Meilensteine" in msg
     assert "Alchemie" in msg
-    assert "Skill **75**" in msg
+    # Only the highest threshold is shown (collapsed), with points summed.
     assert "Skill **150**" in msg
+    assert "Skill **75**" not in msg
     assert "<@42>" in msg
-    assert "+3 Champion-Punkte" in msg
-    assert "+6 Champion-Punkte" in msg
+    assert "+9 Champion-Punkte" in msg
+
+
+@pytest.mark.asyncio
+async def test_skill_milestone_digest_collapses_per_profession(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": crafting_data()}
+    target = member(name="Laenalia")
+    claim, _ = await cog.data.create_claim(target, 42)
+    # Two professions, each crossing all four thresholds (75/150/225/300).
+    await cog._record_skill_milestones(claim.character_key, "alchemy", 0, 300)
+    await cog._record_skill_milestones(claim.character_key, "cooking", 0, 300)
+
+    activity = wow_cog_mod.ActivityDiff(
+        new_members=[],
+        milestones=[],
+        deaths=[],
+        officer_notes=[],
+        skill_events=await cog.data.pending_skill_milestone_events(),
+    )
+
+    msg = await cog.format_activity_digest(activity)
+    # Exactly one collapsed line per profession, only the top threshold.
+    assert msg.count("hat Skill **300** erreicht") == 2
+    assert "Skill **75**" not in msg
+    assert "Skill **150**" not in msg
+    assert "Skill **225**" not in msg
+    # 3 + 6 + 12 + 25 = 46 points summed per profession.
+    assert msg.count("+46 Champion-Punkte") == 2
 
 
 @pytest.mark.asyncio

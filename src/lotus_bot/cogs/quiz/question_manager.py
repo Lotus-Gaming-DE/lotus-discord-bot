@@ -98,12 +98,18 @@ class QuestionManager:
             f"[QuestionManager] Nachricht ID {sent_msg.id} an Channel {channel.id} gesendet."
         )
 
-        delay = max((end_time - datetime.datetime.utcnow()).total_seconds(), 0)
+        # Guarantee a minimum answer window: activity gating can delay the
+        # actual post until near ``end_time`` (window_end), which would leave
+        # almost no time to answer. Floor it at ``cfg.answer_duration`` from
+        # the real post time.
+        now = datetime.datetime.utcnow()
+        effective_end = max(end_time, now + cfg.answer_duration)
+        delay = max((effective_end - now).total_seconds(), 0)
         self.cog._track_task(self.cog.closer.auto_close(area, delay))
 
         qinfo = QuestionInfo(
             message_id=sent_msg.id,
-            end_time=end_time,
+            end_time=effective_end,
             answers=correct_answers,
             frage=frage_text,
             category=question.get("category", "-"),

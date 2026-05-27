@@ -1225,21 +1225,40 @@ class WoWCog(ManagedTaskCog):
             sections.append(("**Ausrüstungs-Meilensteine** 🛡️", body))
 
         if activity.skill_events:
+            # Collapse to one line per (character, profession): show only the
+            # highest threshold reached, but sum the points across all crossed
+            # thresholds so the user still sees the full reward. Avoids digest
+            # spam when several thresholds are crossed at once.
+            grouped: dict[tuple[str, str], list[ProfessionSkillEvent]] = {}
+            for event in activity.skill_events:
+                grouped.setdefault(
+                    (event.character_key, event.profession_id), []
+                ).append(event)
+
+            collapsed: list[tuple[ProfessionSkillEvent, int]] = []
+            for events in grouped.values():
+                top = max(events, key=lambda e: e.threshold)
+                total_points = sum(e.points for e in events)
+                collapsed.append((top, total_points))
+
             body = []
-            for event in sorted(
-                activity.skill_events,
-                key=lambda item: (-item.threshold, item.character_name.casefold()),
+            for top, total_points in sorted(
+                collapsed,
+                key=lambda item: (
+                    -item[0].threshold,
+                    item[0].character_name.casefold(),
+                ),
             ):
                 tail_parts: list[str] = []
-                if event.discord_user_id is not None:
-                    tail_parts.append(f"<@{event.discord_user_id}>")
-                    if event.points > 0:
-                        tail_parts.append(f"(+{event.points} Champion-Punkte)")
+                if top.discord_user_id is not None:
+                    tail_parts.append(f"<@{top.discord_user_id}>")
+                    if total_points > 0:
+                        tail_parts.append(f"(+{total_points} Champion-Punkte)")
                 tail = f" - {' '.join(tail_parts)}" if tail_parts else ""
                 body.append(
-                    f"- **{event.character_name}** "
-                    f"({self._profession_name(event.profession_id)}): "
-                    f"hat Skill **{event.threshold}** erreicht{tail}"
+                    f"- **{top.character_name}** "
+                    f"({self._profession_name(top.profession_id)}): "
+                    f"hat Skill **{top.threshold}** erreicht{tail}"
                 )
             sections.append(("**Berufsskill-Meilensteine** 🧪", body))
 

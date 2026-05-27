@@ -91,6 +91,7 @@ def load_quiz_config(bot: commands.Bot):
 
     for area, cfg in areas.items():
         time_window = datetime.timedelta(minutes=cfg.get("window_timer", 15))
+        answer_duration = datetime.timedelta(minutes=cfg.get("answer_timer", 5))
         language = cfg.get("language", "de")
 
         dynamic_providers = {}
@@ -114,6 +115,7 @@ def load_quiz_config(bot: commands.Bot):
         bot.quiz_data[area] = QuizAreaConfig(
             channel_id=cfg.get("channel_id"),
             time_window=time_window,
+            answer_duration=answer_duration,
             language=language,
             active=cfg.get("active", False),
             activity_threshold=cfg.get("activity_threshold", 10),

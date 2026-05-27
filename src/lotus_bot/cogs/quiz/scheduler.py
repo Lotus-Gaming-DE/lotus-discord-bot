@@ -89,6 +89,16 @@ class QuizScheduler:
 
             cid = self.bot.quiz_data[self.area].channel_id
             self.bot.quiz_cog.awaiting_activity.pop(cid, None)
+            # A question asked late (after activity gating) may carry an
+            # end_time beyond window_end so it gets its full answer duration.
+            # Wait that out before closing instead of cutting it short.
             qinfo = self.bot.quiz_cog.current_questions.get(self.area)
             if qinfo:
-                await self.close_question(self.area, qinfo=qinfo, timed_out=True)
+                remaining = (
+                    qinfo.end_time - datetime.datetime.utcnow()
+                ).total_seconds()
+                if remaining > 0:
+                    await asyncio.sleep(remaining)
+                qinfo = self.bot.quiz_cog.current_questions.get(self.area)
+                if qinfo:
+                    await self.close_question(self.area, qinfo=qinfo, timed_out=True)

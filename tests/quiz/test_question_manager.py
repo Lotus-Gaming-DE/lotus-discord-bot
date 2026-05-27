@@ -108,6 +108,41 @@ async def test_ask_question_posts_and_tracks(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_ask_question_enforces_minimum_answer_duration():
+    """A question posted near window_end still gets >= answer_duration."""
+    channel = DummyChannel()
+    generator = DummyGenerator()
+    bot = DummyBot(channel, generator)
+    cog = DummyCog(bot)
+    manager = QuestionManager(cog)
+
+    # end_time is essentially "now" — simulates a post delayed by activity
+    # gating until the very end of the window.
+    now = datetime.datetime.utcnow()
+    answer_duration = bot.quiz_data["area"].answer_duration
+    await manager.ask_question("area", now)
+
+    stored_end = cog.current_questions["area"].end_time
+    # Floored to ~answer_duration from the post moment (allow scheduling slack).
+    assert stored_end >= now + answer_duration - datetime.timedelta(seconds=5)
+
+
+@pytest.mark.asyncio
+async def test_ask_question_keeps_late_window_end():
+    """When the window end is further out than the floor, keep window_end."""
+    channel = DummyChannel()
+    generator = DummyGenerator()
+    bot = DummyBot(channel, generator)
+    cog = DummyCog(bot)
+    manager = QuestionManager(cog)
+
+    far_end = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    await manager.ask_question("area", far_end)
+
+    assert cog.current_questions["area"].end_time == far_end
+
+
+@pytest.mark.asyncio
 async def test_ask_question_no_question():
     channel = DummyChannel()
     generator = DummyGenerator(question=None, use_default=False)
