@@ -72,6 +72,50 @@ def test_talent_description_disambiguates_class_and_tree(monkeypatch):
     assert question["source_url"].startswith("https://www.wowhead.com/classic/de/")
 
 
+def test_mask_helper_word_boundary():
+    """Helper must not partial-match — 'Heal' should not be masked in 'Healing'."""
+    provider = WoWQuestionProvider(DummyBot(), language="de")
+
+    masked = provider._mask_answer_in_text(
+        "Casts a Healing spell on the target.", ["Heal"]
+    )
+
+    # 'Heal' alone never appears as a standalone word, so the text is untouched.
+    assert masked == "Casts a Healing spell on the target."
+
+    # When the token IS a full word it gets masked.
+    masked2 = provider._mask_answer_in_text("Heal yourself for 100 HP.", ["Heal"])
+    assert "Heal " not in masked2
+    assert "[diese Fähigkeit]" in masked2
+
+
+def test_ability_description_masks_answer_token(monkeypatch):
+    """The Starshards/Sternensplitter case: the German description literally
+    contains the spell name. We must mask it so the question is not trivial."""
+    provider = WoWQuestionProvider(DummyBot(), language="de")
+
+    def pick_starshards(records):
+        for record in records:
+            spell = provider._spell_for(record)
+            if spell.get("id") == "spell.10797":
+                return record
+        return records[0]
+
+    monkeypatch.setattr("random.choice", pick_starshards)
+
+    question = provider.generate_ability_description()
+
+    assert question is not None
+    text = question["frage"]
+    assert "Sternensplitter" not in text
+    assert "[diese Fähigkeit]" in text
+    # The actual answer list still contains the spell name — only the
+    # rendered description text is masked. _answer_aliases lowercases.
+    answers = question["antwort"]
+    answers = answers if isinstance(answers, list) else [answers]
+    assert any("sternensplitter" in a.casefold() for a in answers)
+
+
 def test_missing_required_level_does_not_generate_broken_question(monkeypatch):
     data = load_wow_data("data/wow/classic_hc")
     data["spells"] = [

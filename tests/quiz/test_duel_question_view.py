@@ -99,3 +99,40 @@ async def test_on_timeout_sets_footer():
 
     assert view.message.edited["embed"].footer.text.startswith("⏰")
     view.stop()
+
+
+@pytest.mark.asyncio
+async def test_finish_adds_quelle_field_when_source_present():
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    view = DuelQuestionView(
+        challenger,
+        opponent,
+        ["yes"],
+        30,
+        source_url="https://www.wowhead.com/classic/spell=10797/starshards",
+        source_label="Wowhead - Sternensplitter",
+    )
+    view.message = DummyMessage()
+
+    await view._finish()
+
+    fields = {f.name: f.value for f in view.message.edited["embed"].fields}
+    assert "Quelle" in fields
+    assert "Wowhead - Sternensplitter" in fields["Quelle"]
+    assert "wowhead.com" in fields["Quelle"]
+    view.stop()
+
+
+@pytest.mark.asyncio
+async def test_finish_omits_quelle_field_without_source():
+    challenger = DummyMember(1)
+    opponent = DummyMember(2)
+    view = DuelQuestionView(challenger, opponent, ["yes"], 30)
+    view.message = DummyMessage()
+
+    await view._finish()
+
+    fields = {f.name: f.value for f in view.message.edited["embed"].fields}
+    assert "Quelle" not in fields
+    view.stop()

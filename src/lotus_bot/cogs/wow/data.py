@@ -354,6 +354,38 @@ class WoWData:
             for row in rows
         }
 
+    async def ghost_members(self) -> list[RosterMember]:
+        """Return roster members currently flagged as dead/ghost.
+
+        Sorted by level descending then name. Officers can use this to
+        clean up dead characters that are still in the guild roster.
+        """
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute("""
+            SELECT character_key, character_id, name, realm_slug, level, class_id,
+                   race_id, faction, guild_rank, is_ghost
+              FROM roster_snapshot
+             WHERE is_ghost = 1
+             ORDER BY level DESC, lower(name)
+            """)
+        rows = await cur.fetchall()
+        return [
+            RosterMember(
+                character_key=row[0],
+                character_id=row[1],
+                name=row[2],
+                realm_slug=row[3],
+                level=row[4],
+                class_id=row[5],
+                race_id=row[6],
+                faction=row[7] or "",
+                guild_rank=row[8],
+                is_ghost=bool(row[9]),
+            )
+            for row in rows
+        ]
+
     async def replace_snapshot(self, members: list[RosterMember]) -> None:
         await self.init_db()
         db = await self._get_db()

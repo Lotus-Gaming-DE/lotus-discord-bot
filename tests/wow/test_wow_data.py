@@ -62,6 +62,43 @@ async def test_parse_roster_member_rejects_incomplete_entry():
     assert parse_roster_member({"character": {"name": "NoRealm", "level": 1}}) is None
 
 
+async def test_ghost_members_filters_and_orders_by_level(tmp_path):
+    data = WoWData(str(tmp_path / "wow.db"))
+    alive = roster_member(name="Alive", key="id:alive")
+    ghost_high = RosterMember(
+        character_key="id:gh",
+        character_id=2,
+        name="HighGhost",
+        realm_slug="soulseeker",
+        level=42,
+        class_id=4,
+        race_id=8,
+        faction="HORDE",
+        guild_rank=1,
+        is_ghost=True,
+    )
+    ghost_low = RosterMember(
+        character_key="id:gl",
+        character_id=3,
+        name="LowGhost",
+        realm_slug="soulseeker",
+        level=12,
+        class_id=4,
+        race_id=8,
+        faction="HORDE",
+        guild_rank=1,
+        is_ghost=True,
+    )
+    await data.replace_snapshot([alive, ghost_low, ghost_high])
+
+    ghosts_list = await data.ghost_members()
+
+    # Only dead chars, sorted by level descending.
+    assert [g.name for g in ghosts_list] == ["HighGhost", "LowGhost"]
+    assert all(g.is_ghost for g in ghosts_list)
+    await data.close()
+
+
 async def test_claim_lifecycle_and_case_insensitive_lookup(tmp_path):
     data = WoWData(str(tmp_path / "wow.db"))
     member = roster_member()

@@ -693,7 +693,9 @@ class WoWCog(ManagedTaskCog):
                 # Already announced as "left guild" — don't re-notify even if
                 # the snapshot wasn't replaced (e.g. previous digest failed).
                 continue
-            state = await self._profile_life_state(member, session=session)
+            state, profile = await self._inspect_missing_profile(
+                member, session=session
+            )
             average_item_level = await self._member_average_item_level(
                 member.character_key
             )
@@ -707,7 +709,9 @@ class WoWCog(ManagedTaskCog):
                 notes.append(
                     OfficerNote(
                         member,
-                        f"{member.name} ist nicht mehr Teil von {self.guild_name}.",
+                        await self._format_officer_note(
+                            member, profile, average_item_level
+                        ),
                     )
                 )
             else:
@@ -718,11 +722,59 @@ class WoWCog(ManagedTaskCog):
                 )
         return deaths, notes
 
+    async def _format_officer_note(
+        self,
+        member: RosterMember,
+        profile: dict,
+        average_item_level: float | None,
+    ) -> str:
+        """Build an enriched officer-channel message for a left-the-guild char.
+
+        Includes identity (level/race/class/ilvl), the claim owner (if any)
+        and the character's current guild status so officers have full
+        context without having to look anything up.
+        """
+        header = f"**{member.name}** ist nicht mehr Teil von {self.guild_name}."
+
+        identity = self._format_roster_line(member)
+        if average_item_level is not None:
+            identity += f" (Ø iLvl: **{self._format_item_level(average_item_level)}**)"
+
+        claim = await self.data.get_claim(member.character_key)
+        if claim is not None:
+            status = "bestätigt" if claim.status == "verified" else "ungeprüft"
+            claim_line = f"Claim: <@{claim.discord_user_id}> ({status})"
+        else:
+            claim_line = "Claim: _nicht geclaimed_"
+
+        new_guild = self._profile_guild_name(profile)
+        if new_guild and new_guild.casefold() != self.guild_name.casefold():
+            guild_line = f"Aktuelle Gilde: **{new_guild}**"
+        else:
+            guild_line = "Aktuelle Gilde: _gildenlos_"
+
+        return "\n".join(
+            [header, f"• {identity}", f"• {claim_line}", f"• {guild_line}"]
+        )
+
     async def _member_average_item_level(self, character_key: str) -> float | None:
         snapshot = await self.data.gear_snapshot(character_key)
         return snapshot.average_item_level if snapshot else None
 
     async def _profile_life_state(self, member: RosterMember, *, session=None) -> str:
+        state, _ = await self._inspect_missing_profile(member, session=session)
+        return state
+
+    async def _inspect_missing_profile(
+        self, member: RosterMember, *, session=None
+    ) -> tuple[str, dict]:
+        """Return ``(life_state, profile)`` for a vanished roster member.
+
+        ``life_state`` is ``"dead"``, ``"alive"`` or ``"unknown"``. ``profile``
+        is the raw Blizzard payload (or an empty dict on failure) so callers
+        can extract extra context like the current guild without a second
+        API call.
+        """
         try:
             profile = await fetch_character_profile(
                 member.realm_slug,
@@ -737,7 +789,7 @@ class WoWCog(ManagedTaskCog):
                 member.name,
                 exc,
             )
-            return "unknown"
+            return "unknown", {}
         except Exception as exc:
             logger.info(
                 "[WoWCog] Profile inspection failed for %s: %s",
@@ -745,8 +797,9 @@ class WoWCog(ManagedTaskCog):
                 exc,
                 exc_info=True,
             )
-            return "unknown"
-        return "dead" if self._profile_is_dead(profile) else "alive"
+            return "unknown", {}
+        state = "dead" if self._profile_is_dead(profile) else "alive"
+        return state, profile or {}
 
     def _profile_is_dead(self, profile: dict) -> bool:
         return bool(
@@ -755,6 +808,13 @@ class WoWCog(ManagedTaskCog):
             or profile.get("dead")
             or profile.get("ghost")
         )
+
+    def _profile_guild_name(self, profile: dict) -> str | None:
+        guild = profile.get("guild") if profile else None
+        if not isinstance(guild, dict):
+            return None
+        name = guild.get("name")
+        return name if isinstance(name, str) and name.strip() else None
 
     async def _post_activity_digest(self, activity: ActivityDiff) -> int:
         channel_id = await self.get_announcement_channel_id()
@@ -1117,11 +1177,8 @@ class WoWCog(ManagedTaskCog):
         character = self._display_character(death.member)
         level = death.member.level
         gear = self._format_death_gear_suffix(death)
-        if not death.confirmed:
-            return (
-                f"**{character}** ist auf Level **{level}**{gear} nicht mehr im Roster auffindbar. "
-                "Die Hardcore-Reise endet hier — wahrscheinlich."
-            )
+        # Confirmed and unconfirmed cases are reported uniformly — both mean
+        # the character is gone for good.
         return (
             f"**{character}** ist auf Level **{level}**{gear} gefallen. "
             "Ruhe in Frieden. 🕯️"
@@ -1286,16 +1343,15 @@ class WoWCog(ManagedTaskCog):
                 activity.deaths,
                 key=lambda item: (-item.member.level, item.member.name.casefold()),
             ):
-                suffix = (
-                    ""
-                    if death.confirmed
-                    else " — *nicht mehr im Roster, wahrscheinlich auf Reise gegangen*"
-                )
                 gear = self._format_death_gear_suffix(death)
                 claim = await self.data.get_claim(death.member.character_key)
                 mention = f" - <@{claim.discord_user_id}>" if claim else ""
+                # Both confirmed (Blizzard profile says dead) and unconfirmed
+                # (vanished from roster) cases are listed equally — in
+                # practice the unconfirmed ones turned out to be dead too.
+                # The section header carries the framing for the whole list.
                 body.append(
-                    f"- {self._format_roster_line(death.member)}{gear}{mention}{suffix}"
+                    f"- {self._format_roster_line(death.member)}{gear}{mention}"
                 )
             sections.append(("**Heute nehmen wir Abschied** 🕯️", body))
 

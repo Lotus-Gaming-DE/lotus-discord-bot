@@ -1201,6 +1201,61 @@ async def test_disappeared_unknown_profile_creates_presumed_death(
     assert activity.deaths[0].confirmed is False
     death_line = cog._format_death_line(activity.deaths[0])
     assert "Level **42**" in death_line
+    # Confirmed and unconfirmed cases are reported uniformly as "gefallen" —
+    # no more hedging language.
+    assert "wahrscheinlich" not in death_line
+    assert "verschwunden" not in death_line
+    assert "gefallen" in death_line
+
+
+@pytest.mark.asyncio
+async def test_disappeared_alive_officer_note_includes_claim_and_new_guild(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    """The officer note for a left-the-guild char should expose level/class,
+    the claim owner (if any) and the character's current guild status."""
+    cog = await create_cog(tmp_path, patch_logged_task)
+    target = member(name="Voidok", level=42, class_id=5, race_id=5)
+    previous = {"id:1": target}
+    claim, _ = await cog.data.create_claim(target, 1234)
+
+    async def fake_profile(*args, **kwargs):
+        return {"is_ghost": False, "guild": {"name": "Random Pugs"}}
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", fake_profile)
+    activity = await cog._detect_activity(previous, [])
+
+    assert len(activity.officer_notes) == 1
+    msg = activity.officer_notes[0].message
+    # Header substring preserved for downstream tests.
+    assert "nicht mehr Teil" in msg
+    assert "Voidok" in msg
+    # Identity line: level + race + class.
+    assert "Level **42**" in msg
+    assert "Priester" in msg
+    # Claim and new guild are surfaced.
+    assert "<@1234>" in msg
+    assert "Random Pugs" in msg
+
+
+@pytest.mark.asyncio
+async def test_disappeared_alive_officer_note_guildless_and_unclaimed(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    previous = {"id:1": member(name="Voidok")}
+
+    async def fake_profile(*args, **kwargs):
+        # No 'guild' key → guildless.
+        return {"is_ghost": False}
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", fake_profile)
+    activity = await cog._detect_activity(previous, [])
+
+    msg = activity.officer_notes[0].message
+    assert "nicht mehr Teil" in msg
+    assert "_nicht geclaimed_" in msg
+    assert "_gildenlos_" in msg
 
 
 @pytest.mark.asyncio

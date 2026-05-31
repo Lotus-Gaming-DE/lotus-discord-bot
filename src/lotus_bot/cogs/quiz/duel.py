@@ -27,6 +27,9 @@ class DuelQuestionView(View):
         opponent: discord.Member,
         correct_answers: list[str],
         timeout: int,
+        *,
+        source_url: str | None = None,
+        source_label: str | None = None,
     ) -> None:
         """View handling question answers of a duel round."""
         super().__init__(timeout=timeout)
@@ -37,6 +40,8 @@ class DuelQuestionView(View):
         self.responses: dict[int, tuple[str, datetime.datetime]] = {}
         self.winner_id: int | None = None
         self.message: discord.Message | None = None
+        self.source_url = source_url
+        self.source_label = source_label
         logger.debug(
             f"[DuelQuestionView] init challenger={challenger.id} opponent={opponent.id}"
         )
@@ -101,6 +106,13 @@ class DuelQuestionView(View):
                 else:
                     answers.append(f"{member.display_name}: –")
             embed.add_field(name="Antworten", value="\n".join(answers), inline=False)
+            if self.source_url:
+                label = self.source_label or "Quelle"
+                embed.add_field(
+                    name="Quelle",
+                    value=f"[{label}]({self.source_url})",
+                    inline=False,
+                )
             footer = "⏰ Zeit abgelaufen!" if timed_out else "Runde beendet"
             embed.set_footer(text=footer)
             await self.message.edit(embed=embed, view=self)
@@ -383,7 +395,17 @@ class QuizDuelGame:
         embed = discord.Embed(
             title=title, description=question["frage"], color=discord.Color.blue()
         )
-        view = DuelQuestionView(self.challenger, self.opponent, answers, self.timeout)
+        difficulty = question.get("difficulty")
+        if difficulty:
+            embed.add_field(name="Schwierigkeit", value=difficulty, inline=False)
+        view = DuelQuestionView(
+            self.challenger,
+            self.opponent,
+            answers,
+            self.timeout,
+            source_url=question.get("source_url"),
+            source_label=question.get("source_label"),
+        )
         msg = await self.thread.send(embed=embed, view=view)
         view.message = msg
         await view.wait()

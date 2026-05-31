@@ -1,12 +1,18 @@
 import hashlib
 import random
-from typing import Any
+import re
+from typing import Any, Iterable
 
 from lotus_bot.log_setup import get_logger
 
 from ..utils import create_permutations_list
 from .base import DynamicQuestionProvider, question_matches_context
 from .wow_audit import has_quality_flag
+
+# Placeholder used when an answer token appears in a description text — keeps
+# ability_description / racial_trait_description questions from leaking the
+# answer (e.g. the German spell "Sternensplitter" appears in its own tooltip).
+_DESCRIPTION_ANSWER_MASK = "[diese Fähigkeit]"
 
 logger = get_logger(__name__)
 
@@ -208,6 +214,37 @@ class WoWQuestionProvider(DynamicQuestionProvider):
             name.casefold().split()
         )
 
+    def _mask_answer_in_text(self, text: str, answer_tokens: Iterable[Any]) -> str:
+        """Replace any occurrence of an answer token in ``text`` with a mask.
+
+        Used for description-based questions where the German tooltip often
+        contains the spell name verbatim (e.g. "Lässt Sternensplitter …
+        regnen" for the spell "Sternensplitter"), making the answer trivial.
+        Case-insensitive with word boundaries so e.g. "Heal" does not match
+        inside "Healing".
+        """
+        if not text:
+            return text
+        seen: set[str] = set()
+        # Flatten: tokens can be strings or lists of localised aliases.
+        flat: list[str] = []
+        for token in answer_tokens:
+            if isinstance(token, str):
+                flat.append(token)
+            elif isinstance(token, (list, tuple, set)):
+                flat.extend(t for t in token if isinstance(t, str))
+        # Longest first so multi-word tokens win over their prefixes.
+        flat.sort(key=len, reverse=True)
+        masked = text
+        for raw in flat:
+            token = raw.strip()
+            if not token or token.casefold() in seen:
+                continue
+            seen.add(token.casefold())
+            pattern = re.compile(rf"\b{re.escape(token)}\b", re.IGNORECASE)
+            masked = pattern.sub(_DESCRIPTION_ANSWER_MASK, masked)
+        return masked
+
     def _source_name(self, drop: dict[str, Any]) -> str:
         return self._text(drop.get("source_name"), require_lang=True)
 
@@ -365,6 +402,14 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         trait = random.choice(records)
         race = self._race_for(trait)
         spell = self._spell_for(trait)
+        race_names = race.get("name") or {}
+        answer_tokens = [
+            self._text(race.get("name")),
+            race_names.get("de") if isinstance(race_names, dict) else None,
+            race_names.get("en") if isinstance(race_names, dict) else None,
+        ]
+        raw_description = self._text(spell.get("description"), require_lang=True)
+        masked_description = self._mask_answer_in_text(raw_description, answer_tokens)
         return self._question(
             "racial_trait_description",
             trait["id"],
@@ -372,7 +417,7 @@ class WoWQuestionProvider(DynamicQuestionProvider):
             answers=[self._text(race.get("name"))],
             difficulty="medium",
             source=spell,
-            description=self._text(spell.get("description"), require_lang=True),
+            description=masked_description,
         )
 
     def generate_racial_trait_translation(self):
@@ -589,17 +634,20 @@ class WoWQuestionProvider(DynamicQuestionProvider):
         ability = random.choice(records)
         spell = self._spell_for(ability)
         cls = self._class_for(ability)
+        answer_tokens = [
+            self._text(spell.get("name")),
+            ability.get("answers", {}).get("name"),
+        ]
+        raw_description = self._text(spell.get("description"), require_lang=True)
+        masked_description = self._mask_answer_in_text(raw_description, answer_tokens)
         return self._question(
             "ability_description",
             ability["id"],
             category="Klassenfähigkeiten",
-            answers=[
-                self._text(spell.get("name")),
-                ability.get("answers", {}).get("name"),
-            ],
+            answers=answer_tokens,
             difficulty="medium",
             source=spell,
-            description=self._text(spell.get("description"), require_lang=True),
+            description=masked_description,
             class_name=self._text(cls.get("name"), require_lang=True),
         )
 

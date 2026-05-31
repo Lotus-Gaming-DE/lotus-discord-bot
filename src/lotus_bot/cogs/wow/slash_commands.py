@@ -398,6 +398,41 @@ async def claim_remove(interaction: discord.Interaction, char: str):
     )
 
 
+@wow_group.command(
+    name="ghosts",
+    description="Listet tote Chars, die noch in der Gilde sind (nur Mods)",
+)
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+async def ghosts(interaction: discord.Interaction):
+    """List dead characters that are still members of the guild.
+
+    Mod-only roster cleanup helper: each entry shows level/race/class and
+    the claim owner (if any), so officers can kick them in-game.
+    """
+    logger.info(f"/wow ghosts by {interaction.user}")
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    ghost_members = await cog.data.ghost_members()
+    if not ghost_members:
+        await interaction.response.send_message(
+            "✅ Aktuell sind keine toten Chars mehr im Roster.", ephemeral=True
+        )
+        return
+
+    lines = [f"🕯️ **Geister im Roster** ({len(ghost_members)})"]
+    for member in ghost_members:
+        claim = await cog.data.get_claim(member.character_key)
+        owner = f" — <@{claim.discord_user_id}>" if claim else " — _nicht geclaimed_"
+        lines.append(f"- {cog._format_roster_line(member)}{owner}")
+    await interaction.response.send_message("\n".join(lines), ephemeral=True)
+
+
 gbank_group = app_commands.Group(
     name="gbank",
     description="Verwaltet Gildenbank-Chars",

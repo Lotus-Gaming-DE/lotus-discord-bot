@@ -20,6 +20,7 @@ from lotus_bot.cogs.wow.slash_commands import (
     crafting_remove,
     crafting_search,
     crafting_set,
+    ghosts,
     recipes_profession_autocomplete,
     roster_char_autocomplete,
     scan,
@@ -142,6 +143,10 @@ class DummyCog:
     def format_crafting_search_result(self, result):
         return result.message
 
+    def _format_roster_line(self, member, level=None):
+        lvl = level or member.level
+        return f"**{member.name}**, Level **{lvl}**"
+
 
 def roster_member(name="Lyxendra"):
     return RosterMember(
@@ -210,9 +215,13 @@ class DummyData:
         self.claims = []
         self.professions = []
         self.removed = []
+        self.ghosts: list = []
 
     async def get_snapshot(self):
         return self.snapshot
+
+    async def ghost_members(self):
+        return list(self.ghosts)
 
     async def find_roster_member_by_name(self, char):
         if char.lower() == self.member.name.lower():
@@ -509,6 +518,43 @@ async def test_claim_remove_removes_claim():
 
     assert cog.data.removed == ["id:1"]
     assert "entfernt" in inter.response.messages[0][0]
+
+
+async def test_ghosts_empty_reports_clean_roster():
+    cog = DummyCog()
+    cog.data.ghosts = []
+    inter = DummyInteraction(cog, manage_guild=True)
+    await ghosts.callback(inter)
+
+    msg, kwargs = inter.response.messages[0]
+    assert "keine toten" in msg
+    assert kwargs.get("ephemeral") is True
+
+
+async def test_ghosts_lists_dead_members_with_claim_owner():
+    cog = DummyCog()
+    g1 = roster_member("Eisprinz")
+    g1.character_key = "id:g1"
+    g1.is_ghost = True
+    g2 = roster_member("Ohkaputt")
+    g2.character_key = "id:g2"
+    g2.is_ghost = True
+    cog.data.ghosts = [g1, g2]
+    cog.data.claim = character_claim(name="Eisprinz", key="id:g1", user_id=123)
+    inter = DummyInteraction(cog, manage_guild=True)
+
+    await ghosts.callback(inter)
+
+    msg, kwargs = inter.response.messages[0]
+    assert "Geister im Roster" in msg
+    assert "(2)" in msg
+    assert "Eisprinz" in msg
+    assert "Ohkaputt" in msg
+    # DummyData.get_claim returns the single stored claim for both — that's
+    # OK for this happy-path test; we just want to verify the owner line
+    # renders.
+    assert "<@123>" in msg
+    assert kwargs.get("ephemeral") is True
 
 
 async def test_crafting_set_saves_profile():
