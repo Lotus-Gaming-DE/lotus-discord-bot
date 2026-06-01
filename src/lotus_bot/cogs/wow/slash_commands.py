@@ -430,7 +430,37 @@ async def ghosts(interaction: discord.Interaction):
         claim = await cog.data.get_claim(member.character_key)
         owner = f" — <@{claim.discord_user_id}>" if claim else " — _nicht geclaimed_"
         lines.append(f"- {cog._format_roster_line(member)}{owner}")
-    await interaction.response.send_message("\n".join(lines), ephemeral=True)
+
+    # Discord caps message content at 2000 chars. Chunk the list so a guild
+    # with many ghosts doesn't blow past the limit.
+    chunks = _pack_lines_into_chunks(lines)
+    await interaction.response.send_message(chunks[0], ephemeral=True)
+    for extra in chunks[1:]:
+        await interaction.followup.send(extra, ephemeral=True)
+
+
+def _pack_lines_into_chunks(lines: list[str], limit: int = 1900) -> list[str]:
+    """Pack ``lines`` into messages of at most ``limit`` characters each.
+
+    Joins lines with newlines greedily; a single oversized line is sent on
+    its own (Discord will truncate it). Default ``limit`` 1900 leaves some
+    headroom under Discord's 2000-char content cap.
+    """
+    chunks: list[str] = []
+    current: list[str] = []
+    current_len = 0
+    for line in lines:
+        added = len(line) + (1 if current else 0)  # account for "\n" join
+        if current and current_len + added > limit:
+            chunks.append("\n".join(current))
+            current = []
+            current_len = 0
+            added = len(line)
+        current.append(line)
+        current_len += added
+    if current:
+        chunks.append("\n".join(current))
+    return chunks
 
 
 gbank_group = app_commands.Group(

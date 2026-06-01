@@ -531,6 +531,36 @@ async def test_ghosts_empty_reports_clean_roster():
     assert kwargs.get("ephemeral") is True
 
 
+async def test_ghosts_chunks_when_list_exceeds_message_limit():
+    """A large guild can have many ghosts — output must respect Discord's
+    2000-char limit by sending follow-up messages."""
+    cog = DummyCog()
+    # Forge ~120 ghosts; each line is ~50 chars → ~6000 chars total → 4+ chunks.
+    ghost_list = []
+    for i in range(120):
+        g = roster_member(name=f"Geist{i:03d}")
+        g.character_key = f"id:g{i:03d}"
+        g.is_ghost = True
+        ghost_list.append(g)
+    cog.data.ghosts = ghost_list
+    inter = DummyInteraction(cog, manage_guild=True)
+
+    await ghosts.callback(inter)
+
+    # First message via response, the rest via followup.
+    assert len(inter.response.messages) == 1
+    assert inter.followup.messages, "expected followup chunks"
+    # All chunks stay under Discord's 2000-char cap.
+    first = inter.response.messages[0][0]
+    assert len(first) <= 2000
+    for msg, _ in inter.followup.messages:
+        assert len(msg) <= 2000
+    # Every ghost appears somewhere across all chunks.
+    blob = first + "\n" + "\n".join(m for m, _ in inter.followup.messages)
+    assert "Geist000" in blob
+    assert "Geist119" in blob
+
+
 async def test_ghosts_lists_dead_members_with_claim_owner():
     cog = DummyCog()
     g1 = roster_member("Eisprinz")
