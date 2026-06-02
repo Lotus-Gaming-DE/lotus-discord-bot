@@ -72,6 +72,29 @@ def test_talent_description_disambiguates_class_and_tree(monkeypatch):
     assert question["source_url"].startswith("https://www.wowhead.com/classic/de/")
 
 
+def test_racial_trait_description_accepts_both_languages(monkeypatch):
+    """The Human 'Diplomacy' case: a player answering 'human' should be
+    accepted even though the prompt is in German. Race-name answers must
+    carry both DE and EN aliases."""
+    provider = WoWQuestionProvider(DummyBot(), language="de")
+
+    def pick_diplomacy(records):
+        for record in records:
+            spell = provider._spell_for(record)
+            if spell.get("id") == "spell.20599":
+                return record
+        return records[0]
+
+    monkeypatch.setattr("random.choice", pick_diplomacy)
+
+    question = provider.generate_racial_trait_description()
+
+    assert question is not None
+    answers = question["antwort"]
+    assert "mensch" in answers
+    assert "human" in answers
+
+
 def test_mask_helper_word_boundary():
     """Helper must not partial-match — 'Heal' should not be masked in 'Healing'."""
     provider = WoWQuestionProvider(DummyBot(), language="de")
