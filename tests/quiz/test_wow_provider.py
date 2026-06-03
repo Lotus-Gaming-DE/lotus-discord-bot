@@ -72,6 +72,48 @@ def test_talent_description_disambiguates_class_and_tree(monkeypatch):
     assert question["source_url"].startswith("https://www.wowhead.com/classic/de/")
 
 
+def test_item_subclass_plate_accepts_german_alias(monkeypatch):
+    """The Plattenrüstung case: 'plate' item must accept the German
+    label AND the short alias 'Platte', not just the raw English key."""
+    provider = WoWQuestionProvider(DummyBot(), language="de")
+
+    def pick_plate(records):
+        for record in records:
+            if record.get("item_subclass") == "plate":
+                return record
+        return records[0]
+
+    monkeypatch.setattr("random.choice", pick_plate)
+
+    question = provider.generate_item_subclass()
+
+    assert question is not None
+    answers = question["antwort"]
+    assert "plate" in answers
+    assert "plattenrüstung" in answers
+    assert "platte" in answers
+
+
+def test_item_subclass_labels_cover_all_live_subclasses():
+    """Guard against silent regressions: every item_subclass that actually
+    appears in live items.json data must have a German label."""
+    from lotus_bot.cogs.quiz.area_providers.wow import ITEM_SUBCLASS_LABELS
+    from lotus_bot.bot import load_wow_data
+
+    data = load_wow_data("data/wow/classic_hc")
+    live_subclasses = {
+        item["item_subclass"]
+        for item in data.get("items", [])
+        if item.get("item_subclass")
+    }
+    missing = [sub for sub in live_subclasses if sub not in ITEM_SUBCLASS_LABELS["de"]]
+    assert missing == [], f"item subclasses missing a German label: {missing}"
+    missing_en = [
+        sub for sub in live_subclasses if sub not in ITEM_SUBCLASS_LABELS["en"]
+    ]
+    assert missing_en == [], f"item subclasses missing an English label: {missing_en}"
+
+
 def test_racial_trait_description_accepts_both_languages(monkeypatch):
     """The Human 'Diplomacy' case: a player answering 'human' should be
     accepted even though the prompt is in German. Race-name answers must

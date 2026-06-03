@@ -65,15 +65,101 @@ QUALITY_LABELS = {
 
 ITEM_SUBCLASS_LABELS = {
     "de": {
+        # Armor
+        "plate": "Plattenrüstung",
+        "mail": "Kettenrüstung",
+        "leather": "Lederrüstung",
+        "cloth": "Stoffrüstung",
+        "cloak": "Umhang",
+        "shield": "Schild",
+        "off_hand": "Schildhand",
+        # Weapons
+        "sword": "Schwert",
+        "mace": "Streitkolben",
+        "axe": "Axt",
         "dagger": "Dolch",
+        "staff": "Stab",
+        "polearm": "Stangenwaffe",
+        "bow": "Bogen",
+        "crossbow": "Armbrust",
+        "gun": "Schusswaffe",
+        "wand": "Zauberstab",
+        "fist_weapon": "Faustwaffe",
+        "thrown": "Wurfwaffe",
+        # Accessories
+        "ring": "Ring",
+        "amulet": "Halskette",
+        "trinket": "Schmuckstück",
+        # Consumables
         "potion": "Trank",
+        "elixir": "Elixier",
+        "flask": "Phiole",
+        "food_drink": "Essen",
+        "consumable": "Verbrauchsgegenstand",
+        # Trade goods
+        "engineering": "Ingenieurskunst",
+        "blacksmithing": "Schmiedekunst",
+        "enchanting": "Verzauberkunst",
+        "mining": "Bergbau",
         "miscellaneous": "Verschiedenes",
     },
     "en": {
+        # Armor
+        "plate": "Plate",
+        "mail": "Mail",
+        "leather": "Leather",
+        "cloth": "Cloth",
+        "cloak": "Cloak",
+        "shield": "Shield",
+        "off_hand": "Off-Hand",
+        # Weapons
+        "sword": "Sword",
+        "mace": "Mace",
+        "axe": "Axe",
         "dagger": "Dagger",
+        "staff": "Staff",
+        "polearm": "Polearm",
+        "bow": "Bow",
+        "crossbow": "Crossbow",
+        "gun": "Gun",
+        "wand": "Wand",
+        "fist_weapon": "Fist Weapon",
+        "thrown": "Thrown",
+        # Accessories
+        "ring": "Ring",
+        "amulet": "Amulet",
+        "trinket": "Trinket",
+        # Consumables
         "potion": "Potion",
+        "elixir": "Elixir",
+        "flask": "Flask",
+        "food_drink": "Food",
+        "consumable": "Consumable",
+        # Trade goods
+        "engineering": "Engineering",
+        "blacksmithing": "Blacksmithing",
+        "enchanting": "Enchanting",
+        "mining": "Mining",
         "miscellaneous": "Miscellaneous",
     },
+}
+
+# Extra forms players may write — beyond the primary DE/EN labels.
+# Lower-case-insensitive at match time via _answer_aliases.
+ITEM_SUBCLASS_ALIASES = {
+    "plate": ["Platte"],
+    "mail": ["Kette"],
+    "leather": ["Leder"],
+    "cloth": ["Stoff"],
+    "amulet": ["Necklace", "Amulett"],
+    "food_drink": [
+        "Drink",
+        "Trinken",
+        "Nahrung",
+        "Food and Drink",
+        "Essen und Trinken",
+    ],
+    "off_hand": ["Off Hand"],  # DE label is already "Schildhand"
 }
 
 LEARNED_FROM_LABELS = {
@@ -1001,15 +1087,20 @@ class WoWQuestionProvider(DynamicQuestionProvider):
             return None
         item = random.choice(records)
         subclass = item["item_subclass"]
+        # Accept the raw key (fallback for new subclasses without labels),
+        # both localised labels, plus any extra aliases. _answer_aliases
+        # lowercases + dedups downstream.
+        answers: list[str] = [subclass]
+        for lang in ("de", "en"):
+            label = ITEM_SUBCLASS_LABELS[lang].get(subclass)
+            if label:
+                answers.append(label)
+        answers.extend(ITEM_SUBCLASS_ALIASES.get(subclass, []))
         return self._question(
             "item_subclass",
             item["id"],
             category="Items",
-            answers=[
-                subclass,
-                ITEM_SUBCLASS_LABELS["de"].get(subclass, subclass),
-                ITEM_SUBCLASS_LABELS["en"].get(subclass, subclass),
-            ],
+            answers=answers,
             difficulty="medium",
             source=item,
             item_name=self._text(item.get("name"), require_lang=True),

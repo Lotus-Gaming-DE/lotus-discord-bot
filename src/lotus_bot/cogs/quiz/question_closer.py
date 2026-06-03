@@ -19,8 +19,20 @@ class QuestionCloser:
         winner: discord.User | None = None,
         correct_answer: str | None = None,
     ) -> None:
+        """Mark a question as closed and update the original message.
+
+        Idempotent: concurrent callers (``auto_close``, scheduler trailing
+        close, winner callback) all converge at ``qinfo.end_time``. The
+        atomic ``dict.pop`` at the top guarantees that exactly one caller
+        edits the embed — every other call is a no-op. This kills the
+        race that previously caused "Richtige Antwort" and "Quelle" to
+        appear twice in the closed embed.
+        """
         logger = get_logger(__name__, area=area)
-        """Mark a question as closed and update the original message."""
+        if self.bot.quiz_cog.current_questions.pop(area, None) is None:
+            logger.debug(f"[Closer] Question for '{area}' already closed.")
+            return
+
         cfg = self.bot.quiz_data[area]
         channel = self.bot.get_channel(cfg.channel_id)
 
@@ -60,7 +72,6 @@ class QuestionCloser:
                 exc_info=True,
             )
 
-        self.bot.quiz_cog.current_questions.pop(area, None)
         await self.state.clear_active_question(area)
         self.bot.quiz_cog.tracker.set_initialized(cfg.channel_id)
 

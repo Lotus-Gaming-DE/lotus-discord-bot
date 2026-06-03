@@ -106,3 +106,79 @@ async def test_close_question_adds_user_answer():
     assert state.cleared == ["area"]
     assert tracker.inits == [123]
     assert "area" not in bot.quiz_cog.current_questions
+
+
+@pytest.mark.asyncio
+async def test_close_question_is_idempotent_under_double_call():
+    """Reproduces the prod bug: when auto_close and the scheduler trailing
+    close fire concurrently, the embed had two 'Richtige Antwort' fields.
+    Atomic pop-first must make the second call a no-op."""
+    message = DummyMessage()
+    channel = DummyChannel(message)
+    tracker = DummyTracker()
+    bot = DummyBot(channel, tracker)
+    state = DummyState()
+    closer = QuestionCloser(bot=bot, state=state)
+
+    qinfo = QuestionInfo(
+        message_id=1,
+        end_time=datetime.datetime.utcnow(),
+        answers=["yes"],
+        frage="f",
+        source_url="https://www.wowhead.com/classic/spell=1856/vanish",
+        source_label="Wowhead - Verschwinden",
+    )
+    bot.quiz_cog.current_questions["area"] = qinfo
+
+    # First close: edits embed, pops dict.
+    await closer.close_question(area="area", qinfo=qinfo, timed_out=True)
+    first_edit = message.edited
+    assert first_edit is not None
+    fields = [f.name for f in first_edit["embed"].fields]
+    assert fields.count("Richtige Antwort") == 1
+    assert fields.count("Quelle") == 1
+
+    # Reset to detect any further edits.
+    message.edited = None
+
+    # Second close (simulates the racing path) — must be a complete no-op.
+    await closer.close_question(area="area", qinfo=qinfo, timed_out=True)
+    assert message.edited is None, "second call must not edit the embed"
+    # state cleared exactly once.
+    assert state.cleared == ["area"]
+    assert tracker.inits == [123]
+
+
+@pytest.mark.asyncio
+async def test_close_question_winner_then_auto_close_is_idempotent():
+    """Belt-and-suspenders: winner path closes first, then auto_close
+    fires a few ms later. The second close must be a no-op."""
+    message = DummyMessage()
+    channel = DummyChannel(message)
+    tracker = DummyTracker()
+    bot = DummyBot(channel, tracker)
+    state = DummyState()
+    closer = QuestionCloser(bot=bot, state=state)
+
+    qinfo = QuestionInfo(
+        message_id=1,
+        end_time=datetime.datetime.utcnow(),
+        answers=["yes"],
+        frage="f",
+    )
+    bot.quiz_cog.current_questions["area"] = qinfo
+
+    # Winner path closes.
+    await closer.close_question(
+        area="area",
+        qinfo=qinfo,
+        winner=DummyUser("Tester"),
+        correct_answer="ja",
+    )
+    assert message.edited is not None
+    message.edited = None
+
+    # auto_close re-fires (race) — must not edit again.
+    await closer.close_question(area="area", qinfo=qinfo, timed_out=True)
+    assert message.edited is None
+    assert state.cleared == ["area"]
