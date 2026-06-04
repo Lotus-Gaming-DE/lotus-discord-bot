@@ -603,15 +603,33 @@ class WoWQuestionProvider(DynamicQuestionProvider):
             return None
         talent = random.choice(records)
         spell = self._spell_for(talent)
-        cls = self._class_for(talent)
+        talent_name = self._text(spell.get("name"), require_lang=True)
+        # Several Classic talents share a name across classes (18 in current
+        # data, e.g. "Schwert-Spezialisierung" exists for Warrior AND Rogue,
+        # "Abwehr" for 4 classes). The question text gives no class hint, so
+        # accept any class that has a same-named talent.
+        same_name_class_ids: set[str] = set()
+        for other in records:
+            other_spell = self._spell_for(other)
+            other_name = self._text(other_spell.get("name"), require_lang=True)
+            if other_name == talent_name:
+                cid = other.get("class_id")
+                if cid:
+                    same_name_class_ids.add(cid)
+        answers: list[Any] = []
+        for cid in sorted(same_name_class_ids):
+            cls = self._get("classes", cid)
+            name = cls.get("name")
+            if name:
+                answers.append(name)
         return self._question(
             "talent_class",
             talent["id"],
             category="Talente",
-            answers=[cls.get("name")],
+            answers=answers,
             difficulty="medium",
             source=spell,
-            talent_name=self._text(spell.get("name"), require_lang=True),
+            talent_name=talent_name,
         )
 
     def generate_talent_description(self):

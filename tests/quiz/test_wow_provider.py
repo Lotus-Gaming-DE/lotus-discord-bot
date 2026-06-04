@@ -72,6 +72,36 @@ def test_talent_description_disambiguates_class_and_tree(monkeypatch):
     assert question["source_url"].startswith("https://www.wowhead.com/classic/de/")
 
 
+def test_talent_class_accepts_all_classes_with_same_named_talent(monkeypatch):
+    """The Schwert-Spezialisierung case: Warrior AND Rogue have a talent
+    with that name. The question gives no class hint, so both must be
+    accepted as correct answers."""
+    provider = WoWQuestionProvider(DummyBot(), language="de")
+
+    def pick_warrior_sword_spec(records):
+        # Pick the Warrior 'Schwert-Spezialisierung' specifically.
+        for record in records:
+            if record.get("class_id") != "warrior":
+                continue
+            spell = provider._spell_for(record)
+            name = (spell.get("name") or {}).get("de") or ""
+            if "Schwert-Spezialisierung" in name:
+                return record
+        return records[0]
+
+    monkeypatch.setattr("random.choice", pick_warrior_sword_spec)
+
+    question = provider.generate_talent_class()
+
+    assert question is not None
+    answers = question["antwort"]
+    # Both classes must be valid answers, in both languages.
+    assert "krieger" in answers
+    assert "warrior" in answers
+    assert "schurke" in answers
+    assert "rogue" in answers
+
+
 def test_item_subclass_plate_accepts_german_alias(monkeypatch):
     """The Plattenrüstung case: 'plate' item must accept the German
     label AND the short alias 'Platte', not just the raw English key."""
