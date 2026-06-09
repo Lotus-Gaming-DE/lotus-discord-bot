@@ -350,12 +350,12 @@ async def test_panel_publish_updates_existing_message(tmp_path, patch_logged_tas
 
 
 @pytest.mark.asyncio
-async def test_panel_hub_layout_has_six_sections(tmp_path, patch_logged_task):
-    """V2 hub: one Container with six Sections (Deine Chars, Suchen,
-    Gildenbank, Cooldown, Hilfe, Champion). Each Section's accessory is a
-    clickable Button with a stable custom_id so persistence survives bot
-    restarts. (The 'Event erstellen' block is a plain TextDisplay with an
-    inline command mention, not a Section.)"""
+async def test_panel_hub_layout_has_seven_sections(tmp_path, patch_logged_task):
+    """V2 hub: one Container with seven Sections (Deine Chars, Suchen,
+    Gildenbank, Cooldown, Hilfe, Champion, Raider). Each Section's
+    accessory is a clickable Button with a stable custom_id so persistence
+    survives bot restarts. (The 'Event erstellen' block is a plain
+    TextDisplay with an inline command mention, not a Section.)"""
     cog = await create_cog(tmp_path, patch_logged_task)
     hub = wow_cog_mod.WoWPanelLayoutView(cog)
 
@@ -363,7 +363,7 @@ async def test_panel_hub_layout_has_six_sections(tmp_path, patch_logged_task):
     container = hub.children[0]
     assert isinstance(container, discord.ui.Container)
     sections = [c for c in container.children if isinstance(c, discord.ui.Section)]
-    assert len(sections) == 6
+    assert len(sections) == 7
     custom_ids = {section.accessory.custom_id for section in sections}
     assert custom_ids == {
         "wow_panel_v2:chars",
@@ -372,7 +372,135 @@ async def test_panel_hub_layout_has_six_sections(tmp_path, patch_logged_task):
         "wow_panel_v2:cooldown",
         "wow_panel_v2:help",
         "wow_panel_v2:champion",
+        "wow_panel_v2:raider",
     }
+
+
+class _DummyRaiderMember:
+    def __init__(self, roles=None):
+        self.id = 42
+        self.roles = list(roles or [])
+        self.added = []
+        self.removed = []
+
+    async def add_roles(self, role, *, reason=None):
+        self.added.append(role)
+        self.roles.append(role)
+
+    async def remove_roles(self, role, *, reason=None):
+        self.removed.append(role)
+        self.roles = [r for r in self.roles if r is not role]
+
+
+class _DummyRaiderGuild:
+    def __init__(self, role, member):
+        self._role = role
+        self._member = member
+
+    def get_role(self, rid):
+        return self._role if rid == wow_cog_mod.RAIDER_ROLE_ID else None
+
+    def get_member(self, uid):
+        return self._member
+
+
+class _DummyRaiderResponse:
+    def __init__(self):
+        self.deferred = False
+        self.messages = []
+
+    async def defer(self, *, ephemeral=False):
+        self.deferred = True
+
+    async def send_message(self, msg=None, **kwargs):
+        self.messages.append((msg, kwargs))
+
+
+class _DummyRaiderFollowup:
+    def __init__(self):
+        self.messages = []
+
+    async def send(self, msg=None, **kwargs):
+        self.messages.append((msg, kwargs))
+
+
+class _DummyRaiderInteraction:
+    def __init__(self, member, guild):
+        self.user = member
+        self.guild = guild
+        self.response = _DummyRaiderResponse()
+        self.followup = _DummyRaiderFollowup()
+
+
+@pytest.mark.asyncio
+async def test_raider_toggle_adds_role_when_missing(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    hub = wow_cog_mod.WoWPanelLayoutView(cog)
+    role = type("Role", (), {"id": wow_cog_mod.RAIDER_ROLE_ID, "name": "Raider"})()
+    member = _DummyRaiderMember(roles=[])
+    interaction = _DummyRaiderInteraction(member, _DummyRaiderGuild(role, member))
+
+    await hub._toggle_raider_role(interaction)
+
+    assert interaction.response.deferred is True
+    assert member.added == [role]
+    assert member.removed == []
+    msg, _ = interaction.followup.messages[0]
+    assert "hinzugefügt" in msg
+
+
+@pytest.mark.asyncio
+async def test_raider_toggle_removes_role_when_present(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    hub = wow_cog_mod.WoWPanelLayoutView(cog)
+    role = type("Role", (), {"id": wow_cog_mod.RAIDER_ROLE_ID, "name": "Raider"})()
+    member = _DummyRaiderMember(roles=[role])
+    interaction = _DummyRaiderInteraction(member, _DummyRaiderGuild(role, member))
+
+    await hub._toggle_raider_role(interaction)
+
+    assert member.removed == [role]
+    assert member.added == []
+    msg, _ = interaction.followup.messages[0]
+    assert "entfernt" in msg
+
+
+@pytest.mark.asyncio
+async def test_raider_toggle_handles_missing_role(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    hub = wow_cog_mod.WoWPanelLayoutView(cog)
+    member = _DummyRaiderMember(roles=[])
+    # Guild returns None for the role lookup.
+    guild = _DummyRaiderGuild(role=None, member=member)
+    interaction = _DummyRaiderInteraction(member, guild)
+
+    await hub._toggle_raider_role(interaction)
+
+    assert member.added == [] and member.removed == []
+    msg, _ = interaction.followup.messages[0]
+    assert "nicht gefunden" in msg
+
+
+@pytest.mark.asyncio
+async def test_raider_toggle_handles_forbidden(tmp_path, patch_logged_task):
+    """Reviewer-flagged branch coverage: bot lacks Manage Roles permission."""
+    cog = await create_cog(tmp_path, patch_logged_task)
+    hub = wow_cog_mod.WoWPanelLayoutView(cog)
+    role = type("Role", (), {"id": wow_cog_mod.RAIDER_ROLE_ID, "name": "Raider"})()
+
+    class ForbiddenMember(_DummyRaiderMember):
+        async def add_roles(self, role, *, reason=None):
+            response = type("R", (), {"status": 403, "reason": "Forbidden"})()
+            raise discord.Forbidden(response, {"message": "Missing Permissions"})
+
+    member = ForbiddenMember(roles=[])
+    interaction = _DummyRaiderInteraction(member, _DummyRaiderGuild(role, member))
+
+    await hub._toggle_raider_role(interaction)
+
+    msg, _ = interaction.followup.messages[0]
+    assert "Berechtigung" in msg
+    assert "Manage Roles" in msg
 
 
 @pytest.mark.asyncio
@@ -1217,6 +1345,8 @@ async def test_disappeared_alive_officer_note_includes_claim_and_new_guild(
     cog = await create_cog(tmp_path, patch_logged_task)
     target = member(name="Voidok", level=42, class_id=5, race_id=5)
     previous = {"id:1": target}
+    # Seed roster_first_seen by snapshotting target before they "leave".
+    await cog.data.replace_snapshot([target])
     claim, _ = await cog.data.create_claim(target, 1234)
 
     async def fake_profile(*args, **kwargs):
@@ -1236,6 +1366,14 @@ async def test_disappeared_alive_officer_note_includes_claim_and_new_guild(
     # Claim and new guild are surfaced.
     assert "<@1234>" in msg
     assert "Random Pugs" in msg
+    # First-seen line is present (formatted as YYYY-MM-DD). Wording is
+    # "Bei uns gelistet seit" — honest about the fact that for pre-bot
+    # chars this is only the bot-tracking start, not the actual join.
+    assert "Bei uns gelistet seit:" in msg
+    # Date format is YYYY-MM-DD (10 chars), matched by digit pattern check.
+    import re
+
+    assert re.search(r"Bei uns gelistet seit: \*\*\d{4}-\d{2}-\d{2}\*\*", msg)
 
 
 @pytest.mark.asyncio
@@ -2358,6 +2496,33 @@ async def test_cooldown_eligible_options_filters_by_known_recipes(
     assert [(c.character_name, sid) for c, sid, _, _ in eligible] == [
         ("Voidok", "spell.17187")
     ]
+
+
+@pytest.mark.asyncio
+async def test_salt_shaker_appears_as_cooldown_when_marked_learned(
+    tmp_path, patch_logged_task
+):
+    """Salt Shaker (spell.19566) is registered in COOLDOWN_GROUPS and shows
+    up in cooldown_eligible_options once a Leatherworking char has marked
+    the recipe as learned."""
+    cog = await create_cog(tmp_path, patch_logged_task)
+    # Use live wow data (which now contains the Salt Shaker recipe).
+    from lotus_bot.bot import load_wow_data
+
+    cog.bot.data = {"wow": load_wow_data("data/wow/classic_hc")}
+    target = member(name="Voidok")
+    claim, _ = await cog.data.create_claim(target, 42)
+    await cog.data.add_known_recipes(
+        claim.character_key, "leatherworking", ["spell.19566"]
+    )
+
+    eligible = await cog.cooldown_eligible_options(42)
+    salt_shaker_entries = [
+        (c.character_name, sid, label)
+        for c, sid, _name, label in eligible
+        if sid == "spell.19566"
+    ]
+    assert salt_shaker_entries == [("Voidok", "spell.19566", "Salt Shaker")]
 
 
 # ---- Award retry on ChampionCog failure ----

@@ -70659,5 +70659,22 @@
       "de": "https://www.wowhead.com/classic/de/spell=9997",
       "en": "https://www.wowhead.com/classic/spell=9997"
     }
+  },
+  {
+    "id": "spell.19566",
+    "wowhead_id": 19566,
+    "category_id": "profession",
+    "name": {
+      "de": "Salzstreuer",
+      "en": "Salt Shaker"
+    },
+    "description": {
+      "de": "Verwandelt Tieffelsensalz in geläutertes Tieffelsensalz. Wiederverwendbar nach 3 Tagen.",
+      "en": "Refines Deeprock Salt into Refined Deeprock Salt. Reusable after 3 days."
+    },
+    "source_urls": {
+      "de": "https://www.wowhead.com/classic/de/spell=19566",
+      "en": "https://www.wowhead.com/classic/spell=19566"
+    }
   }
 ]

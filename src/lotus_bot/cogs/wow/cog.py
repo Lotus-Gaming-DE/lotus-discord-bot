@@ -98,6 +98,11 @@ COOLDOWN_GROUPS: dict[str, dict] = {
         "hours": 96,
         "spell_ids": frozenset({"spell.18560"}),
     },
+    "leatherworking_salt_shaker": {
+        "label": "Salt Shaker",
+        "hours": 72,
+        "spell_ids": frozenset({"spell.19566"}),
+    },
 }
 # Reverse-lookup: spell_id → (group_key, group_config). Built once at
 # module load — every COOLDOWN_GROUPS edit is reflected automatically.
@@ -145,6 +150,7 @@ CLASS_EMOJI_NAMES = {
     9: "wow_warlock",
     11: "wow_druid",
 }
+RAIDER_ROLE_ID = 1201977228167221248
 RACE_NAMES_DE = {
     1: "Mensch",
     2: "Orc",
@@ -753,9 +759,16 @@ class WoWCog(ManagedTaskCog):
         else:
             guild_line = "Aktuelle Gilde: _gildenlos_"
 
-        return "\n".join(
-            [header, f"• {identity}", f"• {claim_line}", f"• {guild_line}"]
-        )
+        # First-seen-in-our-roster timestamp. Wording is deliberately
+        # "Bei uns gelistet seit" (not "im Roster seit") because for chars
+        # that were already in the guild when the bot first scanned, the
+        # date is just the bot-tracking start, not the actual guild join.
+        joined = await self.data.first_seen_at(member.character_key)
+        lines = [header, f"• {identity}", f"• {claim_line}", f"• {guild_line}"]
+        if joined:
+            lines.append(f"• Bei uns gelistet seit: **{joined[:10]}**")
+
+        return "\n".join(lines)
 
     async def _member_average_item_level(self, character_key: str) -> float | None:
         snapshot = await self.data.gear_snapshot(character_key)
@@ -3309,6 +3322,13 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         )
         champion_btn.callback = self._open_champion
 
+        raider_btn = discord.ui.Button(
+            label="Umschalten",
+            style=discord.ButtonStyle.secondary,
+            custom_id="wow_panel_v2:raider",
+        )
+        raider_btn.callback = self._toggle_raider_role
+
         container = discord.ui.Container(
             discord.ui.TextDisplay(PANEL_HUB_TEXT),
             discord.ui.Separator(),
@@ -3368,6 +3388,14 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
                     "Dein Punktestand & Rang im serverweiten Champion-System."
                 ),
                 accessory=champion_btn,
+            ),
+            discord.ui.Separator(),
+            discord.ui.Section(
+                discord.ui.TextDisplay(
+                    "### 🛡️ Raider-Rolle\n"
+                    "Hol oder entferne dir die Raider-Rolle per Klick."
+                ),
+                accessory=raider_btn,
             ),
         )
         self.add_item(container)
@@ -3448,6 +3476,65 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         await interaction.response.send_message(
             text, view=_PanelTextView(), ephemeral=True
         )
+
+    async def _toggle_raider_role(self, interaction: discord.Interaction) -> None:
+        """Add or remove the Raider role from the clicking member.
+
+        Defers the response immediately so a fast double-click can't trigger
+        an InteractionResponded error on the late-arriving send.
+        """
+        guild = interaction.guild
+        if guild is None:
+            await interaction.response.send_message(
+                "Geht nur im Server, nicht in DMs.", ephemeral=True
+            )
+            return
+        # Acknowledge within Discord's 3s window; do the role work afterwards
+        # and answer via followup (idempotent on double-clicks).
+        await interaction.response.defer(ephemeral=True)
+        role = guild.get_role(RAIDER_ROLE_ID)
+        if role is None:
+            await interaction.followup.send(
+                "Raider-Rolle nicht gefunden. Bitte einen Mod fragen.",
+                ephemeral=True,
+            )
+            return
+        member = interaction.user
+        if not isinstance(member, discord.Member):
+            member = guild.get_member(member.id)
+            if member is None:
+                try:
+                    member = await guild.fetch_member(interaction.user.id)
+                except discord.HTTPException:
+                    await interaction.followup.send(
+                        "Konnte dich im Server nicht finden.", ephemeral=True
+                    )
+                    return
+        try:
+            if role in member.roles:
+                await member.remove_roles(role, reason="Panel: Raider-Toggle")
+                msg = "🛡️ Raider-Rolle **entfernt**."
+            else:
+                await member.add_roles(role, reason="Panel: Raider-Toggle")
+                msg = "🛡️ Raider-Rolle **hinzugefügt**."
+        except discord.Forbidden:
+            await interaction.followup.send(
+                "❌ Mir fehlt die Berechtigung. Bot braucht *Manage Roles* "
+                "und muss eine Rolle ÜBER der Raider-Rolle haben.",
+                ephemeral=True,
+            )
+            return
+        except discord.HTTPException as exc:
+            logger.warning(
+                "[WoWCog] Raider-Toggle für %s fehlgeschlagen: %s",
+                interaction.user.id,
+                exc,
+            )
+            await interaction.followup.send(
+                "❌ Discord-Fehler beim Rollen-Update.", ephemeral=True
+            )
+            return
+        await interaction.followup.send(msg, ephemeral=True)
 
 
 class PanelSearchSubView(discord.ui.View):

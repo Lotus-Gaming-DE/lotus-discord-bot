@@ -187,6 +187,17 @@ class WoWData:
                 recorded_at TEXT NOT NULL
             )
             """)
+        # Tracks the first time we ever saw a character_key in any roster
+        # snapshot. INSERT OR IGNORE on each replace_snapshot — never
+        # overwritten, so chars who leave + rejoin keep their original date.
+        # Limitation: for chars present at first bot scan, this equals the
+        # bot-tracking-start date, not their actual guild-join date.
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS roster_first_seen (
+                character_key TEXT PRIMARY KEY,
+                first_seen_at TEXT NOT NULL
+            )
+            """)
         await db.execute("""
             CREATE TABLE IF NOT EXISTS character_claims (
                 character_key TEXT PRIMARY KEY,
@@ -413,7 +424,27 @@ class WoWData:
                     now,
                 ),
             )
+            # Record first-seen timestamp once per character_key. Subsequent
+            # scans are no-ops — the original date persists across guild
+            # leaves and re-joins.
+            await db.execute(
+                "INSERT OR IGNORE INTO roster_first_seen("
+                "character_key, first_seen_at) VALUES (?, ?)",
+                (member.character_key, now),
+            )
         await db.commit()
+
+    async def first_seen_at(self, character_key: str) -> str | None:
+        """Return the ISO timestamp of when this character was first seen
+        in any roster snapshot, or ``None`` if never recorded."""
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            "SELECT first_seen_at FROM roster_first_seen WHERE character_key = ?",
+            (character_key,),
+        )
+        row = await cur.fetchone()
+        return row[0] if row else None
 
     async def milestone_exists(self, character_key: str, level: int) -> bool:
         await self.init_db()

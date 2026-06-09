@@ -99,6 +99,37 @@ async def test_ghost_members_filters_and_orders_by_level(tmp_path):
     await data.close()
 
 
+async def test_first_seen_at_is_idempotent_across_replace_snapshot(tmp_path):
+    """first_seen_at must be set on first appearance and preserved across
+    subsequent replace_snapshot calls — even when the member is briefly
+    absent (left guild + rejoined)."""
+    data = WoWData(str(tmp_path / "wow.db"))
+    voidok = roster_member(name="Voidok", key="id:1")
+
+    # First scan records voidok.
+    await data.replace_snapshot([voidok])
+    first = await data.first_seen_at("id:1")
+    assert first is not None
+
+    # Wait a moment; second scan with the same member — date stays.
+    import asyncio
+
+    await asyncio.sleep(0.01)
+    await data.replace_snapshot([voidok])
+    assert await data.first_seen_at("id:1") == first
+
+    # Voidok leaves the guild (not in snapshot) and then comes back.
+    await data.replace_snapshot([])
+    await asyncio.sleep(0.01)
+    await data.replace_snapshot([voidok])
+    # Original date persists — INSERT OR IGNORE.
+    assert await data.first_seen_at("id:1") == first
+
+    # Unknown chars return None.
+    assert await data.first_seen_at("id:nope") is None
+    await data.close()
+
+
 async def test_claim_lifecycle_and_case_insensitive_lookup(tmp_path):
     data = WoWData(str(tmp_path / "wow.db"))
     member = roster_member()

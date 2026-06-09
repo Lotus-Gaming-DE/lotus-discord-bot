@@ -29444,5 +29444,18 @@
       "de": "https://www.wowhead.com/classic/de/spell=2402",
       "en": "https://www.wowhead.com/classic/spell=2402"
     }
+  },
+  {
+    "id": "leatherworking.salt_shaker",
+    "profession_id": "leatherworking",
+    "spell_id": "spell.19566",
+    "required_skill": 250,
+    "learned_from": "drop",
+    "recipe_item_sources": [
+      "world_drop"
+    ],
+    "hardcore_valid": true,
+    "quiz_eligible": false,
+    "skillline_id": 165
   }
 ]
