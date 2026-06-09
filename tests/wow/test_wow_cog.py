@@ -412,46 +412,99 @@ async def test_build_panel_stats_line_renders_counts(tmp_path, patch_logged_task
 
 
 class _DummyLookupUser:
-    def __init__(self, uid, name="Tester"):
+    def __init__(self, uid, name="Tester", username=None):
         self.id = uid
         self.display_name = name
+        self._username = username or name.lower()
+
+    def __str__(self):
+        return self._username
+
+
+class _DummyQueryGuild:
+    def __init__(self, matches):
+        self._matches = matches
+        self.queries = []
+
+    async def query_members(self, *, query, limit):
+        self.queries.append((query, limit))
+        return list(self._matches)
 
 
 @pytest.mark.asyncio
-async def test_member_lookup_lists_claims(tmp_path, patch_logged_task):
+async def test_member_search_single_match_lists_claims(tmp_path, patch_logged_task):
     cog = await create_cog(tmp_path, patch_logged_task)
     voidok = member(key="id:1", name="Voidok", level=48, class_id=5, race_id=5)
     await cog.data.replace_snapshot([voidok])
     await cog.data.create_claim(voidok, 99)
-    view = wow_cog_mod.PanelMemberLookupView(cog)
-    select = view.children[0]
-    select._values = [_DummyLookupUser(99, "Gerrit")]
-    interaction = DummyReviewInteraction(DummyUser(42))
 
-    await select.callback(interaction)
+    modal = wow_cog_mod.PanelMemberSearchModal(cog)
+    modal.query._value = "Gerrit"
+    gerrit = _DummyLookupUser(99, "Gerrit")
+    interaction = _DummyRaiderInteraction(
+        _DummyLookupUser(42), _DummyQueryGuild([gerrit])
+    )
 
-    content = interaction.response.edits[0]["content"]
+    await modal.on_submit(interaction)
+
+    assert interaction.response.deferred is True
+    content, _ = interaction.followup.messages[0]
     assert "Chars von Gerrit" in content
     assert "Voidok" in content
     assert "Level **48**" in content
     assert "ungeprüft" in content
-    # Select stays attached for follow-up lookups.
-    assert interaction.response.edits[0]["view"] is view
 
 
 @pytest.mark.asyncio
-async def test_member_lookup_handles_no_claims(tmp_path, patch_logged_task):
+async def test_member_search_no_match(tmp_path, patch_logged_task):
     cog = await create_cog(tmp_path, patch_logged_task)
-    view = wow_cog_mod.PanelMemberLookupView(cog)
-    select = view.children[0]
-    select._values = [_DummyLookupUser(123, "Niemand")]
+    modal = wow_cog_mod.PanelMemberSearchModal(cog)
+    modal.query._value = "Niemando"
+    interaction = _DummyRaiderInteraction(_DummyLookupUser(42), _DummyQueryGuild([]))
+
+    await modal.on_submit(interaction)
+
+    content, _ = interaction.followup.messages[0]
+    assert "Kein Member gefunden" in content
+    assert "Niemando" in content
+
+
+@pytest.mark.asyncio
+async def test_member_search_multiple_matches_shows_select(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    modal = wow_cog_mod.PanelMemberSearchModal(cog)
+    modal.query._value = "Ger"
+    matches = [_DummyLookupUser(1, "Gerrit"), _DummyLookupUser(2, "Gerald")]
+    interaction = _DummyRaiderInteraction(
+        _DummyLookupUser(42), _DummyQueryGuild(matches)
+    )
+
+    await modal.on_submit(interaction)
+
+    content, kwargs = interaction.followup.messages[0]
+    assert "**2** Member gefunden" in content
+    assert isinstance(kwargs["view"], wow_cog_mod._MemberMatchSelectView)
+
+
+@pytest.mark.asyncio
+async def test_member_match_select_renders_claims(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    voidok = member(key="id:1", name="Voidok", level=48, class_id=5, race_id=5)
+    await cog.data.replace_snapshot([voidok])
+    await cog.data.create_claim(voidok, 99)
+
+    matches = [_DummyLookupUser(99, "Gerrit"), _DummyLookupUser(2, "Gerald")]
+    view = wow_cog_mod._MemberMatchSelectView(cog, matches)
+    view._select._values = ["99"]
     interaction = DummyReviewInteraction(DummyUser(42))
 
-    await select.callback(interaction)
+    await view._on_pick(interaction)
 
     content = interaction.response.edits[0]["content"]
-    assert "Niemand" in content
-    assert "keine Chars geclaimt" in content
+    assert "Chars von Gerrit" in content
+    assert "Voidok" in content
+    # Select stays attached for follow-up lookups.
+    assert interaction.response.edits[0]["view"] is view
 
 
 @pytest.mark.asyncio

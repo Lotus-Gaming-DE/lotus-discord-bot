@@ -3579,53 +3579,125 @@ class PanelSearchSubView(discord.ui.View):
         await interaction.response.send_modal(PanelWhoisModal(self.cog))
 
     async def _open_member_lookup(self, interaction: discord.Interaction) -> None:
-        view = PanelMemberLookupView(self.cog)
-        await interaction.response.send_message(
-            "Wessen Chars willst du sehen?", view=view, ephemeral=True
-        )
+        await interaction.response.send_modal(PanelMemberSearchModal(self.cog))
 
 
-class PanelMemberLookupView(discord.ui.View):
-    """Reverse whois: pick a Discord member, see their claimed chars.
+async def _render_member_claims(cog: WoWCog, user_id: int, display_name: str) -> str:
+    """Render the claimed chars of a Discord user as a message body."""
+    claims = await cog.data.claims_for_user(user_id)
+    if not claims:
+        return f"**{display_name}** hat keine Chars geclaimt."
+    lines = [f"**Chars von {display_name}:**"]
+    for claim in claims:
+        roster = await cog.data.find_roster_member_by_name(claim.character_name)
+        status = "bestätigt" if claim.status == "verified" else "ungeprüft"
+        if roster is not None:
+            lines.append(f"- {cog._format_roster_line(roster)} ({status})")
+        else:
+            lines.append(
+                f"- **{claim.character_name}** ({status}, nicht mehr im Roster)"
+            )
+    return "\n".join(lines)
 
-    The select stays active after a lookup so officers can check several
-    members in a row without re-opening the flow.
+
+class PanelMemberSearchModal(discord.ui.Modal):
+    """Reverse whois via name search: type a Discord name, get the member's
+    claimed chars.
+
+    A UserSelect dropdown was useless on a 1000+-member server (only shows
+    a handful of cached members initially), so this searches server-side
+    via ``guild.query_members`` (username + nickname prefix match, works
+    without the privileged members intent).
     """
 
     def __init__(self, cog: WoWCog) -> None:
+        super().__init__(title="Member suchen")
+        self.cog = cog
+        self.query = discord.ui.TextInput(
+            label="Discord-Name",
+            placeholder="z. B. Gerrit",
+            min_length=2,
+            max_length=32,
+        )
+        self.add_item(self.query)
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        q = str(self.query.value).strip()
+        guild = interaction.guild
+        if guild is None:
+            await interaction.response.send_message(
+                "Geht nur im Server, nicht in DMs.", ephemeral=True
+            )
+            return
+        # query_members can take >3s on a cold gateway — defer first.
+        await interaction.response.defer(ephemeral=True)
+        try:
+            matches = await guild.query_members(query=q, limit=10)
+        except (discord.HTTPException, asyncio.TimeoutError) as exc:
+            logger.warning("[WoWCog] Member-Suche '%s' fehlgeschlagen: %s", q, exc)
+            await interaction.followup.send(
+                "❌ Member-Suche fehlgeschlagen, bitte nochmal versuchen.",
+                ephemeral=True,
+            )
+            return
+        if not matches:
+            await interaction.followup.send(
+                f"Kein Member gefunden, der mit **{q}** beginnt. "
+                "Gesucht wird nach Username und Server-Nickname.",
+                ephemeral=True,
+            )
+            return
+        if len(matches) == 1:
+            target = matches[0]
+            content = await _render_member_claims(
+                self.cog, target.id, target.display_name
+            )
+            await interaction.followup.send(content, ephemeral=True)
+            return
+        view = _MemberMatchSelectView(self.cog, matches)
+        await interaction.followup.send(
+            f"**{len(matches)}** Member gefunden — wähle aus:",
+            view=view,
+            ephemeral=True,
+        )
+
+
+class _MemberMatchSelectView(discord.ui.View):
+    """Disambiguation step when the name search returns several members."""
+
+    def __init__(self, cog: WoWCog, matches: list[discord.Member]) -> None:
         super().__init__(timeout=300)
         self.cog = cog
-        self.add_item(_MemberLookupSelect(self))
+        self.matches = {str(m.id): m for m in matches}
+        select_options = [
+            discord.SelectOption(
+                label=m.display_name[:100],
+                value=str(m.id),
+                description=str(m)[:100],
+            )
+            for m in matches[:25]
+        ]
+        select = discord.ui.Select(
+            placeholder="Member auswählen",
+            min_values=1,
+            max_values=1,
+            options=select_options,
+        )
+        select.callback = self._on_pick
+        self._select = select
+        self.add_item(select)
         _add_dismiss_button(self)
 
-
-class _MemberLookupSelect(discord.ui.UserSelect):
-    def __init__(self, parent: PanelMemberLookupView) -> None:
-        self.parent_view = parent
-        super().__init__(placeholder="Member auswählen", min_values=1, max_values=1)
-
-    async def callback(self, interaction: discord.Interaction) -> None:
-        target = self.values[0]
-        cog = self.parent_view.cog
-        claims = await cog.data.claims_for_user(target.id)
-        if not claims:
-            content = f"**{target.display_name}** hat keine Chars geclaimt."
-        else:
-            lines = [f"**Chars von {target.display_name}:**"]
-            for claim in claims:
-                roster = await cog.data.find_roster_member_by_name(claim.character_name)
-                status = "bestätigt" if claim.status == "verified" else "ungeprüft"
-                if roster is not None:
-                    lines.append(f"- {cog._format_roster_line(roster)} ({status})")
-                else:
-                    lines.append(
-                        f"- **{claim.character_name}** "
-                        f"({status}, nicht mehr im Roster)"
-                    )
-            content = "\n".join(lines)
-        # Edit in place — keeps the select usable for further lookups
-        # without spawning extra ephemerals.
-        await interaction.response.edit_message(content=content, view=self.parent_view)
+    async def _on_pick(self, interaction: discord.Interaction) -> None:
+        target = self.matches.get(self._select.values[0])
+        if target is None:
+            await interaction.response.edit_message(
+                content="Member nicht mehr verfügbar.", view=None
+            )
+            return
+        content = await _render_member_claims(self.cog, target.id, target.display_name)
+        # Keep the select so several members can be checked in a row.
+        await interaction.response.edit_message(content=content, view=self)
 
 
 class PanelWhoisModal(discord.ui.Modal):
