@@ -1579,6 +1579,17 @@ class WoWData:
         rows = await cur.fetchall()
         return [_cooldown_from_row(row) for row in rows]
 
+    async def active_cooldown_count(self) -> int:
+        """Count cooldowns that are still running (ready_at in the future)."""
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            "SELECT COUNT(*) FROM profession_cooldowns WHERE ready_at > ?",
+            (datetime.utcnow().isoformat(),),
+        )
+        row = await cur.fetchone()
+        return int(row[0]) if row else 0
+
     async def remove_known_recipe(self, character_key: str, spell_id: str) -> bool:
         await self.init_db()
         db = await self._get_db()

@@ -130,6 +130,34 @@ async def test_first_seen_at_is_idempotent_across_replace_snapshot(tmp_path):
     await data.close()
 
 
+async def test_active_cooldown_count_ignores_expired(tmp_path):
+    data = WoWData(str(tmp_path / "wow.db"))
+    import datetime as dt
+
+    now = dt.datetime.utcnow()
+    # Expired cooldown — ready two hours ago.
+    await data.set_cooldown(
+        "id:1",
+        "alchemy_transmute",
+        "spell.17187",
+        "Transmute: Arkanit",
+        (now - dt.timedelta(hours=50)).isoformat(),
+        (now - dt.timedelta(hours=2)).isoformat(),
+    )
+    # Running cooldown — ready in 90 hours.
+    await data.set_cooldown(
+        "id:2",
+        "tailoring_mooncloth",
+        "spell.18560",
+        "Mondstoff",
+        now.isoformat(),
+        (now + dt.timedelta(hours=90)).isoformat(),
+    )
+
+    assert await data.active_cooldown_count() == 1
+    await data.close()
+
+
 async def test_claim_lifecycle_and_case_insensitive_lookup(tmp_path):
     data = WoWData(str(tmp_path / "wow.db"))
     member = roster_member()

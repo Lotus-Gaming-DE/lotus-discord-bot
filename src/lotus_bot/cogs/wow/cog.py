@@ -151,6 +151,7 @@ CLASS_EMOJI_NAMES = {
     11: "wow_druid",
 }
 RAIDER_ROLE_ID = 1201977228167221248
+HORDE_RED = discord.Colour(0xC41E3A)  # official Horde crimson
 RACE_NAMES_DE = {
     1: "Mensch",
     2: "Orc",
@@ -386,6 +387,17 @@ class WoWCog(ManagedTaskCog):
         value = await self.data.get_setting("claim_review_channel_id")
         return int(value) if value else DEFAULT_CLAIM_REVIEW_CHANNEL_ID
 
+    async def build_panel_stats_line(self) -> str:
+        """Live dashboard line for the hub header, refreshed on publish."""
+        member_count = await self.data.member_count()
+        claims = len(await self.data.list_claims("all"))
+        ghosts = len(await self.data.ghost_members())
+        running = await self.data.active_cooldown_count()
+        return (
+            f"📊 **{member_count}** Member · **{claims}** Chars geclaimt · "
+            f"**{ghosts}** Geister · **{running}** Cooldowns laufen"
+        )
+
     async def publish_panel(self, channel: discord.TextChannel) -> PanelPublishResult:
         """Send or update the Components-V2 hub message.
 
@@ -395,7 +407,8 @@ class WoWCog(ManagedTaskCog):
         in discord.py 2.6+; if the old message can't be edited (deleted,
         wrong permissions, etc.) we fall back to a fresh send.
         """
-        view = WoWPanelLayoutView(self)
+        stats = await self.build_panel_stats_line()
+        view = WoWPanelLayoutView(self, hub_text=f"{PANEL_HUB_TEXT}\n\n{stats}")
         message_id_value = await self.data.get_setting("panel_message_id")
         if message_id_value:
             try:
@@ -487,6 +500,10 @@ class WoWCog(ManagedTaskCog):
             if persist:
                 await self.data.replace_snapshot(current)
                 await self.data.mark_scanned()
+                # Refresh the hub panel so its dashboard stats line stays
+                # current. Fire-and-forget — a missing panel channel only
+                # logs a warning inside _auto_publish_panel.
+                self._track_task(self._auto_publish_panel())
 
             return ScanResult(
                 member_count=len(current),
@@ -3276,12 +3293,12 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
     re-issued automatically on startup via ``_auto_publish_panel``.
     """
 
-    def __init__(self, cog: WoWCog) -> None:
+    def __init__(self, cog: WoWCog, hub_text: str | None = None) -> None:
         super().__init__(timeout=None)
         self.cog = cog
 
         chars_btn = discord.ui.Button(
-            label="Öffnen",
+            label="Verwalten",
             style=discord.ButtonStyle.primary,
             custom_id="wow_panel_v2:chars",
         )
@@ -3309,34 +3326,33 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         cooldown_btn.callback = self._open_cooldown_log
 
         help_btn = discord.ui.Button(
-            label="Anzeigen",
+            label="Hilfe",
             style=discord.ButtonStyle.secondary,
             custom_id="wow_panel_v2:help",
         )
         help_btn.callback = self._open_help
 
         champion_btn = discord.ui.Button(
-            label="Anzeigen",
+            label="Mein Rang",
             style=discord.ButtonStyle.secondary,
             custom_id="wow_panel_v2:champion",
         )
         champion_btn.callback = self._open_champion
 
         raider_btn = discord.ui.Button(
-            label="Umschalten",
+            label="An / Aus",
             style=discord.ButtonStyle.secondary,
             custom_id="wow_panel_v2:raider",
         )
         raider_btn.callback = self._toggle_raider_role
 
         container = discord.ui.Container(
-            discord.ui.TextDisplay(PANEL_HUB_TEXT),
+            discord.ui.TextDisplay(hub_text or PANEL_HUB_TEXT),
             discord.ui.Separator(),
             discord.ui.Section(
                 discord.ui.TextDisplay(
                     "### 👤 Deine Chars\n"
-                    "Claimen, Berufe & Rezepte pflegen, Cooldowns ansehen, "
-                    "Claim freigeben."
+                    "Claimen, Berufe & Rezepte pflegen, Claim freigeben."
                 ),
                 accessory=chars_btn,
             ),
@@ -3344,7 +3360,7 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
             discord.ui.Section(
                 discord.ui.TextDisplay(
                     "### 🔎 In der Gilde suchen\n"
-                    "Wer kann was craften? Wer steckt hinter dem Char?"
+                    "Crafter finden, Chars nachschlagen, Member-Lookup."
                 ),
                 accessory=search_btn,
             ),
@@ -3352,8 +3368,7 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
             discord.ui.Section(
                 discord.ui.TextDisplay(
                     "### 🏦 Gildenbank-Anfrage\n"
-                    "Etwas aus der Gildenbank gebraucht? Anfrage stellen — "
-                    "der Verwalter des Bank-Chars bekommt eine DM."
+                    "Anfrage stellen — der Verwalter bekommt eine DM."
                 ),
                 accessory=gbank_btn,
             ),
@@ -3368,35 +3383,32 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
             discord.ui.Section(
                 discord.ui.TextDisplay(
                     "### ⏳ Cooldown loggen\n"
-                    "Transmute oder Mondstoff gemacht? Hier eintragen, "
-                    "Bot meldet sich wenn wieder bereit."
+                    "Transmute, Mondstoff oder Salt Shaker eintragen."
                 ),
                 accessory=cooldown_btn,
             ),
             discord.ui.Separator(),
             discord.ui.Section(
                 discord.ui.TextDisplay(
-                    "### ❓ Hilfe & Übersicht\n"
-                    "Kanal-Übersicht und Bot-Kurzanleitung."
+                    "### ❓ Hilfe & Übersicht\n" "Kanal-Übersicht & Bot-Kurzanleitung."
                 ),
                 accessory=help_btn,
             ),
             discord.ui.Separator(),
             discord.ui.Section(
                 discord.ui.TextDisplay(
-                    "### 🏆 Mein Champion-Rang\n"
-                    "Dein Punktestand & Rang im serverweiten Champion-System."
+                    "### 🏆 Mein Champion-Rang\n" "Dein Punktestand & Rang."
                 ),
                 accessory=champion_btn,
             ),
             discord.ui.Separator(),
             discord.ui.Section(
                 discord.ui.TextDisplay(
-                    "### 🛡️ Raider-Rolle\n"
-                    "Hol oder entferne dir die Raider-Rolle per Klick."
+                    "### 🛡️ Raider-Rolle\n" "Raider-Rolle holen oder ablegen."
                 ),
                 accessory=raider_btn,
             ),
+            accent_colour=HORDE_RED,
         )
         self.add_item(container)
 
@@ -3538,11 +3550,20 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
 
 
 class PanelSearchSubView(discord.ui.View):
-    """Sub-menu for the 🔎 Search section: crafter lookup or char-whois."""
+    """Sub-menu for the 🔎 Search section: crafter lookup, char-whois or
+    member-lookup (Discord user → their claimed chars)."""
 
     def __init__(self, cog: WoWCog) -> None:
         super().__init__(timeout=300)
         self.cog = cog
+        # Decorator buttons (crafter, whois) are registered by
+        # super().__init__ — items added here keep stable child indices
+        # for them: [crafter, whois, lookup, dismiss].
+        lookup_btn = discord.ui.Button(
+            label="Chars eines Members", style=discord.ButtonStyle.secondary
+        )
+        lookup_btn.callback = self._open_member_lookup
+        self.add_item(lookup_btn)
         _add_dismiss_button(self)
 
     @discord.ui.button(label="Crafter suchen", style=discord.ButtonStyle.primary)
@@ -3556,6 +3577,55 @@ class PanelSearchSubView(discord.ui.View):
         self, interaction: discord.Interaction, _: discord.ui.Button
     ) -> None:
         await interaction.response.send_modal(PanelWhoisModal(self.cog))
+
+    async def _open_member_lookup(self, interaction: discord.Interaction) -> None:
+        view = PanelMemberLookupView(self.cog)
+        await interaction.response.send_message(
+            "Wessen Chars willst du sehen?", view=view, ephemeral=True
+        )
+
+
+class PanelMemberLookupView(discord.ui.View):
+    """Reverse whois: pick a Discord member, see their claimed chars.
+
+    The select stays active after a lookup so officers can check several
+    members in a row without re-opening the flow.
+    """
+
+    def __init__(self, cog: WoWCog) -> None:
+        super().__init__(timeout=300)
+        self.cog = cog
+        self.add_item(_MemberLookupSelect(self))
+        _add_dismiss_button(self)
+
+
+class _MemberLookupSelect(discord.ui.UserSelect):
+    def __init__(self, parent: PanelMemberLookupView) -> None:
+        self.parent_view = parent
+        super().__init__(placeholder="Member auswählen", min_values=1, max_values=1)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        target = self.values[0]
+        cog = self.parent_view.cog
+        claims = await cog.data.claims_for_user(target.id)
+        if not claims:
+            content = f"**{target.display_name}** hat keine Chars geclaimt."
+        else:
+            lines = [f"**Chars von {target.display_name}:**"]
+            for claim in claims:
+                roster = await cog.data.find_roster_member_by_name(claim.character_name)
+                status = "bestätigt" if claim.status == "verified" else "ungeprüft"
+                if roster is not None:
+                    lines.append(f"- {cog._format_roster_line(roster)} ({status})")
+                else:
+                    lines.append(
+                        f"- **{claim.character_name}** "
+                        f"({status}, nicht mehr im Roster)"
+                    )
+            content = "\n".join(lines)
+        # Edit in place — keeps the select usable for further lookups
+        # without spawning extra ephemerals.
+        await interaction.response.edit_message(content=content, view=self.parent_view)
 
 
 class PanelWhoisModal(discord.ui.Modal):

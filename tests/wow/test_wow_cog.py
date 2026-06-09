@@ -326,7 +326,13 @@ async def test_panel_publish_creates_and_stores_message(tmp_path, patch_logged_t
     # LayoutView's TextDisplay items.
     sent_content, sent_kwargs = channel.sent[0]
     assert sent_content is None
-    assert isinstance(sent_kwargs["view"], wow_cog_mod.WoWPanelLayoutView)
+    view = sent_kwargs["view"]
+    assert isinstance(view, wow_cog_mod.WoWPanelLayoutView)
+    # Published view carries the live stats line in its hub header.
+    hub_display = view.children[0].children[0]
+    assert isinstance(hub_display, discord.ui.TextDisplay)
+    assert "Member" in hub_display.content
+    assert "Cooldowns laufen" in hub_display.content
     assert await cog.data.get_setting("panel_channel_id") == str(channel.id)
     assert await cog.data.get_setting("panel_message_id") == "555"
 
@@ -374,6 +380,108 @@ async def test_panel_hub_layout_has_seven_sections(tmp_path, patch_logged_task):
         "wow_panel_v2:champion",
         "wow_panel_v2:raider",
     }
+    # Horde-red accent stripe on the container.
+    assert container.accent_colour == discord.Colour(0xC41E3A)
+
+
+@pytest.mark.asyncio
+async def test_build_panel_stats_line_renders_counts(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    alive = member(key="id:1", name="Alive")
+    ghost = member(key="id:2", name="Ghosty", is_ghost=True)
+    await cog.data.replace_snapshot([alive, ghost])
+    await cog.data.create_claim(alive, 42)
+    import datetime as dt
+
+    now = dt.datetime.utcnow()
+    await cog.data.set_cooldown(
+        "id:1",
+        "alchemy_transmute",
+        "spell.17187",
+        "Transmute: Arkanit",
+        now.isoformat(),
+        (now + dt.timedelta(hours=48)).isoformat(),
+    )
+
+    line = await cog.build_panel_stats_line()
+
+    assert "**2** Member" in line
+    assert "**1** Chars geclaimt" in line
+    assert "**1** Geister" in line
+    assert "**1** Cooldowns laufen" in line
+
+
+class _DummyLookupUser:
+    def __init__(self, uid, name="Tester"):
+        self.id = uid
+        self.display_name = name
+
+
+@pytest.mark.asyncio
+async def test_member_lookup_lists_claims(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    voidok = member(key="id:1", name="Voidok", level=48, class_id=5, race_id=5)
+    await cog.data.replace_snapshot([voidok])
+    await cog.data.create_claim(voidok, 99)
+    view = wow_cog_mod.PanelMemberLookupView(cog)
+    select = view.children[0]
+    select._values = [_DummyLookupUser(99, "Gerrit")]
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await select.callback(interaction)
+
+    content = interaction.response.edits[0]["content"]
+    assert "Chars von Gerrit" in content
+    assert "Voidok" in content
+    assert "Level **48**" in content
+    assert "ungeprüft" in content
+    # Select stays attached for follow-up lookups.
+    assert interaction.response.edits[0]["view"] is view
+
+
+@pytest.mark.asyncio
+async def test_member_lookup_handles_no_claims(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    view = wow_cog_mod.PanelMemberLookupView(cog)
+    select = view.children[0]
+    select._values = [_DummyLookupUser(123, "Niemand")]
+    interaction = DummyReviewInteraction(DummyUser(42))
+
+    await select.callback(interaction)
+
+    content = interaction.response.edits[0]["content"]
+    assert "Niemand" in content
+    assert "keine Chars geclaimt" in content
+
+
+@pytest.mark.asyncio
+async def test_scan_schedules_panel_refresh(tmp_path, patch_logged_task, monkeypatch):
+    """A persisting scan fires _auto_publish_panel so the dashboard stats
+    in the hub header stay current."""
+    cog = await create_cog(tmp_path, patch_logged_task)
+    members = [member(key=f"id:{i}", name=f"M{i}", level=10) for i in range(6)]
+    await cog.data.replace_snapshot(members)
+
+    async def fake_roster(session=None):
+        return members
+
+    async def fake_profile(*args, **kwargs):
+        return {"is_ghost": False}
+
+    monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", fake_profile)
+    cog.fetch_roster = fake_roster
+
+    tracked = []
+
+    def spy_track(coro):
+        tracked.append(getattr(coro, "__name__", repr(coro)))
+        coro.close()
+
+    cog._track_task = spy_track
+
+    await cog.scan(post=False, persist=True)
+
+    assert "_auto_publish_panel" in tracked
 
 
 class _DummyRaiderMember:
