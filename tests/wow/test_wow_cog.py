@@ -1830,6 +1830,92 @@ async def test_crafting_search_finds_saved_manual_recipe(tmp_path, patch_logged_
 
 
 @pytest.mark.asyncio
+async def test_crafting_search_finds_enchant_by_name_de_en(tmp_path, patch_logged_task):
+    """Crusader is a weapon enchant (no item output). Searching the German
+    OR English name must find an enchanter who maintained the formula."""
+    from lotus_bot.bot import load_wow_data
+
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": load_wow_data("data/wow/classic_hc")}
+    enchanter = member(name="Zappy")
+    await cog.data.replace_snapshot([enchanter])
+    claim, _ = await cog.data.create_claim(enchanter, 42)
+    await cog.data.set_character_profession(claim, "enchanting", 300)
+    await cog.data.add_known_recipes(claim.character_key, "enchanting", ["spell.20034"])
+
+    for term in ("Kreuzfahrer", "Crusader"):
+        result = await cog.search_crafting(term)
+        assert result.status == "ok", f"{term} → {result.status}"
+        assert result.crafters[0].character_name == "Zappy"
+        assert "Kreuzfahrer" in cog.format_crafting_search_result(result)
+
+
+@pytest.mark.asyncio
+async def test_crafting_search_enchant_manual_needs_learned(
+    tmp_path, patch_logged_task
+):
+    """A drop-formula enchant (Crusader) with an enchanter who has the skill
+    but did NOT maintain the formula → manual_recipe (nobody pinned it)."""
+    from lotus_bot.bot import load_wow_data
+
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": load_wow_data("data/wow/classic_hc")}
+    enchanter = member(name="Zappy")
+    await cog.data.replace_snapshot([enchanter])
+    claim, _ = await cog.data.create_claim(enchanter, 42)
+    await cog.data.set_character_profession(claim, "enchanting", 300)
+    # No add_known_recipes — formula not maintained.
+
+    result = await cog.search_crafting("Crusader")
+    assert result.status == "manual_recipe"
+
+
+@pytest.mark.asyncio
+async def test_crafting_search_trainer_enchant_any_enchanter(
+    tmp_path, patch_logged_task
+):
+    """Trainer enchants have no formula item at all. Any enchanter with
+    enough skill counts — covers the 62 trainer enchants the item-only
+    search could never reach. (spell.7420 = Enchant Chest - Minor Health,
+    trainer, skill 15.)"""
+    from lotus_bot.bot import load_wow_data
+
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": load_wow_data("data/wow/classic_hc")}
+    enchanter = member(name="Zappy")
+    await cog.data.replace_snapshot([enchanter])
+    claim, _ = await cog.data.create_claim(enchanter, 42)
+    await cog.data.set_character_profession(claim, "enchanting", 100)
+
+    # Resolve directly by id to bypass any name-ambiguity in the matcher.
+    result = await cog.search_crafting_by_item_id("enchant:spell.7420")
+    assert result.status == "ok"
+    assert result.manual_recipe is False
+    assert result.crafters[0].character_name == "Zappy"
+
+
+@pytest.mark.asyncio
+async def test_search_crafting_by_item_id_resolves_enchant(tmp_path, patch_logged_task):
+    """The ambiguous-dropdown path: a click sends enchant:<spell_id>."""
+    from lotus_bot.bot import load_wow_data
+
+    cog = await create_cog(tmp_path, patch_logged_task)
+    cog.bot.data = {"wow": load_wow_data("data/wow/classic_hc")}
+    enchanter = member(name="Zappy")
+    await cog.data.replace_snapshot([enchanter])
+    claim, _ = await cog.data.create_claim(enchanter, 42)
+    await cog.data.set_character_profession(claim, "enchanting", 300)
+    await cog.data.add_known_recipes(claim.character_key, "enchanting", ["spell.20034"])
+
+    result = await cog.search_crafting_by_item_id("enchant:spell.20034")
+    assert result.status == "ok"
+    assert result.crafters[0].character_name == "Zappy"
+    # Unknown enchant id degrades gracefully.
+    miss = await cog.search_crafting_by_item_id("enchant:spell.nonexistent")
+    assert miss.status == "item_not_found"
+
+
+@pytest.mark.asyncio
 async def test_recipe_selection_filters_known_and_low_skill(
     tmp_path, patch_logged_task
 ):

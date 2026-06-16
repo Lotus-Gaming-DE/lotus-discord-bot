@@ -2265,13 +2265,29 @@ class WoWCog(ManagedTaskCog):
             if r.get("creates_item_id")
         }
         craftable = [m for m in matches if str(m.get("id")) in craftable_ids]
-        if not craftable:
+        # Enchants create no item, so they're matched separately and added
+        # as pseudo-item candidates (id "enchant:<spell_id>").
+        enchants = self._match_enchant_recipes(item_name)
+        candidates = craftable + enchants
+        if not candidates:
             return CraftingSearchResult("item_not_found")
-        if len(craftable) > 1:
-            return CraftingSearchResult("ambiguous_item", candidates=craftable[:5])
-        return await self._search_crafting_for_item(craftable[0])
+        if len(candidates) > 1:
+            return CraftingSearchResult("ambiguous_item", candidates=candidates[:5])
+        return await self._resolve_candidate(candidates[0])
+
+    async def _resolve_candidate(self, candidate: dict) -> CraftingSearchResult:
+        """Dispatch a search candidate to the item- or enchant-resolver."""
+        if str(candidate.get("id")).startswith("enchant:"):
+            return await self._search_crafting_for_enchant(candidate["_recipe"])
+        return await self._search_crafting_for_item(candidate)
 
     async def search_crafting_by_item_id(self, item_id: str) -> CraftingSearchResult:
+        if item_id.startswith("enchant:"):
+            spell_id = item_id.split(":", 1)[1]
+            recipe = self._recipe_by_spell_id(spell_id)
+            if not recipe:
+                return CraftingSearchResult("item_not_found")
+            return await self._search_crafting_for_enchant(recipe)
         item = self._get_static_record("items", item_id)
         if not item:
             return CraftingSearchResult("item_not_found")
@@ -2338,6 +2354,47 @@ class WoWCog(ManagedTaskCog):
             manual_recipe=manual_recipe,
         )
 
+    async def _search_crafting_for_enchant(self, recipe: dict) -> CraftingSearchResult:
+        """Resolve crafters for an enchant recipe (no item output).
+
+        Trainer-learned enchants → any enchanter with enough skill.
+        Drop/recipe-learned enchants (e.g. Crusader) → only enchanters who
+        have explicitly maintained the formula as learned.
+        """
+        spell = self._spell_for_recipe(recipe)
+        pseudo_item = {
+            "name": spell.get("name") or recipe.get("recipe_item_name") or {}
+        }
+        profession_id = "enchanting"
+        required_skill = int(recipe.get("required_skill") or 1)
+        manual = recipe.get("learned_from") != "trainer"
+        if manual:
+            crafters = await self.data.find_crafters_with_known_recipe(
+                profession_id, required_skill, str(recipe.get("spell_id"))
+            )
+        else:
+            crafters = await self.data.find_crafters(profession_id, required_skill)
+        if not crafters:
+            status = "manual_recipe" if manual else "no_crafter"
+            return CraftingSearchResult(
+                status,
+                item=pseudo_item,
+                recipe=recipe,
+                required_skill=required_skill,
+                profession_id=profession_id,
+                crafters=[],
+                manual_recipe=manual,
+            )
+        return CraftingSearchResult(
+            "ok",
+            item=pseudo_item,
+            recipe=recipe,
+            crafters=crafters,
+            required_skill=required_skill,
+            profession_id=profession_id,
+            manual_recipe=manual,
+        )
+
     def _match_items(self, item_name: str) -> list[dict]:
         needle = _norm(item_name)
         exact = []
@@ -2374,6 +2431,61 @@ class WoWCog(ManagedTaskCog):
             )
         )
         return [item for _, item in fuzzy[:25]]
+
+    def _match_enchant_recipes(self, name: str) -> list[dict]:
+        """Match enchant recipes by spell name (de/en) + formula name (de/en).
+
+        Enchants create no item, so they never appear in ``items.json`` and
+        can't be found via ``_match_items``. They flow through the rest of
+        the crafting-search pipeline as pseudo-item dicts with a synthetic
+        ``enchant:<spell_id>`` id and the original recipe under ``_recipe``.
+        """
+        needle = _norm(name)
+        if not needle:
+            return []
+        exact: list[dict] = []
+        partial: list[dict] = []
+        fuzzy: list[tuple[float, dict]] = []
+        for recipe in self._wow_records("profession_recipes"):
+            if recipe.get("profession_id") != "enchanting":
+                continue
+            if not recipe.get("hardcore_valid"):
+                continue
+            spell = self._spell_for_recipe(recipe)
+            names = [
+                self._localized_text(spell.get("name"), "de"),
+                self._localized_text(spell.get("name"), "en"),
+                self._localized_text(recipe.get("recipe_item_name"), "de"),
+                self._localized_text(recipe.get("recipe_item_name"), "en"),
+            ]
+            normalized = [_norm(n) for n in names if n]
+            if not normalized:
+                continue
+            candidate = {
+                "id": f"enchant:{recipe.get('spell_id')}",
+                "name": spell.get("name") or recipe.get("recipe_item_name"),
+                "_recipe": recipe,
+            }
+            if needle in normalized:
+                exact.append(candidate)
+            elif any(needle in n for n in normalized):
+                partial.append(candidate)
+            else:
+                score = max(
+                    (
+                        difflib.SequenceMatcher(None, needle, n).ratio()
+                        for n in normalized
+                    ),
+                    default=0,
+                )
+                if score >= 0.82:
+                    fuzzy.append((score, candidate))
+        if exact:
+            return exact[:25]
+        if partial:
+            return partial[:25]
+        fuzzy.sort(key=lambda match: -match[0])
+        return [candidate for _, candidate in fuzzy[:25]]
 
     def format_profession(self, profile: CharacterProfession) -> str:
         specialization = (
