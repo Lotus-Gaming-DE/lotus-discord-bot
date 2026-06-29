@@ -277,6 +277,41 @@ async def scan(interaction: discord.Interaction, post: bool = True):
 
 
 @wow_group.command(
+    name="role-sync",
+    description="Gleicht die Gildenrolle mit den verifizierten Claims ab (nur Mods)",
+)
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+async def role_sync(interaction: discord.Interaction):
+    logger.info(f"/wow role-sync by {interaction.user}")
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    await interaction.response.defer(ephemeral=True, thinking=True)
+    try:
+        result = await cog.sync_guild_role()
+    except Exception as exc:
+        logger.error("[WoWCommands] Role-Sync failed: %s", exc, exc_info=True)
+        await interaction.followup.send("❌ Rollen-Abgleich fehlgeschlagen.")
+        return
+
+    if not result.available:
+        await interaction.followup.send(
+            "❌ Gilde oder Rolle nicht gefunden — Abgleich nicht möglich."
+        )
+        return
+
+    await interaction.followup.send(
+        f"✅ Rollen-Abgleich fertig: **{result.eligible}** berechtigt, "
+        f"**{result.granted}** vergeben, **{result.removed}** entzogen."
+    )
+
+
+@wow_group.command(
     name="whois",
     description="Zeigt was wir über einen Char wissen (privat).",
 )
@@ -367,6 +402,7 @@ async def claim_release(interaction: discord.Interaction, char: str):
         )
         return
     await cog.data.remove_claim(existing.character_key)
+    await cog.reconcile_guild_role_for(existing.discord_user_id)
     await interaction.response.send_message(
         f"✅ Claim für **{existing.character_name}** wurde freigegeben.", ephemeral=True
     )
@@ -393,6 +429,7 @@ async def claim_remove(interaction: discord.Interaction, char: str):
         )
         return
     await cog.data.remove_claim(existing.character_key)
+    await cog.reconcile_guild_role_for(existing.discord_user_id)
     await interaction.response.send_message(
         f"✅ Claim für **{existing.character_name}** wurde entfernt.", ephemeral=True
     )

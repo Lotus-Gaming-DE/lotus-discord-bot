@@ -62,6 +62,90 @@ async def test_parse_roster_member_rejects_incomplete_entry():
     assert parse_roster_member({"character": {"name": "NoRealm", "level": 1}}) is None
 
 
+async def test_replace_snapshot_seeds_digest_baseline(tmp_path):
+    """The daily scan path keeps the live snapshot and the frozen baseline in sync."""
+    data = WoWData(str(tmp_path / "wow.db"))
+    await data.replace_snapshot([roster_member(name="Lyxendra", key="id:1")])
+
+    snapshot = await data.get_snapshot()
+    baseline = await data.get_digest_baseline()
+    assert set(snapshot) == {"id:1"}
+    assert set(baseline) == {"id:1"}
+    await data.close()
+
+
+async def test_refresh_live_snapshot_keeps_baseline_frozen(tmp_path):
+    """Hourly live refresh adds new chars but must not move the digest baseline."""
+    data = WoWData(str(tmp_path / "wow.db"))
+    await data.replace_snapshot([roster_member(name="Lyxendra", key="id:1")])
+
+    await data.refresh_live_snapshot(
+        [
+            roster_member(name="Lyxendra", key="id:1"),
+            roster_member(name="Newbie", key="id:2"),
+        ]
+    )
+
+    # Live snapshot now sees the freshly joined char (claimable within the hour)...
+    assert set(await data.get_snapshot()) == {"id:1", "id:2"}
+    # ...but the digest baseline still only knows yesterday's roster.
+    assert set(await data.get_digest_baseline()) == {"id:1"}
+    await data.close()
+
+
+async def test_refresh_live_snapshot_preserves_known_ghost(tmp_path):
+    """The roster endpoint omits is_ghost, so a known death must not be wiped."""
+    data = WoWData(str(tmp_path / "wow.db"))
+    ghost = roster_member(name="Lyxendra", key="id:1")
+    ghost.is_ghost = True
+    await data.replace_snapshot([ghost])
+
+    # Hourly fetch carries the same char but without the ghost flag.
+    await data.refresh_live_snapshot([roster_member(name="Lyxendra", key="id:1")])
+
+    snapshot = await data.get_snapshot()
+    assert snapshot["id:1"].is_ghost is True
+    await data.close()
+
+
+async def test_verified_claim_user_ids_only_counts_verified(tmp_path):
+    data = WoWData(str(tmp_path / "wow.db"))
+    alice = roster_member(name="AliceChar", key="id:a")
+    bob = roster_member(name="BobChar", key="id:b")
+    await data.replace_snapshot([alice, bob])
+    await data.create_claim(alice, 111)
+    await data.create_claim(bob, 222)
+
+    # Both claims start unverified → nobody is entitled yet.
+    assert await data.verified_claim_user_ids() == set()
+
+    await data.verify_claim(alice.character_key, reviewer_id=999)
+    assert await data.verified_claim_user_ids() == {111}
+    await data.close()
+
+
+async def test_init_db_seeds_baseline_from_legacy_snapshot(tmp_path):
+    """A DB that predates the baseline table is seeded from the live snapshot.
+
+    Without this, the first daily scan after the upgrade would diff against an
+    empty baseline and announce the whole guild as new.
+    """
+    db_path = str(tmp_path / "wow.db")
+    data = WoWData(db_path)
+    await data.replace_snapshot([roster_member(name="Lyxendra", key="id:1")])
+
+    # Simulate the legacy state: baseline empty, then re-run init.
+    db = await data._get_db()
+    await db.execute("DELETE FROM roster_digest_baseline")
+    await db.commit()
+    data._init_done = False
+
+    await data.init_db()
+
+    assert set(await data.get_digest_baseline()) == {"id:1"}
+    await data.close()
+
+
 async def test_ghost_members_filters_and_orders_by_level(tmp_path):
     data = WoWData(str(tmp_path / "wow.db"))
     alive = roster_member(name="Alive", key="id:alive")

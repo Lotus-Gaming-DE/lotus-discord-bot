@@ -43,6 +43,14 @@ DEFAULT_POLL_INTERVAL = 3 * 60 * 60
 DEFAULT_CLAIM_REVIEW_CHANNEL_ID = 1184115540822855772
 DEFAULT_PANEL_CHANNEL_ID = 1463577361562992807
 DEFAULT_DIGEST_HOUR = 9
+# Guild role the bot fully owns: granted to every member with at least one
+# verified char claim, stripped from everyone else. Reconciled hourly plus
+# on each claim verify/release so it always mirrors the claim table.
+GUILD_ROLE_ID = 1448935193921454100
+# Lightweight hourly roster pull so freshly-joined chars are claimable without
+# waiting for the next 9 o'clock digest run. Fetches only the guild roster
+# (one API call) — no per-character profile calls, no digest, no posting.
+DEFAULT_ROSTER_REFRESH_INTERVAL = 60 * 60
 try:
     DIGEST_TIMEZONE = ZoneInfo("Europe/Berlin")
 except ZoneInfoNotFoundError:  # pragma: no cover - depends on host tzdata
@@ -287,6 +295,16 @@ class PanelPublishResult:
     created: bool
 
 
+@dataclass
+class RoleSyncResult:
+    """Outcome of a full guild-role reconcile."""
+
+    eligible: int
+    granted: int
+    removed: int
+    available: bool
+
+
 class WoWCog(ManagedTaskCog):
     """Track Black Lotus WoW Classic Hardcore milestones."""
 
@@ -300,9 +318,11 @@ class WoWCog(ManagedTaskCog):
         self.namespace = DEFAULT_NAMESPACE
         self.locale = DEFAULT_LOCALE
         self.poll_interval = DEFAULT_POLL_INTERVAL
+        self.roster_refresh_interval = DEFAULT_ROSTER_REFRESH_INTERVAL
         self._scan_lock = asyncio.Lock()
         self._track_task = self.create_task
         self._track_task(self._poll_loop())
+        self._track_task(self._roster_refresh_loop())
         if hasattr(self.bot, "add_view"):
             self.bot.add_view(ClaimReviewView(self))
             self.bot.add_view(WoWPanelLayoutView(self))
@@ -319,6 +339,171 @@ class WoWCog(ManagedTaskCog):
             except Exception as exc:  # pragma: no cover - defensive logging
                 logger.error("[WoWCog] Polling failed: %s", exc, exc_info=True)
             await asyncio.sleep(self._seconds_until_next_digest())
+
+    async def _roster_refresh_loop(self) -> None:
+        """Hourly: refresh the live roster and reconcile the guild role.
+
+        Independent of the daily digest loop. The roster pull keeps freshly
+        joined characters claimable within the hour; the role reconcile is the
+        self-healing backbone that corrects any drift (missed verify/release
+        events, manual role edits, members who left and rejoined).
+        """
+        await self.bot.wait_until_ready()
+        # Reconcile once at startup before entering the hourly cadence so a
+        # restart picks up role changes that happened while the bot was down.
+        try:
+            await self.sync_guild_role()
+        except Exception as exc:  # pragma: no cover - defensive logging
+            logger.error(
+                "[WoWCog] Initial guild-role sync failed: %s", exc, exc_info=True
+            )
+        while True:
+            await asyncio.sleep(self.roster_refresh_interval)
+            try:
+                await self.refresh_live_roster()
+                await self.sync_guild_role()
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:  # pragma: no cover - defensive logging
+                logger.error(
+                    "[WoWCog] Roster refresh / role sync failed: %s",
+                    exc,
+                    exc_info=True,
+                )
+
+    async def refresh_live_roster(self) -> bool:
+        """Pull the guild roster and update only the live snapshot.
+
+        No per-character profile calls, no activity detection, no posting —
+        this is the cheap path that makes new chars claimable between digests.
+        Returns ``True`` if the snapshot was updated, ``False`` if the response
+        looked unsafe (see :meth:`_roster_response_unsafe`) and was skipped.
+        """
+        previous = await self.data.get_snapshot()
+        async with wow_api_session() as session:
+            current = await self.fetch_roster(session=session)
+        if self._roster_response_unsafe(previous, current):
+            logger.warning(
+                "[WoWCog] Live-Roster-Response unplausibel (%d → %d). "
+                "Snapshot nicht aktualisiert.",
+                len(previous),
+                len(current),
+            )
+            return False
+        await self.data.refresh_live_snapshot(current)
+        return True
+
+    def _guild_role(self) -> tuple[discord.Guild, discord.Role] | None:
+        """Resolve the main guild and the managed role, or ``None`` if missing."""
+        guild = getattr(self.bot, "main_guild", None)
+        if not isinstance(guild, discord.Guild):
+            logger.warning("[WoWCog] Guild not ready for role sync.")
+            return None
+        role = guild.get_role(GUILD_ROLE_ID)
+        if role is None:
+            logger.warning("[WoWCog] Guild role %s not found.", GUILD_ROLE_ID)
+            return None
+        return guild, role
+
+    async def sync_guild_role(self) -> "RoleSyncResult":
+        """Full reconcile: role membership == set of verified-claim owners.
+
+        Adds the role to every entitled member that lacks it and strips it from
+        every current holder that is no longer entitled. Stripping requires the
+        member cache to be populated (Server Members Intent); without it
+        ``role.members`` is incomplete and the cleanup direction is a no-op.
+        """
+        resolved = self._guild_role()
+        if resolved is None:
+            return RoleSyncResult(eligible=0, granted=0, removed=0, available=False)
+        guild, role = resolved
+        eligible = await self.data.verified_claim_user_ids()
+        granted = 0
+        removed = 0
+
+        for user_id in eligible:
+            member = guild.get_member(user_id)
+            if member is None:
+                try:
+                    member = await guild.fetch_member(user_id)
+                except discord.NotFound:
+                    continue
+                except discord.HTTPException as exc:
+                    logger.info("[WoWCog] Could not fetch member %s: %s", user_id, exc)
+                    continue
+            if role not in member.roles:
+                await self._add_role(member, role)
+                granted += 1
+
+        for member in list(role.members):
+            if member.id not in eligible:
+                await self._remove_role(member, role)
+                removed += 1
+
+        return RoleSyncResult(
+            eligible=len(eligible), granted=granted, removed=removed, available=True
+        )
+
+    async def reconcile_guild_role_for(self, user_id: int) -> None:
+        """Reconcile the managed role for a single user (verify/release hook).
+
+        Cheap, event-driven companion to :meth:`sync_guild_role`: grants the
+        role if the user now owns a verified claim, removes it otherwise. Works
+        without the member cache because the user ID is already known.
+        """
+        resolved = self._guild_role()
+        if resolved is None:
+            return
+        guild, role = resolved
+        member = guild.get_member(user_id)
+        if member is None:
+            try:
+                member = await guild.fetch_member(user_id)
+            except discord.NotFound:
+                return
+            except discord.HTTPException as exc:
+                logger.info("[WoWCog] Could not fetch member %s: %s", user_id, exc)
+                return
+        eligible = user_id in await self.data.verified_claim_user_ids()
+        has_role = any(r.id == GUILD_ROLE_ID for r in member.roles)
+        if eligible and not has_role:
+            await self._add_role(member, role)
+        elif not eligible and has_role:
+            await self._remove_role(member, role)
+
+    async def _add_role(self, member: discord.Member, role: discord.Role) -> None:
+        try:
+            await member.add_roles(role, reason="Verifizierter WoW-Char-Claim")
+            logger.info(
+                "[WoWCog] Granted guild role to %s (%s).",
+                member.display_name,
+                member.id,
+            )
+        except discord.Forbidden:
+            logger.warning(
+                "[WoWCog] No permission to grant guild role to %s.", member.id
+            )
+        except discord.HTTPException as exc:
+            logger.warning(
+                "[WoWCog] Could not grant guild role to %s: %s", member.id, exc
+            )
+
+    async def _remove_role(self, member: discord.Member, role: discord.Role) -> None:
+        try:
+            await member.remove_roles(role, reason="Kein verifizierter WoW-Char-Claim")
+            logger.info(
+                "[WoWCog] Removed guild role from %s (%s).",
+                member.display_name,
+                member.id,
+            )
+        except discord.Forbidden:
+            logger.warning(
+                "[WoWCog] No permission to remove guild role from %s.", member.id
+            )
+        except discord.HTTPException as exc:
+            logger.warning(
+                "[WoWCog] Could not remove guild role from %s: %s", member.id, exc
+            )
 
     def _seconds_until_next_digest(self, now: datetime | None = None) -> float:
         now = self._digest_now(now)
@@ -460,7 +645,10 @@ class WoWCog(ManagedTaskCog):
     async def scan(self, *, post: bool = True, persist: bool = True) -> ScanResult:
         """Fetch the roster, detect activity, optionally post and persist it."""
         async with self._scan_lock:
-            previous = await self.data.get_snapshot()
+            # Diff against the frozen daily baseline, not the live snapshot —
+            # the latter is refreshed hourly for the claim flow and would
+            # otherwise have already absorbed today's level-ups/joins/deaths.
+            previous = await self.data.get_digest_baseline()
             async with wow_api_session() as session:
                 current = await self.fetch_roster(session=session)
                 if self._roster_response_unsafe(previous, current):
@@ -925,6 +1113,9 @@ class WoWCog(ManagedTaskCog):
                 await self.data.release_claim(
                     death.member.character_key, claim.discord_user_id
                 )
+                # Losing the last claimed char must cost the guild role; the
+                # hourly reconcile would catch it too, but do it immediately.
+                await self.reconcile_guild_role_for(claim.discord_user_id)
         for event in activity.recipe_events or []:
             await self.data.mark_recipe_learning_announced(
                 event.character_key, event.spell_id
@@ -1555,6 +1746,8 @@ class WoWCog(ManagedTaskCog):
             await view.refresh(interaction)
             return
         await self.data.release_claim(claim.character_key, claim.discord_user_id)
+        # May have been the user's last char — drop the guild role if so.
+        await self.reconcile_guild_role_for(claim.discord_user_id)
         view.selected_claim = None
         await view.refresh(interaction)
 
@@ -4537,6 +4730,8 @@ class ClaimReviewView(discord.ui.View):
             )
             return
         await self.cog.data.verify_claim(claim.character_key, interaction.user.id)
+        # Verified claim now entitles the owner to the guild role.
+        await self.cog.reconcile_guild_role_for(claim.discord_user_id)
         await self.cog.update_claim_review_message(interaction, claim, "verified")
 
     @discord.ui.button(
@@ -4556,6 +4751,8 @@ class ClaimReviewView(discord.ui.View):
             )
             return
         await self.cog.data.remove_claim(claim.character_key)
+        # Rejecting removes a claim — re-check the owner's role entitlement.
+        await self.cog.reconcile_guild_role_for(claim.discord_user_id)
         await self.cog.update_claim_review_message(interaction, claim, "rejected")
 
 

@@ -47,10 +47,14 @@ class DummyCog:
         self.known_recipes_result = None
         self.remove_known_recipe_result = None
         self.panel_publish_calls = []
+        self.reconcile_calls = []
         self.data = DummyData()
 
     async def set_announcement_channel(self, channel_id):
         self.channel_id = channel_id
+
+    async def reconcile_guild_role_for(self, user_id):
+        self.reconcile_calls.append(user_id)
 
     async def status(self):
         return {

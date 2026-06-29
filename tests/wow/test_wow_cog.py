@@ -3179,3 +3179,123 @@ async def test_panel_crafting_search_modal_offers_view_for_ambiguous_match(
     _, kwargs = interaction.response.messages[0]
     assert isinstance(kwargs.get("view"), wow_cog_mod.CraftingSearchSuggestionView)
     assert kwargs.get("ephemeral") is True
+
+
+# ---- guild-role reconcile ----
+
+
+class FakeRole:
+    def __init__(self, rid):
+        self.id = rid
+        self.members = []
+
+
+class FakeMember:
+    def __init__(self, uid, roles=None):
+        self.id = uid
+        self.display_name = f"User{uid}"
+        self.roles = list(roles or [])
+        self.added = []
+        self.removed = []
+
+    async def add_roles(self, role, reason=None):
+        self.roles.append(role)
+        self.added.append(role.id)
+
+    async def remove_roles(self, role, reason=None):
+        self.roles = [r for r in self.roles if r.id != role.id]
+        self.removed.append(role.id)
+
+
+class FakeGuild:
+    def __init__(self, role, members):
+        self._role = role
+        self._members = {m.id: m for m in members}
+
+    def get_role(self, rid):
+        return self._role if self._role and rid == self._role.id else None
+
+    def get_member(self, uid):
+        return self._members.get(uid)
+
+    async def fetch_member(self, uid):
+        member_obj = self._members.get(uid)
+        if member_obj is None:
+            response = type("Response", (), {"status": 404, "reason": "Not Found"})()
+            raise discord.NotFound(response, {"message": "Unknown Member"})
+        return member_obj
+
+
+async def _verified_claim(cog, key, uid):
+    char = member(key=key, name=f"Char{uid}")
+    char.character_id = uid
+    await cog.data.replace_snapshot([char])
+    claim, _ = await cog.data.create_claim(char, uid)
+    await cog.data.verify_claim(claim.character_key, reviewer_id=999)
+    return char
+
+
+@pytest.mark.asyncio
+async def test_sync_guild_role_grants_and_strips(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    monkeypatch.setattr(wow_cog_mod.discord, "Guild", FakeGuild)
+    cog = await create_cog(tmp_path, patch_logged_task)
+
+    # User 111 owns a verified claim but lacks the role; 222 holds the role
+    # without any claim (a split-off member to clean up).
+    await _verified_claim(cog, "id:111", 111)
+    role = FakeRole(wow_cog_mod.GUILD_ROLE_ID)
+    entitled = FakeMember(111, roles=[])
+    leftover = FakeMember(222, roles=[role])
+    role.members = [leftover]
+    cog.bot.main_guild = FakeGuild(role, [entitled, leftover])
+
+    result = await cog.sync_guild_role()
+
+    assert result.available is True
+    assert result.eligible == 1
+    assert result.granted == 1
+    assert result.removed == 1
+    assert entitled.added == [wow_cog_mod.GUILD_ROLE_ID]
+    assert leftover.removed == [wow_cog_mod.GUILD_ROLE_ID]
+
+
+@pytest.mark.asyncio
+async def test_sync_guild_role_no_guild_is_safe(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    # DummyBot has no main_guild → reconcile is a no-op, not a crash.
+    result = await cog.sync_guild_role()
+    assert result.available is False
+
+
+@pytest.mark.asyncio
+async def test_reconcile_guild_role_for_removes_when_no_claim(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    monkeypatch.setattr(wow_cog_mod.discord, "Guild", FakeGuild)
+    cog = await create_cog(tmp_path, patch_logged_task)
+    role = FakeRole(wow_cog_mod.GUILD_ROLE_ID)
+    holder = FakeMember(333, roles=[role])
+    cog.bot.main_guild = FakeGuild(role, [holder])
+
+    # No verified claim for 333 → the role must be stripped.
+    await cog.reconcile_guild_role_for(333)
+
+    assert holder.removed == [wow_cog_mod.GUILD_ROLE_ID]
+
+
+@pytest.mark.asyncio
+async def test_reconcile_guild_role_for_grants_when_verified(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    monkeypatch.setattr(wow_cog_mod.discord, "Guild", FakeGuild)
+    cog = await create_cog(tmp_path, patch_logged_task)
+    await _verified_claim(cog, "id:444", 444)
+    role = FakeRole(wow_cog_mod.GUILD_ROLE_ID)
+    newcomer = FakeMember(444, roles=[])
+    cog.bot.main_guild = FakeGuild(role, [newcomer])
+
+    await cog.reconcile_guild_role_for(444)
+
+    assert newcomer.added == [wow_cog_mod.GUILD_ROLE_ID]

@@ -26,6 +26,12 @@ logger = get_logger("bot")
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
+# Required so the WoW cog can enumerate every holder of the bot-managed guild
+# role and strip it from members without a verified char claim. This is a
+# PRIVILEGED intent — it must ALSO be enabled in the Discord Developer Portal
+# (Bot → Privileged Gateway Intents → Server Members Intent), otherwise the
+# bot fails to log in.
+intents.members = True
 
 QUIZ_CONFIG_PATH = "data/pers/quiz/areas.json"
 QUESTION_STATE_PATH = "data/pers/quiz/question_state.json"

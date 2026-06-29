@@ -167,6 +167,26 @@ class WoWData:
                 updated_at TEXT NOT NULL
             )
             """)
+        # Frozen day-over-day baseline for the daily digest diff. ``roster_snapshot``
+        # is now refreshed hourly (so freshly-joined chars become claimable within
+        # the hour), which would otherwise destroy the digest's "yesterday vs today"
+        # comparison. The digest reads this table instead; it is only rewritten by
+        # the daily scan. Same columns as ``roster_snapshot``.
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS roster_digest_baseline (
+                character_key TEXT PRIMARY KEY,
+                character_id INTEGER,
+                name TEXT NOT NULL,
+                realm_slug TEXT NOT NULL,
+                level INTEGER NOT NULL,
+                class_id INTEGER,
+                race_id INTEGER,
+                faction TEXT,
+                guild_rank INTEGER,
+                is_ghost INTEGER NOT NULL DEFAULT 0,
+                updated_at TEXT NOT NULL
+            )
+            """)
         await db.execute("""
             CREATE TABLE IF NOT EXISTS milestone_events (
                 character_key TEXT NOT NULL,
@@ -304,6 +324,23 @@ class WoWData:
         await self._ensure_column(
             "roster_snapshot", "is_ghost", "INTEGER NOT NULL DEFAULT 0"
         )
+        # Seed the digest baseline from the existing live snapshot exactly once,
+        # on upgrade of a database that predates the baseline table. Without this
+        # the first daily scan after deploy would diff against an empty baseline
+        # and announce the entire guild as "new". Skips on a fresh install (both
+        # tables empty) and never re-seeds once the baseline holds rows.
+        cur = await db.execute("SELECT COUNT(*) FROM roster_digest_baseline")
+        baseline_count = (await cur.fetchone())[0]
+        if baseline_count == 0:
+            await db.execute("""
+                INSERT INTO roster_digest_baseline (
+                    character_key, character_id, name, realm_slug, level, class_id,
+                    race_id, faction, guild_rank, is_ghost, updated_at
+                )
+                SELECT character_key, character_id, name, realm_slug, level, class_id,
+                       race_id, faction, guild_rank, is_ghost, updated_at
+                  FROM roster_snapshot
+                """)
         await db.commit()
         self._init_done = True
         logger.info("[WoWData] SQLite database initialized.")
@@ -397,15 +434,19 @@ class WoWData:
             for row in rows
         ]
 
-    async def replace_snapshot(self, members: list[RosterMember]) -> None:
-        await self.init_db()
-        db = await self._get_db()
-        now = datetime.utcnow().isoformat()
-        await db.execute("DELETE FROM roster_snapshot")
+    @staticmethod
+    async def _write_roster_table(
+        db: aiosqlite.Connection,
+        table: str,
+        members: list[RosterMember],
+        now: str,
+    ) -> None:
+        """Replace all rows of a roster-shaped table with ``members``."""
+        await db.execute(f"DELETE FROM {table}")
         for member in members:
             await db.execute(
-                """
-                INSERT INTO roster_snapshot(
+                f"""
+                INSERT INTO {table}(
                     character_key, character_id, name, realm_slug, level, class_id,
                     race_id, faction, guild_rank, is_ghost, updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -424,15 +465,85 @@ class WoWData:
                     now,
                 ),
             )
+
+    @staticmethod
+    async def _record_first_seen(
+        db: aiosqlite.Connection, members: list[RosterMember], now: str
+    ) -> None:
+        for member in members:
             # Record first-seen timestamp once per character_key. Subsequent
-            # scans are no-ops — the original date persists across guild
+            # writes are no-ops — the original date persists across guild
             # leaves and re-joins.
             await db.execute(
                 "INSERT OR IGNORE INTO roster_first_seen("
                 "character_key, first_seen_at) VALUES (?, ?)",
                 (member.character_key, now),
             )
+
+    async def replace_snapshot(self, members: list[RosterMember]) -> None:
+        """Write the daily scan result to the live snapshot AND the digest baseline.
+
+        The daily scan is the only caller that should move the frozen digest
+        baseline forward, so both tables are updated here in lockstep. The
+        hourly live refresh uses :meth:`refresh_live_snapshot`, which leaves
+        the baseline untouched.
+        """
+        await self.init_db()
+        db = await self._get_db()
+        now = datetime.utcnow().isoformat()
+        await self._write_roster_table(db, "roster_snapshot", members, now)
+        await self._write_roster_table(db, "roster_digest_baseline", members, now)
+        await self._record_first_seen(db, members, now)
         await db.commit()
+
+    async def refresh_live_snapshot(self, members: list[RosterMember]) -> None:
+        """Refresh only the live snapshot (hourly), preserving known ghost state.
+
+        The hourly roster pull skips the per-character profile endpoint, so the
+        fetched members never carry a fresh ``is_ghost`` flag. To avoid wiping
+        the death state set by the last daily profile refresh, ghosts already
+        recorded in the snapshot keep their flag. The digest baseline is NOT
+        touched here.
+        """
+        await self.init_db()
+        db = await self._get_db()
+        now = datetime.utcnow().isoformat()
+        cur = await db.execute(
+            "SELECT character_key FROM roster_snapshot WHERE is_ghost = 1"
+        )
+        known_ghosts = {row[0] for row in await cur.fetchall()}
+        for member in members:
+            if member.character_key in known_ghosts:
+                member.is_ghost = True
+        await self._write_roster_table(db, "roster_snapshot", members, now)
+        await self._record_first_seen(db, members, now)
+        await db.commit()
+
+    async def get_digest_baseline(self) -> dict[str, RosterMember]:
+        """Return the frozen day-over-day baseline used by the daily digest."""
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute("""
+            SELECT character_key, character_id, name, realm_slug, level, class_id,
+                   race_id, faction, guild_rank, is_ghost
+              FROM roster_digest_baseline
+            """)
+        rows = await cur.fetchall()
+        return {
+            row[0]: RosterMember(
+                character_key=row[0],
+                character_id=row[1],
+                name=row[2],
+                realm_slug=row[3],
+                level=row[4],
+                class_id=row[5],
+                race_id=row[6],
+                faction=row[7] or "",
+                guild_rank=row[8],
+                is_ghost=bool(row[9]),
+            )
+            for row in rows
+        }
 
     async def first_seen_at(self, character_key: str) -> str | None:
         """Return the ISO timestamp of when this character was first seen
@@ -758,6 +869,21 @@ class WoWData:
         cur = await db.execute(query, params)
         rows = await cur.fetchall()
         return [_claim_from_row(row) for row in rows]
+
+    async def verified_claim_user_ids(self) -> set[int]:
+        """Distinct Discord user IDs that own at least one verified claim.
+
+        Drives the bot-managed guild role: exactly these users are entitled
+        to it. Unverified (pending-review) claims do not count.
+        """
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            "SELECT DISTINCT discord_user_id FROM character_claims "
+            "WHERE status = 'verified'"
+        )
+        rows = await cur.fetchall()
+        return {int(row[0]) for row in rows}
 
     async def add_bank_character(
         self, character_key: str, character_name: str, added_by: int
