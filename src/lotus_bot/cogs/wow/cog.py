@@ -685,6 +685,12 @@ class WoWCog(ManagedTaskCog):
             if post and activity.officer_notes:
                 await self._post_officer_notes(activity.officer_notes)
 
+            # Daily officer reminder: claimed chars still sitting on the lowest
+            # guild rank (= never promoted). A recurring status list, not an
+            # event — reposted every run until the chars are promoted.
+            if post:
+                await self._post_initial_rank_report(current)
+
             if persist:
                 await self.data.replace_snapshot(current)
                 await self.data.mark_scanned()
@@ -1093,6 +1099,67 @@ class WoWCog(ManagedTaskCog):
             # Persist immediately so a later scan failure can't cause a
             # duplicate "X ist nicht mehr Teil von …" message.
             await self.data.record_officer_note(note.member.character_key)
+            posted += 1
+        return posted
+
+    async def _claimed_on_initial_rank(
+        self, members: list[RosterMember]
+    ) -> tuple[int | None, list[tuple[CharacterClaim, RosterMember]]]:
+        """Claimed chars still on the lowest guild rank (= never promoted).
+
+        The "initial" rank is auto-detected as the highest rank number present
+        in the roster — Blizzard numbers ranks 0 (Guild Master) downward, so
+        the largest number is the bottom rank that freshly invited members get.
+        Returns ``(initial_rank, [(claim, member), ...])`` sorted by char name.
+        Ghosts and chars no longer in the roster are skipped.
+        """
+        ranks = [m.guild_rank for m in members if m.guild_rank is not None]
+        if not ranks:
+            return None, []
+        initial_rank = max(ranks)
+        current_by_key = {m.character_key: m for m in members}
+        flagged: list[tuple[CharacterClaim, RosterMember]] = []
+        for claim in await self.data.list_claims("all"):
+            member = current_by_key.get(claim.character_key)
+            if member is None or member.is_ghost:
+                continue
+            if member.guild_rank == initial_rank:
+                flagged.append((claim, member))
+        flagged.sort(key=lambda pair: pair[0].character_name.casefold())
+        return initial_rank, flagged
+
+    async def _post_initial_rank_report(self, members: list[RosterMember]) -> int:
+        """Post the 'claimed but still on initial rank' reminder to officers.
+
+        Returns the number of messages sent (0 if nobody is flagged or the
+        channel is unavailable). The list is chunked to stay under Discord's
+        2000-character message limit.
+        """
+        initial_rank, flagged = await self._claimed_on_initial_rank(members)
+        if not flagged:
+            return 0
+        channel_id = await self.get_claim_review_channel_id()
+        channel = self.bot.get_channel(channel_id)
+        if not channel:
+            logger.warning("[WoWCog] Claim review channel %s not found.", channel_id)
+            return 0
+
+        header = f"📋 **Geclaimt, aber noch auf Initial-Rang (Rang {initial_rank})**"
+        body = ["Diese Chars sollten in-game befördert werden:"] + [
+            f"- **{member.name}** (Level {member.level}) - <@{claim.discord_user_id}>"
+            for claim, member in flagged
+        ]
+        posted = 0
+        for chunk in _pack_digest_sections_into_chunks([(header, body)]):
+            try:
+                await channel.send(chunk)
+            except (discord.Forbidden, discord.HTTPException) as exc:
+                logger.warning(
+                    "[WoWCog] Could not post initial-rank report to channel %s: %s",
+                    channel_id,
+                    exc,
+                )
+                return posted
             posted += 1
         return posted
 

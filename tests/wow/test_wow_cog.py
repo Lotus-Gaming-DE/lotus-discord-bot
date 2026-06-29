@@ -3299,3 +3299,80 @@ async def test_reconcile_guild_role_for_grants_when_verified(
     await cog.reconcile_guild_role_for(444)
 
     assert newcomer.added == [wow_cog_mod.GUILD_ROLE_ID]
+
+
+# ---- initial-rank officer report ----
+
+
+def ranked(key, name, rank, level=60, is_ghost=False):
+    return RosterMember(
+        character_key=key,
+        character_id=int(key.split(":")[-1]) if key.split(":")[-1].isdigit() else 0,
+        name=name,
+        realm_slug="soulseeker",
+        level=level,
+        class_id=4,
+        race_id=8,
+        faction="HORDE",
+        guild_rank=rank,
+        is_ghost=is_ghost,
+    )
+
+
+@pytest.mark.asyncio
+async def test_initial_rank_report_lists_claimed_on_lowest_rank(
+    tmp_path, patch_logged_task
+):
+    officer = DummyChannel()
+    bot = MultiChannelBot(public_channel=None, officer_channel=officer)
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(bot)
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+
+    gm = ranked("id:1", "Gm", 0)
+    promoted = ranked("id:2", "Promoted", 2)  # claimed but already promoted
+    init_a = ranked("id:3", "Initora", 5)  # claimed, initial rank
+    init_b = ranked("id:4", "Anfangus", 5)  # claimed, initial rank
+    init_unclaimed = ranked("id:5", "Niemand", 5)  # initial but no claim
+    init_ghost = ranked("id:6", "Totus", 5, is_ghost=True)  # dead → skip
+    roster = [gm, promoted, init_a, init_b, init_unclaimed, init_ghost]
+    await cog.data.replace_snapshot(roster)
+    for char, uid in [(promoted, 10), (init_a, 20), (init_b, 30), (init_ghost, 40)]:
+        await cog.data.create_claim(char, uid)
+
+    sent = await cog._post_initial_rank_report(roster)
+
+    assert sent == 1
+    msg = officer.sent[0][0]
+    assert "Rang 5" in msg
+    # Both claimed initial-rank chars appear, sorted by name (Anfangus < Initora).
+    assert msg.index("Anfangus") < msg.index("Initora")
+    assert "<@20>" in msg and "<@30>" in msg
+    # Promoted, unclaimed and dead chars must NOT appear.
+    assert "Promoted" not in msg
+    assert "Niemand" not in msg
+    assert "Totus" not in msg
+
+
+@pytest.mark.asyncio
+async def test_initial_rank_report_silent_when_nobody_flagged(
+    tmp_path, patch_logged_task
+):
+    officer = DummyChannel()
+    bot = MultiChannelBot(public_channel=None, officer_channel=officer)
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(bot)
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+
+    # Only claimed char sits on a promoted rank → nothing to report.
+    promoted = ranked("id:2", "Promoted", 2)
+    rookie = ranked("id:5", "Rookie", 5)  # initial rank but unclaimed
+    await cog.data.replace_snapshot([promoted, rookie])
+    await cog.data.create_claim(promoted, 10)
+
+    sent = await cog._post_initial_rank_report([promoted, rookie])
+
+    assert sent == 0
+    assert officer.sent == []
