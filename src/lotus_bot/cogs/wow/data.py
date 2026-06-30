@@ -870,18 +870,24 @@ class WoWData:
         rows = await cur.fetchall()
         return [_claim_from_row(row) for row in rows]
 
-    async def verified_claim_user_ids(self) -> set[int]:
-        """Distinct Discord user IDs that own at least one verified claim.
+    async def role_eligible_user_ids(self) -> set[int]:
+        """Discord user IDs entitled to the bot-managed guild role.
 
-        Drives the bot-managed guild role: exactly these users are entitled
-        to it. Unverified (pending-review) claims do not count.
+        A user qualifies when they own at least one verified claim for a
+        character that is *currently in the guild roster* and alive. Claims
+        for characters that have left the guild (or died) therefore stop
+        granting the role on the next reconcile — without the claim row having
+        to be deleted, so a character that rejoins restores the role
+        automatically. Unverified (pending-review) claims never count.
         """
         await self.init_db()
         db = await self._get_db()
-        cur = await db.execute(
-            "SELECT DISTINCT discord_user_id FROM character_claims "
-            "WHERE status = 'verified'"
-        )
+        cur = await db.execute("""
+            SELECT DISTINCT c.discord_user_id
+              FROM character_claims c
+              JOIN roster_snapshot rs ON rs.character_key = c.character_key
+             WHERE c.status = 'verified' AND rs.is_ghost = 0
+            """)
         rows = await cur.fetchall()
         return {int(row[0]) for row in rows}
 

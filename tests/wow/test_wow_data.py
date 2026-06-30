@@ -108,7 +108,7 @@ async def test_refresh_live_snapshot_preserves_known_ghost(tmp_path):
     await data.close()
 
 
-async def test_verified_claim_user_ids_only_counts_verified(tmp_path):
+async def test_role_eligible_user_ids_only_counts_verified(tmp_path):
     data = WoWData(str(tmp_path / "wow.db"))
     alice = roster_member(name="AliceChar", key="id:a")
     bob = roster_member(name="BobChar", key="id:b")
@@ -117,10 +117,44 @@ async def test_verified_claim_user_ids_only_counts_verified(tmp_path):
     await data.create_claim(bob, 222)
 
     # Both claims start unverified → nobody is entitled yet.
-    assert await data.verified_claim_user_ids() == set()
+    assert await data.role_eligible_user_ids() == set()
 
     await data.verify_claim(alice.character_key, reviewer_id=999)
-    assert await data.verified_claim_user_ids() == {111}
+    assert await data.role_eligible_user_ids() == {111}
+    await data.close()
+
+
+async def test_role_eligible_user_ids_drops_chars_no_longer_in_roster(tmp_path):
+    """A verified claim only counts while its char is still in the roster.
+
+    Mirrors the real bug: someone keeps the guild role after their claimed
+    char left the guild. The claim row stays (so a rejoin restores the role),
+    but eligibility drops as soon as the char is gone from the snapshot.
+    """
+    data = WoWData(str(tmp_path / "wow.db"))
+    leaver = roster_member(name="Leaver", key="id:l")
+    await data.replace_snapshot([leaver])
+    await data.create_claim(leaver, 111)
+    await data.verify_claim(leaver.character_key, reviewer_id=999)
+    assert await data.role_eligible_user_ids() == {111}
+
+    # Char leaves the guild → next live roster refresh no longer lists it.
+    await data.refresh_live_snapshot([])
+    assert await data.role_eligible_user_ids() == set()
+    # The claim itself is untouched, so a rejoin restores eligibility.
+    await data.refresh_live_snapshot([leaver])
+    assert await data.role_eligible_user_ids() == {111}
+    await data.close()
+
+
+async def test_role_eligible_user_ids_excludes_ghosts(tmp_path):
+    data = WoWData(str(tmp_path / "wow.db"))
+    dead = roster_member(name="Dead", key="id:d")
+    dead.is_ghost = True
+    await data.replace_snapshot([dead])
+    await data.create_claim(dead, 111)
+    await data.verify_claim(dead.character_key, reviewer_id=999)
+    assert await data.role_eligible_user_ids() == set()
     await data.close()
 
 

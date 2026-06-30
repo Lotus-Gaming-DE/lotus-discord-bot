@@ -3301,6 +3301,53 @@ async def test_reconcile_guild_role_for_grants_when_verified(
     assert newcomer.added == [wow_cog_mod.GUILD_ROLE_ID]
 
 
+@pytest.mark.asyncio
+async def test_sync_guild_role_strips_when_claimed_char_left_guild(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    """The actual reported bug: role lingers after the claimed char leaves."""
+    monkeypatch.setattr(wow_cog_mod.discord, "Guild", FakeGuild)
+    cog = await create_cog(tmp_path, patch_logged_task)
+
+    left = ranked("id:left", "Leaver", 5)
+    still_here = ranked("id:other", "Stillhere", 2)
+    await cog.data.create_claim(left, 555)
+    await cog.data.verify_claim(left.character_key, 999)
+    # Roster no longer contains the claimed char, but is NOT empty.
+    await cog.data.replace_snapshot([still_here])
+
+    role = FakeRole(wow_cog_mod.GUILD_ROLE_ID)
+    holder = FakeMember(555, roles=[role])
+    role.members = [holder]
+    cog.bot.main_guild = FakeGuild(role, [holder])
+
+    result = await cog.sync_guild_role()
+
+    assert holder.removed == [wow_cog_mod.GUILD_ROLE_ID]
+    assert result.removed == 1
+    assert result.eligible == 0
+
+
+@pytest.mark.asyncio
+async def test_sync_guild_role_skips_strip_when_roster_empty(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    """Empty roster snapshot must not trigger a mass role-strip."""
+    monkeypatch.setattr(wow_cog_mod.discord, "Guild", FakeGuild)
+    cog = await create_cog(tmp_path, patch_logged_task)
+    # No replace_snapshot → roster table empty.
+
+    role = FakeRole(wow_cog_mod.GUILD_ROLE_ID)
+    holder = FakeMember(777, roles=[role])
+    role.members = [holder]
+    cog.bot.main_guild = FakeGuild(role, [holder])
+
+    result = await cog.sync_guild_role()
+
+    assert holder.removed == []
+    assert result.removed == 0
+
+
 # ---- initial-rank officer report ----
 
 

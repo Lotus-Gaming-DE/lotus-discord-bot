@@ -417,7 +417,7 @@ class WoWCog(ManagedTaskCog):
         if resolved is None:
             return RoleSyncResult(eligible=0, granted=0, removed=0, available=False)
         guild, role = resolved
-        eligible = await self.data.verified_claim_user_ids()
+        eligible = await self.data.role_eligible_user_ids()
         granted = 0
         removed = 0
 
@@ -435,10 +435,17 @@ class WoWCog(ManagedTaskCog):
                 await self._add_role(member, role)
                 granted += 1
 
-        for member in list(role.members):
-            if member.id not in eligible:
-                await self._remove_role(member, role)
-                removed += 1
+        # Guard against catastrophic mass-removal: if the roster snapshot is
+        # empty (failed fetch, fresh DB) the eligible set is empty too, which
+        # would otherwise strip the role from everyone. Skip the strip pass in
+        # that state — grants are safe, removals are not.
+        if await self.data.member_count() == 0:
+            logger.warning("[WoWCog] Roster snapshot empty — skipping role strip pass.")
+        else:
+            for member in list(role.members):
+                if member.id not in eligible:
+                    await self._remove_role(member, role)
+                    removed += 1
 
         return RoleSyncResult(
             eligible=len(eligible), granted=granted, removed=removed, available=True
@@ -464,7 +471,7 @@ class WoWCog(ManagedTaskCog):
             except discord.HTTPException as exc:
                 logger.info("[WoWCog] Could not fetch member %s: %s", user_id, exc)
                 return
-        eligible = user_id in await self.data.verified_claim_user_ids()
+        eligible = user_id in await self.data.role_eligible_user_ids()
         has_role = any(r.id == GUILD_ROLE_ID for r in member.roles)
         if eligible and not has_role:
             await self._add_role(member, role)
