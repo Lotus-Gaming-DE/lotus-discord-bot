@@ -312,6 +312,37 @@ async def role_sync(interaction: discord.Interaction):
 
 
 @wow_group.command(
+    name="sync-report",
+    description="Zeigt Abweichungen zwischen Claims und In-Game-Rängen (nur Mods)",
+)
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+async def sync_report(interaction: discord.Interaction):
+    logger.info(f"/wow sync-report by {interaction.user}")
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
+        )
+        return
+
+    await interaction.response.defer(ephemeral=True, thinking=True)
+    try:
+        members = list((await cog.data.get_snapshot()).values())
+        chunks = await cog.sync_report_chunks(members)
+    except Exception as exc:
+        logger.error("[WoWCommands] Sync-Report failed: %s", exc, exc_info=True)
+        await interaction.followup.send("❌ Sync-Report fehlgeschlagen.")
+        return
+
+    if not chunks:
+        await interaction.followup.send("✅ Alles synchron — keine Abweichungen.")
+        return
+    for chunk in chunks:
+        await interaction.followup.send(chunk)
+
+
+@wow_group.command(
     name="whois",
     description="Zeigt was wir über einen Char wissen (privat).",
 )

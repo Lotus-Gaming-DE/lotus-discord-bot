@@ -1273,6 +1273,10 @@ async def test_digest_posts_one_message_for_multiple_events(
 ):
     channel = DummyChannel()
     cog = await create_cog(tmp_path, patch_logged_task, channel=channel)
+    # Announcement and officer channels are distinct in reality — the sync
+    # report posts to the officer channel, so it must not land on the
+    # announcement channel this test counts.
+    cog.bot = MultiChannelBot(public_channel=channel, officer_channel=DummyChannel())
     await cog.set_announcement_channel(123)
     await cog.data.replace_snapshot([member(level=49)])
 
@@ -3348,7 +3352,7 @@ async def test_sync_guild_role_skips_strip_when_roster_empty(
     assert result.removed == 0
 
 
-# ---- initial-rank officer report ----
+# ---- Offi-Sync-Report (claim ⇄ in-game rank reconcile) ----
 
 
 def ranked(key, name, rank, level=60, is_ghost=False):
@@ -3366,10 +3370,13 @@ def ranked(key, name, rank, level=60, is_ghost=False):
     )
 
 
+async def _verify(cog, char, uid):
+    await cog.data.create_claim(char, uid)
+    await cog.data.verify_claim(char.character_key, reviewer_id=999)
+
+
 @pytest.mark.asyncio
-async def test_initial_rank_report_lists_claimed_on_lowest_rank(
-    tmp_path, patch_logged_task
-):
+async def test_sync_report_flags_all_three_categories(tmp_path, patch_logged_task):
     officer = DummyChannel()
     bot = MultiChannelBot(public_channel=None, officer_channel=officer)
     patch_logged_task(wow_cog_mod, log_setup)
@@ -3377,35 +3384,47 @@ async def test_initial_rank_report_lists_claimed_on_lowest_rank(
     cog.data = WoWData(str(tmp_path / "wow.db"))
     CREATED_COGS.append(cog)
 
-    gm = ranked("id:1", "Gm", 0)
-    promoted = ranked("id:2", "Promoted", 2)  # claimed but already promoted
-    init_a = ranked("id:3", "Initora", 5)  # claimed, initial rank
-    init_b = ranked("id:4", "Anfangus", 5)  # claimed, initial rank
-    init_unclaimed = ranked("id:5", "Niemand", 5)  # initial but no claim
-    init_ghost = ranked("id:6", "Totus", 5, is_ghost=True)  # dead → skip
-    roster = [gm, promoted, init_a, init_b, init_unclaimed, init_ghost]
+    main_a = ranked("id:1", "Maina", 3)  # Member, verified (user 100's main)
+    main_a2 = ranked("id:2", "Zweitmain", 2)  # Veteran, verified (100 → 2nd Member+)
+    initiate_claimed = ranked("id:3", "Neulor", 6)  # verified but still Initiate
+    twink = ranked("id:4", "Twinkus", 5)  # verified twink → fine
+    pending = ranked("id:5", "Pendlor", 6)  # UNVERIFIED claim → must be ignored
+    legacy_member = ranked("id:6", "Altmember", 3)  # Member, no claim at all
+    bank_noclaim = ranked("id:7", "Bankus", 4)  # Bank, no claim → not Member+
+    roster = [
+        main_a,
+        main_a2,
+        initiate_claimed,
+        twink,
+        pending,
+        legacy_member,
+        bank_noclaim,
+    ]
     await cog.data.replace_snapshot(roster)
-    for char, uid in [(promoted, 10), (init_a, 20), (init_b, 30), (init_ghost, 40)]:
-        await cog.data.create_claim(char, uid)
+    await _verify(cog, main_a, 100)
+    await _verify(cog, main_a2, 100)
+    await _verify(cog, initiate_claimed, 200)
+    await _verify(cog, twink, 200)
+    await cog.data.create_claim(pending, 300)  # left unverified
 
-    sent = await cog._post_initial_rank_report(roster)
+    posted = await cog._post_sync_report(roster)
 
-    assert sent == 1
-    msg = officer.sent[0][0]
-    assert "Rang 5" in msg
-    # Both claimed initial-rank chars appear, sorted by name (Anfangus < Initora).
-    assert msg.index("Anfangus") < msg.index("Initora")
-    assert "<@20>" in msg and "<@30>" in msg
-    # Promoted, unclaimed and dead chars must NOT appear.
-    assert "Promoted" not in msg
-    assert "Niemand" not in msg
-    assert "Totus" not in msg
+    assert posted >= 1
+    msg = "\n".join(sent[0] for sent in officer.sent)
+    assert "Offi-Sync-Report" in msg
+    # Section 1: verified claim on Initiate.
+    assert "Neulor" in msg and "<@200>" in msg
+    assert "Pendlor" not in msg  # unverified → ignored
+    # Section 2: Member+ without any claim; Bank char must not appear.
+    assert "Altmember" in msg
+    assert "Bankus" not in msg
+    # Section 3: user with >1 Member+ char.
+    assert "<@100>" in msg
+    assert "Maina" in msg and "Zweitmain" in msg
 
 
 @pytest.mark.asyncio
-async def test_initial_rank_report_silent_when_nobody_flagged(
-    tmp_path, patch_logged_task
-):
+async def test_sync_report_empty_when_everything_matches(tmp_path, patch_logged_task):
     officer = DummyChannel()
     bot = MultiChannelBot(public_channel=None, officer_channel=officer)
     patch_logged_task(wow_cog_mod, log_setup)
@@ -3413,13 +3432,46 @@ async def test_initial_rank_report_silent_when_nobody_flagged(
     cog.data = WoWData(str(tmp_path / "wow.db"))
     CREATED_COGS.append(cog)
 
-    # Only claimed char sits on a promoted rank → nothing to report.
-    promoted = ranked("id:2", "Promoted", 2)
-    rookie = ranked("id:5", "Rookie", 5)  # initial rank but unclaimed
-    await cog.data.replace_snapshot([promoted, rookie])
-    await cog.data.create_claim(promoted, 10)
+    main = ranked("id:1", "Main", 3)  # Member, verified
+    twink = ranked("id:2", "Twink", 5)  # Twink, verified (same user, fine)
+    bank = ranked("id:3", "Bank", 4)  # Bank, no claim → not Member+
+    await cog.data.replace_snapshot([main, twink, bank])
+    await _verify(cog, main, 100)
+    await _verify(cog, twink, 100)
 
-    sent = await cog._post_initial_rank_report([promoted, rookie])
-
-    assert sent == 0
+    assert await cog.sync_report_chunks([main, twink, bank]) == []
+    assert await cog._post_sync_report([main, twink, bank]) == 0
     assert officer.sent == []
+
+
+@pytest.mark.asyncio
+async def test_claim_review_message_hints_twink_when_user_has_member(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    main = ranked("id:1", "Hauptmann", 3)  # existing Member char
+    twink = ranked("id:2", "Zwergnase", 6)  # the newly claimed char (Initiate)
+    await cog.data.replace_snapshot([main, twink])
+    await _verify(cog, main, 100)
+    new_claim, _ = await cog.data.create_claim(twink, 100)
+
+    msg = await cog.format_claim_review_message(new_claim)
+
+    assert "Hauptmann" in msg  # existing claim shown
+    assert "Member" in msg  # its rank label
+    assert "Twink" in msg  # recommendation
+
+
+@pytest.mark.asyncio
+async def test_claim_review_message_recommends_member_for_first_claim(
+    tmp_path, patch_logged_task
+):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    first = ranked("id:1", "Erstchar", 6)
+    await cog.data.replace_snapshot([first])
+    claim, _ = await cog.data.create_claim(first, 100)
+
+    msg = await cog.format_claim_review_message(claim)
+
+    assert "Bereits geclaimt" not in msg
+    assert "Member" in msg

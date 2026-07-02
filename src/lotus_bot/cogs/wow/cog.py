@@ -51,6 +51,21 @@ GUILD_ROLE_ID = 1448935193921454100
 # waiting for the next 9 o'clock digest run. Fetches only the guild roster
 # (one API call) — no per-character profile calls, no digest, no posting.
 DEFAULT_ROSTER_REFRESH_INTERVAL = 60 * 60
+# In-game guild rank layout (Blizzard rank index → meaning). The roster API only
+# exposes the integer rank; this fixed map gives it meaning. "Member or higher"
+# is any rank <= MEMBER_RANK. Drives the claim-review hints and the Offi-Sync-
+# Report. Adjust here if the guild's rank structure ever changes.
+GUILD_RANKS = {
+    0: "Gildenmeister",
+    1: "Offizier",
+    2: "Veteran",
+    3: "Member",
+    4: "Bank",
+    5: "Twink",
+    6: "Initiate",
+}
+MEMBER_RANK = 3
+INITIATE_RANK = 6
 try:
     DIGEST_TIMEZONE = ZoneInfo("Europe/Berlin")
 except ZoneInfoNotFoundError:  # pragma: no cover - depends on host tzdata
@@ -303,6 +318,31 @@ class RoleSyncResult:
     granted: int
     removed: int
     available: bool
+
+
+@dataclass
+class SyncReport:
+    """Discrepancies between verified claims and in-game guild ranks.
+
+    * ``initiate_claims`` — verified claim, but the char still sits on Initiate
+      (confirmed yet never promoted).
+    * ``members_without_claim`` — char on Member+ rank with no claim at all
+      (legacy Discord-join members).
+    * ``multi_member_users`` — ``(discord_user_id, [(claim, member), ...])`` for
+      users with more than one Member+ char (invariant: only one allowed).
+    """
+
+    initiate_claims: list[tuple["CharacterClaim", RosterMember]]
+    members_without_claim: list[RosterMember]
+    multi_member_users: list[tuple[int, list[tuple["CharacterClaim", RosterMember]]]]
+
+    @property
+    def empty(self) -> bool:
+        return not (
+            self.initiate_claims
+            or self.members_without_claim
+            or self.multi_member_users
+        )
 
 
 class WoWCog(ManagedTaskCog):
@@ -692,11 +732,12 @@ class WoWCog(ManagedTaskCog):
             if post and activity.officer_notes:
                 await self._post_officer_notes(activity.officer_notes)
 
-            # Daily officer reminder: claimed chars still sitting on the lowest
-            # guild rank (= never promoted). A recurring status list, not an
-            # event — reposted every run until the chars are promoted.
+            # Daily officer reconcile report: claim ⇄ in-game rank mismatches
+            # (Initiate-but-claimed, Member+-without-claim, >1 Member+ per user).
+            # A recurring status list, not an event — reposted every run until
+            # the discrepancies are resolved.
             if post:
-                await self._post_initial_rank_report(current)
+                await self._post_sync_report(current)
 
             if persist:
                 await self.data.replace_snapshot(current)
@@ -1109,60 +1150,128 @@ class WoWCog(ManagedTaskCog):
             posted += 1
         return posted
 
-    async def _claimed_on_initial_rank(
-        self, members: list[RosterMember]
-    ) -> tuple[int | None, list[tuple[CharacterClaim, RosterMember]]]:
-        """Claimed chars still on the lowest guild rank (= never promoted).
+    def _rank_label(self, rank: int | None) -> str:
+        if rank is None:
+            return "kein Rang"
+        return GUILD_RANKS.get(rank, f"Rang {rank}")
 
-        The "initial" rank is auto-detected as the highest rank number present
-        in the roster — Blizzard numbers ranks 0 (Guild Master) downward, so
-        the largest number is the bottom rank that freshly invited members get.
-        Returns ``(initial_rank, [(claim, member), ...])`` sorted by char name.
-        Ghosts and chars no longer in the roster are skipped.
+    async def build_sync_report(self, members: list[RosterMember]) -> SyncReport:
+        """Compare verified claims against in-game ranks (see :class:`SyncReport`).
+
+        Ghosts and chars no longer in the roster are ignored. "Member or higher"
+        is any rank <= ``MEMBER_RANK``; Initiate is ``INITIATE_RANK``.
         """
-        ranks = [m.guild_rank for m in members if m.guild_rank is not None]
-        if not ranks:
-            return None, []
-        initial_rank = max(ranks)
-        current_by_key = {m.character_key: m for m in members}
-        flagged: list[tuple[CharacterClaim, RosterMember]] = []
-        for claim in await self.data.list_claims("all"):
-            member = current_by_key.get(claim.character_key)
-            if member is None or member.is_ghost:
+        members_by_key = {m.character_key: m for m in members if not m.is_ghost}
+        verified = await self.data.list_claims("verified")
+        claimed_keys = {c.character_key for c in await self.data.list_claims("all")}
+
+        initiate_claims: list[tuple[CharacterClaim, RosterMember]] = []
+        member_claims_by_user: dict[int, list[tuple[CharacterClaim, RosterMember]]] = {}
+        for claim in verified:
+            member = members_by_key.get(claim.character_key)
+            if member is None or member.guild_rank is None:
                 continue
-            if member.guild_rank == initial_rank:
-                flagged.append((claim, member))
-        flagged.sort(key=lambda pair: pair[0].character_name.casefold())
-        return initial_rank, flagged
+            if member.guild_rank == INITIATE_RANK:
+                initiate_claims.append((claim, member))
+            if member.guild_rank <= MEMBER_RANK:
+                member_claims_by_user.setdefault(claim.discord_user_id, []).append(
+                    (claim, member)
+                )
 
-    async def _post_initial_rank_report(self, members: list[RosterMember]) -> int:
-        """Post the 'claimed but still on initial rank' reminder to officers.
+        members_without_claim = [
+            member
+            for member in members_by_key.values()
+            if member.guild_rank is not None
+            and member.guild_rank <= MEMBER_RANK
+            and member.character_key not in claimed_keys
+        ]
+        multi_member_users = [
+            (user_id, claims)
+            for user_id, claims in member_claims_by_user.items()
+            if len(claims) > 1
+        ]
 
-        Returns the number of messages sent (0 if nobody is flagged or the
-        channel is unavailable). The list is chunked to stay under Discord's
-        2000-character message limit.
-        """
-        initial_rank, flagged = await self._claimed_on_initial_rank(members)
-        if not flagged:
+        initiate_claims.sort(key=lambda pair: pair[0].character_name.casefold())
+        members_without_claim.sort(key=lambda m: (m.guild_rank, m.name.casefold()))
+        multi_member_users.sort(key=lambda pair: pair[0])
+        return SyncReport(
+            initiate_claims=initiate_claims,
+            members_without_claim=members_without_claim,
+            multi_member_users=multi_member_users,
+        )
+
+    def _sync_report_sections(
+        self, report: SyncReport
+    ) -> list[tuple[str | None, list[str]]]:
+        sections: list[tuple[str | None, list[str]]] = []
+        if report.initiate_claims:
+            body = [
+                f"- **{member.name}** (Level {member.level}) - "
+                f"<@{claim.discord_user_id}>"
+                for claim, member in report.initiate_claims
+            ]
+            sections.append(
+                (
+                    "**Geclaimt & bestätigt, aber noch auf Initiate** — "
+                    "auf Member oder Twink hochstufen:",
+                    body,
+                )
+            )
+        if report.members_without_claim:
+            body = [
+                f"- **{member.name}** ({self._rank_label(member.guild_rank)}, "
+                f"Level {member.level})"
+                for member in report.members_without_claim
+            ]
+            sections.append(
+                (
+                    "**Member+ ohne Claim** — claimen lassen oder runterstufen:",
+                    body,
+                )
+            )
+        if report.multi_member_users:
+            body = []
+            for user_id, claims in report.multi_member_users:
+                chars = ", ".join(
+                    f"**{member.name}** ({self._rank_label(member.guild_rank)})"
+                    for _, member in sorted(claims, key=lambda p: p[1].guild_rank)
+                )
+                body.append(f"- <@{user_id}>: {chars}")
+            sections.append(
+                (
+                    "**Mehr als ein Member+-Char** — nur einer soll Member+ "
+                    "sein, Rest → Twink:",
+                    body,
+                )
+            )
+        return sections
+
+    async def sync_report_chunks(self, members: list[RosterMember]) -> list[str]:
+        """Render the sync report as Discord-postable chunks (empty if clean)."""
+        report = await self.build_sync_report(members)
+        sections = self._sync_report_sections(report)
+        if not sections:
+            return []
+        header: tuple[str | None, list[str]] = (None, ["🔄 **Offi-Sync-Report**"])
+        return _pack_digest_sections_into_chunks([header] + sections)
+
+    async def _post_sync_report(self, members: list[RosterMember]) -> int:
+        """Post the sync report to the officer channel (0 if clean/unavailable)."""
+        chunks = await self.sync_report_chunks(members)
+        if not chunks:
             return 0
         channel_id = await self.get_claim_review_channel_id()
         channel = self.bot.get_channel(channel_id)
         if not channel:
             logger.warning("[WoWCog] Claim review channel %s not found.", channel_id)
             return 0
-
-        header = f"📋 **Geclaimt, aber noch auf Initial-Rang (Rang {initial_rank})**"
-        body = ["Diese Chars sollten in-game befördert werden:"] + [
-            f"- **{member.name}** (Level {member.level}) - <@{claim.discord_user_id}>"
-            for claim, member in flagged
-        ]
         posted = 0
-        for chunk in _pack_digest_sections_into_chunks([(header, body)]):
+        for chunk in chunks:
             try:
                 await channel.send(chunk)
             except (discord.Forbidden, discord.HTTPException) as exc:
                 logger.warning(
-                    "[WoWCog] Could not post initial-rank report to channel %s: %s",
+                    "[WoWCog] Could not post sync report to channel %s: %s",
                     channel_id,
                     exc,
                 )
@@ -1927,7 +2036,7 @@ class WoWCog(ManagedTaskCog):
 
         try:
             message = await channel.send(
-                self.format_claim_review(claim),
+                await self.format_claim_review_message(claim),
                 view=ClaimReviewView(self),
             )
         except discord.Forbidden:
@@ -1952,6 +2061,50 @@ class WoWCog(ManagedTaskCog):
             f"<@{claim.discord_user_id}> möchte **{claim.character_name}** verbinden "
             f"— bitte bestätigen oder ablehnen."
         )
+
+    async def format_claim_review_message(self, claim: CharacterClaim) -> str:
+        """Claim-review text enriched with the user's other claims + a hint.
+
+        Shows every already-claimed char of the requester with its current
+        in-game rank, and recommends the target rank: first Member+ char →
+        Member; if they already have one → the new claim is a Twink. Lets the
+        officer decide Member-vs-Twink without looking it up in-game.
+        """
+        base = self.format_claim_review(claim)
+        snapshot = await self.data.get_snapshot()
+        others = [
+            existing
+            for existing in await self.data.claims_for_user(claim.discord_user_id)
+            if existing.character_key != claim.character_key
+        ]
+        lines = [base, ""]
+        has_member = False
+        if others:
+            lines.append("**Bereits geclaimt von diesem User:**")
+            for existing in sorted(others, key=lambda c: c.character_name.casefold()):
+                member = snapshot.get(existing.character_key)
+                if member is None:
+                    rank_label = "nicht mehr im Roster"
+                else:
+                    rank_label = self._rank_label(member.guild_rank)
+                    if (
+                        member.guild_rank is not None
+                        and member.guild_rank <= MEMBER_RANK
+                    ):
+                        has_member = True
+                marker = "✅" if existing.status == "verified" else "⏳"
+                lines.append(f"- {marker} **{existing.character_name}** ({rank_label})")
+            lines.append("")
+        if has_member:
+            lines.append(
+                "⚠️ Hat bereits einen **Member+**-Char → dieser Claim ist "
+                "vermutlich ein **Twink**."
+            )
+        else:
+            lines.append(
+                "➡️ Noch kein Member+-Char → dieser Claim wird der " "**Member**-Char."
+            )
+        return "\n".join(lines)
 
     def _wow_records(self, table: str) -> list[dict]:
         data = getattr(self.bot, "data", {}).get("wow", {})
