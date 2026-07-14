@@ -81,8 +81,10 @@ HUB_HELP_TEXT = (
     "direkt, wer zeitlich zu dir passt.\n\n"
     "**Mit mir leveln** — in einem fremden Suchpost startest du damit eine "
     "Anfrage. Der andere muss zustimmen, dann entsteht euer Team.\n\n"
-    "**Mein Status** — zeigt, ob du suchst oder in einem Team bist, mit "
-    "Buttons zum Bearbeiten, Zurückziehen oder Auflösen.\n\n"
+    "**Mein Status** — zeigt alle deine Teams und offenen Suchen. Pro Char "
+    "geht ein Partner — du kannst also mit mehreren Twinks parallel suchen. "
+    "Eine Suche ziehst du im Such-Post zurück, ein Team löst/benennst du im "
+    "Team-Post.\n\n"
     "**Im Team** — der Bot postet automatisch, wenn ihr Meilensteine "
     "erreicht (Level 30/40/50/60) und vergibt Bonus-Champion-Punkte, wenn "
     "**beide** dort ankommen. Fällt ein Partner, bekommt ihr ein Memorial "
@@ -243,30 +245,56 @@ class DuoCog(ManagedTaskCog):
         member = snapshot.get(character_key)
         return member.level if member else 0
 
+    async def _chars_in_active_team(self, user_id: int) -> set[str]:
+        """Character keys of the user that already sit in an active team."""
+        in_team: set[str] = set()
+        for team in await self.data.active_teams_for_user(user_id):
+            for member in await self.data.team_members(team.team_id):
+                if member.discord_user_id == user_id:
+                    in_team.add(member.character_key)
+        return in_team
+
+    async def _available_chars(
+        self, user_id: int, *, exclude_searching: bool
+    ) -> list[tuple[str, str, int, int | None]]:
+        """Living claimed chars a player can still dedicate to a partner.
+
+        Always excludes chars already in an active team. When
+        ``exclude_searching`` is set (creating a new search), also excludes
+        chars that already have an open search post, so a char can't be
+        double-listed on the board.
+        """
+        chars = await self._living_claim_chars(user_id)
+        blocked = await self._chars_in_active_team(user_id)
+        if exclude_searching:
+            blocked |= {
+                s.character_key for s in await self.data.signups_for_user(user_id)
+            }
+        return [c for c in chars if c[0] not in blocked]
+
     # ---- hub button entry points ----
 
     async def open_search(self, interaction: discord.Interaction) -> None:
-        team = await self.data.active_team_for_user(interaction.user.id)
-        if team is not None:
-            await interaction.response.send_message(
-                f"Du bist schon in **{team.name}** "
-                f"({_thread_mention(team.thread_id)}). Löse das Team zuerst über "
-                "**Mein Status** auf, wenn du neu suchen willst.",
-                ephemeral=True,
-            )
-            return
-        chars = await self._living_claim_chars(interaction.user.id)
-        if not chars:
+        if not await self._living_claim_chars(interaction.user.id):
             await interaction.response.send_message(
                 "Du musst zuerst einen lebenden Black-Lotus-Char claimen "
                 "(WoW-Hub → **Deine Chars**), bevor du einen Partner suchst.",
                 ephemeral=True,
             )
             return
+        chars = await self._available_chars(interaction.user.id, exclude_searching=True)
+        if not chars:
+            await interaction.response.send_message(
+                "Alle deine lebenden Chars sind schon in einem Team oder suchen "
+                "bereits. Pro Char geht ein Partner — für einen weiteren brauchst "
+                "du einen anderen Char.",
+                ephemeral=True,
+            )
+            return
         view = DuoSearchComposeView(self, interaction.user.id, chars)
         await interaction.response.send_message(
-            "**Partner-Suche erstellen** — wähle deinen Char und deine "
-            "typischen Spielzeiten, dann **Auf's Board**.",
+            "**Partner-Suche erstellen** — wähle den Char, mit dem du suchst, "
+            "und deine typischen Spielzeiten, dann **Auf's Board**.",
             view=view,
             ephemeral=True,
         )
@@ -280,36 +308,53 @@ class DuoCog(ManagedTaskCog):
         await interaction.response.send_message(HUB_HELP_TEXT, ephemeral=True)
 
     async def _status_payload(self, user_id: int) -> dict:
-        team = await self.data.active_team_for_user(user_id)
-        if team is not None:
-            members = await self.data.team_members(team.team_id)
-            lines = [
-                f"🤝 Du bist in **{team.name}** ({_thread_mention(team.thread_id)})."
-            ]
-            for member in members:
-                who = (
-                    "Du"
-                    if member.discord_user_id == user_id
-                    else f"<@{member.discord_user_id}>"
+        """Informational overview of ALL of a player's teams and searches.
+
+        Mutating actions live on the posts themselves (disband/rename/swap on
+        the team post, withdraw on the search post) so this scales cleanly to
+        several alts.
+        """
+        teams = await self.data.active_teams_for_user(user_id)
+        searches = await self.data.signups_for_user(user_id)
+        lines: list[str] = []
+        if teams:
+            lines.append("🤝 **Deine Teams:**")
+            for team in teams:
+                members = await self.data.team_members(team.team_id)
+                mine = next((m for m in members if m.discord_user_id == user_id), None)
+                partners = [m for m in members if m.discord_user_id != user_id]
+                mine_txt = (
+                    await self._char_descriptor(mine.character_key, mine.character_name)
+                    if mine
+                    else "—"
+                )
+                partner_txt = (
+                    ", ".join(
+                        f"<@{p.discord_user_id}> ({p.character_name})" for p in partners
+                    )
+                    or "—"
                 )
                 lines.append(
-                    f"• {who}: {await self._char_descriptor(member.character_key, member.character_name)}"
+                    f"• **{team.name}** ({_thread_mention(team.thread_id)}) — "
+                    f"dein Char: {mine_txt}; Partner: {partner_txt}"
                 )
-            return {"content": "\n".join(lines), "view": DuoStatusTeamView(self, team)}
-        signup = await self.data.get_signup(user_id)
-        if signup is not None:
-            windows = format_windows(decode_windows(signup.time_windows))
-            content = (
-                f"🔍 Du suchst mit "
-                f"{await self._char_descriptor(signup.character_key, signup.character_name)}.\n"
-                f"**Zeiten:** {windows}\n"
-                f"**Post:** {_thread_mention(signup.post_id)}"
-            )
-            return {"content": content, "view": DuoStatusSearchView(self)}
-        return {
-            "content": "Du suchst gerade nicht und bist in keinem Team.",
-            "view": DuoStatusIdleView(self),
-        }
+        if searches:
+            lines.append("🔍 **Deine offenen Suchen:**")
+            for signup in searches:
+                windows = format_windows(decode_windows(signup.time_windows))
+                descriptor = await self._char_descriptor(
+                    signup.character_key, signup.character_name
+                )
+                lines.append(
+                    f"• {descriptor} — {windows} ({_thread_mention(signup.post_id)})"
+                )
+        if not lines:
+            lines.append("Du suchst gerade nicht und bist in keinem Team.")
+        lines.append(
+            "\n_Suche zurückziehen: im Such-Post · Team auflösen/umbenennen: "
+            "im Team-Post._"
+        )
+        return {"content": "\n".join(lines), "view": DuoStatusView(self)}
 
     # ---- search publishing ----
 
@@ -329,10 +374,18 @@ class DuoCog(ManagedTaskCog):
                 content="❌ Dieser Char gehört dir nicht (mehr).", view=None
             )
             return
+        # Guard against a race: the char may have joined a team since the
+        # compose view was opened.
+        if await self.data.active_team_by_character(character_key) is not None:
+            await interaction.response.edit_message(
+                content=f"❌ **{claim.character_name}** ist bereits in einem Team.",
+                view=None,
+            )
+            return
 
         encoded = encode_windows(windows)
-        # Replace any previous open search + its forum post.
-        old = await self.data.get_signup(interaction.user.id)
+        # Replace this character's previous open search + its forum post.
+        old = await self.data.get_signup(character_key)
         if old is not None and old.post_id:
             await self._delete_post(old.post_id)
 
@@ -362,10 +415,13 @@ class DuoCog(ManagedTaskCog):
             applied_tags=self._tag(TAG_SEARCHING),
         )
         await created.message.edit(view=DuoSearchPostView(self))
-        await self.data.set_signup_post(interaction.user.id, created.thread.id)
+        await self.data.set_signup_post(character_key, created.thread.id)
 
         # Light suggestion nudge: who overlaps best with the fresh searcher.
-        suggestions = await self._suggestions_for(interaction.user.id)
+        my_level = await self._char_level(character_key)
+        suggestions = await self._suggestions_for(
+            interaction.user.id, decode_windows(encoded), my_level
+        )
         note = f"\n\n**Passt gerade zu dir:**\n{suggestions}" if suggestions else ""
         try:
             await interaction.edit_original_response(
@@ -374,12 +430,9 @@ class DuoCog(ManagedTaskCog):
         except discord.HTTPException:
             pass
 
-    async def _suggestions_for(self, user_id: int) -> str:
-        signup = await self.data.get_signup(user_id)
-        if signup is None:
-            return ""
-        my_windows = decode_windows(signup.time_windows)
-        my_level = await self._char_level(signup.character_key)
+    async def _suggestions_for(
+        self, user_id: int, my_windows: list[str], my_level: int
+    ) -> str:
         others = []
         for other in await self.data.list_signups(exclude_user_id=user_id):
             level = await self._char_level(other.character_key)
@@ -422,25 +475,20 @@ class DuoCog(ManagedTaskCog):
                 "Das ist deine eigene Suche. 🙂", ephemeral=True
             )
             return
-        existing_team = await self.data.active_team_for_user(interaction.user.id)
-        if existing_team is not None:
-            await interaction.response.send_message(
-                f"Du bist schon in **{existing_team.name}**. Löse es zuerst auf.",
-                ephemeral=True,
-            )
-            return
-        my_signup = await self.data.get_signup(interaction.user.id)
-        if my_signup is not None:
-            await self._send_request(
-                interaction, signup, my_signup.character_key, my_signup.character_name
-            )
-            return
-        chars = await self._living_claim_chars(interaction.user.id)
+        # Chars already in a team can't join another; a char that is itself
+        # searching may join (its search post is cleaned up on match).
+        chars = await self._available_chars(
+            interaction.user.id, exclude_searching=False
+        )
         if not chars:
             await interaction.response.send_message(
-                "Du brauchst einen lebenden, geclaimten Char, um mitzuleveln.",
+                "Alle deine lebenden Chars sind schon in einem Team. Für einen "
+                "weiteren Partner brauchst du einen freien Char.",
                 ephemeral=True,
             )
+            return
+        if len(chars) == 1:
+            await self._send_request(interaction, signup, chars[0][0], chars[0][1])
             return
         view = DuoJoinCharSelectView(self, signup, chars)
         await interaction.response.send_message(
@@ -457,22 +505,19 @@ class DuoCog(ManagedTaskCog):
         requester_char_name: str,
     ) -> None:
         my_level = await self._char_level(requester_char_key)
+        req_signup = await self.data.get_signup(requester_char_key)
         shared = overlap_keys(
             decode_windows(owner_signup.time_windows),
-            [],  # filled below from requester signup if present
+            decode_windows(req_signup.time_windows) if req_signup else [],
         )
-        req_signup = await self.data.get_signup(interaction.user.id)
-        if req_signup is not None:
-            shared = overlap_keys(
-                decode_windows(owner_signup.time_windows),
-                decode_windows(req_signup.time_windows),
-            )
         shared_txt = (
             f"\nGemeinsame Zeiten: **{format_windows(shared)}**" if shared else ""
         )
         view = DuoJoinRequestView(
             self,
             owner_id=owner_signup.discord_user_id,
+            owner_char_key=owner_signup.character_key,
+            owner_char_name=owner_signup.character_name,
             requester_id=interaction.user.id,
             requester_char_key=requester_char_key,
             requester_char_name=requester_char_name,
@@ -501,24 +546,28 @@ class DuoCog(ManagedTaskCog):
         self,
         interaction: discord.Interaction,
         owner_id: int,
+        owner_char_key: str,
+        owner_char_name: str,
         requester_id: int,
         requester_char_key: str,
         requester_char_name: str,
     ) -> None:
-        owner_signup = await self.data.get_signup(owner_id)
+        owner_signup = await self.data.get_signup(owner_char_key)
         if owner_signup is None:
             await interaction.response.edit_message(
                 content="Diese Suche ist nicht mehr aktiv.", view=None
             )
             return
-        if await self.data.active_team_for_user(requester_id) is not None:
+        # Per-character guard: either char may have been paired meanwhile.
+        if await self.data.active_team_by_character(requester_char_key) is not None:
             await interaction.response.edit_message(
-                content=f"<@{requester_id}> ist bereits in einem Team.", view=None
+                content=f"**{requester_char_name}** ist bereits in einem Team.",
+                view=None,
             )
             return
-        if await self.data.active_team_for_user(owner_id) is not None:
+        if await self.data.active_team_by_character(owner_char_key) is not None:
             await interaction.response.edit_message(
-                content="Du bist bereits in einem Team.", view=None
+                content=f"**{owner_char_name}** ist bereits in einem Team.", view=None
             )
             return
         await interaction.response.edit_message(
@@ -526,8 +575,8 @@ class DuoCog(ManagedTaskCog):
         )
         await self._create_team(
             owner_id,
-            owner_signup.character_key,
-            owner_signup.character_name,
+            owner_char_key,
+            owner_char_name,
             requester_id,
             requester_char_key,
             requester_char_name,
@@ -549,8 +598,8 @@ class DuoCog(ManagedTaskCog):
         owner_line = await self._char_descriptor(owner_char_key, owner_char_name)
         req_line = await self._char_descriptor(requester_char_key, requester_char_name)
 
-        owner_signup = await self.data.get_signup(owner_id)
-        req_signup = await self.data.get_signup(requester_id)
+        owner_signup = await self.data.get_signup(owner_char_key)
+        req_signup = await self.data.get_signup(requester_char_key)
         shared = overlap_keys(
             decode_windows(owner_signup.time_windows) if owner_signup else [],
             decode_windows(req_signup.time_windows) if req_signup else [],
@@ -604,35 +653,58 @@ class DuoCog(ManagedTaskCog):
         except (discord.Forbidden, discord.HTTPException):
             pass
 
-        # Both searchers are now paired: drop their board posts + signups.
+        # Both dedicated chars are now paired: drop their board posts + signups.
         for signup in (owner_signup, req_signup):
             if signup is None:
                 continue
             if signup.post_id:
                 await self._delete_post(signup.post_id)
-            await self.data.remove_signup(signup.discord_user_id)
+            await self.data.remove_signup(signup.character_key)
 
     # ---- status actions (edit / withdraw / disband / swap) ----
 
-    async def withdraw_search(self, interaction: discord.Interaction) -> None:
-        signup = await self.data.get_signup(interaction.user.id)
+    async def handle_withdraw(self, interaction: discord.Interaction) -> None:
+        """Owner-only 'Zurückziehen' button on a search post."""
+        channel = interaction.channel
+        signup = (
+            await self.data.get_signup_by_post(channel.id)
+            if isinstance(channel, discord.Thread)
+            else None
+        )
         if signup is None:
-            await interaction.response.edit_message(
-                content="Du hast keine aktive Suche.", view=None
+            await interaction.response.send_message(
+                "Diese Suche ist nicht mehr aktiv.", ephemeral=True
             )
             return
+        if signup.discord_user_id != interaction.user.id:
+            await interaction.response.send_message(
+                "Nur wer die Suche erstellt hat, kann sie zurückziehen.",
+                ephemeral=True,
+            )
+            return
+        await self.data.remove_signup(signup.character_key)
+        await interaction.response.send_message(
+            f"✅ Suche für **{signup.character_name}** zurückgezogen.", ephemeral=True
+        )
         if signup.post_id:
             await self._delete_post(signup.post_id)
-        await self.data.remove_signup(interaction.user.id)
-        await interaction.response.edit_message(
-            content="✅ Deine Suche wurde zurückgezogen.", view=None
-        )
 
     async def disband_team_for(self, interaction: discord.Interaction) -> None:
-        team = await self.data.active_team_for_user(interaction.user.id)
-        if team is None:
+        channel = interaction.channel
+        team = (
+            await self.data.get_team_by_thread(channel.id)
+            if isinstance(channel, discord.Thread)
+            else None
+        )
+        if team is None or team.status == "disbanded":
             await interaction.response.send_message(
-                "Du bist in keinem Team.", ephemeral=True
+                "Dieses Team ist nicht mehr aktiv.", ephemeral=True
+            )
+            return
+        members = await self.data.team_members(team.team_id)
+        if interaction.user.id not in {m.discord_user_id for m in members}:
+            await interaction.response.send_message(
+                "Nur Team-Mitglieder können das Team auflösen.", ephemeral=True
             )
             return
         await self._disband(team)
@@ -717,6 +789,56 @@ class DuoCog(ManagedTaskCog):
                 await thread.edit(applied_tags=self._tag(TAG_ACTIVE))
             except (discord.Forbidden, discord.HTTPException):
                 pass
+
+    async def start_rename(self, interaction: discord.Interaction) -> None:
+        """Open the rename modal for a team member."""
+        channel = interaction.channel
+        team = (
+            await self.data.get_team_by_thread(channel.id)
+            if isinstance(channel, discord.Thread)
+            else None
+        )
+        if team is None or team.status == "disbanded":
+            await interaction.response.send_message(
+                "Dieses Team ist nicht mehr aktiv.", ephemeral=True
+            )
+            return
+        members = await self.data.team_members(team.team_id)
+        if interaction.user.id not in {m.discord_user_id for m in members}:
+            await interaction.response.send_message(
+                "Nur Team-Mitglieder können den Namen ändern.", ephemeral=True
+            )
+            return
+        await interaction.response.send_modal(DuoTeamRenameModal(self, team))
+
+    async def apply_rename(
+        self, interaction: discord.Interaction, team: DuoTeam, raw_name: str
+    ) -> None:
+        name = " ".join(raw_name.split()).strip()
+        if not name:
+            await interaction.response.send_message(
+                "Der Name darf nicht leer sein.", ephemeral=True
+            )
+            return
+        # Discord caps thread titles at 100 chars; leave room for the emoji.
+        name = name[:80]
+        current = await self.data.get_team(team.team_id)
+        if current is None or current.status == "disbanded":
+            await interaction.response.send_message(
+                "Dieses Team ist nicht mehr aktiv.", ephemeral=True
+            )
+            return
+        await self.data.set_team_name(team.team_id, name)
+        await interaction.response.send_message(
+            f"✅ Team heißt jetzt **{name}**.", ephemeral=True
+        )
+        thread = await self._fetch_thread(team.thread_id)
+        if thread is not None:
+            try:
+                await thread.edit(name=f"🤝 {name}")
+                await thread.send(f"✏️ Das Team heißt ab jetzt **{name}**.")
+            except (discord.Forbidden, discord.HTTPException) as exc:
+                logger.warning("[DuoCog] Team-Umbenennung fehlgeschlagen: %s", exc)
 
     # ---- hooks called by WoWCog ----
 
@@ -856,15 +978,26 @@ class DuoCog(ManagedTaskCog):
     async def _delete_post(self, thread_id: int) -> None:
         thread = await self._fetch_thread(thread_id)
         if thread is None:
+            logger.warning(
+                "[DuoCog] Such-Post %s zum Löschen nicht auffindbar.", thread_id
+            )
             return
         try:
             await thread.delete()
-        except (discord.Forbidden, discord.HTTPException):
-            # Fall back to archiving if we can't delete.
-            try:
-                await thread.edit(archived=True, locked=True)
-            except (discord.Forbidden, discord.HTTPException):
-                pass
+            return
+        except (discord.Forbidden, discord.HTTPException) as exc:
+            logger.warning(
+                "[DuoCog] Such-Post %s löschen fehlgeschlagen (%s) — archiviere.",
+                thread_id,
+                exc,
+            )
+        # Fall back to archiving + locking if we can't delete.
+        try:
+            await thread.edit(archived=True, locked=True)
+        except (discord.Forbidden, discord.HTTPException) as exc:
+            logger.warning(
+                "[DuoCog] Such-Post %s archivieren fehlgeschlagen: %s", thread_id, exc
+            )
 
 
 def _thread_mention(thread_id: int | None) -> str:
@@ -933,6 +1066,17 @@ class DuoSearchPostView(discord.ui.View):
     ) -> None:
         await self.cog.handle_join(interaction)
 
+    @discord.ui.button(
+        label="Zurückziehen",
+        style=discord.ButtonStyle.secondary,
+        emoji="🗑️",
+        custom_id="duo_post:withdraw",
+    )
+    async def withdraw(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        await self.cog.handle_withdraw(interaction)
+
 
 class DuoTeamPostView(discord.ui.View):
     """Persistent buttons on a team post."""
@@ -940,6 +1084,17 @@ class DuoTeamPostView(discord.ui.View):
     def __init__(self, cog: DuoCog) -> None:
         super().__init__(timeout=None)
         self.cog = cog
+
+    @discord.ui.button(
+        label="Team umbenennen",
+        style=discord.ButtonStyle.secondary,
+        emoji="✏️",
+        custom_id="duo_team:rename",
+    )
+    async def rename(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        await self.cog.start_rename(interaction)
 
     @discord.ui.button(
         label="Meinen Char wechseln",
@@ -962,6 +1117,26 @@ class DuoTeamPostView(discord.ui.View):
         self, interaction: discord.Interaction, _: discord.ui.Button
     ) -> None:
         await self.cog.disband_team_for(interaction)
+
+
+class DuoTeamRenameModal(discord.ui.Modal, title="Team umbenennen"):
+    """Lets a team member set a custom team name."""
+
+    new_name: discord.ui.TextInput = discord.ui.TextInput(
+        label="Neuer Teamname",
+        placeholder="z.B. Team Aschefaust",
+        min_length=1,
+        max_length=80,
+        required=True,
+    )
+
+    def __init__(self, cog: DuoCog, team: DuoTeam) -> None:
+        super().__init__()
+        self.cog = cog
+        self.team = team
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        await self.cog.apply_rename(interaction, self.team, str(self.new_name.value))
 
 
 class _OwnerCheckMixin(discord.ui.View):
@@ -1127,6 +1302,8 @@ class DuoJoinRequestView(discord.ui.View):
         self,
         cog: DuoCog,
         owner_id: int,
+        owner_char_key: str,
+        owner_char_name: str,
         requester_id: int,
         requester_char_key: str,
         requester_char_name: str,
@@ -1134,6 +1311,8 @@ class DuoJoinRequestView(discord.ui.View):
         super().__init__(timeout=86400)
         self.cog = cog
         self.owner_id = owner_id
+        self.owner_char_key = owner_char_key
+        self.owner_char_name = owner_char_name
         self.requester_id = requester_id
         self.requester_char_key = requester_char_key
         self.requester_char_name = requester_char_name
@@ -1153,6 +1332,8 @@ class DuoJoinRequestView(discord.ui.View):
         await self.cog.accept_request(
             interaction,
             self.owner_id,
+            self.owner_char_key,
+            self.owner_char_name,
             self.requester_id,
             self.requester_char_key,
             self.requester_char_name,
@@ -1169,51 +1350,24 @@ class DuoJoinRequestView(discord.ui.View):
         )
 
 
-class DuoStatusIdleView(discord.ui.View):
+class DuoStatusView(discord.ui.View):
+    """Ephemeral status overview — the only action is starting a new search.
+
+    Withdrawing a search and disbanding/renaming a team happen on the
+    respective forum posts, so this stays valid no matter how many teams or
+    searches a player has.
+    """
+
     def __init__(self, cog: DuoCog) -> None:
         super().__init__(timeout=300)
         self.cog = cog
 
     @discord.ui.button(
-        label="Partner suchen", style=discord.ButtonStyle.success, emoji="🤝"
+        label="Weiteren Partner suchen",
+        style=discord.ButtonStyle.success,
+        emoji="🤝",
     )
     async def search(
         self, interaction: discord.Interaction, _: discord.ui.Button
     ) -> None:
         await self.cog.open_search(interaction)
-
-
-class DuoStatusSearchView(discord.ui.View):
-    def __init__(self, cog: DuoCog) -> None:
-        super().__init__(timeout=300)
-        self.cog = cog
-
-    @discord.ui.button(
-        label="Suche bearbeiten", style=discord.ButtonStyle.primary, emoji="✏️"
-    )
-    async def edit(
-        self, interaction: discord.Interaction, _: discord.ui.Button
-    ) -> None:
-        await self.cog.open_search(interaction)
-
-    @discord.ui.button(
-        label="Suche zurückziehen", style=discord.ButtonStyle.danger, emoji="🗑️"
-    )
-    async def withdraw(
-        self, interaction: discord.Interaction, _: discord.ui.Button
-    ) -> None:
-        await self.cog.withdraw_search(interaction)
-
-
-class DuoStatusTeamView(discord.ui.View):
-    def __init__(self, cog: DuoCog, team: DuoTeam) -> None:
-        super().__init__(timeout=300)
-        self.cog = cog
-
-    @discord.ui.button(
-        label="Team auflösen", style=discord.ButtonStyle.danger, emoji="🕯️"
-    )
-    async def disband(
-        self, interaction: discord.Interaction, _: discord.ui.Button
-    ) -> None:
-        await self.cog.disband_team_for(interaction)

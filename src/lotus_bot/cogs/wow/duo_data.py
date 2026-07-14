@@ -67,13 +67,14 @@ class DuoData:
         if self._init_done:
             return
         db = await self._get_db()
-        # One active signup per Discord user (PK on discord_user_id). ``post_id``
-        # is the id of the public forum "Sucht Partner" post so we can find the
-        # signup back from a button click and delete the post on match.
+        # One open signup per CHARACTER (PK on character_key) — a player can
+        # search with several alts at once. ``post_id`` is the public forum
+        # "Sucht Partner" post so we can find the signup back from a button
+        # click and delete the post on match.
         await db.execute("""
             CREATE TABLE IF NOT EXISTS duo_signups (
-                discord_user_id INTEGER PRIMARY KEY,
-                character_key TEXT NOT NULL,
+                character_key TEXT PRIMARY KEY,
+                discord_user_id INTEGER NOT NULL,
                 character_name TEXT NOT NULL,
                 realm_slug TEXT NOT NULL,
                 time_windows TEXT NOT NULL,
@@ -116,9 +117,49 @@ class DuoData:
                 value TEXT NOT NULL
             )
             """)
+        await self._migrate_signups_pk(db)
         await db.commit()
         self._init_done = True
         logger.info("[DuoData] SQLite database initialized.")
+
+    async def _migrate_signups_pk(self, db: aiosqlite.Connection) -> None:
+        """Rebuild ``duo_signups`` with a character_key PK if it predates it.
+
+        The first release keyed signups on ``discord_user_id`` (one search per
+        player). Multiple alts need one search per character, so the PK moved
+        to ``character_key``. ``CREATE TABLE IF NOT EXISTS`` above is a no-op on
+        an existing old table, so we detect the old primary key here and copy
+        the rows across.
+        """
+        cur = await db.execute("PRAGMA table_info(duo_signups)")
+        cols = await cur.fetchall()
+        pk_cols = [c[1] for c in cols if c[5]]
+        if not cols or pk_cols == ["character_key"]:
+            return
+        await db.execute("ALTER TABLE duo_signups RENAME TO duo_signups_old")
+        await db.execute("""
+            CREATE TABLE duo_signups (
+                character_key TEXT PRIMARY KEY,
+                discord_user_id INTEGER NOT NULL,
+                character_name TEXT NOT NULL,
+                realm_slug TEXT NOT NULL,
+                time_windows TEXT NOT NULL,
+                note TEXT,
+                post_id INTEGER,
+                created_at TEXT NOT NULL
+            )
+            """)
+        await db.execute("""
+            INSERT OR IGNORE INTO duo_signups (
+                character_key, discord_user_id, character_name, realm_slug,
+                time_windows, note, post_id, created_at
+            )
+            SELECT character_key, discord_user_id, character_name, realm_slug,
+                   time_windows, note, post_id, created_at
+              FROM duo_signups_old
+            """)
+        await db.execute("DROP TABLE duo_signups_old")
+        logger.info("[DuoData] duo_signups auf character_key-PK migriert.")
 
     async def get_setting(self, key: str) -> str | None:
         await self.init_db()
@@ -156,7 +197,7 @@ class DuoData:
         time_windows: str,
         note: str | None,
     ) -> DuoSignup:
-        """Create or replace the caller's single open signup.
+        """Create or replace the open signup for a single character.
 
         ``post_id`` is reset to NULL — the caller creates the forum post
         afterwards and records its id via :meth:`set_signup_post`.
@@ -167,11 +208,11 @@ class DuoData:
         await db.execute(
             """
             INSERT INTO duo_signups(
-                discord_user_id, character_key, character_name, realm_slug,
+                character_key, discord_user_id, character_name, realm_slug,
                 time_windows, note, post_id, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?)
-            ON CONFLICT(discord_user_id) DO UPDATE SET
-                character_key = excluded.character_key,
+            ON CONFLICT(character_key) DO UPDATE SET
+                discord_user_id = excluded.discord_user_id,
                 character_name = excluded.character_name,
                 realm_slug = excluded.realm_slug,
                 time_windows = excluded.time_windows,
@@ -180,8 +221,8 @@ class DuoData:
                 created_at = excluded.created_at
             """,
             (
-                discord_user_id,
                 character_key,
+                discord_user_id,
                 character_name,
                 realm_slug,
                 time_windows,
@@ -190,30 +231,30 @@ class DuoData:
             ),
         )
         await db.commit()
-        signup = await self.get_signup(discord_user_id)
+        signup = await self.get_signup(character_key)
         if signup is None:  # pragma: no cover - defensive
             raise RuntimeError("Signup creation failed")
         return signup
 
-    async def set_signup_post(self, discord_user_id: int, post_id: int) -> None:
+    async def set_signup_post(self, character_key: str, post_id: int) -> None:
         await self.init_db()
         db = await self._get_db()
         await db.execute(
-            "UPDATE duo_signups SET post_id = ? WHERE discord_user_id = ?",
-            (post_id, discord_user_id),
+            "UPDATE duo_signups SET post_id = ? WHERE character_key = ?",
+            (post_id, character_key),
         )
         await db.commit()
 
-    async def get_signup(self, discord_user_id: int) -> DuoSignup | None:
+    async def get_signup(self, character_key: str) -> DuoSignup | None:
         await self.init_db()
         db = await self._get_db()
         cur = await db.execute(
             """
             SELECT discord_user_id, character_key, character_name, realm_slug,
                    time_windows, note, post_id, created_at
-              FROM duo_signups WHERE discord_user_id = ?
+              FROM duo_signups WHERE character_key = ?
             """,
-            (discord_user_id,),
+            (character_key,),
         )
         row = await cur.fetchone()
         return _signup_from_row(row) if row else None
@@ -232,15 +273,31 @@ class DuoData:
         row = await cur.fetchone()
         return _signup_from_row(row) if row else None
 
-    async def remove_signup(self, discord_user_id: int) -> bool:
+    async def remove_signup(self, character_key: str) -> bool:
         await self.init_db()
         db = await self._get_db()
         cur = await db.execute(
-            "DELETE FROM duo_signups WHERE discord_user_id = ?",
-            (discord_user_id,),
+            "DELETE FROM duo_signups WHERE character_key = ?",
+            (character_key,),
         )
         await db.commit()
         return cur.rowcount > 0
+
+    async def signups_for_user(self, discord_user_id: int) -> list[DuoSignup]:
+        """All open signups belonging to a player (one per searching alt)."""
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT discord_user_id, character_key, character_name, realm_slug,
+                   time_windows, note, post_id, created_at
+              FROM duo_signups WHERE discord_user_id = ?
+             ORDER BY created_at
+            """,
+            (discord_user_id,),
+        )
+        rows = await cur.fetchall()
+        return [_signup_from_row(row) for row in rows]
 
     async def list_signups(self, exclude_user_id: int | None = None) -> list[DuoSignup]:
         await self.init_db()
@@ -354,6 +411,23 @@ class DuoData:
         )
         row = await cur.fetchone()
         return _team_from_row(row) if row else None
+
+    async def active_teams_for_user(self, discord_user_id: int) -> list[DuoTeam]:
+        """All active/mourning teams a player belongs to (one per alt)."""
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT t.team_id, t.name, t.thread_id, t.status, t.created_at
+              FROM duo_teams t
+              JOIN duo_team_members m ON m.team_id = t.team_id
+             WHERE m.discord_user_id = ? AND t.status != 'disbanded'
+             ORDER BY t.created_at
+            """,
+            (discord_user_id,),
+        )
+        rows = await cur.fetchall()
+        return [_team_from_row(row) for row in rows]
 
     async def active_team_by_character(self, character_key: str) -> DuoTeam | None:
         """The active/mourning team a given character currently plays in."""
