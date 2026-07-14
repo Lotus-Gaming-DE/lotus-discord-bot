@@ -1285,6 +1285,9 @@ class WoWCog(ManagedTaskCog):
                 milestone.member.character_key, milestone.level
             )
             await self._award_claimed_milestone_points(milestone)
+            # Duo hook AFTER record_milestone so the "both partners reached it"
+            # check sees the just-recorded event (timing-independent).
+            await self._notify_duo_milestone(milestone)
         for death in activity.deaths:
             await self.data.record_death(death.member.character_key)
             # Auto-release the dead char's claim so the owner can claim a
@@ -1299,6 +1302,9 @@ class WoWCog(ManagedTaskCog):
                 # Losing the last claimed char must cost the guild role; the
                 # hourly reconcile would catch it too, but do it immediately.
                 await self.reconcile_guild_role_for(claim.discord_user_id)
+            # Duo hook: memorial in the team thread if the fallen char was in
+            # an active team. Independent of the claim (team keeps the key).
+            await self._notify_duo_death(death)
         for event in activity.recipe_events or []:
             await self.data.mark_recipe_learning_announced(
                 event.character_key, event.spell_id
@@ -1316,6 +1322,32 @@ class WoWCog(ManagedTaskCog):
             await self._award_skill_milestone_points(event)
         # Cooldowns are read-only in the digest — no DB write needed here.
         await self._retry_unawarded_pending_events()
+
+    def _duo_cog(self):
+        get_cog = getattr(self.bot, "get_cog", None)
+        return get_cog("DuoCog") if get_cog else None
+
+    async def _notify_duo_milestone(self, milestone: Milestone) -> None:
+        """Fire-and-forget: let the Duo cog celebrate a team level-milestone."""
+        duo = self._duo_cog()
+        if duo is None or not hasattr(duo, "on_character_milestone"):
+            return
+        try:
+            await duo.on_character_milestone(
+                milestone.member.character_key, milestone.level
+            )
+        except Exception as exc:  # pragma: no cover - defensive integration logging
+            logger.warning("[WoWCog] Duo-Milestone-Hook fehlgeschlagen: %s", exc)
+
+    async def _notify_duo_death(self, death: DeathEvent) -> None:
+        """Fire-and-forget: let the Duo cog post a memorial for a fallen partner."""
+        duo = self._duo_cog()
+        if duo is None or not hasattr(duo, "on_character_death"):
+            return
+        try:
+            await duo.on_character_death(death.member.character_key, death.member.level)
+        except Exception as exc:  # pragma: no cover - defensive integration logging
+            logger.warning("[WoWCog] Duo-Death-Hook fehlgeschlagen: %s", exc)
 
     async def _retry_unawarded_pending_events(self) -> None:
         """Re-fund events that were announced but never landed Champion points.
