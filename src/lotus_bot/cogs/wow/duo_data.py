@@ -29,6 +29,10 @@ class DuoSignup:
     note: str | None
     post_id: int | None
     created_at: str
+    kind: str = "char"  # 'char' (real claimed char) | 'reroll' (roll fresh together)
+    self_found: bool = False
+    prefs: str = ""  # encoded PLAY_TAGS
+    intensity: str | None = None  # INTENSITY key
 
 
 @dataclass
@@ -118,9 +122,28 @@ class DuoData:
             )
             """)
         await self._migrate_signups_pk(db)
+        # Additive columns added after the first release. Idempotent — same
+        # pattern as WoWData._ensure_column.
+        await self._ensure_column(
+            db, "duo_signups", "kind", "TEXT NOT NULL DEFAULT 'char'"
+        )
+        await self._ensure_column(
+            db, "duo_signups", "self_found", "INTEGER NOT NULL DEFAULT 0"
+        )
+        await self._ensure_column(db, "duo_signups", "prefs", "TEXT")
+        await self._ensure_column(db, "duo_signups", "intensity", "TEXT")
         await db.commit()
         self._init_done = True
         logger.info("[DuoData] SQLite database initialized.")
+
+    @staticmethod
+    async def _ensure_column(
+        db: aiosqlite.Connection, table: str, column: str, definition: str
+    ) -> None:
+        cur = await db.execute(f"PRAGMA table_info({table})")
+        columns = {row[1] for row in await cur.fetchall()}
+        if column not in columns:
+            await db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
     async def _migrate_signups_pk(self, db: aiosqlite.Connection) -> None:
         """Rebuild ``duo_signups`` with a character_key PK if it predates it.
@@ -196,6 +219,11 @@ class DuoData:
         realm_slug: str,
         time_windows: str,
         note: str | None,
+        *,
+        kind: str = "char",
+        self_found: bool = False,
+        prefs: str = "",
+        intensity: str | None = None,
     ) -> DuoSignup:
         """Create or replace the open signup for a single character.
 
@@ -209,8 +237,9 @@ class DuoData:
             """
             INSERT INTO duo_signups(
                 character_key, discord_user_id, character_name, realm_slug,
-                time_windows, note, post_id, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?)
+                time_windows, note, post_id, created_at,
+                kind, self_found, prefs, intensity
+            ) VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)
             ON CONFLICT(character_key) DO UPDATE SET
                 discord_user_id = excluded.discord_user_id,
                 character_name = excluded.character_name,
@@ -218,7 +247,11 @@ class DuoData:
                 time_windows = excluded.time_windows,
                 note = excluded.note,
                 post_id = NULL,
-                created_at = excluded.created_at
+                created_at = excluded.created_at,
+                kind = excluded.kind,
+                self_found = excluded.self_found,
+                prefs = excluded.prefs,
+                intensity = excluded.intensity
             """,
             (
                 character_key,
@@ -228,6 +261,10 @@ class DuoData:
                 time_windows,
                 (note or None),
                 now,
+                kind,
+                int(bool(self_found)),
+                (prefs or None),
+                intensity,
             ),
         )
         await db.commit()
@@ -251,7 +288,8 @@ class DuoData:
         cur = await db.execute(
             """
             SELECT discord_user_id, character_key, character_name, realm_slug,
-                   time_windows, note, post_id, created_at
+                   time_windows, note, post_id, created_at,
+                   kind, self_found, prefs, intensity
               FROM duo_signups WHERE character_key = ?
             """,
             (character_key,),
@@ -265,7 +303,8 @@ class DuoData:
         cur = await db.execute(
             """
             SELECT discord_user_id, character_key, character_name, realm_slug,
-                   time_windows, note, post_id, created_at
+                   time_windows, note, post_id, created_at,
+                   kind, self_found, prefs, intensity
               FROM duo_signups WHERE post_id = ?
             """,
             (post_id,),
@@ -290,7 +329,8 @@ class DuoData:
         cur = await db.execute(
             """
             SELECT discord_user_id, character_key, character_name, realm_slug,
-                   time_windows, note, post_id, created_at
+                   time_windows, note, post_id, created_at,
+                   kind, self_found, prefs, intensity
               FROM duo_signups WHERE discord_user_id = ?
              ORDER BY created_at
             """,
@@ -304,7 +344,8 @@ class DuoData:
         db = await self._get_db()
         cur = await db.execute("""
             SELECT discord_user_id, character_key, character_name, realm_slug,
-                   time_windows, note, post_id, created_at
+                   time_windows, note, post_id, created_at,
+                   kind, self_found, prefs, intensity
               FROM duo_signups
              ORDER BY created_at
             """)
@@ -320,6 +361,24 @@ class DuoData:
         cur = await db.execute("SELECT COUNT(*) FROM duo_signups")
         row = await cur.fetchone()
         return int(row[0]) if row else 0
+
+    async def stale_signups(self, cutoff_iso: str) -> list[DuoSignup]:
+        """Open signups created before ``cutoff_iso`` (for auto-expiry)."""
+        await self.init_db()
+        db = await self._get_db()
+        cur = await db.execute(
+            """
+            SELECT discord_user_id, character_key, character_name, realm_slug,
+                   time_windows, note, post_id, created_at,
+                   kind, self_found, prefs, intensity
+              FROM duo_signups
+             WHERE created_at < ?
+             ORDER BY created_at
+            """,
+            (cutoff_iso,),
+        )
+        rows = await cur.fetchall()
+        return [_signup_from_row(row) for row in rows]
 
     # ---- teams ----
 
@@ -558,6 +617,10 @@ def _signup_from_row(row: tuple[Any, ...]) -> DuoSignup:
         note=row[5],
         post_id=row[6],
         created_at=row[7],
+        kind=row[8] if len(row) > 8 and row[8] else "char",
+        self_found=bool(row[9]) if len(row) > 9 else False,
+        prefs=(row[10] or "") if len(row) > 10 else "",
+        intensity=row[11] if len(row) > 11 else None,
     )
 
 

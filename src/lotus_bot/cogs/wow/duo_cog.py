@@ -23,6 +23,7 @@ anspricht.
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
 import discord
@@ -34,10 +35,18 @@ from lotus_bot.utils.managed_cog import ManagedTaskCog
 from .cog import CLASS_NAMES_DE, HORDE_RED, RACE_NAMES_DE
 from .duo_data import DuoData, DuoSignup, DuoTeam
 from .duo_logic import (
+    INTENSITY,
+    LEVEL_BRACKET,
+    PLAY_TAGS,
+    SELF_FOUND_TAG,
     TIME_WINDOWS,
+    decode_prefs,
     decode_windows,
+    encode_prefs,
     encode_windows,
+    format_prefs,
     format_windows,
+    intensity_label,
     overlap_keys,
     pick_team_name,
     rank_candidates,
@@ -61,13 +70,18 @@ TAG_DISBANDED = "🕯️ Aufgelöst"
 # together. On top of the solo milestone points the WoW cog already awards.
 DUO_MILESTONE_BONUS = {30: 3, 40: 6, 50: 12, 60: 30}
 
+# Sentinel char-select value for "let's roll a brand-new char together".
+REROLL_VALUE = "__new__"
+# Open searches auto-expire after this many days so the board stays credible.
+SEARCH_STALE_DAYS = 14
+
 HUB_TEXT = (
     "# 🤝 Zusammen leveln\n"
     "Niemand muss allein leveln. Such dir einen Partner — mehr Spaß, viel "
     "sicherer, und ihr schreibt eure Hardcore-Geschichte gemeinsam.\n\n"
     "**So geht's:**\n"
-    "1. **Partner suchen** — Char wählen, Zeiten anklicken, fertig. Dein "
-    "Suchpost erscheint hier im Forum.\n"
+    "1. **Partner suchen** — Char (oder neu rollen) + Zeiten + Pensum wählen. "
+    "Dein Suchpost erscheint hier im Forum.\n"
     "2. Findest du unten jemand Passenden, klick **🤝 Mit mir leveln** in "
     "seinem Post.\n"
     "3. Nimmt er an, macht der Bot euch ein **Team** mit eigenem Thread — "
@@ -76,9 +90,10 @@ HUB_TEXT = (
 )
 HUB_HELP_TEXT = (
     "**❓ Hilfe – Zusammen leveln**\n\n"
-    "**Partner suchen** — wähle einen deiner geclaimten Chars und deine "
-    "typischen Spielzeiten. Der Bot stellt dich aufs Board und zeigt dir "
-    "direkt, wer zeitlich zu dir passt.\n\n"
+    "**Partner suchen** — wähle einen Char (oder **✨ Neuer Char**, um mit "
+    "jemandem zusammen frisch zu rollen), deine Spielzeiten und dein **Pensum** "
+    "(1–2 h / 2–4 h / 5 h+). Optional: **Self-Found** & Vorlieben, plus eine "
+    "kurze Notiz. Der Bot stellt dich aufs Board und pingt passende Sucher.\n\n"
     "**Mit mir leveln** — in einem fremden Suchpost startest du damit eine "
     "Anfrage. Der andere muss zustimmen, dann entsteht euer Team.\n\n"
     "**Mein Status** — zeigt alle deine Teams und offenen Suchen. Pro Char "
@@ -245,6 +260,69 @@ class DuoCog(ManagedTaskCog):
         member = snapshot.get(character_key)
         return member.level if member else 0
 
+    async def _class_name_for(self, character_key: str) -> str | None:
+        """German class name from the snapshot, or ``None`` if unknown."""
+        wow = self.wow
+        if wow is None:
+            return None
+        snapshot = await wow.data.get_snapshot()
+        member = snapshot.get(character_key)
+        if member is None:
+            return None
+        klass = _class_name(member.class_id)
+        return klass if klass != "?" else None
+
+    @staticmethod
+    def _is_reroll(signup: DuoSignup) -> bool:
+        return signup.kind == "reroll"
+
+    async def _search_title(self, signup: DuoSignup) -> str:
+        """Forum title for a search post — carries class + level at a glance."""
+        if self._is_reroll(signup):
+            return f"🔍 {signup.character_name} · neuer Char ab 1 – Partner gesucht"[
+                :100
+            ]
+        klass = await self._class_name_for(signup.character_key)
+        level = await self._char_level(signup.character_key)
+        klass_part = f"{klass} " if klass else ""
+        return f"🔍 {signup.character_name} · {klass_part}{level} sucht Partner"[:100]
+
+    async def _signup_descriptor(self, signup: DuoSignup) -> str:
+        if self._is_reroll(signup):
+            return "🆕 **Neuer Char** (rollt frisch von 1 an)"
+        return await self._char_descriptor(signup.character_key, signup.character_name)
+
+    async def _search_body(self, signup: DuoSignup) -> str:
+        """Body text for a search post, rebuilt on refresh so level stays live."""
+        prefs = decode_prefs(signup.prefs)
+        lines = [
+            f"**{signup.character_name} sucht einen Level-Partner!**",
+            "",
+            f"• {await self._signup_descriptor(signup)}",
+            f"• **Zeiten:** {format_windows(decode_windows(signup.time_windows))}",
+            f"• **Pensum:** {intensity_label(signup.intensity)}",
+        ]
+        if signup.self_found:
+            lines.append("• **Self-Found** 🛡️")
+        style = [p for p in prefs if p != SELF_FOUND_TAG]
+        if style:
+            lines.append(f"• **Stil:** {format_prefs(style)}")
+        if signup.note:
+            lines.append(f"• 📝 {signup.note}")
+        lines.append(f"• Gesucht von <@{signup.discord_user_id}>")
+        lines.append("")
+        lines.append(
+            "Passt zu dir? Klick **🤝 Mit mir leveln** — der Rest geht von allein."
+        )
+        return "\n".join(lines)
+
+    async def _team_title(self, name: str, member_keys: list[str]) -> str:
+        """Team forum title with both classes (level intentionally omitted)."""
+        classes = [await self._class_name_for(k) for k in member_keys]
+        classes = [c for c in classes if c]
+        suffix = f" · {' + '.join(classes)}" if classes else ""
+        return f"🤝 {name}{suffix}"[:100]
+
     async def _chars_in_active_team(self, user_id: int) -> set[str]:
         """Character keys of the user that already sit in an active team."""
         in_team: set[str] = set()
@@ -275,26 +353,14 @@ class DuoCog(ManagedTaskCog):
     # ---- hub button entry points ----
 
     async def open_search(self, interaction: discord.Interaction) -> None:
-        if not await self._living_claim_chars(interaction.user.id):
-            await interaction.response.send_message(
-                "Du musst zuerst einen lebenden Black-Lotus-Char claimen "
-                "(WoW-Hub → **Deine Chars**), bevor du einen Partner suchst.",
-                ephemeral=True,
-            )
-            return
+        # Reroll ("neuen Char zusammen anfangen") is always possible, so even a
+        # player with every char already paired can still open the flow.
         chars = await self._available_chars(interaction.user.id, exclude_searching=True)
-        if not chars:
-            await interaction.response.send_message(
-                "Alle deine lebenden Chars sind schon in einem Team oder suchen "
-                "bereits. Pro Char geht ein Partner — für einen weiteren brauchst "
-                "du einen anderen Char.",
-                ephemeral=True,
-            )
-            return
         view = DuoSearchComposeView(self, interaction.user.id, chars)
         await interaction.response.send_message(
-            "**Partner-Suche erstellen** — wähle den Char, mit dem du suchst, "
-            "und deine typischen Spielzeiten, dann **Auf's Board**.",
+            "**Partner-Suche erstellen** — wähle den Char (oder **✨ Neuer Char**, "
+            "um zusammen frisch zu rollen), deine Spielzeiten und dein Pensum, "
+            "dann **Auf's Board**.",
             view=view,
             ephemeral=True,
         )
@@ -359,7 +425,14 @@ class DuoCog(ManagedTaskCog):
     # ---- search publishing ----
 
     async def publish_search(
-        self, interaction: discord.Interaction, character_key: str, windows: list[str]
+        self,
+        interaction: discord.Interaction,
+        character_key: str,
+        windows: list[str],
+        *,
+        intensity: str,
+        prefs: list[str],
+        note: str | None,
     ) -> None:
         wow = self.wow
         forum = self.forum()
@@ -368,93 +441,118 @@ class DuoCog(ManagedTaskCog):
                 content="❌ System aktuell nicht verfügbar.", view=None
             )
             return
-        claim = await wow.data.get_claim(character_key)
-        if claim is None or claim.discord_user_id != interaction.user.id:
-            await interaction.response.edit_message(
-                content="❌ Dieser Char gehört dir nicht (mehr).", view=None
-            )
-            return
-        # Guard against a race: the char may have joined a team since the
-        # compose view was opened.
-        if await self.data.active_team_by_character(character_key) is not None:
-            await interaction.response.edit_message(
-                content=f"❌ **{claim.character_name}** ist bereits in einem Team.",
-                view=None,
-            )
-            return
 
-        encoded = encode_windows(windows)
+        is_reroll = character_key == REROLL_VALUE
+        if is_reroll:
+            character_key = (
+                f"reroll:{interaction.user.id}:{int(datetime.utcnow().timestamp())}"
+            )
+            char_name = "Neuer Char"
+            realm_slug = ""
+        else:
+            claim = await wow.data.get_claim(character_key)
+            if claim is None or claim.discord_user_id != interaction.user.id:
+                await interaction.response.edit_message(
+                    content="❌ Dieser Char gehört dir nicht (mehr).", view=None
+                )
+                return
+            # Race guard: the char may have joined a team since compose opened.
+            if await self.data.active_team_by_character(character_key) is not None:
+                await interaction.response.edit_message(
+                    content=f"❌ **{claim.character_name}** ist bereits in einem Team.",
+                    view=None,
+                )
+                return
+            char_name = claim.character_name
+            realm_slug = claim.realm_slug
+
+        encoded_windows = encode_windows(windows)
+        encoded_prefs = encode_prefs(prefs)
+        self_found = SELF_FOUND_TAG in prefs
+
         # Replace this character's previous open search + its forum post.
         old = await self.data.get_signup(character_key)
         if old is not None and old.post_id:
             await self._delete_post(old.post_id)
 
-        await self.data.upsert_signup(
+        signup = await self.data.upsert_signup(
             interaction.user.id,
             character_key,
-            claim.character_name,
-            claim.realm_slug,
-            encoded,
-            None,
+            char_name,
+            realm_slug,
+            encoded_windows,
+            (note or None),
+            kind="reroll" if is_reroll else "char",
+            self_found=self_found,
+            prefs=encoded_prefs,
+            intensity=intensity,
         )
         await interaction.response.edit_message(
             content="✅ Deine Suche wird erstellt …", view=None
         )
 
-        descriptor = await self._char_descriptor(character_key, claim.character_name)
-        body = (
-            f"**{claim.character_name} sucht einen Level-Partner!**\n\n"
-            f"• {descriptor}\n"
-            f"• **Zeiten:** {format_windows(decode_windows(encoded))}\n"
-            f"• Gesucht von <@{interaction.user.id}>\n\n"
-            "Passt zu dir? Klick **🤝 Mit mir leveln** — der Rest geht von allein."
-        )
         created = await forum.create_thread(
-            name=f"🔍 {claim.character_name} sucht Level-Partner",
-            content=body,
+            name=await self._search_title(signup),
+            content=await self._search_body(signup),
             applied_tags=self._tag(TAG_SEARCHING),
         )
         await created.message.edit(view=DuoSearchPostView(self))
         await self.data.set_signup_post(character_key, created.thread.id)
 
-        # Light suggestion nudge: who overlaps best with the fresh searcher.
-        my_level = await self._char_level(character_key)
-        suggestions = await self._suggestions_for(
-            interaction.user.id, decode_windows(encoded), my_level
-        )
-        note = f"\n\n**Passt gerade zu dir:**\n{suggestions}" if suggestions else ""
+        await self._ping_matches(created.thread, signup)
         try:
             await interaction.edit_original_response(
-                content=(f"✅ Deine Suche ist online: {created.thread.mention}{note}")
+                content=f"✅ Deine Suche ist online: {created.thread.mention}"
             )
         except discord.HTTPException:
             pass
 
-    async def _suggestions_for(
-        self, user_id: int, my_windows: list[str], my_level: int
-    ) -> str:
+    async def _ranked_candidates(self, signup: DuoSignup):
+        """Rank all OTHER open signups against ``signup``."""
+        my_level = await self._char_level(signup.character_key)
         others = []
-        for other in await self.data.list_signups(exclude_user_id=user_id):
-            level = await self._char_level(other.character_key)
+        for other in await self.data.list_signups(
+            exclude_user_id=signup.discord_user_id
+        ):
             others.append(
                 (
                     other.discord_user_id,
                     other.character_name,
-                    level,
+                    await self._char_level(other.character_key),
                     decode_windows(other.time_windows),
+                    bool(other.self_found),
+                    other.intensity,
                 )
             )
-        ranked = rank_candidates(my_windows, my_level, others)
-        lines = []
-        for cand in ranked[:3]:
-            if cand.overlap_count == 0:
-                continue
-            shared = format_windows(cand.overlap)
+        return rank_candidates(
+            decode_windows(signup.time_windows),
+            my_level,
+            others,
+            my_self_found=bool(signup.self_found),
+            my_intensity=signup.intensity,
+        )
+
+    async def _ping_matches(self, thread: discord.Thread, signup: DuoSignup) -> None:
+        """Reverse-match: ping the best-fitting existing searchers in the post.
+
+        Turns a passive board into active matchmaking — the *potential
+        partners* get notified, not just the person who searched.
+        """
+        ranked = [c for c in await self._ranked_candidates(signup) if c.overlap_count]
+        if not ranked:
+            return
+        top = ranked[:3]
+        mentions = " ".join(f"<@{c.discord_user_id}>" for c in top)
+        lines = [f"👀 {mentions} — das könnte zu euch passen!"]
+        for cand in top:
             lines.append(
-                f"• <@{cand.discord_user_id}> — **{cand.character_name}** "
-                f"(Level {cand.level}) · gemeinsam: {shared}"
+                f"• **{cand.character_name}** (Level {cand.level}) · "
+                f"gemeinsam: {format_windows(cand.overlap)}"
             )
-        return "\n".join(lines)
+        try:
+            await thread.send("\n".join(lines))
+        except (discord.Forbidden, discord.HTTPException):
+            pass
 
     # ---- join / request / team creation ----
 
@@ -476,23 +574,15 @@ class DuoCog(ManagedTaskCog):
             )
             return
         # Chars already in a team can't join another; a char that is itself
-        # searching may join (its search post is cleaned up on match).
+        # searching may join (its search post is cleaned up on match). A reroll
+        # option is always available so two people can start fresh together.
         chars = await self._available_chars(
             interaction.user.id, exclude_searching=False
         )
-        if not chars:
-            await interaction.response.send_message(
-                "Alle deine lebenden Chars sind schon in einem Team. Für einen "
-                "weiteren Partner brauchst du einen freien Char.",
-                ephemeral=True,
-            )
-            return
-        if len(chars) == 1:
-            await self._send_request(interaction, signup, chars[0][0], chars[0][1])
-            return
         view = DuoJoinCharSelectView(self, signup, chars)
         await interaction.response.send_message(
-            f"Mit welchem Char willst du zu **{signup.character_name}**?",
+            f"Mit welchem Char willst du zu **{signup.character_name}**? "
+            "(**✨ Neuer Char** = ihr rollt zusammen frisch)",
             view=view,
             ephemeral=True,
         )
@@ -504,14 +594,22 @@ class DuoCog(ManagedTaskCog):
         requester_char_key: str,
         requester_char_name: str,
     ) -> None:
-        my_level = await self._char_level(requester_char_key)
-        req_signup = await self.data.get_signup(requester_char_key)
+        is_reroll = requester_char_key == REROLL_VALUE
+        my_level = 0 if is_reroll else await self._char_level(requester_char_key)
+        req_signup = (
+            None if is_reroll else await self.data.get_signup(requester_char_key)
+        )
         shared = overlap_keys(
             decode_windows(owner_signup.time_windows),
             decode_windows(req_signup.time_windows) if req_signup else [],
         )
         shared_txt = (
             f"\nGemeinsame Zeiten: **{format_windows(shared)}**" if shared else ""
+        )
+        who = (
+            "🆕 Neuer Char (frisch)"
+            if is_reroll
+            else f"**{requester_char_name}**, Level {my_level}"
         )
         view = DuoJoinRequestView(
             self,
@@ -526,8 +624,7 @@ class DuoCog(ManagedTaskCog):
             await interaction.channel.send(
                 content=(
                     f"<@{owner_signup.discord_user_id}> — <@{interaction.user.id}> "
-                    f"will mit dir leveln! (**{requester_char_name}**, Level "
-                    f"{my_level}){shared_txt}\n"
+                    f"will mit dir leveln! ({who}){shared_txt}\n"
                     "Nimm an, dann macht der Bot euch ein Team."
                 ),
                 view=view,
@@ -594,12 +691,22 @@ class DuoCog(ManagedTaskCog):
         forum = self.forum()
         if forum is None:
             return
+
+        # A requester joining as a fresh reroll has no signup yet — mint a
+        # synthetic character key for them (owner rerolls already carry one).
+        owner_signup = await self.data.get_signup(owner_char_key)
+        if requester_char_key == REROLL_VALUE:
+            requester_char_key = (
+                f"reroll:{requester_id}:{int(datetime.utcnow().timestamp())}"
+            )
+            requester_char_name = "Neuer Char"
+            req_signup = None
+        else:
+            req_signup = await self.data.get_signup(requester_char_key)
+
         name = pick_team_name(await self.data.used_team_names())
         owner_line = await self._char_descriptor(owner_char_key, owner_char_name)
         req_line = await self._char_descriptor(requester_char_key, requester_char_name)
-
-        owner_signup = await self.data.get_signup(owner_char_key)
-        req_signup = await self.data.get_signup(requester_char_key)
         shared = overlap_keys(
             decode_windows(owner_signup.time_windows) if owner_signup else [],
             decode_windows(req_signup.time_windows) if req_signup else [],
@@ -625,7 +732,7 @@ class DuoCog(ManagedTaskCog):
         embed.set_footer(text="Meilensteine & Reise werden hier automatisch geteilt.")
 
         created = await forum.create_thread(
-            name=f"🤝 {name}",
+            name=await self._team_title(name, [owner_char_key, requester_char_key]),
             embed=embed,
             applied_tags=self._tag(TAG_ACTIVE),
         )
@@ -834,11 +941,93 @@ class DuoCog(ManagedTaskCog):
         )
         thread = await self._fetch_thread(team.thread_id)
         if thread is not None:
+            members = await self.data.team_members(team.team_id)
+            title = await self._team_title(name, [m.character_key for m in members])
             try:
-                await thread.edit(name=f"🤝 {name}")
+                await thread.edit(name=title)
                 await thread.send(f"✏️ Das Team heißt ab jetzt **{name}**.")
             except (discord.Forbidden, discord.HTTPException) as exc:
                 logger.warning("[DuoCog] Team-Umbenennung fehlgeschlagen: %s", exc)
+
+    # ---- hourly upkeep (called by WoWCog.refresh_live_roster) ----
+
+    async def refresh_open_posts(self) -> None:
+        """Keep search posts' level/class live, expire stale searches, and
+        update the hub board counter. Each step is isolated so one failure
+        doesn't skip the rest."""
+        if self.forum() is None:
+            return
+        for step in (
+            self._expire_stale_searches,
+            self._refresh_search_posts,
+            self._refresh_team_titles,
+            self._refresh_hub_counter,
+        ):
+            try:
+                await step()
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.warning("[DuoCog] %s fehlgeschlagen: %s", step.__name__, exc)
+
+    async def _expire_stale_searches(self) -> None:
+        cutoff = (datetime.utcnow() - timedelta(days=SEARCH_STALE_DAYS)).isoformat()
+        for signup in await self.data.stale_signups(cutoff):
+            if signup.post_id:
+                await self._delete_post(signup.post_id)
+            await self.data.remove_signup(signup.character_key)
+            logger.info(
+                "[DuoCog] Abgelaufene Suche entfernt: %s (%s).",
+                signup.character_name,
+                signup.character_key,
+            )
+
+    async def _refresh_search_posts(self) -> None:
+        for signup in await self.data.list_signups():
+            if not signup.post_id:
+                continue
+            thread = await self._fetch_thread(signup.post_id)
+            if thread is None:
+                continue
+            try:
+                await thread.get_partial_message(signup.post_id).edit(
+                    content=await self._search_body(signup)
+                )
+                new_title = await self._search_title(signup)
+                if thread.name != new_title:  # rename only on change (rate-limit)
+                    await thread.edit(name=new_title)
+            except (discord.Forbidden, discord.HTTPException):
+                pass
+
+    async def _refresh_team_titles(self) -> None:
+        for team in await self.data.active_teams():
+            if not team.thread_id:
+                continue
+            members = await self.data.team_members(team.team_id)
+            title = await self._team_title(
+                team.name, [m.character_key for m in members]
+            )
+            thread = await self._fetch_thread(team.thread_id)
+            if thread is None or thread.name == title:
+                continue
+            try:
+                await thread.edit(name=title)
+            except (discord.Forbidden, discord.HTTPException):
+                pass
+
+    async def _refresh_hub_counter(self) -> None:
+        hub_id = await self.data.get_setting("hub_thread_id")
+        if not hub_id:
+            return
+        thread = await self._fetch_thread(int(hub_id))
+        if thread is None:
+            return
+        count = await self.data.signup_count()
+        counter = f"\n\n🔎 **Gerade auf Partnersuche:** {count}" if count else ""
+        try:
+            await thread.get_partial_message(int(hub_id)).edit(
+                content=HUB_TEXT + counter
+            )
+        except (discord.Forbidden, discord.HTTPException):
+            pass
 
     # ---- hooks called by WoWCog ----
 
@@ -1153,8 +1342,39 @@ class _OwnerCheckMixin(discord.ui.View):
         return True
 
 
+def _char_select_options(
+    chars: list[tuple[str, str, int, int | None]],
+    *,
+    encode_name: bool = False,
+) -> list[discord.SelectOption]:
+    """Build char-select options with the reroll option always on top.
+
+    ``encode_name`` packs ``key||name`` into the value (used where the callback
+    only sees the value, e.g. the join flow); otherwise the value is the key.
+    """
+    reroll_value = f"{REROLL_VALUE}||Neuer Char" if encode_name else REROLL_VALUE
+    options = [
+        discord.SelectOption(
+            label="✨ Neuer Char (zusammen rollen)",
+            value=reroll_value,
+            description="Ihr fangt beide frisch von Level 1 an",
+        )
+    ]
+    for key, name, level, class_id in chars[:24]:
+        value = f"{key}||{name}" if encode_name else key
+        options.append(
+            discord.SelectOption(
+                label=name[:100],
+                value=value,
+                description=f"Level {level} · {_class_name(class_id)}"[:100],
+            )
+        )
+    return options
+
+
 class DuoSearchComposeView(_OwnerCheckMixin):
-    """Ephemeral compose flow: pick a char + time windows, then publish."""
+    """Ephemeral compose flow: char/reroll + windows + intensity (+ optional
+    play-style tags and a free-text note), then publish."""
 
     def __init__(
         self,
@@ -1167,19 +1387,16 @@ class DuoSearchComposeView(_OwnerCheckMixin):
         self.allowed_user_id = user_id
         self.char_key: str | None = None
         self.windows: list[str] = []
+        self.intensity: str | None = None
+        self.prefs: list[str] = []
+        self.note: str | None = None
 
         self.char_select = discord.ui.Select(
-            placeholder="Welchen Char dedizierst du?",
+            placeholder="Welchen Char? (oder neu rollen)",
             min_values=1,
             max_values=1,
-            options=[
-                discord.SelectOption(
-                    label=name[:100],
-                    value=key,
-                    description=f"Level {level} · {_class_name(class_id)}"[:100],
-                )
-                for key, name, level, class_id in chars[:25]
-            ],
+            options=_char_select_options(chars),
+            row=0,
         )
         self.char_select.callback = self._on_char
         self.add_item(self.char_select)
@@ -1192,9 +1409,48 @@ class DuoSearchComposeView(_OwnerCheckMixin):
                 discord.SelectOption(label=label, value=key)
                 for key, label in TIME_WINDOWS.items()
             ],
+            row=1,
         )
         self.win_select.callback = self._on_win
         self.add_item(self.win_select)
+
+        self.intensity_select = discord.ui.Select(
+            placeholder="Wie viel Zeit pro Session?",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(label=label, value=key)
+                for key, label in INTENSITY.items()
+            ],
+            row=2,
+        )
+        self.intensity_select.callback = self._on_intensity
+        self.add_item(self.intensity_select)
+
+        self.prefs_select = discord.ui.Select(
+            placeholder="Vorlieben (optional, mehrere)",
+            min_values=0,
+            max_values=len(PLAY_TAGS),
+            options=[
+                discord.SelectOption(label=label, value=key)
+                for key, label in PLAY_TAGS.items()
+            ],
+            row=3,
+        )
+        self.prefs_select.callback = self._on_prefs
+        self.add_item(self.prefs_select)
+
+        publish_btn = discord.ui.Button(
+            label="Auf's Board", style=discord.ButtonStyle.success, row=4
+        )
+        publish_btn.callback = self._publish
+        self.add_item(publish_btn)
+
+        note_btn = discord.ui.Button(
+            label="Notiz", emoji="✏️", style=discord.ButtonStyle.secondary, row=4
+        )
+        note_btn.callback = self._open_note
+        self.add_item(note_btn)
 
     async def _on_char(self, interaction: discord.Interaction) -> None:
         self.char_key = self.char_select.values[0]
@@ -1204,20 +1460,60 @@ class DuoSearchComposeView(_OwnerCheckMixin):
         self.windows = list(self.win_select.values)
         await interaction.response.defer()
 
-    @discord.ui.button(label="Auf's Board", style=discord.ButtonStyle.success, row=2)
-    async def publish(
-        self, interaction: discord.Interaction, _: discord.ui.Button
-    ) -> None:
-        if not self.char_key or not self.windows:
+    async def _on_intensity(self, interaction: discord.Interaction) -> None:
+        self.intensity = self.intensity_select.values[0]
+        await interaction.response.defer()
+
+    async def _on_prefs(self, interaction: discord.Interaction) -> None:
+        self.prefs = list(self.prefs_select.values)
+        await interaction.response.defer()
+
+    async def _open_note(self, interaction: discord.Interaction) -> None:
+        await interaction.response.send_modal(DuoNoteModal(self))
+
+    async def _publish(self, interaction: discord.Interaction) -> None:
+        if not self.char_key or not self.windows or not self.intensity:
             await interaction.response.send_message(
-                "Bitte erst Char **und** Zeiten wählen.", ephemeral=True
+                "Bitte Char, **Zeiten** und **Pensum** wählen.", ephemeral=True
             )
             return
-        await self.cog.publish_search(interaction, self.char_key, self.windows)
+        await self.cog.publish_search(
+            interaction,
+            self.char_key,
+            self.windows,
+            intensity=self.intensity,
+            prefs=self.prefs,
+            note=self.note,
+        )
+
+
+class DuoNoteModal(discord.ui.Modal, title="Notiz zur Suche"):
+    """Optional free-text note to capture things the selects can't."""
+
+    note_input: discord.ui.TextInput = discord.ui.TextInput(
+        label="Notiz (optional)",
+        style=discord.TextStyle.paragraph,
+        required=False,
+        max_length=200,
+        placeholder="z.B. meist mittwochs · suche ruhigen Schurken-Partner",
+    )
+
+    def __init__(self, compose_view: "DuoSearchComposeView") -> None:
+        super().__init__()
+        self.compose_view = compose_view
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        self.compose_view.note = str(self.note_input.value).strip() or None
+        msg = (
+            "📝 Notiz gespeichert. Jetzt **Auf's Board**."
+            if self.compose_view.note
+            else "Notiz geleert."
+        )
+        await interaction.response.send_message(msg, ephemeral=True)
 
 
 class DuoJoinCharSelectView(_OwnerCheckMixin):
-    """Requester without an own signup picks which char to bring."""
+    """Requester picks which char to bring (or a fresh reroll)."""
 
     def __init__(
         self,
@@ -1231,17 +1527,10 @@ class DuoJoinCharSelectView(_OwnerCheckMixin):
         self.allowed_user_id = 0  # set below to the requester
         # The requester is whoever opened this; captured on first interaction.
         self.select = discord.ui.Select(
-            placeholder="Dein Char",
+            placeholder="Dein Char (oder neu rollen)",
             min_values=1,
             max_values=1,
-            options=[
-                discord.SelectOption(
-                    label=name[:100],
-                    value=f"{key}||{name}",
-                    description=f"Level {level} · {_class_name(class_id)}"[:100],
-                )
-                for key, name, level, class_id in chars[:25]
-            ],
+            options=_char_select_options(chars, encode_name=True),
         )
         self.select.callback = self._on_pick
         self.add_item(self.select)

@@ -32,6 +32,42 @@ async def test_signup_upsert_get_and_by_post(tmp_path):
     assert refreshed.post_id is None
 
 
+async def test_signup_new_fields_round_trip(tmp_path):
+    data = _data(tmp_path)
+    await data.upsert_signup(
+        1,
+        "id:10",
+        "Grimjaw",
+        "soulseeker",
+        "wd_abend",
+        "meist mittwochs",
+        kind="reroll",
+        self_found=True,
+        prefs="selffound,push",
+        intensity="grind",
+    )
+    s = await data.get_signup("id:10")
+    assert s.kind == "reroll"
+    assert s.self_found is True
+    assert s.prefs == "selffound,push"
+    assert s.intensity == "grind"
+    assert s.note == "meist mittwochs"
+    # Defaults when omitted.
+    await data.upsert_signup(2, "id:20", "Plain", "r", "we_abend", None)
+    plain = await data.get_signup("id:20")
+    assert plain.kind == "char"
+    assert plain.self_found is False
+    assert plain.intensity is None
+
+
+async def test_stale_signups_filters_by_cutoff(tmp_path):
+    data = _data(tmp_path)
+    await data.upsert_signup(1, "id:1", "A", "r", "wd_abend", None)
+    # Everything is stale relative to a far-future cutoff, nothing to an old one.
+    assert {s.character_key for s in await data.stale_signups("2999-01-01")} == {"id:1"}
+    assert await data.stale_signups("2000-01-01") == []
+
+
 async def test_one_signup_per_character_multiple_alts(tmp_path):
     data = _data(tmp_path)
     # Same player, two different alts searching at once.

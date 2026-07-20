@@ -402,6 +402,7 @@ class WoWCog(ManagedTaskCog):
             try:
                 await self.refresh_live_roster()
                 await self.sync_guild_role()
+                await self._notify_duo_refresh()
             except asyncio.CancelledError:
                 raise
             except Exception as exc:  # pragma: no cover - defensive logging
@@ -1348,6 +1349,16 @@ class WoWCog(ManagedTaskCog):
             await duo.on_character_death(death.member.character_key, death.member.level)
         except Exception as exc:  # pragma: no cover - defensive integration logging
             logger.warning("[WoWCog] Duo-Death-Hook fehlgeschlagen: %s", exc)
+
+    async def _notify_duo_refresh(self) -> None:
+        """Hourly: let the Duo cog refresh open posts against the fresh roster."""
+        duo = self._duo_cog()
+        if duo is None or not hasattr(duo, "refresh_open_posts"):
+            return
+        try:
+            await duo.refresh_open_posts()
+        except Exception as exc:  # pragma: no cover - defensive integration logging
+            logger.warning("[WoWCog] Duo-Refresh-Hook fehlgeschlagen: %s", exc)
 
     async def _retry_unawarded_pending_events(self) -> None:
         """Re-fund events that were announced but never landed Champion points.

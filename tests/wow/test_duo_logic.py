@@ -53,6 +53,40 @@ def test_rank_candidates_orders_by_overlap_then_level_then_name():
     assert ranked[-1].overlap_count == 0
 
 
+def test_encode_decode_prefs_round_trip():
+    from lotus_bot.cogs.wow.duo_logic import decode_prefs, encode_prefs
+
+    encoded = encode_prefs(["push", "selffound", "bogus", "push"])
+    assert decode_prefs(encoded) == ["selffound", "push"]  # canonical order
+    assert decode_prefs("") == []
+
+
+def test_intensity_label():
+    from lotus_bot.cogs.wow.duo_logic import INTENSITY, intensity_label
+
+    assert intensity_label("chill") == INTENSITY["chill"]
+    assert intensity_label(None) == "—"
+    assert intensity_label("nonsense") == "—"
+
+
+def test_rank_prefers_selffound_intensity_then_level_bracket():
+    from lotus_bot.cogs.wow.duo_logic import rank_candidates
+
+    my_windows = ["wd_abend"]
+    others = [
+        # (uid, name, level, windows, self_found, intensity)
+        (1, "A", 31, ["wd_abend"], True, "regular"),  # everything matches
+        (2, "B", 31, ["wd_abend"], False, "regular"),  # self-found mismatch
+        (3, "C", 31, ["wd_abend"], True, "grind"),  # intensity mismatch
+        (4, "D", 55, ["wd_abend"], True, "regular"),  # level too far
+    ]
+    ranked = rank_candidates(
+        my_windows, 30, others, my_self_found=True, my_intensity="regular"
+    )
+    assert [c.discord_user_id for c in ranked] == [1, 3, 2, 4]
+    assert ranked[-1].level_far is True
+
+
 def test_pick_team_name_avoids_used():
     used = set(TEAM_NAME_POOL[:-1])  # only the last name is free
     name = pick_team_name(used, rng=random.Random(0))
