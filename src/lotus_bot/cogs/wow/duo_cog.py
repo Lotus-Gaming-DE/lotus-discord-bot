@@ -36,7 +36,6 @@ from .cog import CLASS_NAMES_DE, HORDE_RED, RACE_NAMES_DE
 from .duo_data import DuoData, DuoSignup, DuoTeam
 from .duo_logic import (
     INTENSITY,
-    LEVEL_BRACKET,
     PLAY_TAGS,
     SELF_FOUND_TAG,
     TIME_WINDOWS,

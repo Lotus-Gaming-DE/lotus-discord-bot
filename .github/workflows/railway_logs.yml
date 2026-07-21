@@ -6,7 +6,7 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Railway CLI
         run: npm install -g @railway/cli@3.14.0
@@ -37,7 +37,7 @@ jobs:
           git push
 
       - name: Upload logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: railway-latest-log
           path: logs/railway/latest_logs.json
