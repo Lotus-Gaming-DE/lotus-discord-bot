@@ -4185,3 +4185,27 @@ async def test_claim_review_message_recommends_member_for_first_claim(
 
     assert "Bereits geclaimt" not in msg
     assert "Member" in msg
+
+
+@pytest.mark.asyncio
+async def test_claim_review_message_shows_level_and_class(tmp_path, patch_logged_task):
+    cog = await create_cog(tmp_path, patch_logged_task)
+    # class_id 3 = Jäger, class_id 8 = Magier (CLASS_NAMES_DE).
+    main = member(key="id:1", name="Hauptmann", level=52, class_id=3, guild_rank=4)
+    lowbie = member(key="id:2", name="Kleinchen", level=14, class_id=8, guild_rank=6)
+    new = member(key="id:3", name="Frischling", level=8, class_id=1, guild_rank=7)
+    await cog.data.replace_snapshot([main, lowbie, new])
+    await _verify(cog, main, 100)
+    await _verify(cog, lowbie, 100)
+    new_claim, _ = await cog.data.create_claim(new, 100)
+
+    msg = await cog.format_claim_review_message(new_claim)
+
+    # Claimed char shows its own level + class.
+    assert "Frischling" in msg
+    assert "Lvl 8 Krieger" in msg
+    # Alts show level + class alongside the rank.
+    assert "Lvl 52 Jäger" in msg
+    assert "Lvl 14 Magier" in msg
+    # Highest char (Member rank 4) is listed before the Twink (rank 6).
+    assert msg.index("Hauptmann") < msg.index("Kleinchen")

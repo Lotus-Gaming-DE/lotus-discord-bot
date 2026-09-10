@@ -1,6 +1,10 @@
-pytest>=9,<10
-pytest-asyncio>=1,<2
-pytest-cov>=7,<8
-pytest-timeout>=2,<3
-pre-commit>=4,<5
-pip-audit>=2,<3
+# Entwicklungs-/CI-Abhängigkeiten — exakt gepinnt, siehe requirements.txt.
+#
+# pip-audit ist absichtlich auf dieselbe Version gepinnt wie der pip-audit-Hook
+# in .pre-commit-config.yaml, damit lokal und in der CI dasselbe läuft.
+pytest==9.1.1
+pytest-asyncio==1.4.0
+pytest-cov==7.1.0
+pytest-timeout==2.4.0
+pre-commit==4.6.2
+pip-audit==2.10.1

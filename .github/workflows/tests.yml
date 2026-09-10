@@ -5,13 +5,19 @@ on:
     paths:
       - '**/*.py'
       - 'tests/**'
-      - 'requirements.txt'
+      # requirements*.txt (nicht nur requirements.txt): sonst laufen die Tests
+      # bei einem Update von requirements-dev.txt gar nicht erst an.
+      - 'requirements*.txt'
+      - '.python-version'
+      - '.pre-commit-config.yaml'
       - '.github/workflows/**'
   pull_request:
     paths:
       - '**/*.py'
       - 'tests/**'
-      - 'requirements.txt'
+      - 'requirements*.txt'
+      - '.python-version'
+      - '.pre-commit-config.yaml'
       - '.github/workflows/**'
 
 jobs:

@@ -1,8 +1,17 @@
-discord.py>=2.7.1
-Unidecode>=1.4.0
-aiosqlite>=0.22.1
-python-dotenv>=1.2.2
-aiohttp>=3.14.2
-structlog>=26.1.0
-idna>=3.18
-tzdata>=2026.3
+# Laufzeit-Abhängigkeiten — exakt gepinnt (==), nicht als Mindestversion (>=).
+#
+# Warum exakt: Railway löst beim Deploy neu auf. Mit ">=" zieht jeder Deploy
+# still die neueste Version — ungetestet, direkt in Produktion. Mit "==" ist
+# der Stand hier identisch mit dem, gegen den die CI grün ist.
+#
+# Aktualisiert wird nicht von Hand: Dependabot (.github/dependabot.yml) meldet
+# neue Versionen als PR, die CI testet sie, und Patch-/Minor-Updates mergen
+# sich bei grünem Lauf selbst. Major-Updates warten auf deine Freigabe.
+discord.py==2.7.1
+Unidecode==1.4.0
+aiosqlite==0.22.1
+python-dotenv==1.2.2
+aiohttp==3.14.2
+structlog==26.1.0
+idna==3.18
+tzdata==2026.3

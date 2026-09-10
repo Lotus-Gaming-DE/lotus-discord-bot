@@ -1,10 +1,37 @@
 version: 2
+
+# Hält die exakt gepinnten Versionen in requirements*.txt aktuell.
+#
+# Ablauf: Dependabot öffnet einen PR -> tests.yml laesst alle Tests gegen die
+# neue Version laufen -> dependabot-auto-merge.yml merged bei gruenem Lauf
+# automatisch, aber NUR Patch- und Minor-Updates. Major-Updates (z.B.
+# discord.py 2.x -> 3.x) bleiben liegen und brauchen deine Freigabe, weil dort
+# bewusst Verhalten brechen darf, das kein Test abdeckt.
+#
+# Die Gruppierung buendelt harmlose Updates zu einem PR statt acht einzelnen.
 updates:
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 5
+    groups:
+      python-minor-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: "deps"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      actions-minor-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: "ci"

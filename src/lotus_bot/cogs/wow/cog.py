@@ -2607,13 +2607,22 @@ class WoWCog(ManagedTaskCog):
             f"— bitte bestätigen oder ablehnen."
         )
 
+    def _claim_char_details(self, member: "RosterMember | None") -> str:
+        """`Lvl 42 Jäger` style detail for a roster member, for the review card."""
+        if member is None:
+            return "nicht mehr im Roster"
+        level = member.level if member.level else "?"
+        class_name = CLASS_NAMES_DE.get(member.class_id) or "Klasse?"
+        return f"Lvl {level} {class_name}"
+
     async def format_claim_review_message(self, claim: CharacterClaim) -> str:
         """Claim-review text enriched with the user's other claims + a hint.
 
-        Shows every already-claimed char of the requester with its current
-        in-game rank, and recommends the target rank: first Member+ char →
-        Member; if they already have one → the new claim is a Twink. Lets the
-        officer decide Member-vs-Twink without looking it up in-game.
+        Shows level + class of the claimed char and of every already-claimed
+        char of the requester (highest first: best in-game rank, then level),
+        so an officer can see at a glance which char is the higher one. Also
+        recommends the target rank: first Member+ char → Member; if they
+        already have one → the new claim is a Twink.
         """
         base = self.format_claim_review(claim)
         snapshot = await self.data.get_snapshot()
@@ -2623,22 +2632,43 @@ class WoWCog(ManagedTaskCog):
             if existing.character_key != claim.character_key
         ]
         lines = [base, ""]
+        claimed_member = snapshot.get(claim.character_key)
+        if claimed_member is not None:
+            lines.append(
+                f"🎯 **{claim.character_name}** — "
+                f"{self._claim_char_details(claimed_member)}"
+            )
+            lines.append("")
         has_member = False
         if others:
-            lines.append("**Bereits geclaimt von diesem User:**")
-            for existing in sorted(others, key=lambda c: c.character_name.casefold()):
+
+            def _sort_key(existing: CharacterClaim) -> tuple:
                 member = snapshot.get(existing.character_key)
-                if member is None:
-                    rank_label = "nicht mehr im Roster"
-                else:
-                    rank_label = self._rank_label(member.guild_rank)
-                    if (
-                        member.guild_rank is not None
-                        and member.guild_rank <= MEMBER_RANK
-                    ):
-                        has_member = True
+                rank = (
+                    member.guild_rank
+                    if member is not None and member.guild_rank is not None
+                    else 99
+                )
+                level = member.level if member is not None and member.level else 0
+                return (rank, -level, existing.character_name.casefold())
+
+            lines.append("**Bereits geclaimt von diesem User:**")
+            for existing in sorted(others, key=_sort_key):
+                member = snapshot.get(existing.character_key)
                 marker = "✅" if existing.status == "verified" else "⏳"
-                lines.append(f"- {marker} **{existing.character_name}** ({rank_label})")
+                if member is None:
+                    lines.append(
+                        f"- {marker} **{existing.character_name}** "
+                        "(nicht mehr im Roster)"
+                    )
+                    continue
+                if member.guild_rank is not None and member.guild_rank <= MEMBER_RANK:
+                    has_member = True
+                lines.append(
+                    f"- {marker} **{existing.character_name}** — "
+                    f"{self._claim_char_details(member)} · "
+                    f"{self._rank_label(member.guild_rank)}"
+                )
             lines.append("")
         if has_member:
             lines.append(

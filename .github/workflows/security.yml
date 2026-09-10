@@ -15,7 +15,9 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          # Muss zu tests.yml und .python-version passen — sonst prüft der
+          # Audit einen Dependency-Baum, der nie ausgeführt wird.
+          python-version: '3.13'
       - name: Cache dependencies
         uses: actions/cache@v6
         with:

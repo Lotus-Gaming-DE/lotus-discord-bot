@@ -1,0 +1,80 @@
+name: Dependabot auto-merge
+
+# Merged Dependabot-PRs automatisch — aber erst, NACHDEM die Tests gruen sind.
+#
+# Warum "workflow_run" und nicht GitHubs eingebautes "gh pr merge --auto":
+# Das eingebaute Auto-Merge wartet nur dann auf die CI, wenn der Branch "main"
+# per Branch Protection Required Status Checks erzwingt. Diese Protection wuerde
+# aber auch direkte Pushes auf main blockieren — und genau so wird hier
+# gearbeitet. Deshalb haengt der Merge hier am Testlauf selbst: Dieser Workflow
+# startet erst, wenn "Run tests" durch ist, und merged nur bei conclusion=success.
+#
+# Sicherheit: Es wird zu keinem Zeitpunkt Code aus dem PR ausgecheckt oder
+# ausgefuehrt. Der Job ruft ausschliesslich die GitHub-API auf.
+#
+# Gemerged werden nur die in dependabot.yml definierten Minor-/Patch-Gruppen
+# (Branchname enthaelt "-minor-patch"). Major-Updates landen in eigenen
+# Branches ohne diesen Marker und bleiben liegen, bis du sie freigibst.
+
+on:
+  workflow_run:
+    workflows: ["Run tests"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request'
+    steps:
+      - name: Zugehoerigen PR ermitteln und pruefen
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+
+          number=$(gh api "repos/$REPO/commits/$SHA/pulls" \
+            --jq '[.[] | select(.state == "open")][0].number // empty')
+          if [ -z "$number" ]; then
+            echo "Kein offener PR zu $SHA — nichts zu tun."
+            echo "merge=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          author=$(gh api "repos/$REPO/pulls/$number" --jq '.user.login')
+          branch=$(gh api "repos/$REPO/pulls/$number" --jq '.head.ref')
+          echo "PR #$number von '$author' (Branch: $branch)"
+
+          if [ "$author" != "dependabot[bot]" ]; then
+            echo "Kein Dependabot-PR — wird nicht automatisch gemerged."
+            echo "merge=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          case "$branch" in
+            *-minor-patch*)
+              echo "Minor-/Patch-Gruppe — Merge freigegeben."
+              echo "merge=true" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Kein Minor-/Patch-Update (moeglicherweise Major) — wartet auf Freigabe."
+              echo "merge=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+
+      - name: PR mergen
+        if: steps.check.outputs.merge == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ steps.check.outputs.number }}
+        run: gh pr merge "$NUMBER" --repo "$REPO" --squash --delete-branch
