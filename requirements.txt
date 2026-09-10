@@ -10,8 +10,8 @@
 discord.py==2.7.1
 Unidecode==1.4.0
 aiosqlite==0.22.1
-python-dotenv==1.2.2
-aiohttp==3.14.2
+python-dotenv==1.2.3
+aiohttp==3.14.3
 structlog==26.1.0
-idna==3.18
+idna==3.19
 tzdata==2026.3
