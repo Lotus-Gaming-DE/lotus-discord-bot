@@ -176,8 +176,10 @@ class MarketplaceCog(ManagedTaskCog):
     async def _try_pin(self, thread: discord.Thread) -> None:
         try:
             await thread.edit(pinned=True)
-        except (discord.Forbidden, discord.HTTPException, TypeError):
-            pass
+        except (discord.HTTPException, TypeError) as exc:
+            logger.warning(
+                "[MarketplaceCog] Thread %s nicht angepinnt: %s", thread.id, exc
+            )
 
     # ---- hub entry points ----
 

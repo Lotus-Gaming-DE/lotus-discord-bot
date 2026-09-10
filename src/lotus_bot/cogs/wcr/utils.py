@@ -25,6 +25,31 @@ CACHE_FILE = Path("data/pers/wcr_cache.json")
 CACHE_TTL = int(os.getenv("WCR_CACHE_TTL", "86400"))
 
 
+def _normalize_base_url(base_url: str) -> str:
+    """Ergänzt ein fehlendes Schema (``https://``).
+
+    ``WCR_API_URL`` ist als ``wcr-api.up.railway.app`` gesetzt. Ohne Schema
+    lehnt aiohttp die URL ab und jeder Abruf scheitert.
+    """
+    base_url = base_url.strip()
+    if "://" not in base_url:
+        base_url = f"https://{base_url}"
+    return base_url
+
+
+def _has_units(data: Any) -> bool:
+    return isinstance(data, dict) and bool(data.get("units"))
+
+
+def _read_cache() -> dict[str, Any] | None:
+    try:
+        with open(CACHE_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as exc:  # pragma: no cover - should not happen
+        logger.error("[WCRUtils] Error reading cache: %s", exc)
+        return None
+
+
 async def fetch_wcr_data(base_url: str) -> dict[str, Any]:
     """Ruft alle WCR-Endpunkte von ``base_url`` ab.
 
@@ -80,26 +105,28 @@ async def load_wcr_data(base_url: str | None = None) -> dict[str, Any]:
     Bei vorhandenem und gültigem Cache werden die Daten aus
     :data:`CACHE_FILE` geladen. Andernfalls erfolgt ein API-Aufruf über
     :func:`fetch_wcr_data` und das Ergebnis wird im Cache gespeichert.
+
+    Ein Cache ohne Einheiten gilt als ungültig, und ein gescheiterter Abruf
+    überschreibt nie den letzten guten Stand — sonst hätte ein einziger
+    Ausfall der API die WCR-Befehle für die volle TTL mit leeren Daten
+    lahmgelegt.
     """
 
     # Zuerst Cache prüfen
-    if CACHE_FILE.exists():
-        age = time.time() - CACHE_FILE.stat().st_mtime
-        if age < CACHE_TTL:
-            try:
-                with open(CACHE_FILE, "r", encoding="utf-8") as f:
-                    cached = json.load(f)
-                logger.info("[WCRUtils] Loaded data from cache.")
-                return cached
-            except Exception as exc:  # pragma: no cover - should not happen
-                logger.error("[WCRUtils] Error reading cache: %s", exc)
+    cached = _read_cache() if CACHE_FILE.exists() else None
+    if cached is not None and not _has_units(cached):
+        logger.warning("[WCRUtils] Cache contains no units — ignoring it.")
+        cached = None
+    if cached is not None and time.time() - CACHE_FILE.stat().st_mtime < CACHE_TTL:
+        logger.info("[WCRUtils] Loaded data from cache.")
+        return cached
 
     base_url = base_url or os.getenv("WCR_API_URL")
     if not base_url:
         logger.error("[WCRUtils] Base URL for the WCR API is missing.")
-        return {}
+        return cached or {}
 
-    api_data = await fetch_wcr_data(base_url)
+    api_data = await fetch_wcr_data(_normalize_base_url(base_url))
 
     units = api_data.get("units", {})
     units_list = units.get("units", units)
@@ -153,6 +180,15 @@ async def load_wcr_data(base_url: str | None = None) -> dict[str, Any]:
         "stat_labels": stat_labels,
         "faction_combinations": api_data.get("faction_combinations", {}),
     }
+
+    if not _has_units(result):
+        if cached is not None:
+            logger.warning(
+                "[WCRUtils] API returned no units — keeping the stale cache."
+            )
+            return cached
+        logger.error("[WCRUtils] API returned no units and there is no cache.")
+        return result
 
     # Cache speichern
     try:

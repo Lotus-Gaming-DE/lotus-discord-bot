@@ -202,8 +202,8 @@ class DuoCog(ManagedTaskCog):
     async def _try_pin(self, thread: discord.Thread) -> None:
         try:
             await thread.edit(pinned=True)
-        except (discord.Forbidden, discord.HTTPException, TypeError):
-            pass
+        except (discord.HTTPException, TypeError) as exc:
+            logger.warning("[DuoCog] Thread %s nicht angepinnt: %s", thread.id, exc)
 
     # ---- character helpers ----
 
@@ -584,8 +584,10 @@ class DuoCog(ManagedTaskCog):
             )
         try:
             await thread.send("\n".join(lines))
-        except (discord.Forbidden, discord.HTTPException):
-            pass
+        except discord.HTTPException as exc:
+            logger.warning(
+                "[DuoCog] Match-Hinweis in %s fehlgeschlagen: %s", thread.id, exc
+            )
 
     # ---- join / request / team creation ----
 
@@ -753,16 +755,23 @@ class DuoCog(ManagedTaskCog):
         for user_id in (owner_id, requester_id):
             try:
                 await thread.add_user(discord.Object(id=user_id))
-            except (discord.Forbidden, discord.HTTPException):
-                pass
+            except discord.HTTPException as exc:
+                logger.warning(
+                    "[DuoCog] User %s nicht zu Team-Thread %s hinzugefügt: %s",
+                    user_id,
+                    thread.id,
+                    exc,
+                )
         try:
             pin_msg = await thread.send(
                 "📌 **Haltet hier eure Termine fest** — wann geht's weiter? "
                 "Postet ruhig Screenshots, das ist eure Reise."
             )
             await pin_msg.pin()
-        except (discord.Forbidden, discord.HTTPException):
-            pass
+        except discord.HTTPException as exc:
+            logger.warning(
+                "[DuoCog] Termin-Nachricht in %s nicht angepinnt: %s", thread.id, exc
+            )
 
         # Both dedicated chars are now paired: drop their board posts + signups.
         for signup in (owner_signup, req_signup):
@@ -832,8 +841,10 @@ class DuoCog(ManagedTaskCog):
                     "🕯️ Dieses Team wurde aufgelöst. Danke für die Reise."
                 )
                 await thread.edit(applied_tags=self._tag(TAG_DISBANDED), archived=True)
-            except (discord.Forbidden, discord.HTTPException):
-                pass
+            except discord.HTTPException as exc:
+                logger.warning(
+                    "[DuoCog] Team-Thread %s nicht archiviert: %s", thread.id, exc
+                )
 
     async def start_char_swap(self, interaction: discord.Interaction) -> None:
         """Team member picks a new dedicated char (reroll / after a death)."""
@@ -898,8 +909,12 @@ class DuoCog(ManagedTaskCog):
                     f"weiter. **{team.name}** macht weiter! 💪"
                 )
                 await thread.edit(applied_tags=self._tag(TAG_ACTIVE))
-            except (discord.Forbidden, discord.HTTPException):
-                pass
+            except discord.HTTPException as exc:
+                logger.warning(
+                    "[DuoCog] Char-Wechsel-Hinweis in %s fehlgeschlagen: %s",
+                    thread.id,
+                    exc,
+                )
 
     async def start_rename(self, interaction: discord.Interaction) -> None:
         """Open the rename modal for a team member."""
@@ -998,8 +1013,12 @@ class DuoCog(ManagedTaskCog):
                 new_title = await self._search_title(signup)
                 if thread.name != new_title:  # rename only on change (rate-limit)
                     await thread.edit(name=new_title)
-            except (discord.Forbidden, discord.HTTPException):
-                pass
+            except discord.HTTPException as exc:
+                logger.warning(
+                    "[DuoCog] Such-Beitrag %s nicht aktualisiert: %s",
+                    signup.post_id,
+                    exc,
+                )
 
     async def _refresh_team_posts(self) -> None:
         """Keep team posts' embed (live levels/classes) and title current."""
@@ -1022,8 +1041,12 @@ class DuoCog(ManagedTaskCog):
                 )
                 if thread.name != title:  # rename only on change (rate-limit)
                     await thread.edit(name=title)
-            except (discord.Forbidden, discord.HTTPException):
-                pass
+            except discord.HTTPException as exc:
+                logger.warning(
+                    "[DuoCog] Team-Beitrag %s nicht aktualisiert: %s",
+                    team.thread_id,
+                    exc,
+                )
 
     async def _refresh_hub_counter(self) -> None:
         hub_id = await self.data.get_setting("hub_thread_id")
@@ -1038,8 +1061,8 @@ class DuoCog(ManagedTaskCog):
             await thread.get_partial_message(int(hub_id)).edit(
                 content=HUB_TEXT + counter
             )
-        except (discord.Forbidden, discord.HTTPException):
-            pass
+        except discord.HTTPException as exc:
+            logger.warning("[DuoCog] Hub-Zähler nicht aktualisiert: %s", exc)
 
     # ---- hooks called by WoWCog ----
 
@@ -1081,8 +1104,10 @@ class DuoCog(ManagedTaskCog):
             await thread.send(content=ping, embed=embed)
             try:
                 await thread.edit(applied_tags=self._tag(TAG_MOURNING))
-            except (discord.Forbidden, discord.HTTPException):
-                pass
+            except discord.HTTPException as exc:
+                logger.warning(
+                    "[DuoCog] Trauer-Tag für %s nicht gesetzt: %s", thread.id, exc
+                )
         except Exception as exc:  # pragma: no cover - defensive
             logger.warning("[DuoCog] on_character_death fehlgeschlagen: %s", exc)
 

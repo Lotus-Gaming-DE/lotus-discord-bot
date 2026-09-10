@@ -93,7 +93,16 @@ class ChampionCog(ManagedTaskCog):
         return new_total
 
     async def sync_all_roles(self) -> None:
-        """Synchronisiert die Champion-Rollen aller gespeicherten Nutzer."""
+        """Synchronisiert die Champion-Rollen aller gespeicherten Nutzer.
+
+        Wird schon im ``__init__`` gestartet, also während ``setup_hook`` —
+        da ist der Bot noch nicht verbunden und die Guild unbekannt. Ohne das
+        Warten brach der Sync für jeden Nutzer mit „Guild not found" ab und
+        hat nie eine Rolle korrigiert.
+        """
+        wait_until_ready = getattr(self.bot, "wait_until_ready", None)
+        if callable(wait_until_ready):
+            await wait_until_ready()
         user_ids = await self.data.get_all_user_ids()
         for user_id_str in user_ids:
             total = await self.data.get_total(user_id_str)
@@ -115,15 +124,32 @@ class ChampionCog(ManagedTaskCog):
         except asyncio.CancelledError:
             pass
 
+    def _resolve_guild(self) -> discord.Guild | None:
+        """Die Haupt-Guild — auch kurz nach dem Start, bevor ``on_ready`` lief.
+
+        ``bot.main_guild`` ist bis ``on_ready`` nur ein ``discord.Object``, und
+        ``wait_until_ready`` kann zurückkehren, bevor ``on_ready`` es ersetzt
+        hat. Dann liefert ``get_guild`` die echte Guild.
+        """
+        guild = getattr(self.bot, "main_guild", None)
+        if isinstance(guild, discord.Guild):
+            return guild
+        guild_id = getattr(self.bot, "main_guild_id", None)
+        get_guild = getattr(self.bot, "get_guild", None)
+        if guild_id is not None and callable(get_guild):
+            resolved = get_guild(guild_id)
+            if isinstance(resolved, discord.Guild):
+                return resolved
+        return None
+
     async def _apply_champion_role(self, user_id_str: str, score: int) -> None:
         """Vergibt anhand der Punkte die passende Champion-Rolle.
 
         Existiert die im Config definierte Rollen-ID nicht, wird keine Rolle
         vergeben und ein Hinweis geloggt.
         """
-        # Zugriff auf Guild NUR noch über self.bot.main_guild (Zentral, wie in bot.py gesetzt)
-        guild = self.bot.main_guild
-        if not isinstance(guild, discord.Guild):
+        guild = self._resolve_guild()
+        if guild is None:
             logger.warning("[ChampionCog] Guild not found.")
             return
 

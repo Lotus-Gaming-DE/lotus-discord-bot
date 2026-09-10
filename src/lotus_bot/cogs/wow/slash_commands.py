@@ -10,6 +10,7 @@ from .cog import (
     WoWCog,
 )
 from .data import CharacterClaim, CharacterKnownRecipe, CharacterProfession
+from .health import format_report, run_health_check
 
 logger = get_logger(__name__)
 
@@ -233,6 +234,55 @@ async def dungeons_guide(interaction: discord.Interaction):
     await interaction.followup.send(
         "✅ Dungeon-Run-Anleitung veröffentlicht/aktualisiert."
     )
+
+
+@wow_group.command(
+    name="doctor", description="Prüft, ob der Bot überall die nötigen Rechte hat"
+)
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+async def doctor(interaction: discord.Interaction):
+    cog: WoWCog | None = interaction.client.get_cog("WoWCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "❌ WoW-System nicht verfügbar.", ephemeral=True
+        )
+        return
+    report = await run_health_check(cog)
+    if report is None:
+        await interaction.response.send_message(
+            "❌ Server-Daten sind noch nicht geladen — bitte gleich nochmal.",
+            ephemeral=True,
+        )
+        return
+    await interaction.response.send_message(format_report(report), ephemeral=True)
+
+
+@wow_group.command(
+    name="backup", description="Legt sofort ein Backup an und postet es im Offi-Channel"
+)
+@moderator_only()
+@app_commands.default_permissions(manage_guild=True)
+async def backup_now(interaction: discord.Interaction):
+    logger.info(f"/wow backup by {interaction.user}")
+    backup_cog = interaction.client.get_cog("BackupCog")
+    if backup_cog is None:
+        await interaction.response.send_message(
+            "❌ Backup-System nicht verfügbar.", ephemeral=True
+        )
+        return
+    await interaction.response.defer(ephemeral=True, thinking=True)
+    result = await backup_cog.run_backup(upload=True)
+    if result.error:
+        message = f"❌ Backup fehlgeschlagen: {result.error}"
+    else:
+        size = f"{result.size / (1024 * 1024):.1f} MB"
+        message = f"✅ Backup `{result.archive.name}` ({size}) erstellt"
+        if result.uploaded:
+            message += " und im Offi-Channel gepostet."
+        else:
+            message += f", aber nicht hochgeladen: {result.note}"
+    await interaction.followup.send(message, ephemeral=True)
 
 
 @wow_group.command(name="status", description="Zeigt den WoW-Tracker Status")

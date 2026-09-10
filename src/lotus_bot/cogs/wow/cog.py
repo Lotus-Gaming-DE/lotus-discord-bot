@@ -468,6 +468,10 @@ class WoWCog(ManagedTaskCog):
         await self.bot.wait_until_ready()
         await self._auto_publish_panel()
         await self._auto_publish_dungeons_guide()
+        try:
+            await self._startup_health_check()
+        except Exception as exc:  # pragma: no cover - defensive logging
+            logger.error("[WoWCog] Bot-Check fehlgeschlagen: %s", exc, exc_info=True)
         while True:
             try:
                 if await self._scheduled_digest_due():
@@ -750,8 +754,8 @@ class WoWCog(ManagedTaskCog):
     async def _try_pin_thread(self, thread: discord.Thread) -> None:
         try:
             await thread.edit(pinned=True)
-        except (discord.Forbidden, discord.HTTPException, TypeError):
-            pass
+        except (discord.HTTPException, TypeError) as exc:
+            logger.warning("[WoWCog] Thread %s nicht angepinnt: %s", thread.id, exc)
 
     async def _auto_publish_dungeons_guide(self) -> None:
         try:
@@ -1313,7 +1317,32 @@ class WoWCog(ManagedTaskCog):
 
     def _main_guild(self) -> "discord.Guild | None":
         guild = getattr(self.bot, "main_guild", None)
-        return guild if isinstance(guild, discord.Guild) else None
+        if isinstance(guild, discord.Guild):
+            return guild
+        # bot.main_guild ist bis on_ready nur ein discord.Object — und
+        # wait_until_ready kann zurückkehren, bevor on_ready es ersetzt hat.
+        guild_id = getattr(self.bot, "main_guild_id", None)
+        get_guild = getattr(self.bot, "get_guild", None)
+        if guild_id is not None and callable(get_guild):
+            resolved = get_guild(guild_id)
+            if isinstance(resolved, discord.Guild):
+                return resolved
+        return None
+
+    async def _startup_health_check(self) -> None:
+        """Beim Start fehlende Rechte sofort melden — nicht erst, wenn etwas fehlt."""
+        from .health import format_report, run_health_check
+
+        report = await run_health_check(self)
+        if report is None:
+            logger.warning("[WoWCog] Bot-Check übersprungen: Guild nicht verfügbar.")
+            return
+        if report.ok:
+            logger.info("[WoWCog] Bot-Check: alles in Ordnung.")
+            return
+        for problem in report.problems:
+            logger.warning("[WoWCog] Bot-Check: %s", problem)
+        await self._post_officer_text(format_report(report))
 
     async def _discord_member_present(
         self, guild: "discord.Guild", user_id: int

@@ -214,6 +214,64 @@ async def test_apply_role_ignores_same_name_if_id_missing(
 
 
 @pytest.mark.asyncio
+async def test_apply_role_resolves_guild_before_on_ready(
+    monkeypatch, patch_logged_task
+):
+    # Right after wait_until_ready, bot.main_guild can still be a discord.Object.
+    patch_logged_task(champion_cog_mod, log_setup)
+    bot = DummyBot()
+    bot.data["champion"]["roles"] = [{"name": "Silver", "threshold": 5, "id": 1}]
+    silver = DummyRole("Silver", 1)
+    member = DummyMember([])
+    guild = DummyGuild(member, [silver])
+    bot.main_guild = object()
+    bot.main_guild_id = 42
+    bot.get_guild = lambda guild_id: guild if guild_id == 42 else None
+
+    monkeypatch.setattr(champion_cog_mod.discord, "Guild", DummyGuild)
+
+    cog = ChampionCog(bot)
+
+    await cog._apply_champion_role("123", 5)
+
+    assert member.added == [silver]
+    await cog.cog_unload()
+
+
+@pytest.mark.asyncio
+async def test_sync_all_roles_waits_until_ready(
+    monkeypatch, patch_logged_task, tmp_path
+):
+    patch_logged_task(champion_cog_mod, log_setup)
+    bot = DummyBot()
+    ready = asyncio.Event()
+
+    async def wait_until_ready():
+        await ready.wait()
+
+    bot.wait_until_ready = wait_until_ready
+    cog = ChampionCog(bot)
+    cog.data = ChampionData(str(tmp_path / "points.db"))
+    await cog.data.add_delta("123", 5, "test")
+    applied = []
+
+    async def fake_apply(user_id, score):
+        applied.append((user_id, score))
+
+    monkeypatch.setattr(cog, "_apply_champion_role", fake_apply)
+
+    task = asyncio.create_task(cog.sync_all_roles())
+    await asyncio.sleep(0)
+    assert applied == []  # nothing happens while the guild is unknown
+
+    ready.set()
+    await task
+
+    assert applied == [("123", 5)]
+    await cog.cog_unload()
+
+
+@pytest.mark.asyncio
 async def test_worker_cancelled_on_unload(monkeypatch, patch_logged_task):
     bot = DummyBot()
 
