@@ -13,5 +13,5 @@ aiosqlite==0.22.1
 python-dotenv==1.2.3
 aiohttp==3.14.3
 structlog==26.1.0
-idna==3.19
+idna==3.20
 tzdata==2026.4
