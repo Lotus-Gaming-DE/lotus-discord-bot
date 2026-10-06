@@ -85,3 +85,18 @@ async def test_fresh_but_empty_cache_is_refetched(monkeypatch, tmp_path):
 
     assert len(calls) == 1
     assert len(data["units"]) == 1
+
+
+@pytest.mark.asyncio
+async def test_load_wcr_data_accepts_units_as_plain_list(monkeypatch, tmp_path):
+    # The live API returns "units" as a bare list; this crashed the bot at startup.
+    async def fake_fetch(url):
+        return {"units": [{"id": 1, "names": {"en": "Grunt"}}], "categories": {}}
+
+    monkeypatch.setattr(utils, "fetch_wcr_data", fake_fetch)
+    monkeypatch.setattr(utils, "CACHE_FILE", tmp_path / "cache.json")
+
+    data = await utils.load_wcr_data("https://test")
+
+    assert [u["id"] for u in data["units"]] == [1]
+    assert data["locals"]["en"]["units"][0]["name"] == "Grunt"

@@ -129,9 +129,14 @@ async def load_wcr_data(base_url: str | None = None) -> dict[str, Any]:
     api_data = await fetch_wcr_data(_normalize_base_url(base_url))
 
     units = api_data.get("units", {})
-    units_list = units.get("units", units)
-
-    locals_ = units.get("locals", {})
+    # Die API liefert die Einheiten entweder direkt als Liste oder als
+    # {"units": [...], "locals": {...}}.
+    if isinstance(units, dict):
+        units_list = units.get("units", [])
+        locals_ = units.get("locals", {})
+    else:
+        units_list = units or []
+        locals_ = {}
     if not locals_:
         for unit in units_list:
             for lang, name in (unit.get("names") or {}).items():
