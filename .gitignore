@@ -17,3 +17,9 @@ logs/*
 # … but PUT BACK the railway sub-folder + the JSON file
 !logs/railway/
 !logs/railway/latest_logs.json
+
+# pytest --basetemp leftovers
+.pytest_tmp/
+
+# local Blender/asset work, not part of the bot
+wow_crystal_work/
