@@ -443,9 +443,9 @@ async def test_publish_dungeons_guide_edits_existing_thread(
 
 
 @pytest.mark.asyncio
-async def test_panel_hub_layout_has_seven_sections(tmp_path, patch_logged_task):
-    """V2 hub: one Container with seven Sections (Deine Chars, Suchen,
-    Gildenbank, Cooldown, Hilfe, Champion, Raider). Each Section's
+async def test_panel_hub_layout_has_eight_sections(tmp_path, patch_logged_task):
+    """V2 hub: one Container with eight Sections (Deine Chars, Suchen,
+    Gildenbank, Cooldown, Hilfe, Champion, Raider, Forever). Each Section's
     accessory is a clickable Button with a stable custom_id so persistence
     survives bot restarts. (The 'Event erstellen' block is a plain
     TextDisplay with an inline command mention, not a Section.)"""
@@ -456,7 +456,7 @@ async def test_panel_hub_layout_has_seven_sections(tmp_path, patch_logged_task):
     container = hub.children[0]
     assert isinstance(container, discord.ui.Container)
     sections = [c for c in container.children if isinstance(c, discord.ui.Section)]
-    assert len(sections) == 7
+    assert len(sections) == 8
     custom_ids = {section.accessory.custom_id for section in sections}
     assert custom_ids == {
         "wow_panel_v2:chars",
@@ -466,6 +466,7 @@ async def test_panel_hub_layout_has_seven_sections(tmp_path, patch_logged_task):
         "wow_panel_v2:help",
         "wow_panel_v2:champion",
         "wow_panel_v2:raider",
+        "wow_panel_v2:forever",
     }
     # Horde-red accent stripe on the container.
     assert container.accent_colour == discord.Colour(0xC41E3A)

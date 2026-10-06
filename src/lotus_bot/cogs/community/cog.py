@@ -7,7 +7,6 @@ from lotus_bot.log_setup import get_logger
 from lotus_bot.utils.managed_cog import ManagedTaskCog
 
 from .data import CommunityData
-from .forever_view import ForeverRolesLayoutView
 from .panel_view import ServerInfoLayoutView
 
 logger = get_logger(__name__)
@@ -22,8 +21,6 @@ class CommunityCog(ManagedTaskCog):
         super().__init__()
         self.bot = bot
         self.data = CommunityData("data/pers/community/community.db")
-        # Persistente Buttons müssen nach einem Neustart wieder registriert sein.
-        bot.add_view(ForeverRolesLayoutView(bot.data.get("emojis", {})))
         self.create_task(self._startup())
 
     async def _startup(self) -> None:
@@ -34,57 +31,57 @@ class CommunityCog(ManagedTaskCog):
                 "[CommunityCog] Panel-Channel %s nicht gefunden.", PANEL_CHANNEL_ID
             )
             return
+        await self._remove_misplaced_forever_panel(channel)
         try:
             await self.publish_panel(channel)
         except Exception as exc:
             logger.error(
                 "[CommunityCog] Auto-Publish fehlgeschlagen: %s", exc, exc_info=True
             )
-        try:
-            await self.publish_forever_panel(channel)
-        except Exception as exc:
-            logger.error(
-                "[CommunityCog] Forever-Panel fehlgeschlagen: %s", exc, exc_info=True
-            )
 
     async def publish_panel(self, channel: discord.TextChannel) -> None:
         """Postet oder editiert das Info-Panel im angegebenen Channel."""
         view = ServerInfoLayoutView(self.bot.data.get("emojis", {}))
-        await self._publish(channel, "panel_message_id", view)
-
-    async def publish_forever_panel(self, channel: discord.TextChannel) -> None:
-        """Postet oder editiert das WoW-Forever-Rollenpanel (zweite Nachricht)."""
-        view = ForeverRolesLayoutView(self.bot.data.get("emojis", {}))
-        await self._publish(channel, "forever_panel_message_id", view)
-
-    async def _publish(
-        self,
-        channel: discord.TextChannel,
-        setting_key: str,
-        view: discord.ui.LayoutView,
-    ) -> None:
-        message_id_value = await self.data.get_setting(setting_key)
+        message_id_value = await self.data.get_setting("panel_message_id")
         if message_id_value:
             try:
                 message = await channel.fetch_message(int(message_id_value))
                 await message.edit(content=None, view=view)
                 logger.info(
-                    "[CommunityCog] %s aktualisiert (Message %s).",
-                    setting_key,
-                    message.id,
+                    "[CommunityCog] Panel aktualisiert (Message %s).", message.id
                 )
                 return
             except (discord.NotFound, discord.Forbidden, discord.HTTPException):
                 logger.info(
-                    "[CommunityCog] %s nicht editierbar, erstelle neu.", setting_key
+                    "[CommunityCog] Bestehende Panel-Message nicht editierbar, erstelle neu."
                 )
 
-        # Rollen-Erwähnungen im Panel dürfen niemanden anpingen.
-        message = await channel.send(
-            view=view, allowed_mentions=discord.AllowedMentions.none()
-        )
-        await self.data.set_setting(setting_key, str(message.id))
-        logger.info("[CommunityCog] %s erstellt (Message %s).", setting_key, message.id)
+        message = await channel.send(view=view)
+        await self.data.set_setting("panel_message_id", str(message.id))
+        logger.info("[CommunityCog] Panel erstellt (Message %s).", message.id)
+
+    async def _remove_misplaced_forever_panel(
+        self, channel: discord.TextChannel
+    ) -> None:
+        """Einmalig: löscht das versehentlich hier gepostete Forever-Rollenpanel.
+
+        Die Forever-Auswahl lebt jetzt im WoW-Hub (wow-info). Kann nach dem
+        nächsten Deploy samt Setting ``forever_panel_message_id`` entfernt werden.
+        """
+        key = "forever_panel_message_id"
+        message_id_value = await self.data.get_setting(key)
+        if not message_id_value:
+            return
+        try:
+            message = await channel.fetch_message(int(message_id_value))
+            await message.delete()
+            logger.info("[CommunityCog] Altes Forever-Panel gelöscht.")
+        except discord.NotFound:
+            pass
+        except (discord.Forbidden, discord.HTTPException) as exc:
+            logger.warning("[CommunityCog] Altes Forever-Panel nicht löschbar: %s", exc)
+            return
+        await self.data.set_setting(key, "")
 
     def cog_unload(self) -> None:
         super().cog_unload()

@@ -15,6 +15,7 @@ from discord.ext import commands
 from lotus_bot.log_setup import get_logger
 from lotus_bot.utils.managed_cog import ManagedTaskCog
 
+from .forever_roles import FOREVER_ROLES, ForeverGuildsLayoutView
 from .api import (
     DEFAULT_LOCALE,
     DEFAULT_NAMESPACE,
@@ -4765,6 +4766,13 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         )
         champion_btn.callback = self._open_champion
 
+        forever_btn = discord.ui.Button(
+            label="Auswählen",
+            style=discord.ButtonStyle.secondary,
+            custom_id="wow_panel_v2:forever",
+        )
+        forever_btn.callback = self._open_forever_guilds
+
         raider_btn = discord.ui.Button(
             label="An / Aus",
             style=discord.ButtonStyle.secondary,
@@ -4833,6 +4841,14 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
                     "### 🛡️ Raider-Rolle\n" "Raider-Rolle holen oder ablegen."
                 ),
                 accessory=raider_btn,
+            ),
+            discord.ui.Separator(),
+            discord.ui.Section(
+                discord.ui.TextDisplay(
+                    "### ♾️ WoW Forever – Gilden\n"
+                    "Horde & Allianz · Hardcore, PvP, PvE — Gilden wählen."
+                ),
+                accessory=forever_btn,
             ),
             accent_colour=HORDE_RED,
         )
@@ -4914,6 +4930,18 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         await interaction.response.send_message(
             text, view=_PanelTextView(), ephemeral=True
         )
+
+    async def _open_forever_guilds(self, interaction: discord.Interaction) -> None:
+        member = interaction.user
+        if interaction.guild is None or not isinstance(member, discord.Member):
+            await interaction.response.send_message(
+                "Geht nur im Server, nicht in DMs.", ephemeral=True
+            )
+            return
+        wanted = {r.role_id for r in FOREVER_ROLES}
+        owned = {r.id for r in member.roles if r.id in wanted}
+        view = ForeverGuildsLayoutView(owned, self.cog.bot.data.get("emojis", {}))
+        await interaction.response.send_message(view=view, ephemeral=True)
 
     async def _toggle_raider_role(self, interaction: discord.Interaction) -> None:
         """Add or remove the Raider role from the clicking member.
