@@ -64,3 +64,26 @@ async def test_toggle_adds_then_removes():
     member.roles = [role]
     assert await toggle_forever_role(member, role, entry) is False
     member.remove_roles.assert_awaited_once()
+
+
+async def test_button_click_replies_with_current_selection():
+    entry = FOREVER_ROLES[1]
+    role = MagicMock(spec=discord.Role)
+    role.id = entry.role_id
+    member = MagicMock(spec=discord.Member)
+    member.roles = []
+    member.add_roles = AsyncMock()
+    guild = MagicMock(spec=discord.Guild)
+    guild.get_role.return_value = role
+    interaction = MagicMock(spec=discord.Interaction)
+    interaction.guild = guild
+    interaction.user = member
+    interaction.response = MagicMock()
+    interaction.response.send_message = AsyncMock()
+
+    await ForeverRoleButton(entry, discord.ButtonStyle.primary).callback(interaction)
+
+    member.add_roles.assert_awaited_once()
+    args, kwargs = interaction.response.send_message.await_args
+    assert kwargs["ephemeral"] is True
+    assert "PvP" in args[0]

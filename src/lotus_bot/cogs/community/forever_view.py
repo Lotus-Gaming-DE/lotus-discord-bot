@@ -135,7 +135,7 @@ class ForeverRoleButton(discord.ui.Button):
         projected = {r.id for r in member.roles}
         (projected.add if added else projected.discard)(role.id)
         await interaction.response.send_message(
-            f"**{role_title(self.entry)}** {verb}\n{summary}",
+            f"**{role_title(self.entry)}** {verb}\n{selection_summary(projected)}",
             ephemeral=True,
             allowed_mentions=discord.AllowedMentions.none(),
         )
