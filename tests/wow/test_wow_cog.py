@@ -379,7 +379,6 @@ async def test_panel_publish_creates_and_stores_message(tmp_path, patch_logged_t
     hub_display = view.children[0].children[0]
     assert isinstance(hub_display, discord.ui.TextDisplay)
     assert "Member" in hub_display.content
-    assert "Cooldowns laufen" in hub_display.content
     assert await cog.data.get_setting("panel_channel_id") == str(channel.id)
     assert await cog.data.get_setting("panel_message_id") == "555"
 
@@ -443,9 +442,10 @@ async def test_publish_dungeons_guide_edits_existing_thread(
 
 
 @pytest.mark.asyncio
-async def test_panel_hub_layout_has_eight_sections(tmp_path, patch_logged_task):
-    """V2 hub: one Container with eight Sections (Deine Chars, Suchen,
-    Gildenbank, Cooldown, Hilfe, Champion, Raider, Forever). Each Section's
+async def test_panel_hub_classic_layout_has_five_sections(tmp_path, patch_logged_task):
+    """V2 hub: one Container with five Sections (Deine Chars, Suchen,
+    Gildenbank, Cooldown, Raider). Help/Champion live in the general panel,
+    the Forever picker in the Forever panel. Each Section's
     accessory is a clickable Button with a stable custom_id so persistence
     survives bot restarts. (The 'Event erstellen' block is a plain
     TextDisplay with an inline command mention, not a Section.)"""
@@ -456,17 +456,14 @@ async def test_panel_hub_layout_has_eight_sections(tmp_path, patch_logged_task):
     container = hub.children[0]
     assert isinstance(container, discord.ui.Container)
     sections = [c for c in container.children if isinstance(c, discord.ui.Section)]
-    assert len(sections) == 8
+    assert len(sections) == 5
     custom_ids = {section.accessory.custom_id for section in sections}
     assert custom_ids == {
         "wow_panel_v2:chars",
         "wow_panel_v2:search",
         "wow_panel_v2:gbank",
         "wow_panel_v2:cooldown",
-        "wow_panel_v2:help",
-        "wow_panel_v2:champion",
         "wow_panel_v2:raider",
-        "wow_panel_v2:forever",
     }
     # Horde-red accent stripe on the container.
     assert container.accent_colour == discord.Colour(0xC41E3A)
@@ -494,9 +491,9 @@ async def test_build_panel_stats_line_renders_counts(tmp_path, patch_logged_task
     line = await cog.build_panel_stats_line()
 
     assert "**2** Member" in line
-    assert "**1** Chars geclaimt" in line
+    assert "**1** Chars verknüpft" in line
     assert "**1** Geister" in line
-    assert "**1** Cooldowns laufen" in line
+    assert "**50 %**" in line  # 1 claim / 2 members
 
 
 class _DummyLookupUser:
@@ -684,12 +681,19 @@ class _DummyRaiderResponse:
         self.messages.append((msg, kwargs))
 
 
+class _DummySentMessage:
+    async def delete(self):
+        pass
+
+
 class _DummyRaiderFollowup:
     def __init__(self):
         self.messages = []
 
     async def send(self, msg=None, **kwargs):
         self.messages.append((msg, kwargs))
+        # ``wait=True`` returns the sent message, like the real webhook.
+        return _DummySentMessage()
 
 
 class _DummyRaiderInteraction:

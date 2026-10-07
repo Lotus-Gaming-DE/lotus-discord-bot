@@ -19,3 +19,11 @@ def stub_wow_api(monkeypatch):
         return {"is_ghost": False}
 
     monkeypatch.setattr(wow_cog_mod, "fetch_character_profile", alive_profile)
+
+
+@pytest.fixture(autouse=True)
+def no_ephemeral_cleanup_tasks(monkeypatch):
+    """The hub schedules delayed deletes of private replies; in tests they would
+    show up as stray tasks. The helper itself is covered in test_forever_panel."""
+    monkeypatch.setattr(wow_cog_mod, "schedule_message_cleanup", lambda *a, **k: None)
+    monkeypatch.setattr(wow_cog_mod, "schedule_response_cleanup", lambda *a, **k: None)
