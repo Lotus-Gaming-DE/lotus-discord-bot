@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import discord
 import pytest
+import pytest_asyncio
 
 from lotus_bot.cogs.wow import cog as wow_cog_mod
 from lotus_bot.cogs.wow.forever_panel import (
@@ -129,15 +130,27 @@ class _Channel:
         return self.messages[mid]
 
 
+_OPEN_COGS = []
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def _close_cog_databases():
+    """Open aiosqlite connections keep the interpreter alive after the run."""
+    yield
+    for cog in _OPEN_COGS:
+        await cog.data.close()
+    _OPEN_COGS.clear()
+
+
 async def _cog_with_db(tmp_path, patch_logged_task):
     from lotus_bot import log_setup
     from lotus_bot.cogs.wow.data import WoWData
-    from tests.wow.test_wow_cog import DummyBot, CREATED_COGS
+    from tests.wow.test_wow_cog import DummyBot
 
     patch_logged_task(wow_cog_mod, log_setup)
     cog = wow_cog_mod.WoWCog(DummyBot())
     cog.data = WoWData(str(tmp_path / "wow.db"))
-    CREATED_COGS.append(cog)
+    _OPEN_COGS.append(cog)
     return cog
 
 
