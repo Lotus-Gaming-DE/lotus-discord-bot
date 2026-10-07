@@ -442,9 +442,9 @@ async def test_publish_dungeons_guide_edits_existing_thread(
 
 
 @pytest.mark.asyncio
-async def test_panel_hub_classic_layout_has_five_sections(tmp_path, patch_logged_task):
-    """V2 hub: one Container with five Sections (Deine Chars, Suchen,
-    Gildenbank, Cooldown, Raider). Help/Champion live in the general panel,
+async def test_panel_hub_classic_layout_has_four_sections(tmp_path, patch_logged_task):
+    """V2 hub: one Container with four Sections (Deine Chars, Suchen,
+    Gildenbank, Cooldown). Help/Champion/Raider live in the general panel,
     the Forever picker in the Forever panel. Each Section's
     accessory is a clickable Button with a stable custom_id so persistence
     survives bot restarts. (The 'Event erstellen' block is a plain
@@ -456,14 +456,13 @@ async def test_panel_hub_classic_layout_has_five_sections(tmp_path, patch_logged
     container = hub.children[0]
     assert isinstance(container, discord.ui.Container)
     sections = [c for c in container.children if isinstance(c, discord.ui.Section)]
-    assert len(sections) == 5
+    assert len(sections) == 4
     custom_ids = {section.accessory.custom_id for section in sections}
     assert custom_ids == {
         "wow_panel_v2:chars",
         "wow_panel_v2:search",
         "wow_panel_v2:gbank",
         "wow_panel_v2:cooldown",
-        "wow_panel_v2:raider",
     }
     # Horde-red accent stripe on the container.
     assert container.accent_colour == discord.Colour(0xC41E3A)

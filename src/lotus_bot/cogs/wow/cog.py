@@ -64,7 +64,7 @@ DEFAULT_POLL_INTERVAL = 3 * 60 * 60
 DEFAULT_CLAIM_REVIEW_CHANNEL_ID = 1544601948169314324
 DEFAULT_PANEL_CHANNEL_ID = 1463577361562992807
 # Bump to make the bot delete + repost all hub panels once (message order).
-PANEL_LAYOUT = "three-panels-v1"
+PANEL_LAYOUT = "three-panels-v2"
 # Role changes are batched so a rush of clicks edits the counter panel once.
 FOREVER_REFRESH_DELAY = 20
 DEFAULT_DIGEST_HOUR = 9
@@ -845,7 +845,7 @@ class WoWCog(ManagedTaskCog):
 
     async def _reset_panels(self, channel: discord.TextChannel) -> None:
         """One-off on layout change: remove old panel messages so the new
-        ones are posted in the intended order (Forever, general, Classic)."""
+        ones are posted in the intended order (Forever, Classic, general)."""
         for key in (
             "panel_message_id",
             "panel_forever_message_id",
@@ -864,12 +864,12 @@ class WoWCog(ManagedTaskCog):
     async def publish_all_panels(
         self, channel: discord.TextChannel
     ) -> PanelPublishResult:
-        """Post/refresh the three hub panels: Forever, general, Classic HC."""
+        """Post/refresh the three hub panels: Forever, Classic HC, general."""
         if await self.data.get_setting("panel_layout") != PANEL_LAYOUT:
             await self._reset_panels(channel)
         await self.publish_forever_panel(channel)
-        await self.publish_general_panel(channel)
         result = await self.publish_panel(channel)
+        await self.publish_general_panel(channel)
         await self.data.set_setting("panel_layout", PANEL_LAYOUT)
         return result
 
@@ -4928,6 +4928,13 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
                     ),
                     accessory=champion_btn,
                 ),
+                discord.ui.Separator(),
+                discord.ui.Section(
+                    discord.ui.TextDisplay(
+                        "### 🛡️ Raider-Rolle\n" "Raider-Rolle holen oder ablegen."
+                    ),
+                    accessory=raider_btn,
+                ),
                 accent_colour=HORDE_RED,
             )
         else:
@@ -4964,13 +4971,6 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
                         "Transmute, Mondstoff oder Salt Shaker eintragen."
                     ),
                     accessory=cooldown_btn,
-                ),
-                discord.ui.Separator(),
-                discord.ui.Section(
-                    discord.ui.TextDisplay(
-                        "### 🛡️ Raider-Rolle\n" "Raider-Rolle holen oder ablegen."
-                    ),
-                    accessory=raider_btn,
                 ),
                 accent_colour=HORDE_RED,
             )

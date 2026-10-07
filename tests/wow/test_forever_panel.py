@@ -56,6 +56,7 @@ def test_goals_grow_with_the_count():
     assert next_goal(GOAL_TIERS[0]) == GOAL_TIERS[1]  # reached -> next tier
     assert next_goal(10_000) >= 10_000  # beyond all tiers never divides by zero
     assert progress_bar(0).count("▰") == 0
+    assert progress_bar(1).count("▰") == 1  # first person is visible
     assert progress_bar(5).count("▰") > progress_bar(1).count("▰")
     assert len(progress_bar(37)) == len(progress_bar(0))
 
@@ -80,7 +81,12 @@ def test_three_variants_have_disjoint_custom_ids_and_fit_limits():
     all_ids = _custom_ids(classic) + _custom_ids(general) + _custom_ids(forever)
     assert len(all_ids) == len(set(all_ids))
     assert _custom_ids(forever) == ["wow_panel_v2:forever"]
-    assert set(_custom_ids(general)) == {"wow_panel_v2:help", "wow_panel_v2:champion"}
+    assert set(_custom_ids(general)) == {
+        "wow_panel_v2:help",
+        "wow_panel_v2:champion",
+        "wow_panel_v2:raider",
+    }
+    assert "wow_panel_v2:raider" not in _custom_ids(classic)
     for view in (classic, general, forever):
         assert view.is_persistent()
         assert len(list(view.walk_children())) + 1 <= 40
@@ -163,7 +169,7 @@ async def test_publish_all_panels_posts_in_order_then_edits_in_place(
 
     await cog.publish_all_panels(channel)
 
-    assert [v for _, v in channel.sent_order] == ["forever", "general", "classic"]
+    assert [v for _, v in channel.sent_order] == ["forever", "classic", "general"]
     first_ids = [i for i, _ in channel.sent_order]
 
     await cog.publish_all_panels(channel)  # restart: edit, don't repost

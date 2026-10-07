@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import discord
 
 from .forever_roles import FOREVER_ROLES, roles_for_faction
@@ -20,10 +22,6 @@ FOREVER_PANEL_INTRO = (
     "**sag uns, wo du mitspielen willst**, dann sehen wir, welche zustande kommen.\n"
     "-# Mehrfachauswahl möglich · jederzeit änderbar"
 )
-FOREVER_PANEL_FOOTER = (
-    "-# Balken = Weg zum nächsten Ziel (10 → 25 → 50 → 100) · ✅ ab 10 Interessenten\n"
-    "-# Deine Auswahl ist nur für dich sichtbar und räumt sich nach 10 Minuten selbst auf."
-)
 
 
 def next_goal(count: int) -> int:
@@ -31,7 +29,8 @@ def next_goal(count: int) -> int:
 
 
 def progress_bar(count: int) -> str:
-    filled = min(BAR_WIDTH, round(count / next_goal(count) * BAR_WIDTH))
+    # Aufrunden: schon die erste Person füllt einen Balkenabschnitt.
+    filled = min(BAR_WIDTH, math.ceil(count * BAR_WIDTH / next_goal(count)))
     return "▰" * filled + "▱" * (BAR_WIDTH - filled)
 
 
@@ -85,5 +84,4 @@ def build_forever_panel_children(
         discord.ui.TextDisplay(total_line(total)),
         discord.ui.Separator(),
         discord.ui.ActionRow(button),
-        discord.ui.TextDisplay(FOREVER_PANEL_FOOTER),
     ]
