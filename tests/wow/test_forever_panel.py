@@ -7,10 +7,11 @@ import pytest_asyncio
 
 from lotus_bot.cogs.wow import cog as wow_cog_mod
 from lotus_bot.cogs.wow.forever_panel import (
+    BAR_WIDTH,
     FACTION_ROLE_IDS,
-    GOAL_TIERS,
+    MIN_SCALE,
+    bar_scale,
     count_forever_roles,
-    next_goal,
     progress_bar,
 )
 from lotus_bot.cogs.wow.forever_roles import FOREVER_ROLES
@@ -51,14 +52,25 @@ def _custom_ids(view):
     ]
 
 
-def test_goals_grow_with_the_count():
-    assert next_goal(0) == GOAL_TIERS[0]
-    assert next_goal(GOAL_TIERS[0]) == GOAL_TIERS[1]  # reached -> next tier
-    assert next_goal(10_000) >= 10_000  # beyond all tiers never divides by zero
-    assert progress_bar(0).count("▰") == 0
-    assert progress_bar(1).count("▰") == 1  # first person is visible
-    assert progress_bar(5).count("▰") > progress_bar(1).count("▰")
-    assert len(progress_bar(37)) == len(progress_bar(0))
+def test_scale_has_a_floor_and_grows_with_the_number_of_players():
+    assert bar_scale(0) == MIN_SCALE
+    assert bar_scale(33) == MIN_SCALE  # 60 % of 33 is still below the floor
+    assert bar_scale(34) > MIN_SCALE
+    assert bar_scale(100) == 60
+    sizes = [bar_scale(n) for n in range(0, 400)]
+    assert sizes == sorted(sizes)  # never shrinks while players are added
+
+
+def test_bars_share_one_scale_across_rows():
+    scale = bar_scale(33)
+    assert progress_bar(0, scale).count("▰") == 0
+    assert progress_bar(1, scale).count("▰") == 1  # first person is visible
+    assert progress_bar(17, scale).count("▰") > progress_bar(9, scale).count("▰")
+    # Same count -> same bar, whichever guild it belongs to.
+    assert progress_bar(9, scale) == progress_bar(9, scale)
+    assert progress_bar(scale, scale) == "▰" * BAR_WIDTH
+    assert progress_bar(scale * 3, scale) == "▰" * BAR_WIDTH  # no overflow
+    assert len(progress_bar(37, scale)) == len(progress_bar(0, scale)) == BAR_WIDTH
 
 
 def test_count_forever_roles_counts_people_once():
