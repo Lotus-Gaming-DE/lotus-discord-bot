@@ -20,14 +20,15 @@ class ForeverGuildRole:
     mode: str  # "hc" | "pvp" | "pve"
     label: str
     emoji: str
+    soon: bool = False  # Gilde wird noch gegründet
 
 
+# Allianz Hardcore (1556277258023346186) und Allianz PvP (1556276573773111340)
+# gibt es nicht; ihre Rollen werden nicht mehr angeboten.
 FOREVER_ROLES: tuple[ForeverGuildRole, ...] = (
-    ForeverGuildRole(1556277335500525749, "horde", "hc", "Hardcore", "💀"),
+    ForeverGuildRole(1556277335500525749, "horde", "hc", "Hardcore", "💀", soon=True),
     ForeverGuildRole(1556276890853965884, "horde", "pvp", "PvP", "⚔️"),
     ForeverGuildRole(1556277083880038501, "horde", "pve", "PvE", "🐉"),
-    ForeverGuildRole(1556277258023346186, "alliance", "hc", "Hardcore", "💀"),
-    ForeverGuildRole(1556276573773111340, "alliance", "pvp", "PvP", "⚔️"),
     ForeverGuildRole(1556276986580566027, "alliance", "pve", "PvE", "🐉"),
 )
 
@@ -39,8 +40,7 @@ _FACTIONS = (
 
 FOREVER_INTRO = (
     "## ♾️ WoW Forever – Gilden\n"
-    "Wähle, in welchen **WoW-Forever-Gilden** du mitspielen möchtest "
-    "(Release 4. November 2026). Mehrfachauswahl ist möglich — "
+    "Wähle deine **Gilden**. Mehrfachauswahl ist möglich — "
     "was du abwählst, wird entfernt.\n"
     "-# Deine aktuelle Auswahl ist schon markiert. Änderungen gelten sofort."
 )
@@ -73,6 +73,7 @@ class ForeverFactionSelect(discord.ui.Select):
                 value=str(r.role_id),
                 emoji=r.emoji,
                 default=r.role_id in owned,
+                description="Folgt in Kürze" if r.soon else None,
             )
             for r in roles_for_faction(faction)
         ]

@@ -18,15 +18,18 @@ def _selects(view):
     return [c for c in view.walk_children() if isinstance(c, ForeverFactionSelect)]
 
 
-def test_all_six_roles_configured():
+def test_offered_roles_are_the_four_existing_guilds():
     assert {r.role_id for r in FOREVER_ROLES} == {
-        1556277335500525749,
-        1556277258023346186,
-        1556276890853965884,
-        1556276573773111340,
-        1556277083880038501,
-        1556276986580566027,
+        1556277335500525749,  # Horde HC (folgt)
+        1556276890853965884,  # Horde PvP
+        1556277083880038501,  # Horde PvE
+        1556276986580566027,  # Allianz PvE
     }
+    # Allianz HC / PvP gibt es nicht und dürfen nicht mehr wählbar sein.
+    assert not {1556277258023346186, 1556276573773111340} & {
+        r.role_id for r in FOREVER_ROLES
+    }
+    assert [r.role_id for r in FOREVER_ROLES if r.soon] == [1556277335500525749]
 
 
 def test_view_has_one_select_per_faction_with_current_state_preselected():

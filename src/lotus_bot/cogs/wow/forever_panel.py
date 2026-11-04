@@ -23,8 +23,7 @@ _FACTION_HEADERS = (
 
 FOREVER_PANEL_INTRO = (
     "## ♾️ WoW: Forever – Gilden\n"
-    "Am **4. November** startet **WoW: Forever**. Wir gründen mehrere Gilden — "
-    "**sag uns, wo du mitspielen willst**, dann sehen wir, welche zustande kommen.\n"
+    "Hol dir hier die Rolle deiner **Gilde**.\n"
     "-# Mehrfachauswahl möglich · jederzeit änderbar"
 )
 
@@ -65,17 +64,17 @@ def faction_block(
     lines = [f"### {emojis.get(emoji_name) or fallback} {title}"]
     for entry in roles_for_faction(faction):
         count = counts.get(entry.role_id, 0)
+        soon = " *(folgt)*" if entry.soon else ""
         lines.append(
-            f"{entry.emoji} **{entry.label}** {progress_bar(count, scale)} **{count}**"
+            f"{entry.emoji} **{entry.label}** {progress_bar(count, scale)} **{count}**{soon}"
         )
     return "\n".join(lines)
 
 
 def total_line(total: int) -> str:
     if total == 0:
-        return "👥 Noch niemand eingetragen — sei der Erste!"
-    noun = "Spieler hat" if total == 1 else "Spieler haben"
-    return f"👥 **{total}** {noun} schon gewählt"
+        return "👥 Noch niemand dabei"
+    return f"👥 **{total}** Spieler mit Gildenrolle"
 
 
 def build_forever_panel_children(
