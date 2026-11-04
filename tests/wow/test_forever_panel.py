@@ -174,8 +174,9 @@ async def _cog_with_db(tmp_path, patch_logged_task):
 
 @pytest.mark.asyncio
 async def test_publish_all_panels_posts_in_order_then_edits_in_place(
-    tmp_path, patch_logged_task
+    tmp_path, patch_logged_task, monkeypatch
 ):
+    monkeypatch.setattr(wow_cog_mod, "CLASSIC_PANEL_ENABLED", True)
     cog = await _cog_with_db(tmp_path, patch_logged_task)
     channel = _Channel()
 
@@ -191,7 +192,10 @@ async def test_publish_all_panels_posts_in_order_then_edits_in_place(
 
 
 @pytest.mark.asyncio
-async def test_layout_change_replaces_the_old_single_panel(tmp_path, patch_logged_task):
+async def test_layout_change_replaces_the_old_single_panel(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    monkeypatch.setattr(wow_cog_mod, "CLASSIC_PANEL_ENABLED", True)
     cog = await _cog_with_db(tmp_path, patch_logged_task)
     channel = _Channel()
     old = _Message(7)
@@ -203,6 +207,28 @@ async def test_layout_change_replaces_the_old_single_panel(tmp_path, patch_logge
     assert old.deleted is True
     assert await cog.data.get_setting("panel_message_id") != "7"
     assert len(channel.sent_order) == 3
+
+
+@pytest.mark.asyncio
+async def test_disabled_classic_panel_is_removed_and_not_reposted(
+    tmp_path, patch_logged_task
+):
+    cog = await _cog_with_db(tmp_path, patch_logged_task)
+    channel = _Channel()
+    classic = _Message(7)
+    channel.messages[7] = classic
+    await cog.data.set_setting("panel_layout", wow_cog_mod.PANEL_LAYOUT)
+    await cog.data.set_setting("panel_message_id", "7")
+
+    result = await cog.publish_all_panels(channel)
+
+    assert result is None
+    assert classic.deleted is True
+    assert await cog.data.get_setting("panel_message_id") == ""
+    assert [v for _, v in channel.sent_order] == ["forever", "general"]
+
+    await cog.publish_all_panels(channel)  # next refresh: nothing comes back
+    assert [v for _, v in channel.sent_order] == ["forever", "general"]
 
 
 @pytest.mark.asyncio

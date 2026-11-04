@@ -65,6 +65,9 @@ DEFAULT_CLAIM_REVIEW_CHANNEL_ID = 1544601948169314324
 DEFAULT_PANEL_CHANNEL_ID = 1463577361562992807
 # Bump to make the bot delete + repost all hub panels once (message order).
 PANEL_LAYOUT = "three-panels-v2"
+# The Black Lotus Classic HC guild is on hold (WoW Forever launch). While this
+# is False the Classic hub is not posted and an existing message is removed.
+CLASSIC_PANEL_ENABLED = False
 # Role changes are batched so a rush of clicks edits the counter panel once.
 FOREVER_REFRESH_DELAY = 20
 DEFAULT_DIGEST_HOUR = 9
@@ -722,12 +725,15 @@ class WoWCog(ManagedTaskCog):
             return
         try:
             result = await self.publish_all_panels(channel)
-            action = "erstellt" if result.created else "aktualisiert"
-            logger.info(
-                "[WoWCog] WoW-Panel beim Start %s (Message %s).",
-                action,
-                result.message_id,
-            )
+            if result is None:
+                logger.info("[WoWCog] WoW-Panels aktualisiert (ohne Classic).")
+            else:
+                action = "erstellt" if result.created else "aktualisiert"
+                logger.info(
+                    "[WoWCog] WoW-Panel beim Start %s (Message %s).",
+                    action,
+                    result.message_id,
+                )
         except Exception as exc:
             logger.error("[WoWCog] Auto-Publish fehlgeschlagen: %s", exc, exc_info=True)
 
@@ -861,14 +867,34 @@ class WoWCog(ManagedTaskCog):
                 pass
             await self.data.set_setting(key, "")
 
+    async def _remove_classic_panel(self, channel: discord.TextChannel) -> None:
+        """Delete the Classic hub message (if any) and forget it."""
+        value = await self.data.get_setting("panel_message_id")
+        if not value:
+            return
+        try:
+            message = await channel.fetch_message(int(value))
+            await message.delete()
+        except discord.NotFound:
+            pass
+        except (discord.HTTPException, AttributeError) as exc:
+            logger.warning("[WoWCog] Classic-Panel nicht löschbar: %s", exc)
+            return
+        await self.data.set_setting("panel_message_id", "")
+        logger.info("[WoWCog] Classic-Panel entfernt.")
+
     async def publish_all_panels(
         self, channel: discord.TextChannel
-    ) -> PanelPublishResult:
-        """Post/refresh the three hub panels: Forever, Classic HC, general."""
+    ) -> PanelPublishResult | None:
+        """Post/refresh the hub panels: Forever, Classic HC (if enabled), general."""
         if await self.data.get_setting("panel_layout") != PANEL_LAYOUT:
             await self._reset_panels(channel)
         await self.publish_forever_panel(channel)
-        result = await self.publish_panel(channel)
+        result = None
+        if CLASSIC_PANEL_ENABLED:
+            result = await self.publish_panel(channel)
+        else:
+            await self._remove_classic_panel(channel)
         await self.publish_general_panel(channel)
         await self.data.set_setting("panel_layout", PANEL_LAYOUT)
         return result
