@@ -64,7 +64,7 @@ DEFAULT_POLL_INTERVAL = 3 * 60 * 60
 DEFAULT_CLAIM_REVIEW_CHANNEL_ID = 1544601948169314324
 DEFAULT_PANEL_CHANNEL_ID = 1463577361562992807
 # Bump to make the bot delete + repost all hub panels once (message order).
-PANEL_LAYOUT = "three-panels-v2"
+PANEL_LAYOUT = "three-panels-v3"
 # The Black Lotus Classic HC guild is on hold (WoW Forever launch). While this
 # is False the Classic hub is not posted and an existing message is removed.
 CLASSIC_PANEL_ENABLED = False
@@ -76,6 +76,9 @@ DEFAULT_DIGEST_HOUR = 9
 # only maintains a pinned, purely informational how-to post here (see
 # DUNGEONS_GUIDE_TEXT / publish_dungeons_guide).
 DUNGEONS_FORUM_CHANNEL_ID = 1214627449804165170
+# A separate dungeon bot now handles dungeon runs; while this is False the
+# pinned how-to post is not posted and an existing one is deleted.
+DUNGEONS_GUIDE_ENABLED = False
 # Raid-Helper's bot user id (not the /create command's own id, used below —
 # those are two different Discord snowflakes), so we can @-mention it.
 RAID_HELPER_BOT_ID = 579155972115660803
@@ -747,6 +750,9 @@ class WoWCog(ManagedTaskCog):
         new one" hub pattern, using WoWData's generic settings store since
         this is a single string, not worth a dedicated table.
         """
+        if not DUNGEONS_GUIDE_ENABLED:
+            await self._remove_dungeons_guide()
+            return
         channel = self.bot.get_channel(DUNGEONS_FORUM_CHANNEL_ID)
         if not isinstance(channel, discord.ForumChannel):
             logger.warning(
@@ -776,6 +782,28 @@ class WoWCog(ManagedTaskCog):
         await self.data.set_setting("dungeons_guide_thread_id", str(created.thread.id))
         await self._try_pin_thread(created.thread)
 
+    async def _remove_dungeons_guide(self) -> None:
+        """Delete the tracked how-to post (only ever a thread of the dungeons forum)."""
+        guide_id = await self.data.get_setting("dungeons_guide_thread_id")
+        if not guide_id:
+            return
+        try:
+            thread = self.bot.get_channel(
+                int(guide_id)
+            ) or await self.bot.fetch_channel(int(guide_id))
+            if (
+                isinstance(thread, discord.Thread)
+                and thread.parent_id == DUNGEONS_FORUM_CHANNEL_ID
+            ):
+                await thread.delete()
+        except discord.NotFound:
+            pass
+        except discord.HTTPException as exc:
+            logger.warning("[WoWCog] Dungeons-Anleitung nicht löschbar: %s", exc)
+            return
+        await self.data.set_setting("dungeons_guide_thread_id", "")
+        logger.info("[WoWCog] Dungeons-Anleitung entfernt.")
+
     async def _try_pin_thread(self, thread: discord.Thread) -> None:
         try:
             await thread.edit(pinned=True)
@@ -785,7 +813,7 @@ class WoWCog(ManagedTaskCog):
     async def _auto_publish_dungeons_guide(self) -> None:
         try:
             await self.publish_dungeons_guide()
-            logger.info("[WoWCog] Dungeons-Anleitung beim Start veröffentlicht.")
+            logger.info("[WoWCog] Dungeons-Anleitung beim Start abgeglichen.")
         except Exception as exc:
             logger.error(
                 "[WoWCog] Dungeons-Anleitung-Publish fehlgeschlagen: %s",

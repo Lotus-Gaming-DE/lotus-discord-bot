@@ -83,6 +83,11 @@ HUB_HELP_TEXT = (
 )
 
 
+# On hold: while this is False the pinned hub post (with the create buttons) is
+# not posted and an existing one is deleted. Regular listings stay untouched.
+MARKETPLACE_HUB_ENABLED = False
+
+
 class MarketplaceCog(ManagedTaskCog):
     """Marktplatz-Forum: allgemeine Angebote/Gesuche + smarte Crafting-Gesuche."""
 
@@ -112,7 +117,10 @@ class MarketplaceCog(ManagedTaskCog):
     async def _startup(self) -> None:
         await self.bot.wait_until_ready()
         try:
-            await self.publish_hub()
+            if MARKETPLACE_HUB_ENABLED:
+                await self.publish_hub()
+            else:
+                await self.remove_hub()
         except Exception as exc:  # pragma: no cover - defensive
             logger.error(
                 "[MarketplaceCog] Hub-Publish beim Start fehlgeschlagen: %s", exc
@@ -136,6 +144,28 @@ class MarketplaceCog(ManagedTaskCog):
     def _tag(self, name: str) -> list[discord.ForumTag]:
         tag = self._tags.get(name)
         return [tag] if tag else []
+
+    async def remove_hub(self) -> None:
+        """Delete the tracked hub post (only ever a thread of the market forum)."""
+        hub_id = await self.data.get_setting("hub_thread_id")
+        if not hub_id:
+            return
+        try:
+            thread = self.bot.get_channel(int(hub_id)) or await self.bot.fetch_channel(
+                int(hub_id)
+            )
+            if (
+                isinstance(thread, discord.Thread)
+                and thread.parent_id == self.forum_channel_id
+            ):
+                await thread.delete()
+        except discord.NotFound:
+            pass
+        except discord.HTTPException as exc:
+            logger.warning("[MarketplaceCog] Hub-Post nicht löschbar: %s", exc)
+            return
+        await self.data.set_setting("hub_thread_id", "")
+        logger.info("[MarketplaceCog] Hub-Post entfernt.")
 
     async def publish_hub(self) -> None:
         """Create or refresh the pinned hub post in the forum."""

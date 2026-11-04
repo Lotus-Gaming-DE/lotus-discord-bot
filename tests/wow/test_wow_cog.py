@@ -403,8 +403,9 @@ async def test_panel_publish_updates_existing_message(tmp_path, patch_logged_tas
 
 @pytest.mark.asyncio
 async def test_publish_dungeons_guide_creates_new_pinned_thread(
-    tmp_path, patch_logged_task
+    tmp_path, patch_logged_task, monkeypatch
 ):
+    monkeypatch.setattr(wow_cog_mod, "DUNGEONS_GUIDE_ENABLED", True)
     forum, thread = make_dungeons_forum(created_thread_id=4242)
     patch_logged_task(wow_cog_mod, log_setup)
     cog = WoWCog(DungeonsBot(forum=forum))
@@ -422,8 +423,9 @@ async def test_publish_dungeons_guide_creates_new_pinned_thread(
 
 @pytest.mark.asyncio
 async def test_publish_dungeons_guide_edits_existing_thread(
-    tmp_path, patch_logged_task
+    tmp_path, patch_logged_task, monkeypatch
 ):
+    monkeypatch.setattr(wow_cog_mod, "DUNGEONS_GUIDE_ENABLED", True)
     forum, thread = make_dungeons_forum(created_thread_id=5555)
     patch_logged_task(wow_cog_mod, log_setup)
     cog = WoWCog(DungeonsBot(forum=forum, thread=thread))
