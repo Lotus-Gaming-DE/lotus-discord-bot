@@ -216,6 +216,7 @@ class MyBot(commands.Bot):
             ptcgp,
             quiz,
             wcr,
+            website,
             wow,
         )
 
@@ -227,6 +228,7 @@ class MyBot(commands.Bot):
         await community.setup(self)
         await dev.setup(self)
         await backup.setup(self)
+        await website.setup(self)
 
         await self.tree.sync(guild=self.main_guild)
 
