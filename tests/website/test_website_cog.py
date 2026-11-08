@@ -16,8 +16,10 @@ def channel(cid, members):
     return SimpleNamespace(id=cid, members=members)
 
 
-def guild(voice, stage=(), afk=None):
+def guild(voice, stage=(), afk=None, member_count=None):
     return SimpleNamespace(
+        id=1,
+        member_count=member_count,
         voice_channels=list(voice),
         stage_channels=list(stage),
         afk_channel=afk,
@@ -47,9 +49,15 @@ class FakeBot:
         self.main_guild_id = 1
         self._g = g
         self.added = []
+        self.fail_fetch = False
 
     def get_guild(self, gid):
         return self._g
+
+    async def fetch_guild(self, gid, with_counts=False):
+        if self.fail_fetch:
+            raise RuntimeError("kaputt")
+        return SimpleNamespace(approximate_member_count=1400, approximate_presence_count=350)
 
     async def wait_until_ready(self):
         return None
@@ -62,15 +70,19 @@ class FakeBot:
 async def test_report_once_sends_count(monkeypatch):
     sent = []
 
-    async def fake_report(self, count):
-        sent.append(count)
+    async def fake_report(self, count, members=None, online=None):
+        sent.append((count, members, online))
         return True
 
     monkeypatch.setattr(website.WebsiteCog, "report", fake_report)
     monkeypatch.setattr(website.WebsiteCog, "_loop", lambda self: asyncio.sleep(0))
-    cog = website.WebsiteCog(FakeBot(guild([channel(1, [member(), member()])])), "t")
+    bot = FakeBot(guild([channel(1, [member(), member()])], member_count=1390))
+    cog = website.WebsiteCog(bot, "t")
     assert await cog.report_once() is True
-    assert sent == [2]
+    assert sent == [(2, 1400, 350)]
+    bot.fail_fetch = True
+    assert await cog.report_once() is True
+    assert sent[-1] == (2, 1390, None)
     cog.cog_unload()
 
 
@@ -130,6 +142,8 @@ async def test_report_status_codes(monkeypatch):
     cog = website.WebsiteCog(FakeBot(None), "geheim", url="https://x/api/voice")
     assert await cog.report(5) is True
     assert calls[0][1] == {"count": 5}
+    assert await cog.report(5, 1400, 350) is True
+    assert calls[1][1] == {"count": 5, "members": 1400, "online": 350}
     assert calls[0][2]["Authorization"] == "Bearer geheim"
     Session.status = 401
     assert await cog.report(5) is False
