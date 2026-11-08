@@ -57,7 +57,9 @@ class FakeBot:
     async def fetch_guild(self, gid, with_counts=False):
         if self.fail_fetch:
             raise RuntimeError("kaputt")
-        return SimpleNamespace(approximate_member_count=1400, approximate_presence_count=350)
+        return SimpleNamespace(
+            approximate_member_count=1400, approximate_presence_count=350
+        )
 
     async def wait_until_ready(self):
         return None

@@ -83,7 +83,9 @@ class WebsiteCog(ManagedTaskCog):
         members, online = await self.server_counts(guild)
         return await self.report(count_voice(guild), members, online)
 
-    async def server_counts(self, guild: discord.Guild) -> tuple[int | None, int | None]:
+    async def server_counts(
+        self, guild: discord.Guild
+    ) -> tuple[int | None, int | None]:
         """Mitglieder und Online-Zahl. Online gibt es nur über einen REST-Abruf."""
         members = guild.member_count
         online = None
