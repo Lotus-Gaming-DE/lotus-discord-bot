@@ -23,8 +23,9 @@ _FACTION_HEADERS = (
 
 FOREVER_PANEL_INTRO = (
     "## ♾️ WoW: Forever – Gilden\n"
-    "Hol dir hier die Rolle deiner **Gilde**.\n"
-    "-# Mehrfachauswahl möglich · jederzeit änderbar"
+    "Deine Gildenrolle kommt automatisch, sobald du einen Char der Gilde "
+    "in Lotus Link per **Battle.net** verbindest.\n"
+    "-# Neue Gilden kannst du über den Button vormerken"
 )
 
 
@@ -65,8 +66,9 @@ def faction_block(
     for entry in roles_for_faction(faction):
         count = counts.get(entry.role_id, 0)
         soon = " *(folgt)*" if entry.soon else ""
+        name = f"{entry.guild} · {entry.label}" if entry.guild else entry.label
         lines.append(
-            f"{entry.emoji} **{entry.label}** {progress_bar(count, scale)} **{count}**{soon}"
+            f"{entry.emoji} **{name}** {progress_bar(count, scale)} **{count}**{soon}"
         )
     return "\n".join(lines)
 

@@ -3,8 +3,13 @@
 Alle zehn Minuten liest der Bot aus Lotus Link, wer welchen Char per Battle.net
 verbunden hat, und die Gildenlisten von Silent, Crimson und Golden Lotus.
 
-* Neue Verbindung → Meldung in #wow-logs, damit die Offiziere den Rang im
-  Spiel setzen. Bestätigen muss niemand mehr, der Login beweist den Besitz.
+* Neue Verbindung → Meldung in #wow-logs mit Button „In Offi-Note eingetragen“.
+  Bestätigen muss niemand mehr, der Login beweist den Besitz.
+* Gildenrolle: Wer einen Char einer Lotus-Gilde verbunden hat, bekommt ihre
+  Discord-Rolle. Steht kein verbundener Char mehr in der Gilde, fällt sie weg.
+* Char nicht mehr in der Gildenliste → Austritts-Meldung (mit „gelistet seit“).
+* Discord verlassen → Meldung mit Button „Runtergestuft“.
+* Pings an die Gildenrolle höchstens einmal pro Stunde, gesammelt.
 * Täglich um 9 Uhr → Offi-Sync-Report je Gilde (Ränge, die nicht passen).
 * Champion-Punkte nur für Fortschritt nach dem Verbinden: Stufen-Meilensteine
   über dem Ausgangsstand und Dungeon-Runs auf diesem Server, die nach dem Start
@@ -15,7 +20,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import discord
@@ -30,13 +35,19 @@ from .logic import (
     LEVEL_MILESTONE_POINTS,
     RUN_ORGANIZER_POINTS,
     RUN_POINTS,
+    ForeverGuild,
     build_report,
+    discord_left_notice,
+    guild_left_notice,
     link_notice,
     lotus_guild_of,
     milestones_reached,
+    ping_text,
     report_sections,
+    role_holders,
+    roster_is_plausible,
 )
-from .registry import PgRegistry, Registry, Snapshot
+from .registry import GuildMember, LinkedCharacter, PgRegistry, Registry, Snapshot
 from .store import ForeverStore, Tracked
 
 logger = get_logger(__name__)
@@ -48,6 +59,12 @@ BERLIN = ZoneInfo("Europe/Berlin")
 DEFAULT_LOG_CHANNEL_ID = 1544601948169314324
 RUNS_SINCE_KEY = "runs_since"
 LAST_REPORT_KEY = "last_report_date"
+LAST_PING_KEY = "last_ping_at"
+ROLE_STRIP_KEY = "role_strip_after"
+# Pings an die Gildenrolle sammeln, damit die Leitung nicht zugespammt wird.
+PING_INTERVAL = timedelta(hours=1)
+# Wer die Rolle bisher selbst gewählt hat, bekommt so lange Zeit zum Verbinden.
+ROLE_GRACE = timedelta(days=3)
 NO_PINGS = discord.AllowedMentions.none()
 
 
@@ -65,6 +82,10 @@ class ForeverCog(ManagedTaskCog):
         self.registry = registry
         self.store = store
         self._sync_lock = asyncio.Lock()
+        self._last_snapshot: Snapshot | None = None
+        if hasattr(bot, "add_view"):
+            bot.add_view(ClaimNoticeView(self))
+            bot.add_view(DemoteNoticeView(self))
         if start_loop:
             self.create_task(self._loop())
 
@@ -77,6 +98,7 @@ class ForeverCog(ManagedTaskCog):
                 snapshot = await self.sync()
                 if snapshot is not None and await self._report_due():
                     await self.post_report(snapshot)
+                await self.ping_if_due()
             except Exception as exc:  # eine Runde darf den Bot nie stören
                 logger.warning("[ForeverCog] Abgleich fehlgeschlagen: %s", exc)
             await asyncio.sleep(SYNC_INTERVAL)
@@ -105,7 +127,7 @@ class ForeverCog(ManagedTaskCog):
             roster_guild = {m.blizzard_id: m.guild_slug for m in snapshot.members}
             member_by_id = {m.blizzard_id: m for m in snapshot.members}
             tracked = await self.store.tracked()
-            notices: list[str] = []
+            links: list[tuple[LinkedCharacter, ForeverGuild, GuildMember | None]] = []
             seen: set[int] = set()
 
             for char in snapshot.linked:
@@ -124,7 +146,7 @@ class ForeverCog(ManagedTaskCog):
                         ),
                         stamp,
                     )
-                    notices.append(link_notice(char, guild, member))
+                    links.append((char, guild, member))
                     continue
                 if (known.guild_slug, known.discord_user_id) != (
                     guild.slug,
@@ -139,7 +161,7 @@ class ForeverCog(ManagedTaskCog):
                         ),
                         stamp,
                     )
-                    notices.append(link_notice(char, guild, member))
+                    links.append((char, guild, member))
                 for milestone in milestones_reached(known.baseline_level, level):
                     await self._award(
                         "level",
@@ -168,9 +190,333 @@ class ForeverCog(ManagedTaskCog):
                     stamp,
                 )
 
-        if notices:
-            await self._post([(None, notices)])
+            departures, absent = await self._check_presence(snapshot, stamp)
+            left = await self._roster_changes(snapshot, stamp)
+            self._last_snapshot = snapshot
+
+        for char, guild, member in links:
+            await self._post_link(snapshot, char, guild, member, stamp)
+        for text in left:
+            await self._send([text])
+        for user_id in departures:
+            await self._post_departure(snapshot, user_id, stamp)
+        await self.sync_roles(snapshot, absent, now)
         return snapshot
+
+    # ------------------------------------------------------------ meldungen
+
+    async def _post_link(
+        self,
+        snapshot: Snapshot,
+        char: LinkedCharacter,
+        guild: ForeverGuild,
+        member: GuildMember | None,
+        stamp: str,
+    ) -> None:
+        mine = {
+            c.blizzard_id
+            for c in snapshot.linked
+            if c.discord_user_id == char.discord_user_id
+            and c.character_id != char.character_id
+        }
+        others = [
+            m
+            for m in snapshot.members
+            if m.guild_slug == guild.slug and m.blizzard_id in mine
+        ]
+        discord_member = self._member(char.discord_user_id)
+        text = link_notice(
+            char,
+            guild,
+            member,
+            discord_name=getattr(discord_member, "name", None),
+            others=others,
+        )
+        await self._send_notice(
+            text, ClaimNoticeView(self), "link", guild, char.name, stamp
+        )
+
+    async def _roster_changes(self, snapshot: Snapshot, stamp: str) -> list[str]:
+        """Vergleicht die Gildenlisten mit dem letzten Stand: Wer fehlt, ist raus."""
+        owner_of = {c.blizzard_id: c.discord_user_id for c in snapshot.linked}
+        guild_of = {m.blizzard_id: m.guild_slug for m in snapshot.members}
+        notices: list[str] = []
+        for guild in GUILDS:
+            if guild.slug not in snapshot.rosters_loaded:
+                continue
+            current = [m for m in snapshot.members if m.guild_slug == guild.slug]
+            previous = await self.store.roster(guild.slug)
+            if not roster_is_plausible(len(previous), len(current)):
+                logger.warning(
+                    "[ForeverCog] Gildenliste %s unplausibel (%d → %d), übersprungen.",
+                    guild.slug,
+                    len(previous),
+                    len(current),
+                )
+                continue
+            ids = {m.blizzard_id for m in current}
+            for blizzard_id, (old, since) in sorted(
+                previous.items(), key=lambda item: item[1][0].name.casefold()
+            ):
+                if blizzard_id in ids:
+                    continue
+                moved = GUILDS_BY_SLUG.get(guild_of.get(blizzard_id, ""))
+                notices.append(
+                    guild_left_notice(
+                        guild,
+                        old,
+                        owner_id=owner_of.get(blizzard_id),
+                        listed_since=since,
+                        moved_to=moved,
+                    )
+                )
+            await self.store.replace_roster(guild.slug, current, stamp)
+        return notices
+
+    async def _check_presence(
+        self, snapshot: Snapshot, stamp: str
+    ) -> tuple[list[int], set[int]]:
+        """Findet verbundene Spieler, die den Discord verlassen haben.
+
+        Gibt die neu Gegangenen (noch nicht gemeldet) und alle Abwesenden
+        zurück. Wer zurückkommt, wird wieder normal behandelt.
+        """
+        discord_guild = self._main_guild()
+        if discord_guild is None:
+            return [], set()
+        in_roster = {m.blizzard_id for m in snapshot.members}
+        owners = {
+            c.discord_user_id for c in snapshot.linked if c.blizzard_id in in_roster
+        }
+        known = await self.store.departed()
+        new: list[int] = []
+        absent: set[int] = set()
+        for user_id in sorted(owners | known):
+            if await self._present(discord_guild, user_id):
+                if user_id in known:
+                    await self.store.clear_departed(user_id)
+                continue
+            absent.add(user_id)
+            if user_id in owners and await self.store.mark_departed(user_id, stamp):
+                new.append(user_id)
+        return new, absent
+
+    async def _post_departure(
+        self, snapshot: Snapshot, user_id: int, stamp: str
+    ) -> None:
+        mine = {c.blizzard_id for c in snapshot.linked if c.discord_user_id == user_id}
+        for guild in GUILDS:
+            chars = [
+                m
+                for m in snapshot.members
+                if m.guild_slug == guild.slug
+                and m.blizzard_id in mine
+                and (guild.layout is None or m.rank < guild.layout.initiate)
+            ]
+            if not chars:
+                continue
+            label = ", ".join(sorted(m.name for m in chars))
+            await self._send_notice(
+                discord_left_notice(guild, user_id, chars),
+                DemoteNoticeView(self),
+                "discord_left",
+                guild,
+                label,
+                stamp,
+            )
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member: discord.Member) -> None:
+        """Sofort melden, nicht erst beim nächsten Abgleich."""
+        main_guild_id = getattr(self.bot, "main_guild_id", None)
+        if main_guild_id is not None and member.guild.id != main_guild_id:
+            return
+        snapshot = self._last_snapshot
+        if snapshot is None:
+            return  # der nächste Abgleich holt es nach
+        if not any(c.discord_user_id == member.id for c in snapshot.linked):
+            return
+        stamp = datetime.now(timezone.utc).isoformat()
+        if await self.store.mark_departed(member.id, stamp):
+            await self._post_departure(snapshot, member.id, stamp)
+
+    # --------------------------------------------------------------- rollen
+
+    async def _strip_allowed(self, now: datetime) -> tuple[bool, datetime]:
+        raw = await self.store.get_setting(ROLE_STRIP_KEY)
+        if raw is None:
+            after = now + ROLE_GRACE
+            await self.store.set_setting(ROLE_STRIP_KEY, after.isoformat())
+        else:
+            after = datetime.fromisoformat(raw)
+        return now >= after, after
+
+    async def sync_roles(
+        self, snapshot: Snapshot, absent: set[int], now: datetime
+    ) -> dict[str, tuple[list[int], list[int]]]:
+        """Gildenrolle = verbundener Char in dieser Gilde. Wie bei Black Lotus.
+
+        Weggenommen wird nur, wenn die Gildenliste vorliegt und nicht leer ist,
+        sonst verlöre bei einem Fehler in Lotus Link jeder seine Rolle.
+        """
+        discord_guild = self._main_guild()
+        if discord_guild is None:
+            return {}
+        holders = role_holders(
+            snapshot.linked, snapshot.members, snapshot.rosters_loaded, absent
+        )
+        strip, _ = await self._strip_allowed(now)
+        changes: dict[str, tuple[list[int], list[int]]] = {}
+        for guild in GUILDS:
+            role = discord_guild.get_role(guild.role_id)
+            if role is None:
+                logger.warning("[ForeverCog] Rolle %s fehlt.", guild.role_id)
+                continue
+            wanted = holders[guild.slug]
+            granted: list[int] = []
+            removed: list[int] = []
+            for user_id in sorted(wanted):
+                member = discord_guild.get_member(user_id)
+                if member is None or role in member.roles:
+                    continue
+                if await self._change_role(member, role, add=True):
+                    granted.append(user_id)
+            has_roster = guild.slug in snapshot.rosters_loaded and any(
+                m.guild_slug == guild.slug for m in snapshot.members
+            )
+            if strip and has_roster:
+                for member in list(role.members):
+                    if member.id in wanted or getattr(member, "bot", False):
+                        continue
+                    if await self._change_role(member, role, add=False):
+                        removed.append(member.id)
+            if granted or removed:
+                changes[guild.slug] = (granted, removed)
+                await self._send([role_change_text(guild, granted, removed)])
+        return changes
+
+    async def _change_role(self, member, role, *, add: bool) -> bool:
+        try:
+            if add:
+                await member.add_roles(role, reason="Char per Battle.net verbunden")
+            else:
+                await member.remove_roles(
+                    role, reason="Kein verbundener Char mehr in der Gilde"
+                )
+            return True
+        except discord.Forbidden:
+            logger.warning(
+                "[ForeverCog] Keine Rechte für Rolle %s (Rollenhierarchie prüfen).",
+                role.id,
+            )
+        except discord.HTTPException as exc:
+            logger.warning("[ForeverCog] Rolle %s nicht geändert: %s", role.id, exc)
+        return False
+
+    # ----------------------------------------------------------------- pings
+
+    async def ping_if_due(self, now: datetime | None = None) -> int:
+        """Einmal pro Stunde: neue offene Meldungen je Gilde, ein Ping pro Gilde."""
+        now = now or datetime.now(timezone.utc)
+        raw = await self.store.get_setting(LAST_PING_KEY)
+        if raw is not None and now - datetime.fromisoformat(raw) < PING_INTERVAL:
+            return 0
+        await self.store.set_setting(LAST_PING_KEY, now.isoformat())
+        if raw is None:
+            return 0  # erst eine Stunde sammeln
+        channel = await self._channel()
+        if channel is None:
+            return 0
+        sent = 0
+        for guild in GUILDS:
+            rows = await self.store.unpinged(guild.slug)
+            if not rows:
+                continue
+            text = ping_text(
+                guild,
+                rows,
+                await self.store.open_count(guild.slug),
+                lambda mid: self._jump_url(channel, mid),
+            )
+            try:
+                await channel.send(
+                    text,
+                    allowed_mentions=discord.AllowedMentions(
+                        everyone=False,
+                        users=False,
+                        roles=[discord.Object(guild.role_id)],
+                    ),
+                )
+            except (discord.Forbidden, discord.HTTPException) as exc:
+                logger.warning("[ForeverCog] Ping nicht gesendet: %s", exc)
+                continue
+            await self.store.mark_pinged([r[0] for r in rows], now.isoformat())
+            sent += 1
+        return sent
+
+    def _jump_url(self, channel, message_id: int) -> str:
+        guild_id = getattr(self.bot, "main_guild_id", 0)
+        return (
+            f"https://discord.com/channels/{guild_id}/{getattr(channel, 'id', 0)}"
+            f"/{message_id}"
+        )
+
+    # ---------------------------------------------------------------- button
+
+    async def handle_done(self, interaction: discord.Interaction, verb: str) -> None:
+        message = interaction.message
+        notice = await self.store.notice(message.id) if message else None
+        if notice is None:
+            await interaction.response.send_message(
+                "❌ Diese Meldung ist nicht mehr aktiv.", ephemeral=True
+            )
+            return
+        guild = GUILDS_BY_SLUG.get(notice["guild_slug"])
+        if guild is None or not may_handle(interaction.user, guild):
+            name = guild.name if guild else "dieser Gilde"
+            await interaction.response.send_message(
+                f"❌ Das darf nur die Leitung von {name}.", ephemeral=True
+            )
+            return
+        now = datetime.now(timezone.utc).isoformat()
+        if not await self.store.mark_done(message.id, interaction.user.id, now):
+            await interaction.response.send_message(
+                "Das hat schon jemand erledigt.", ephemeral=True
+            )
+            return
+        await interaction.response.edit_message(
+            content=f"{message.content}\n✅ {verb} von <@{interaction.user.id}>",
+            view=None,
+            allowed_mentions=NO_PINGS,
+        )
+
+    # -------------------------------------------------------------- discord
+
+    def _main_guild(self):
+        get_guild = getattr(self.bot, "get_guild", None)
+        guild_id = getattr(self.bot, "main_guild_id", None)
+        if callable(get_guild) and guild_id is not None:
+            guild = get_guild(guild_id)
+            if guild is not None:
+                return guild
+        guild = getattr(self.bot, "main_guild", None)
+        return guild if hasattr(guild, "get_role") else None
+
+    def _member(self, user_id: int):
+        guild = self._main_guild()
+        return guild.get_member(user_id) if guild is not None else None
+
+    async def _present(self, guild, user_id: int) -> bool:
+        """Nur ein bestätigtes 404 heißt „weg“, Störungen zählen als „da“."""
+        if guild.get_member(user_id) is not None:
+            return True
+        try:
+            await guild.fetch_member(user_id)
+            return True
+        except discord.NotFound:
+            return False
+        except discord.HTTPException:
+            return True
 
     async def _award(
         self, kind: str, key: str, user_id: int, points: int, reason: str, stamp: str
@@ -188,10 +534,20 @@ class ForeverCog(ManagedTaskCog):
 
     # ---------------------------------------------------------------- report
 
-    def report_chunks(self, snapshot: Snapshot) -> list[str]:
+    def report_chunks(
+        self,
+        snapshot: Snapshot,
+        absent: set[int] | frozenset[int] = frozenset(),
+        extra: list[tuple[str | None, list[str]]] | None = None,
+    ) -> list[str]:
         from lotus_bot.cogs.wow.cog import _pack_digest_sections_into_chunks
 
-        owner_of = {c.blizzard_id: c.discord_user_id for c in snapshot.linked}
+        # Wer den Discord verlassen hat, zählt wie unverbunden (wie bei Black Lotus).
+        owner_of = {
+            c.blizzard_id: c.discord_user_id
+            for c in snapshot.linked
+            if c.discord_user_id not in absent
+        }
         sections: list[tuple[str | None, list[str]]] = []
         for guild in GUILDS:
             if guild.layout is None or guild.slug not in snapshot.rosters_loaded:
@@ -199,14 +555,19 @@ class ForeverCog(ManagedTaskCog):
             members = [m for m in snapshot.members if m.guild_slug == guild.slug]
             report = build_report(guild, members, owner_of)
             sections.extend(report_sections(report))
+        sections.extend(extra or [])
         if not sections:
             return []
         header = (None, ["🔄 **Offi-Sync-Report WoW Forever**"])
         return _pack_digest_sections_into_chunks([header] + sections)
 
     async def post_report(self, snapshot: Snapshot, now: datetime | None = None) -> int:
-        local = (now or datetime.now(timezone.utc)).astimezone(BERLIN)
-        chunks = self.report_chunks(snapshot)
+        now = now or datetime.now(timezone.utc)
+        local = now.astimezone(BERLIN)
+        absent = await self.store.departed()
+        chunks = self.report_chunks(
+            snapshot, absent, await self._grace_sections(snapshot, absent, now)
+        )
         posted = 0
         if chunks:
             posted = await self._send(chunks)
@@ -215,7 +576,60 @@ class ForeverCog(ManagedTaskCog):
         await self.store.set_setting(LAST_REPORT_KEY, local.date().isoformat())
         return posted
 
+    async def _grace_sections(
+        self, snapshot: Snapshot, absent: set[int], now: datetime
+    ) -> list[tuple[str | None, list[str]]]:
+        """Solange die Übergangsfrist läuft: Wer hat die Rolle ohne Verbindung?"""
+        strip, after = await self._strip_allowed(now)
+        discord_guild = self._main_guild()
+        if strip or discord_guild is None:
+            return []
+        holders = role_holders(
+            snapshot.linked, snapshot.members, snapshot.rosters_loaded, absent
+        )
+        day = after.astimezone(BERLIN).strftime("%d.%m.")
+        sections: list[tuple[str | None, list[str]]] = []
+        for guild in GUILDS:
+            role = discord_guild.get_role(guild.role_id)
+            if role is None:
+                continue
+            without = sorted(
+                m.id
+                for m in role.members
+                if m.id not in holders[guild.slug] and not getattr(m, "bot", False)
+            )
+            if without:
+                sections.append(
+                    (
+                        f"{guild.icon} **{guild.name}: Rolle ohne verbundenen Char**, "
+                        f"wird ab {day} entfernt. Bitte per Battle.net verbinden lassen:",
+                        [", ".join(f"<@{uid}>" for uid in without)],
+                    )
+                )
+        return sections
+
     # --------------------------------------------------------------- posting
+
+    async def _send_notice(
+        self,
+        text: str,
+        view: discord.ui.View,
+        kind: str,
+        guild: ForeverGuild,
+        label: str,
+        stamp: str,
+    ) -> None:
+        """Eine Meldung mit Button. Gepingt wird später gesammelt (``ping_if_due``)."""
+        channel = await self._channel()
+        if channel is None:
+            logger.warning("[ForeverCog] Log-Kanal nicht gefunden.")
+            return
+        try:
+            message = await channel.send(text, view=view, allowed_mentions=NO_PINGS)
+        except (discord.Forbidden, discord.HTTPException) as exc:
+            logger.warning("[ForeverCog] Meldung nicht gesendet: %s", exc)
+            return
+        await self.store.add_notice(message.id, kind, guild.slug, label, stamp)
 
     async def _channel(self):
         wow = self.bot.get_cog("WoWCog")
@@ -223,11 +637,6 @@ class ForeverCog(ManagedTaskCog):
         if wow is not None and hasattr(wow, "get_claim_review_channel_id"):
             channel_id = await wow.get_claim_review_channel_id()
         return self.bot.get_channel(channel_id)
-
-    async def _post(self, sections: list[tuple[str | None, list[str]]]) -> int:
-        from lotus_bot.cogs.wow.cog import _pack_digest_sections_into_chunks
-
-        return await self._send(_pack_digest_sections_into_chunks(sections))
 
     async def _send(self, chunks: list[str]) -> int:
         channel = await self._channel()
@@ -248,6 +657,66 @@ class ForeverCog(ManagedTaskCog):
         super().cog_unload()
         await self.registry.close()
         await self.store.close()
+
+
+def may_handle(user, guild: ForeverGuild) -> bool:
+    """Leitung der Gilde: wer #wow-logs sieht und die Gildenrolle hat, oder Admins."""
+    permissions = getattr(user, "guild_permissions", None)
+    if permissions is not None and permissions.manage_guild:
+        return True
+    return any(r.id == guild.role_id for r in getattr(user, "roles", []))
+
+
+def role_change_text(
+    guild: ForeverGuild, granted: list[int], removed: list[int]
+) -> str:
+    lines = [f"{guild.tag} · 🎭 Gildenrolle"]
+    if granted:
+        lines.append("Vergeben: " + ", ".join(f"<@{uid}>" for uid in granted))
+    if removed:
+        lines.append(
+            "Entfernt (kein verbundener Char mehr in der Gilde): "
+            + ", ".join(f"<@{uid}>" for uid in removed)
+        )
+    return "\n".join(lines)
+
+
+class ClaimNoticeView(discord.ui.View):
+    """Button unter „Neuer Claim“: Discord-Name steht in der Offi-Note."""
+
+    def __init__(self, cog: ForeverCog) -> None:
+        super().__init__(timeout=None)
+        self.cog = cog
+
+    @discord.ui.button(
+        label="In Offi-Note eingetragen",
+        emoji="📝",
+        style=discord.ButtonStyle.success,
+        custom_id="forever_notice:entered",
+    )
+    async def entered(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        await self.cog.handle_done(interaction, "In Offi-Note eingetragen")
+
+
+class DemoteNoticeView(discord.ui.View):
+    """Button unter „Discord verlassen“: Chars sind im Spiel runtergestuft."""
+
+    def __init__(self, cog: ForeverCog) -> None:
+        super().__init__(timeout=None)
+        self.cog = cog
+
+    @discord.ui.button(
+        label="Runtergestuft",
+        emoji="⬇️",
+        style=discord.ButtonStyle.primary,
+        custom_id="forever_notice:demoted",
+    )
+    async def demoted(
+        self, interaction: discord.Interaction, _: discord.ui.Button
+    ) -> None:
+        await self.cog.handle_done(interaction, "Runtergestuft")
 
 
 async def setup(bot: commands.Bot) -> None:
