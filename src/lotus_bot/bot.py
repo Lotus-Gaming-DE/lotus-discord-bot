@@ -213,6 +213,7 @@ class MyBot(commands.Bot):
             champion,
             community,
             dev,
+            forever,
             ptcgp,
             quiz,
             wcr,
@@ -229,6 +230,7 @@ class MyBot(commands.Bot):
         await dev.setup(self)
         await backup.setup(self)
         await website.setup(self)
+        await forever.setup(self)
 
         await self.tree.sync(guild=self.main_guild)
 
