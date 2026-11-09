@@ -4886,7 +4886,7 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         if variant == "forever":
             counts, total = forever_counts or ({}, 0)
             forever_btn = discord.ui.Button(
-                label="Gilden auswählen",
+                label="Meine Gilden",
                 emoji="♾️",
                 style=discord.ButtonStyle.primary,
                 custom_id="wow_panel_v2:forever",

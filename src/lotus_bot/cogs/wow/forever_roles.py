@@ -21,15 +21,27 @@ class ForeverGuildRole:
     label: str
     emoji: str
     soon: bool = False  # Gilde wird noch gegründet
+    # Vergibt der ForeverCog anhand der Battle.net-Verbindung, nicht wählbar.
+    guild: str = ""
+
+    @property
+    def auto(self) -> bool:
+        return bool(self.guild)
 
 
 # Allianz Hardcore (1556277258023346186) und Allianz PvP (1556276573773111340)
 # gibt es nicht; ihre Rollen werden nicht mehr angeboten.
 FOREVER_ROLES: tuple[ForeverGuildRole, ...] = (
     ForeverGuildRole(1556277335500525749, "horde", "hc", "Hardcore", "💀", soon=True),
-    ForeverGuildRole(1556276890853965884, "horde", "pvp", "PvP", "⚔️"),
-    ForeverGuildRole(1556277083880038501, "horde", "pve", "PvE", "🐉"),
-    ForeverGuildRole(1556276986580566027, "alliance", "pve", "PvE", "🐉"),
+    ForeverGuildRole(
+        1556276890853965884, "horde", "pvp", "PvP", "⚔️", guild="Crimson Lotus"
+    ),
+    ForeverGuildRole(
+        1556277083880038501, "horde", "pve", "PvE", "🐉", guild="Silent Lotus"
+    ),
+    ForeverGuildRole(
+        1556276986580566027, "alliance", "pve", "PvE", "🐉", guild="Golden Lotus"
+    ),
 )
 
 # key, Titel, Server-Emoji, Fallback
@@ -40,14 +52,25 @@ _FACTIONS = (
 
 FOREVER_INTRO = (
     "## ♾️ WoW Forever – Gilden\n"
-    "Wähle deine **Gilden**. Mehrfachauswahl ist möglich — "
-    "was du abwählst, wird entfernt.\n"
-    "-# Deine aktuelle Auswahl ist schon markiert. Änderungen gelten sofort."
+    "Die Rolle deiner **Gilde** bekommst du automatisch, sobald du einen Char "
+    "der Gilde in Lotus Link per **Battle.net** verbindest. Verlässt der Char "
+    "die Gilde, fällt die Rolle wieder weg.\n"
+    "-# Gilden, die es noch nicht gibt, kannst du hier vormerken."
 )
+AUTO_HINT = "kommt automatisch per Battle.net"
 
 
 def roles_for_faction(faction: str) -> list[ForeverGuildRole]:
     return [r for r in FOREVER_ROLES if r.faction == faction]
+
+
+def selectable_roles_for_faction(faction: str) -> list[ForeverGuildRole]:
+    return [r for r in roles_for_faction(faction) if not r.auto]
+
+
+def auto_role_line(role: ForeverGuildRole, owned: bool) -> str:
+    state = "✅ hast du" if owned else AUTO_HINT
+    return f"{role.emoji} **{role.guild}** ({role.label}) · {state}"
 
 
 def role_title(role: ForeverGuildRole) -> str:
@@ -75,7 +98,7 @@ class ForeverFactionSelect(discord.ui.Select):
                 default=r.role_id in owned,
                 description="Folgt in Kürze" if r.soon else None,
             )
-            for r in roles_for_faction(faction)
+            for r in selectable_roles_for_faction(faction)
         ]
         super().__init__(
             placeholder=f"Keine {title}-Gilde",
@@ -110,9 +133,19 @@ class ForeverGuildsLayoutView(discord.ui.LayoutView):
             icon = self.emojis.get(emoji_name) or fallback
             children.append(discord.ui.Separator())
             children.append(discord.ui.TextDisplay(f"### {icon} {title}"))
-            children.append(
-                discord.ui.ActionRow(ForeverFactionSelect(self, faction, title))
-            )
+            auto = [r for r in roles_for_faction(faction) if r.auto]
+            if auto:
+                children.append(
+                    discord.ui.TextDisplay(
+                        "\n".join(
+                            auto_role_line(r, r.role_id in self.owned_ids) for r in auto
+                        )
+                    )
+                )
+            if selectable_roles_for_faction(faction):
+                children.append(
+                    discord.ui.ActionRow(ForeverFactionSelect(self, faction, title))
+                )
         children.append(discord.ui.Separator())
         children.append(
             discord.ui.TextDisplay(status or selection_summary(self.owned_ids))
@@ -130,7 +163,9 @@ class ForeverGuildsLayoutView(discord.ui.LayoutView):
             )
             return
 
-        group = {r.role_id for r in roles_for_faction(faction)}
+        # Nur wählbare Rollen. Die Gildenrollen vergibt der ForeverCog.
+        group = {r.role_id for r in selectable_roles_for_faction(faction)}
+        chosen = chosen & group
         # Der Stand in der Auswahl-View ist maßgeblich, nicht der (ggf. alte)
         # Member-Cache der Interaktion.
         to_add = chosen - self.owned_ids

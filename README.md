@@ -4,7 +4,7 @@ Lotus Gaming's community bot built with [discord.py](https://discordpy.readthedo
 
 ## Setup
 
-1. Install Python **3.11**.
+1. Install Python **3.13**.
 2. Install runtime dependencies:
    ```bash
    pip install -r requirements.txt
