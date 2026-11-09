@@ -29,23 +29,21 @@ class RankLayout:
     officer_twink: int | None = None
 
 
-# Wie bei Black Lotus. Sobald die Ränge der Forever-Gilden feststehen, hier je
-# Gilde eintragen.
-DEFAULT_LAYOUT = RankLayout(
+# Crimson Lotus laut Gilden-Einstellungen (Screenshot von Gerrit, 9.11.2026).
+# Im Spiel heißen sie „Rank 1“ bis „Rank 7“, die API zählt ab 0.
+CRIMSON_LAYOUT = RankLayout(
     names={
-        0: "Gildenmeister",
-        1: "Offizier",
+        0: "Guild Master",
+        1: "Officer",
         2: "Officer Twink",
         3: "Veteran",
         4: "Member",
-        5: "Bank",
-        6: "Twink",
-        7: "Initiate",
+        5: "Twink",
+        6: "Initiate",
     },
     member=4,
-    twink=6,
-    initiate=7,
-    bank=5,
+    twink=5,
+    initiate=6,
     officer_twink=2,
 )
 
@@ -60,10 +58,14 @@ class ForeverGuild:
     # Farbmarke wie auf www.LotusGaming.de (Menüpunkte: Silent rosa, Crimson rot,
     # Golden blau), damit die Leitungen ihre Meldungen schnell finden.
     icon: str
-    layout: RankLayout = DEFAULT_LAYOUT
+    # ``None``: Ränge noch nicht abgestimmt. Dann gibt es für diese Gilde keinen
+    # Sync-Report, denn ohne Bedeutung der Nummern wäre er falsch.
+    layout: RankLayout | None = None
 
     def rank_name(self, rank: int) -> str:
-        return self.layout.names.get(rank, f"Rang {rank}")
+        if self.layout is None:
+            return f"Rang {rank + 1}"
+        return self.layout.names.get(rank, f"Rang {rank + 1}")
 
     @property
     def tag(self) -> str:
@@ -72,7 +74,9 @@ class ForeverGuild:
 
 GUILDS: tuple[ForeverGuild, ...] = (
     ForeverGuild("silent-lotus", "Silent Lotus", 1556277083880038501, "🩷"),
-    ForeverGuild("crimson-lotus", "Crimson Lotus", 1556276890853965884, "❤️"),
+    ForeverGuild(
+        "crimson-lotus", "Crimson Lotus", 1556276890853965884, "❤️", CRIMSON_LAYOUT
+    ),
     ForeverGuild("golden-lotus", "Golden Lotus", 1556276986580566027, "💙"),
 )
 GUILDS_BY_SLUG = {g.slug: g for g in GUILDS}
@@ -196,6 +200,8 @@ def build_report(
     """
     layout = guild.layout
     report = GuildReport(guild)
+    if layout is None:
+        return report
     by_user: dict[int, list[GuildMember]] = {}
     for member in members:
         owner = owner_of.get(member.blizzard_id)
@@ -315,6 +321,8 @@ def link_notice(
     if others:
         lines.append("Weitere verbundene Chars in dieser Gilde:")
         lines.extend(f"- **{m.name}** ({char_details(m, guild)})" for m in others)
+    if layout is None:
+        return "\n".join(lines)  # Ränge noch nicht abgestimmt, keine Empfehlung
     has_main = any(
         m.rank <= layout.member and m.rank != layout.officer_twink for m in others
     )
@@ -356,7 +364,7 @@ def discord_left_notice(
     return "\n".join(
         [
             f"{guild.tag} · ⬇️ <@{user_id}> hat den Discord verlassen.",
-            "Bitte diese Chars in-game auf Initiate runterstufen:",
+            "Bitte diese Chars in-game auf den niedrigsten Rang runterstufen:",
             *(f"- **{m.name}** ({char_details(m, guild)})" for m in ordered),
         ]
     )

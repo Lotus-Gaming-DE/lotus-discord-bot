@@ -7,7 +7,7 @@ import pytest
 
 from lotus_bot.cogs.forever import cog as forever
 from lotus_bot.cogs.forever.logic import (
-    DEFAULT_LAYOUT,
+    CRIMSON_LAYOUT,
     GUILDS,
     GUILDS_BY_SLUG,
     build_report,
@@ -218,11 +218,11 @@ def test_report_lists_ranks_that_do_not_match():
     guild = GUILDS_BY_SLUG[CRIMSON]
     members = [
         member(1, rank=4, name="Ohneclaim"),
-        member(2, rank=7, name="Neuling"),  # unverbundener Initiate: nicht melden
-        member(3, rank=7, name="Verbunden"),
+        member(2, rank=6, name="Neuling"),  # unverbundener Initiate: nicht melden
+        member(3, rank=6, name="Verbunden"),
         member(4, rank=4, name="MainEins"),
         member(5, rank=3, name="MainZwei"),
-        member(6, rank=6, name="NurTwink", level=50),
+        member(6, rank=5, name="NurTwink", level=50),
     ]
     owner_of = {1003: ME, 1004: OTHER, 1005: OTHER, 1006: ME}
     report = build_report(guild, members, owner_of)
@@ -236,7 +236,7 @@ def test_report_lists_ranks_that_do_not_match():
 
 def test_officer_twink_is_no_second_main():
     guild = GUILDS_BY_SLUG[CRIMSON]
-    members = [member(1, rank=1), member(2, rank=DEFAULT_LAYOUT.officer_twink)]
+    members = [member(1, rank=1), member(2, rank=CRIMSON_LAYOUT.officer_twink)]
     report = build_report(guild, members, {1001: ME, 1002: ME})
     assert report.empty
 
@@ -271,6 +271,12 @@ async def test_setup_without_database_url_adds_nothing(monkeypatch):
     bot = Bot()
     await forever.setup(bot)
     assert bot.added == []
+
+
+def test_guilds_without_agreed_ranks_get_no_report():
+    guild = GUILDS_BY_SLUG["silent-lotus"]
+    report = build_report(guild, [member(1, rank=2, guild="silent-lotus")], {})
+    assert report.empty and guild.rank_name(0) == "Rang 1"
 
 
 # ------------------------------------------------- Rollen, Meldungen, Pings
@@ -415,7 +421,10 @@ async def test_discord_leave_asks_to_demote_once_and_rejoin_resets(world):
     cog, bot, registry, guild = world
     guild.add(ME)
     registry.linked = [char(1, name="Main"), char(2, name="Neu")]
-    registry.members = [member(1, rank=4, name="Main"), member(2, rank=7, name="Neu")]
+    registry.members = [
+        member(1, rank=4, name="Main"),
+        member(2, rank=CRIMSON_LAYOUT.initiate, name="Neu"),
+    ]
     await cog.sync(T0)
     bot.channel.sent.clear()
     bot.channel.kwargs.clear()

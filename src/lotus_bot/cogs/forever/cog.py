@@ -311,7 +311,7 @@ class ForeverCog(ManagedTaskCog):
                 for m in snapshot.members
                 if m.guild_slug == guild.slug
                 and m.blizzard_id in mine
-                and m.rank < guild.layout.initiate
+                and (guild.layout is None or m.rank < guild.layout.initiate)
             ]
             if not chars:
                 continue
@@ -550,7 +550,7 @@ class ForeverCog(ManagedTaskCog):
         }
         sections: list[tuple[str | None, list[str]]] = []
         for guild in GUILDS:
-            if guild.slug not in snapshot.rosters_loaded:
+            if guild.layout is None or guild.slug not in snapshot.rosters_loaded:
                 continue
             members = [m for m in snapshot.members if m.guild_slug == guild.slug]
             report = build_report(guild, members, owner_of)
