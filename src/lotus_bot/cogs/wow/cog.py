@@ -16,7 +16,6 @@ from lotus_bot.log_setup import get_logger
 from lotus_bot.utils.managed_cog import ManagedTaskCog
 
 from lotus_bot.utils.ephemeral import (
-    schedule_message_cleanup,
     schedule_response_cleanup,
 )
 from .forever_panel import (
@@ -253,7 +252,6 @@ CLASS_EMOJI_NAMES = {
     9: "wow_warlock",
     11: "wow_druid",
 }
-RAIDER_ROLE_ID = 1201977228167221248
 HORDE_RED = discord.Colour(0xC41E3A)  # official Horde crimson
 RACE_NAMES_DE = {
     1: "Mensch",
@@ -872,11 +870,6 @@ class WoWCog(ManagedTaskCog):
         )
         await self._publish_view(channel, "panel_forever_message_id", view)
 
-    async def publish_general_panel(self, channel: discord.TextChannel) -> None:
-        """Game-independent part of the hub (help, champion rank)."""
-        view = WoWPanelLayoutView(self, hub_text=GENERAL_PANEL_TEXT, variant="general")
-        await self._publish_view(channel, "panel_general_message_id", view)
-
     async def _reset_panels(self, channel: discord.TextChannel) -> None:
         """One-off on layout change: remove old panel messages so the new
         ones are posted in the intended order (Forever, Classic, general)."""
@@ -895,9 +888,11 @@ class WoWCog(ManagedTaskCog):
                 pass
             await self.data.set_setting(key, "")
 
-    async def _remove_classic_panel(self, channel: discord.TextChannel) -> None:
-        """Delete the Classic hub message (if any) and forget it."""
-        value = await self.data.get_setting("panel_message_id")
+    async def _remove_panel(
+        self, channel: discord.TextChannel, key: str, name: str
+    ) -> None:
+        """Delete a hub message that is no longer posted (if any) and forget it."""
+        value = await self.data.get_setting(key)
         if not value:
             return
         try:
@@ -906,15 +901,15 @@ class WoWCog(ManagedTaskCog):
         except discord.NotFound:
             pass
         except (discord.HTTPException, AttributeError) as exc:
-            logger.warning("[WoWCog] Classic-Panel nicht löschbar: %s", exc)
+            logger.warning("[WoWCog] %s nicht löschbar: %s", name, exc)
             return
-        await self.data.set_setting("panel_message_id", "")
-        logger.info("[WoWCog] Classic-Panel entfernt.")
+        await self.data.set_setting(key, "")
+        logger.info("[WoWCog] %s entfernt.", name)
 
     async def publish_all_panels(
         self, channel: discord.TextChannel
     ) -> PanelPublishResult | None:
-        """Post/refresh the hub panels: Forever, Classic HC (if enabled), general."""
+        """Post/refresh the hub panels: Forever and Classic HC (if enabled)."""
         if await self.data.get_setting("panel_layout") != PANEL_LAYOUT:
             await self._reset_panels(channel)
         await self.publish_forever_panel(channel)
@@ -922,8 +917,12 @@ class WoWCog(ManagedTaskCog):
         if CLASSIC_PANEL_ENABLED:
             result = await self.publish_panel(channel)
         else:
-            await self._remove_classic_panel(channel)
-        await self.publish_general_panel(channel)
+            await self._remove_panel(channel, "panel_message_id", "Classic-Panel")
+        # "WoW bei Lotus Gaming" is gone: the channel belongs to Lotus Link,
+        # which now offers the Raider role itself.
+        await self._remove_panel(
+            channel, "panel_general_message_id", "Panel WoW bei Lotus Gaming"
+        )
         await self.data.set_setting("panel_layout", PANEL_LAYOUT)
         return result
 
@@ -4809,46 +4808,10 @@ class PanelCooldownStartSelect(discord.ui.Select):
         )
 
 
-_PANEL_CHANNEL_OVERVIEW = (
-    "**WoW Channels im Überblick**\n"
-    "**#wow-info** — Infos & dieses Panel\n"
-    "**#wow-general** — Allgemeiner WoW-Chat\n"
-    "**#wow-dungeons** — Dungeon- & Raid-Runs (Raid Helper: `/create`)\n"
-    "**#wow-classic-news** — Aktuelle News zu WoW Classic\n"
-    "**#wow-content** — Streams, Videos & Clips\n"
-    "**#wow-classes** — Klassen, Builds, Talente, Spielweise\n"
-    "**#wow-welcome** — Neu im WoW-Bereich? Hier starten!"
-)
 PANEL_HUB_TEXT = (
     "## 🪷 Black Lotus · Classic Hardcore\n"
     "Hier verbindest du deine Chars, pflegst Berufe, loggst Cooldowns und "
     "findest Crafter in der Gilde. Wähle einen Bereich aus."
-)
-GENERAL_PANEL_TEXT = (
-    "## 🌸 WoW bei Lotus Gaming\n"
-    "Allgemeine Infos rund um den WoW-Bereich — gilt für Classic **und** Forever."
-)
-PANEL_HELP_TEXT = (
-    "**Kurzanleitung**\n\n"
-    "**👤 Deine Chars** — verbinde Black-Lotus-Charaktere mit deinem "
-    "Discord-Account, pflege Berufe & Spezialrezepte, schau dir aktive "
-    "Cooldowns an und gib Claims frei. **📥 Per Addon importieren** übernimmt "
-    "Beruf, Skill und Rezepte direkt aus dem `/ldx`-Export-Code des Addons — "
-    "Alternative zum manuellen Eintragen.\n\n"
-    "**🔎 In der Gilde suchen** — finde, wer ein bestimmtes Item craften "
-    "kann, oder schlag einen Char nach (Owner, Berufe, Status).\n\n"
-    "**⏳ Cooldown loggen** — wenn du als Alchemist eine Transmute oder "
-    "als Schneider Mondstoff machst, trag das hier über den Hub-Button ein. "
-    "Der Bot erinnert im täglichen Digest, sobald sie wieder bereit sind.\n\n"
-    "**Daily Digest** — jeden Morgen um **09:00 Berlin** postet der Bot "
-    "Aufstiege, Tode, neue Crafts, Berufsskill-Meilensteine und "
-    "bereitstehende Cooldowns. Geclaimte Chars werden gepingt.\n\n"
-    "**🏆 Champion-System** — serverweites Punkte-System. Punkte gibt es "
-    "automatisch für WoW-Aktivitäten (Chars claimen, Levelaufstiege, "
-    "Berufs-Meilensteine, Rezepte). Commands: `/champion score` · "
-    "`/champion rank` · `/champion leaderboard` · `/champion myhistory`\n\n"
-    "Power-User: alle Funktionen gibt's auch als `/wow ...` Slash-Command.\n\n"
-    "──────────────────────\n" + _PANEL_CHANNEL_OVERVIEW
 )
 
 
@@ -4865,14 +4828,6 @@ def _add_dismiss_button(view: discord.ui.View) -> None:
 
     btn.callback = _close
     view.add_item(btn)
-
-
-class _PanelTextView(discord.ui.View):
-    """Minimal view for ephemeral text-only panel responses."""
-
-    def __init__(self) -> None:
-        super().__init__(timeout=300)
-        _add_dismiss_button(self)
 
 
 class WoWPanelLayoutView(discord.ui.LayoutView):
@@ -4928,27 +4883,6 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         )
         cooldown_btn.callback = self._open_cooldown_log
 
-        help_btn = discord.ui.Button(
-            label="Hilfe",
-            style=discord.ButtonStyle.secondary,
-            custom_id="wow_panel_v2:help",
-        )
-        help_btn.callback = self._open_help
-
-        champion_btn = discord.ui.Button(
-            label="Mein Rang",
-            style=discord.ButtonStyle.secondary,
-            custom_id="wow_panel_v2:champion",
-        )
-        champion_btn.callback = self._open_champion
-
-        raider_btn = discord.ui.Button(
-            label="An / Aus",
-            style=discord.ButtonStyle.secondary,
-            custom_id="wow_panel_v2:raider",
-        )
-        raider_btn.callback = self._toggle_raider_role
-
         if variant == "forever":
             counts, total = forever_counts or ({}, 0)
             forever_btn = discord.ui.Button(
@@ -4963,33 +4897,6 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
                     counts, total, cog.bot.data.get("emojis", {}), forever_btn
                 ),
                 accent_colour=FOREVER_GOLD,
-            )
-        elif variant == "general":
-            container = discord.ui.Container(
-                discord.ui.TextDisplay(hub_text or GENERAL_PANEL_TEXT),
-                discord.ui.Separator(),
-                discord.ui.Section(
-                    discord.ui.TextDisplay(
-                        "### ❓ Hilfe & Übersicht\n"
-                        "Kanal-Übersicht & Bot-Kurzanleitung."
-                    ),
-                    accessory=help_btn,
-                ),
-                discord.ui.Separator(),
-                discord.ui.Section(
-                    discord.ui.TextDisplay(
-                        "### 🏆 Mein Champion-Rang\n" "Dein Punktestand & Rang."
-                    ),
-                    accessory=champion_btn,
-                ),
-                discord.ui.Separator(),
-                discord.ui.Section(
-                    discord.ui.TextDisplay(
-                        "### 🛡️ Raider-Rolle\n" "Raider-Rolle holen oder ablegen."
-                    ),
-                    accessory=raider_btn,
-                ),
-                accent_colour=HORDE_RED,
             )
         else:
             container = discord.ui.Container(
@@ -5069,44 +4976,6 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
             ephemeral=True,
         )
 
-    async def _open_help(self, interaction: discord.Interaction) -> None:
-        await interaction.response.send_message(
-            PANEL_HELP_TEXT, view=_PanelTextView(), ephemeral=True
-        )
-
-    async def _open_champion(self, interaction: discord.Interaction) -> None:
-        champion = interaction.client.get_cog("ChampionCog")
-        if champion is None or not hasattr(champion, "data"):
-            await interaction.response.send_message(
-                "Champion-System nicht verfügbar.", ephemeral=True
-            )
-            return
-        user_id_str = str(interaction.user.id)
-        total = await champion.data.get_total(user_id_str)
-        rank_result = await champion.data.get_rank(user_id_str)
-        role = champion.get_current_role(total)
-
-        if total == 0:
-            text = (
-                "**🏆 Champion-Status**\n\n"
-                "Du hast noch keine Punkte gesammelt.\n\n"
-                "Punkte gibt es automatisch für WoW-Aktivitäten: Chars claimen, "
-                "Levelaufstiege, Berufs-Meilensteine, Spezialrezepte und mehr."
-            )
-        else:
-            role_text = f"**{role.name}**" if role else "Champion"
-            rank_text = f"Rang **#{rank_result[0]}**" if rank_result else "kein Rang"
-            text = (
-                f"**🏆 Champion-Status**\n\n"
-                f"Rolle: {role_text}\n"
-                f"Punkte: **{total}**  ·  {rank_text}\n\n"
-                f"`/champion score` · `/champion rank`\n"
-                f"`/champion leaderboard` · `/champion myhistory`"
-            )
-        await interaction.response.send_message(
-            text, view=_PanelTextView(), ephemeral=True
-        )
-
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         # Every hub button answers with a private message; tidy it up later.
         schedule_response_cleanup(interaction)
@@ -5123,66 +4992,6 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         owned = {r.id for r in member.roles if r.id in wanted}
         view = ForeverGuildsLayoutView(owned, self.cog.bot.data.get("emojis", {}))
         await interaction.response.send_message(view=view, ephemeral=True)
-
-    async def _toggle_raider_role(self, interaction: discord.Interaction) -> None:
-        """Add or remove the Raider role from the clicking member.
-
-        Defers the response immediately so a fast double-click can't trigger
-        an InteractionResponded error on the late-arriving send.
-        """
-        guild = interaction.guild
-        if guild is None:
-            await interaction.response.send_message(
-                "Geht nur im Server, nicht in DMs.", ephemeral=True
-            )
-            return
-        # Acknowledge within Discord's 3s window; do the role work afterwards
-        # and answer via followup (idempotent on double-clicks).
-        await interaction.response.defer(ephemeral=True)
-        role = guild.get_role(RAIDER_ROLE_ID)
-        if role is None:
-            await interaction.followup.send(
-                "Raider-Rolle nicht gefunden. Bitte einen Mod fragen.",
-                ephemeral=True,
-            )
-            return
-        member = interaction.user
-        if not isinstance(member, discord.Member):
-            member = guild.get_member(member.id)
-            if member is None:
-                try:
-                    member = await guild.fetch_member(interaction.user.id)
-                except discord.HTTPException:
-                    await interaction.followup.send(
-                        "Konnte dich im Server nicht finden.", ephemeral=True
-                    )
-                    return
-        try:
-            if role in member.roles:
-                await member.remove_roles(role, reason="Panel: Raider-Toggle")
-                msg = "🛡️ Raider-Rolle **entfernt**."
-            else:
-                await member.add_roles(role, reason="Panel: Raider-Toggle")
-                msg = "🛡️ Raider-Rolle **hinzugefügt**."
-        except discord.Forbidden:
-            await interaction.followup.send(
-                "❌ Mir fehlt die Berechtigung. Bot braucht *Manage Roles* "
-                "und muss eine Rolle ÜBER der Raider-Rolle haben.",
-                ephemeral=True,
-            )
-            return
-        except discord.HTTPException as exc:
-            logger.warning(
-                "[WoWCog] Raider-Toggle für %s fehlgeschlagen: %s",
-                interaction.user.id,
-                exc,
-            )
-            await interaction.followup.send(
-                "❌ Discord-Fehler beim Rollen-Update.", ephemeral=True
-            )
-            return
-        sent = await interaction.followup.send(msg, ephemeral=True, wait=True)
-        schedule_message_cleanup(sent)
 
 
 class PanelSearchSubView(discord.ui.View):
