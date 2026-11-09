@@ -1,97 +1,105 @@
 # AGENTS.md
 
-Guidelines for AI agents (Claude, Codex, etc.) working on this project.
+Guidelines for AI agents (Claude, Codex, etc.) working on this project. The only readers are AI sessions: keep this file dense and current, and fix a stale line when you notice it.
 
 ## Project Overview
 
-Discord bot for the WoW Classic Hardcore guild "Black Lotus" on EU server Soulseeker.
-Written entirely by AI agents — no human writes code directly.
-Hosted on Railway. Python 3.13, discord.py 2.x.
+Discord bot of the Lotus Gaming community (guild "Black Lotus"). Python 3.13, discord.py 2.x, SQLite (aiosqlite) under `data/pers/`, hosted on Railway. Written entirely by AI agents; the operator (gs3rr4) does not code, speaks German and often reads replies on the phone: answer in short German.
+
+**Current focus: WoW Forever** (launched 04.11.2026, a Retail-based client with Classic-era content). The Classic Hardcore guild on Soulseeker is on hold; its features stay in the code but several are switched off (see "Switches").
+
+Related repositories (separate, do not edit from here): `lotus-wow-addons` (in-game addons, incl. LotusDiscordBridge whose export the WoW cog imports) and `lotus-link` (central group finder bot for Forever).
 
 ## Repository Layout
 
 ```
-src/lotus_bot/          Main bot package
-  bot.py                Entry point, loads cogs
+src/lotus_bot/
+  bot.py                Entry point: loads central data, registers cogs, syncs guild commands
+  backup.py             Backup of everything in data/pers
+  permissions.py        Owner-only command check
+  utils/                ManagedTaskCog (tracks background tasks), setup helpers, ephemeral replies
   cogs/
-    wow/                WoW Classic cog — roster sync, daily digest, champion points
-    quiz/               Quiz system — WoW + WCR questions, duels, scheduler
-    champion/           Points leaderboard
-    wcr/                Warcraft Rumble cog
-    ptcgp/              Pokémon TCG Pocket cog
+    wow/                WoW hub: roster sync, claims, daily digest, champion points,
+                        hub panels (cog.py), Forever guild roles + interest panel
+                        (forever_panel.py, forever_roles.py), WoW-Duo level partners
+                        (duo_*.py), marketplace forum (marketplace_*.py)
+    community/          Server-wide info panel in #infos-und-regeln
+    champion/           Points and champion roles (data/champion/roles.json)
+    quiz/               Quiz (WoW + WCR questions, duels, scheduler)
+    wcr/                Warcraft Rumble
+    ptcgp/              Pokémon TCG Pocket
+    backup/             Daily backup, weekly also to Discord
+    dev/                Owner-only helper commands
+    website/            Reports the voice channel head count to lotusgaming.de every 5 min
+                        (only when WEBSITE_VOICE_TOKEN is set)
 data/
-  wow/classic_hc/       Static WoW data (items.json, instance_drops.json, …)
-  quiz/templates/       Question templates (wow.json, wcr.json)
-tests/                  pytest test suite — mirrors src/ structure
-scripts/                One-off utility scripts (WoW data import, etc.)
+  wow/classic_hc/       Static Classic HC data (items.json, instance_drops.json, …)
+  quiz/                 Questions and templates
+  pers/                 Persistent databases (gitignored)
+tests/                  pytest, mirrors src/
+scripts/                Utility scripts (WoW data import/audit, WCR fetch, …)
+wow_crystal_work/       Local scratch, gitignored, not part of the bot
 ```
 
-## Code Conventions
+## Conventions
 
-- Python 3.13, async/await throughout
-- All slash commands are guild-scoped: `bot.tree.add_command(..., guild=bot.main_guild)` + sync
-- Persistent data goes in `data/pers/` (gitignored)
-- Logs go in `logs/` (gitignored)
-- No global slash commands
+- All slash commands are guild-scoped (`guild=bot.main_guild`); `setup_hook` clears global commands. No global commands.
+- Channel, role and message IDs are module constants in the cog (e.g. `DEFAULT_PANEL_CHANNEL_ID`), not env vars.
+- Panels follow the "find own message, edit or repost" pattern; message/thread IDs are stored in the cog's settings store.
+- Background work goes through `ManagedTaskCog.create_task` so unload/shutdown stops it.
+- Code, comments and logs in English; user-facing text in German.
+- Only delete Discord messages/threads the bot created and tracks itself.
 
-## Tooling
+## Switches (module constants)
 
-- Formatter: **black 26.3.1** — pinned, must match `.pre-commit-config.yaml`
-- Linter: **ruff** — configured in `pyproject.toml`
-- Tests: `pytest` — run from project root
-- Pre-commit: all hooks defined in `.pre-commit-config.yaml`
+| Constant | File | State | Why |
+|---|---|---|---|
+| `CLASSIC_PANEL_ENABLED` | `cogs/wow/cog.py` | False | Classic HC guild on hold since the Forever launch |
+| `DUNGEONS_GUIDE_ENABLED` | `cogs/wow/cog.py` | False | A separate dungeon bot handles dungeon runs (04.11.2026) |
+| `MARKETPLACE_HUB_ENABLED` | `cogs/wow/marketplace_cog.py` | False | Market hub post switched off (04.11.2026) |
+| `PANEL_LAYOUT` | `cogs/wow/cog.py` | "three-panels-v3" | Bump the string to make the bot delete and repost all hub panels once |
+
+When off, the feature removes its own existing post once. Record a new switch or decision in this table with its reason.
 
 ## Definition of Done — MANDATORY before reporting work as complete
 
-The user (gs3rr4) does **not** code and pushes via GitHub Desktop. They cannot fix CI failures themselves. Every red CI run = back to an agent = wasted tokens. So:
-
-**Run these locally before saying "done" — every time, no exceptions:**
+The operator merges through GitHub Desktop and cannot fix CI failures. Every red CI run means another agent round trip. Run locally, every time:
 
 ```
 python -m black src/ tests/ scripts/
 python -m black --check src/ tests/ scripts/   # must report 0 changes
 python -m pytest -q                            # must be all green
-pre-commit run --all-files                     # catches EOL / whitespace / YAML
-                                               # hooks that would otherwise burn
-                                               # a CI cycle on an unrelated file
+pre-commit run --all-files                     # EOL/whitespace/YAML hooks, ruff, pip-audit
 ```
 
-The `pre-commit` step matters even if your diff is small: hooks run with
-`--all-files` in CI and will flag historical files (missing trailing newline,
-stray tabs) that have nothing to do with your change. Running it locally first
-means a one-line fix is in your commit instead of a separate red-CI roundtrip.
+Black is pinned (see `.pre-commit-config.yaml`). CI runs pre-commit with `--all-files`, so it flags old files too; fix them in your commit. If `black` reformats anything, include it. If a test fails because you intentionally changed behaviour, update the test to the new intent.
 
-If `black` reformats anything, those changes are part of your work — include them.
-If a test fails because **you intentionally changed behavior**, update the test to match the new intent. Don't push and hope.
+**Tests encode guarantees, not wording:**
 
-**Writing new tests — avoid brittle assertions:**
+- ❌ `assert "Folgende seltene Rezepte" in msg`
+- ✅ `assert event.points == 3`
+- ✅ `assert "Voidok" in msg and "Level **40**" in msg` (structural facts)
 
-- ❌ `assert "Folgende seltene Rezepte" in msg` — breaks on any copy tweak
-- ❌ `assert "Level **37** gestorben" in line` — breaks on any wording change
-- ✅ `assert event.points == 3` — encodes a real design decision
-- ✅ `assert "Voidok" in msg and "Level **40**" in msg` — structural facts
+Tests must close every aiosqlite connection they open; an open one keeps pytest alive after the summary and hangs CI.
 
-Test what the code is *supposed to guarantee*, not the exact German wording. Copy gets tweaked all the time; behaviour shouldn't break tests.
-
-**Temp paths on Windows:** never pass `--basetemp=C:\...` through Bash — the backslashes get eaten and pytest creates a `C__...` directory inside the repo. Use forward slashes or omit the flag.
+**Windows:** never pass `--basetemp=C:\...` through Bash (backslashes get eaten).
 
 ## Environment Variables
 
-See `.env.example` for the full list. Key vars:
-- `DISCORD_TOKEN` — bot token
-- `server_id` — Discord guild ID
-- `BLIZZARD_CLIENT_ID` / `BLIZZARD_CLIENT_SECRET` — Battle.net API
-- `RAILWAY_TOKEN` — Railway deployment
+Full list in `.env.example`. Key ones: `bot_key` (Discord token), `server_id` (guild ID), `BLIZZARD_CLIENT_ID` / `BLIZZARD_CLIENT_SECRET`, `WCR_API_URL`, `LOG_LEVEL`, `WEBSITE_VOICE_TOKEN` / `WEBSITE_VOICE_URL` (optional). CI uses `RAILWAY_TOKEN` (secret) plus `RAILWAY_PROJECT` / `RAILWAY_SERVICE` (repository variables).
 
-## Hosting
+## Hosting and CI
 
-- Deployed on Railway (production)
-- Env vars managed via Railway dashboard or CLI
-- Logs accessible via `railway logs` or GitHub Actions artifacts
+Railway hosts the bot; env vars live in the Railway dashboard. Logs: `logs/runtime-<YYYY-MM-DD-HH>.json`, `railway logs`, or the artifact of the `railway_logs` workflow. Dependabot opens dependency PRs; minor/patch groups are merged automatically once "Run tests" succeeds (`dependabot-auto-merge.yml`).
 
-## WoW Cog Notes
+## WoW Notes
 
-- Classic Era 1x namespace: `profile-classic1x-eu`
-- The `/professions` and `/reputations` Blizzard API endpoints return 404 for Classic Era 1x
-- Item levels are resolved via a local lookup (data/wow/classic_hc/items.json) — the equipment API does not return iLvl
-- Daily digest posts at 09:00 Europe/Berlin time
+- Classic Era 1x namespace: `profile-classic1x-eu`. `/professions` and `/reputations` return 404 there.
+- Item levels come from `data/wow/classic_hc/items.json`; the equipment API returns none.
+- Daily digest posts at 09:00 Europe/Berlin.
+- WoW Forever API facts are measured in `lotus-link/docs/forever-api.md`; do not assume Classic or Retail behaviour.
+
+## Git
+
+- Work on a branch, never directly on `main`. Ask before pushing, opening a PR or merging.
+- End commit messages with the attribution line the session provides.
