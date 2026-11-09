@@ -83,23 +83,22 @@ def test_count_forever_roles_counts_people_once():
     assert count_forever_roles(None)[1] == 0
 
 
-def test_three_variants_have_disjoint_custom_ids_and_fit_limits():
+def test_both_variants_have_disjoint_custom_ids_and_fit_limits():
     classic = wow_cog_mod.WoWPanelLayoutView(_cog())
-    general = wow_cog_mod.WoWPanelLayoutView(_cog(), variant="general")
     forever = wow_cog_mod.WoWPanelLayoutView(
         _cog(), variant="forever", forever_counts=({HORDE_HC: 12}, 12)
     )
 
-    all_ids = _custom_ids(classic) + _custom_ids(general) + _custom_ids(forever)
+    all_ids = _custom_ids(classic) + _custom_ids(forever)
     assert len(all_ids) == len(set(all_ids))
     assert _custom_ids(forever) == ["wow_panel_v2:forever"]
-    assert set(_custom_ids(general)) == {
+    # Help, champion rank and the Raider role left with "WoW bei Lotus Gaming".
+    assert not {
         "wow_panel_v2:help",
         "wow_panel_v2:champion",
         "wow_panel_v2:raider",
-    }
-    assert "wow_panel_v2:raider" not in _custom_ids(classic)
-    for view in (classic, general, forever):
+    } & set(all_ids)
+    for view in (classic, forever):
         assert view.is_persistent()
         assert len(list(view.walk_children())) + 1 <= 40
         assert len(_all_texts(view)) < 4000
@@ -182,7 +181,7 @@ async def test_publish_all_panels_posts_in_order_then_edits_in_place(
 
     await cog.publish_all_panels(channel)
 
-    assert [v for _, v in channel.sent_order] == ["forever", "classic", "general"]
+    assert [v for _, v in channel.sent_order] == ["forever", "classic"]
     first_ids = [i for i, _ in channel.sent_order]
 
     await cog.publish_all_panels(channel)  # restart: edit, don't repost
@@ -206,7 +205,7 @@ async def test_layout_change_replaces_the_old_single_panel(
 
     assert old.deleted is True
     assert await cog.data.get_setting("panel_message_id") != "7"
-    assert len(channel.sent_order) == 3
+    assert len(channel.sent_order) == 2
 
 
 @pytest.mark.asyncio
@@ -225,10 +224,29 @@ async def test_disabled_classic_panel_is_removed_and_not_reposted(
     assert result is None
     assert classic.deleted is True
     assert await cog.data.get_setting("panel_message_id") == ""
-    assert [v for _, v in channel.sent_order] == ["forever", "general"]
+    assert [v for _, v in channel.sent_order] == ["forever"]
 
     await cog.publish_all_panels(channel)  # next refresh: nothing comes back
-    assert [v for _, v in channel.sent_order] == ["forever", "general"]
+    assert [v for _, v in channel.sent_order] == ["forever"]
+
+
+@pytest.mark.asyncio
+async def test_the_old_wow_bei_lotus_gaming_panel_is_removed(
+    tmp_path, patch_logged_task
+):
+    # The channel belongs to Lotus Link; it offers the Raider role now.
+    cog = await _cog_with_db(tmp_path, patch_logged_task)
+    channel = _Channel()
+    general = _Message(8)
+    channel.messages[8] = general
+    await cog.data.set_setting("panel_layout", wow_cog_mod.PANEL_LAYOUT)
+    await cog.data.set_setting("panel_general_message_id", "8")
+
+    await cog.publish_all_panels(channel)
+
+    assert general.deleted is True
+    assert await cog.data.get_setting("panel_general_message_id") == ""
+    assert "general" not in [v for _, v in channel.sent_order]
 
 
 @pytest.mark.asyncio

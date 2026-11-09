@@ -642,34 +642,6 @@ async def test_scan_schedules_panel_refresh(tmp_path, patch_logged_task, monkeyp
     assert "_auto_publish_panel" in tracked
 
 
-class _DummyRaiderMember:
-    def __init__(self, roles=None):
-        self.id = 42
-        self.roles = list(roles or [])
-        self.added = []
-        self.removed = []
-
-    async def add_roles(self, role, *, reason=None):
-        self.added.append(role)
-        self.roles.append(role)
-
-    async def remove_roles(self, role, *, reason=None):
-        self.removed.append(role)
-        self.roles = [r for r in self.roles if r is not role]
-
-
-class _DummyRaiderGuild:
-    def __init__(self, role, member):
-        self._role = role
-        self._member = member
-
-    def get_role(self, rid):
-        return self._role if rid == wow_cog_mod.RAIDER_ROLE_ID else None
-
-    def get_member(self, uid):
-        return self._member
-
-
 class _DummyRaiderResponse:
     def __init__(self):
         self.deferred = False
@@ -703,77 +675,6 @@ class _DummyRaiderInteraction:
         self.guild = guild
         self.response = _DummyRaiderResponse()
         self.followup = _DummyRaiderFollowup()
-
-
-@pytest.mark.asyncio
-async def test_raider_toggle_adds_role_when_missing(tmp_path, patch_logged_task):
-    cog = await create_cog(tmp_path, patch_logged_task)
-    hub = wow_cog_mod.WoWPanelLayoutView(cog)
-    role = type("Role", (), {"id": wow_cog_mod.RAIDER_ROLE_ID, "name": "Raider"})()
-    member = _DummyRaiderMember(roles=[])
-    interaction = _DummyRaiderInteraction(member, _DummyRaiderGuild(role, member))
-
-    await hub._toggle_raider_role(interaction)
-
-    assert interaction.response.deferred is True
-    assert member.added == [role]
-    assert member.removed == []
-    msg, _ = interaction.followup.messages[0]
-    assert "hinzugefügt" in msg
-
-
-@pytest.mark.asyncio
-async def test_raider_toggle_removes_role_when_present(tmp_path, patch_logged_task):
-    cog = await create_cog(tmp_path, patch_logged_task)
-    hub = wow_cog_mod.WoWPanelLayoutView(cog)
-    role = type("Role", (), {"id": wow_cog_mod.RAIDER_ROLE_ID, "name": "Raider"})()
-    member = _DummyRaiderMember(roles=[role])
-    interaction = _DummyRaiderInteraction(member, _DummyRaiderGuild(role, member))
-
-    await hub._toggle_raider_role(interaction)
-
-    assert member.removed == [role]
-    assert member.added == []
-    msg, _ = interaction.followup.messages[0]
-    assert "entfernt" in msg
-
-
-@pytest.mark.asyncio
-async def test_raider_toggle_handles_missing_role(tmp_path, patch_logged_task):
-    cog = await create_cog(tmp_path, patch_logged_task)
-    hub = wow_cog_mod.WoWPanelLayoutView(cog)
-    member = _DummyRaiderMember(roles=[])
-    # Guild returns None for the role lookup.
-    guild = _DummyRaiderGuild(role=None, member=member)
-    interaction = _DummyRaiderInteraction(member, guild)
-
-    await hub._toggle_raider_role(interaction)
-
-    assert member.added == [] and member.removed == []
-    msg, _ = interaction.followup.messages[0]
-    assert "nicht gefunden" in msg
-
-
-@pytest.mark.asyncio
-async def test_raider_toggle_handles_forbidden(tmp_path, patch_logged_task):
-    """Reviewer-flagged branch coverage: bot lacks Manage Roles permission."""
-    cog = await create_cog(tmp_path, patch_logged_task)
-    hub = wow_cog_mod.WoWPanelLayoutView(cog)
-    role = type("Role", (), {"id": wow_cog_mod.RAIDER_ROLE_ID, "name": "Raider"})()
-
-    class ForbiddenMember(_DummyRaiderMember):
-        async def add_roles(self, role, *, reason=None):
-            response = type("R", (), {"status": 403, "reason": "Forbidden"})()
-            raise discord.Forbidden(response, {"message": "Missing Permissions"})
-
-    member = ForbiddenMember(roles=[])
-    interaction = _DummyRaiderInteraction(member, _DummyRaiderGuild(role, member))
-
-    await hub._toggle_raider_role(interaction)
-
-    msg, _ = interaction.followup.messages[0]
-    assert "Berechtigung" in msg
-    assert "Manage Roles" in msg
 
 
 @pytest.mark.asyncio
@@ -958,21 +859,6 @@ async def test_gbank_own_char_select_finalizes(tmp_path, patch_logged_task):
     assert len(owner.sent) == 1
     assert claims[0].character_name in owner.sent[0]
     assert interaction.response.edits[0]["content"] == "✅ Anfrage gesendet."
-
-
-@pytest.mark.asyncio
-async def test_panel_hub_help_button_sends_overview(tmp_path, patch_logged_task):
-    cog = await create_cog(tmp_path, patch_logged_task)
-    hub = wow_cog_mod.WoWPanelLayoutView(cog)
-    interaction = DummyReviewInteraction(DummyUser(42))
-
-    await hub._open_help(interaction)
-
-    text = interaction.response.messages[0][0]
-    assert "Deine Chars" in text
-    assert "Cooldown" in text
-    assert "Daily Digest" in text
-    assert interaction.response.messages[0][1]["ephemeral"] is True
 
 
 @pytest.mark.asyncio
