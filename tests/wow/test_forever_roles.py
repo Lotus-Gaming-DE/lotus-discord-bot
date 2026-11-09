@@ -32,13 +32,19 @@ def test_offered_roles_are_the_four_existing_guilds():
     assert [r.role_id for r in FOREVER_ROLES if r.soon] == [1556277335500525749]
 
 
-def test_view_has_one_select_per_faction_with_current_state_preselected():
+def test_guild_roles_are_not_selectable_only_future_guilds():
     view = ForeverGuildsLayoutView({HORDE_HC, ALLIANCE_PVE})
     selects = _selects(view)
-    assert {s.faction for s in selects} == {"horde", "alliance"}
+    offered = {int(o.value) for s in selects for o in s.options}
+    assert offered == {HORDE_HC}  # Crimson, Silent, Golden kommen per Battle.net
     defaults = {int(o.value) for s in selects for o in s.options if o.default}
-    assert defaults == {HORDE_HC, ALLIANCE_PVE}
+    assert defaults == {HORDE_HC}
     assert all(s.min_values == 0 for s in selects)  # abwählen erlaubt
+    assert {r.role_id for r in FOREVER_ROLES if r.auto} == {
+        HORDE_PVP,
+        1556277083880038501,
+        ALLIANCE_PVE,
+    }
 
 
 def test_view_fits_components_v2_limits():
@@ -72,21 +78,19 @@ def _interaction(role_ids):
     return interaction, member, roles
 
 
-async def test_apply_selection_adds_new_and_removes_unselected_in_faction_only():
-    view = ForeverGuildsLayoutView({HORDE_HC, ALLIANCE_PVE})
+async def test_apply_selection_never_touches_the_guild_roles():
+    view = ForeverGuildsLayoutView({HORDE_PVP, ALLIANCE_PVE})
     interaction, member, roles = _interaction([r.role_id for r in FOREVER_ROLES])
 
-    # Horde: HC abwählen, PvP wählen. Allianz-Rolle darf unberührt bleiben.
-    await view.apply_selection(interaction, "horde", {HORDE_PVP})
+    # Auch ein gefälschter Wert für eine Gildenrolle wird ignoriert.
+    await view.apply_selection(interaction, "horde", {HORDE_HC, ALLIANCE_PVE})
 
     member.add_roles.assert_awaited_once()
-    assert member.add_roles.await_args.args == (roles[HORDE_PVP],)
-    member.remove_roles.assert_awaited_once()
-    assert member.remove_roles.await_args.args == (roles[HORDE_HC],)
+    assert member.add_roles.await_args.args == (roles[HORDE_HC],)
+    member.remove_roles.assert_not_awaited()  # Crimson bleibt
 
     new_view = interaction.edit_original_response.await_args.kwargs["view"]
-    owned = {int(o.value) for s in _selects(new_view) for o in s.options if o.default}
-    assert owned == {HORDE_PVP, ALLIANCE_PVE}
+    assert new_view.owned_ids == {HORDE_HC, HORDE_PVP, ALLIANCE_PVE}
 
 
 async def test_apply_selection_reports_missing_permission():

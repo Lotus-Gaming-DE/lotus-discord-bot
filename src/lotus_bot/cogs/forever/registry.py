@@ -38,6 +38,7 @@ class GuildMember:
     name: str
     level: int
     rank: int
+    class_key: str | None = None
 
 
 @dataclass(frozen=True)
@@ -77,7 +78,7 @@ SELECT c.id, c.blizzard_character_id, p.discord_user_id, c.name, c.level, g.slug
 """
 
 MEMBERS_SQL = """
-SELECT g.slug, m.blizzard_character_id, m.name, m.level, m.rank
+SELECT g.slug, m.blizzard_character_id, m.name, m.level, m.rank, m.class_key
   FROM registry_api.guild_members m
   JOIN registry_api.guilds g ON g.id = m.guild_id
  WHERE g.region = 'eu' AND g.slug = ANY($1::text[])
@@ -126,7 +127,9 @@ class PgRegistry:
             linked=tuple(
                 LinkedCharacter(r[0], r[1], r[2], r[3], r[4], r[5]) for r in linked
             ),
-            members=tuple(GuildMember(r[0], r[1], r[2], r[3], r[4]) for r in members),
+            members=tuple(
+                GuildMember(r[0], r[1], r[2], r[3], r[4], r[5]) for r in members
+            ),
             runs=tuple(
                 RunAttendance(r[0], r[1], r[2], r[3])
                 for r in runs
