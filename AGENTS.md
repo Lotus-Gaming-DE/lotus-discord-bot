@@ -30,6 +30,8 @@ src/lotus_bot/
     ptcgp/              Pokémon TCG Pocket
     backup/             Daily backup, weekly also to Discord
     dev/                Owner-only helper commands
+    website/            Reports the voice channel head count to lotusgaming.de every 5 min
+                        (only when WEBSITE_VOICE_TOKEN is set)
 data/
   wow/classic_hc/       Static Classic HC data (items.json, instance_drops.json, …)
   quiz/                 Questions and templates
@@ -84,7 +86,7 @@ Tests must close every aiosqlite connection they open; an open one keeps pytest 
 
 ## Environment Variables
 
-Full list in `.env.example`. Key ones: `bot_key` (Discord token), `server_id` (guild ID), `BLIZZARD_CLIENT_ID` / `BLIZZARD_CLIENT_SECRET`, `WCR_API_URL`, `LOG_LEVEL`. CI uses `RAILWAY_TOKEN` (secret) plus `RAILWAY_PROJECT` / `RAILWAY_SERVICE` (repository variables).
+Full list in `.env.example`. Key ones: `bot_key` (Discord token), `server_id` (guild ID), `BLIZZARD_CLIENT_ID` / `BLIZZARD_CLIENT_SECRET`, `WCR_API_URL`, `LOG_LEVEL`, `WEBSITE_VOICE_TOKEN` / `WEBSITE_VOICE_URL` (optional). CI uses `RAILWAY_TOKEN` (secret) plus `RAILWAY_PROJECT` / `RAILWAY_SERVICE` (repository variables).
 
 ## Hosting and CI
 
