@@ -24,5 +24,5 @@ def stub_wow_api(monkeypatch):
 @pytest.fixture(autouse=True)
 def no_ephemeral_cleanup_tasks(monkeypatch):
     """The hub schedules delayed deletes of private replies; in tests they would
-    show up as stray tasks. The helper itself is covered in test_forever_panel."""
+    show up as stray tasks. The helper itself is covered in test_hub_panels."""
     monkeypatch.setattr(wow_cog_mod, "schedule_response_cleanup", lambda *a, **k: None)

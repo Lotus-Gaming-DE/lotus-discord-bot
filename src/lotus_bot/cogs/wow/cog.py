@@ -18,16 +18,6 @@ from lotus_bot.utils.managed_cog import ManagedTaskCog
 from lotus_bot.utils.ephemeral import (
     schedule_response_cleanup,
 )
-from .forever_panel import (
-    FACTION_ROLE_IDS,
-    build_forever_panel_children,
-    count_forever_roles,
-)
-from .forever_roles import (
-    FOREVER_GOLD,
-    FOREVER_ROLES,
-    ForeverGuildsLayoutView,
-)
 from .api import (
     DEFAULT_LOCALE,
     DEFAULT_NAMESPACE,
@@ -68,7 +58,6 @@ PANEL_LAYOUT = "three-panels-v3"
 # is False the Classic hub is not posted and an existing message is removed.
 CLASSIC_PANEL_ENABLED = False
 # Role changes are batched so a rush of clicks edits the counter panel once.
-FOREVER_REFRESH_DELAY = 20
 DEFAULT_DIGEST_HOUR = 9
 # Forum channel where Raid-Helper posts dungeon-run events. Raid-Helper is a
 # THIRD-PARTY bot — we can't drive its /create flow ourselves, so this bot
@@ -479,7 +468,6 @@ class WoWCog(ManagedTaskCog):
         self.poll_interval = DEFAULT_POLL_INTERVAL
         self.roster_refresh_interval = DEFAULT_ROSTER_REFRESH_INTERVAL
         self._scan_lock = asyncio.Lock()
-        self._forever_refresh_pending = False
         self._track_task = self.create_task
         self._track_task(self._poll_loop())
         self._track_task(self._roster_refresh_loop())
@@ -862,14 +850,6 @@ class WoWCog(ManagedTaskCog):
         await self.data.set_setting(key, str(message.id))
         return True
 
-    async def publish_forever_panel(self, channel: discord.TextChannel) -> None:
-        """WoW Forever interest counter + role picker button."""
-        counts, total = count_forever_roles(getattr(channel, "guild", None))
-        view = WoWPanelLayoutView(
-            self, variant="forever", forever_counts=(counts, total)
-        )
-        await self._publish_view(channel, "panel_forever_message_id", view)
-
     async def _reset_panels(self, channel: discord.TextChannel) -> None:
         """One-off on layout change: remove old panel messages so the new
         ones are posted in the intended order (Forever, Classic, general)."""
@@ -909,10 +889,14 @@ class WoWCog(ManagedTaskCog):
     async def publish_all_panels(
         self, channel: discord.TextChannel
     ) -> PanelPublishResult | None:
-        """Post/refresh the hub panels: Forever and Classic HC (if enabled)."""
+        """Post/refresh the hub panels: only Classic HC, and only if enabled."""
         if await self.data.get_setting("panel_layout") != PANEL_LAYOUT:
             await self._reset_panels(channel)
-        await self.publish_forever_panel(channel)
+        # The Forever guild panel is gone: the ForeverCog grants the guild roles
+        # from Battle.net links, nobody picks them by hand any more.
+        await self._remove_panel(
+            channel, "panel_forever_message_id", "Forever-Gilden-Panel"
+        )
         result = None
         if CLASSIC_PANEL_ENABLED:
             result = await self.publish_panel(channel)
@@ -925,35 +909,6 @@ class WoWCog(ManagedTaskCog):
         )
         await self.data.set_setting("panel_layout", PANEL_LAYOUT)
         return result
-
-    @commands.Cog.listener()
-    async def on_member_update(
-        self, before: discord.Member, after: discord.Member
-    ) -> None:
-        changed = {r.id for r in before.roles} ^ {r.id for r in after.roles}
-        if changed & FACTION_ROLE_IDS:
-            self._schedule_forever_refresh()
-
-    def _schedule_forever_refresh(self) -> None:
-        if self._forever_refresh_pending:
-            return
-        self._forever_refresh_pending = True
-        self._track_task(self._refresh_forever_panel())
-
-    async def _refresh_forever_panel(self) -> None:
-        try:
-            await asyncio.sleep(FOREVER_REFRESH_DELAY)
-            # Reset first: changes that arrive while we publish re-schedule.
-            self._forever_refresh_pending = False
-            channel = self.bot.get_channel(DEFAULT_PANEL_CHANNEL_ID)
-            if isinstance(channel, discord.TextChannel):
-                await self.publish_forever_panel(channel)
-        except Exception as exc:
-            logger.error(
-                "[WoWCog] Forever-Zähler fehlgeschlagen: %s", exc, exc_info=True
-            )
-        finally:
-            self._forever_refresh_pending = False
 
     async def publish_panel(self, channel: discord.TextChannel) -> PanelPublishResult:
         """Send or update the Components-V2 hub message.
@@ -4849,7 +4804,6 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         cog: WoWCog,
         hub_text: str | None = None,
         variant: str = "classic",
-        forever_counts: tuple[dict[int, int], int] | None = None,
     ) -> None:
         super().__init__(timeout=None)
         self.cog = cog
@@ -4883,58 +4837,42 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         )
         cooldown_btn.callback = self._open_cooldown_log
 
-        if variant == "forever":
-            counts, total = forever_counts or ({}, 0)
-            forever_btn = discord.ui.Button(
-                label="Meine Gilden",
-                emoji="♾️",
-                style=discord.ButtonStyle.primary,
-                custom_id="wow_panel_v2:forever",
-            )
-            forever_btn.callback = self._open_forever_guilds
-            container = discord.ui.Container(
-                *build_forever_panel_children(
-                    counts, total, cog.bot.data.get("emojis", {}), forever_btn
+        container = discord.ui.Container(
+            discord.ui.TextDisplay(hub_text or PANEL_HUB_TEXT),
+            discord.ui.Separator(),
+            discord.ui.Section(
+                discord.ui.TextDisplay(
+                    "### 👤 Deine Chars\n"
+                    "Claimen, Berufe & Rezepte pflegen, Claim freigeben."
                 ),
-                accent_colour=FOREVER_GOLD,
-            )
-        else:
-            container = discord.ui.Container(
-                discord.ui.TextDisplay(hub_text or PANEL_HUB_TEXT),
-                discord.ui.Separator(),
-                discord.ui.Section(
-                    discord.ui.TextDisplay(
-                        "### 👤 Deine Chars\n"
-                        "Claimen, Berufe & Rezepte pflegen, Claim freigeben."
-                    ),
-                    accessory=chars_btn,
+                accessory=chars_btn,
+            ),
+            discord.ui.Separator(),
+            discord.ui.Section(
+                discord.ui.TextDisplay(
+                    "### 🔎 In der Gilde suchen\n"
+                    "Crafter finden, Chars nachschlagen, Member-Lookup."
                 ),
-                discord.ui.Separator(),
-                discord.ui.Section(
-                    discord.ui.TextDisplay(
-                        "### 🔎 In der Gilde suchen\n"
-                        "Crafter finden, Chars nachschlagen, Member-Lookup."
-                    ),
-                    accessory=search_btn,
+                accessory=search_btn,
+            ),
+            discord.ui.Separator(),
+            discord.ui.Section(
+                discord.ui.TextDisplay(
+                    "### 🏦 Gildenbank-Anfrage\n"
+                    "Anfrage stellen — der Verwalter bekommt eine DM."
                 ),
-                discord.ui.Separator(),
-                discord.ui.Section(
-                    discord.ui.TextDisplay(
-                        "### 🏦 Gildenbank-Anfrage\n"
-                        "Anfrage stellen — der Verwalter bekommt eine DM."
-                    ),
-                    accessory=gbank_btn,
+                accessory=gbank_btn,
+            ),
+            discord.ui.Separator(),
+            discord.ui.Section(
+                discord.ui.TextDisplay(
+                    "### ⏳ Cooldown loggen\n"
+                    "Transmute, Mondstoff oder Salt Shaker eintragen."
                 ),
-                discord.ui.Separator(),
-                discord.ui.Section(
-                    discord.ui.TextDisplay(
-                        "### ⏳ Cooldown loggen\n"
-                        "Transmute, Mondstoff oder Salt Shaker eintragen."
-                    ),
-                    accessory=cooldown_btn,
-                ),
-                accent_colour=HORDE_RED,
-            )
+                accessory=cooldown_btn,
+            ),
+            accent_colour=HORDE_RED,
+        )
         self.add_item(container)
 
     async def _open_my_chars(self, interaction: discord.Interaction) -> None:
@@ -4980,18 +4918,6 @@ class WoWPanelLayoutView(discord.ui.LayoutView):
         # Every hub button answers with a private message; tidy it up later.
         schedule_response_cleanup(interaction)
         return True
-
-    async def _open_forever_guilds(self, interaction: discord.Interaction) -> None:
-        member = interaction.user
-        if interaction.guild is None or not isinstance(member, discord.Member):
-            await interaction.response.send_message(
-                "Geht nur im Server, nicht in DMs.", ephemeral=True
-            )
-            return
-        wanted = {r.role_id for r in FOREVER_ROLES}
-        owned = {r.id for r in member.roles if r.id in wanted}
-        view = ForeverGuildsLayoutView(owned, self.cog.bot.data.get("emojis", {}))
-        await interaction.response.send_message(view=view, ephemeral=True)
 
 
 class PanelSearchSubView(discord.ui.View):

@@ -19,10 +19,13 @@ src/lotus_bot/
   permissions.py        Owner-only command check
   utils/                ManagedTaskCog (tracks background tasks), setup helpers, ephemeral replies
   cogs/
-    wow/                WoW hub: roster sync, claims, daily digest, champion points,
-                        hub panels (cog.py), Forever guild roles + interest panel
-                        (forever_panel.py, forever_roles.py), WoW-Duo level partners
-                        (duo_*.py), marketplace forum (marketplace_*.py)
+    wow/                Black Lotus Classic HC: roster sync, claims, daily digest,
+                        champion points, hub panel (cog.py, off), WoW-Duo level
+                        partners (duo_*.py), marketplace forum (marketplace_*.py)
+    forever/            WoW Forever guilds (Silent, Crimson, Golden): reads Battle.net
+                        links from Lotus Link, grants/removes the guild roles,
+                        #wow-logs notices with buttons, hourly pings, daily rank report,
+                        champion points. No self-pick panel: roles come from links only.
     community/          Server-wide info panel in #infos-und-regeln
     champion/           Points and champion roles (data/champion/roles.json)
     quiz/               Quiz (WoW + WCR questions, duels, scheduler)
