@@ -64,7 +64,7 @@ ROLE_STRIP_KEY = "role_strip_after"
 # Pings an die Gildenrolle sammeln, damit die Leitung nicht zugespammt wird.
 PING_INTERVAL = timedelta(hours=1)
 # Wer die Rolle bisher selbst gewählt hat, bekommt so lange Zeit zum Verbinden.
-ROLE_GRACE = timedelta(days=7)
+ROLE_GRACE = timedelta(days=3)
 NO_PINGS = discord.AllowedMentions.none()
 
 

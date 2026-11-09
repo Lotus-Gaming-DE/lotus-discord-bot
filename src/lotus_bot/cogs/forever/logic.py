@@ -57,7 +57,8 @@ class ForeverGuild:
     # Discord-Rolle der Gilde. Der Bot vergibt sie an jeden, der einen Char
     # dieser Gilde per Battle.net verbunden hat, und nimmt sie sonst wieder weg.
     role_id: int
-    # Farbmarke, damit die Leitungen ihre Meldungen in #wow-logs schnell finden.
+    # Farbmarke wie auf www.LotusGaming.de (Menüpunkte: Silent rosa, Crimson rot,
+    # Golden blau), damit die Leitungen ihre Meldungen schnell finden.
     icon: str
     layout: RankLayout = DEFAULT_LAYOUT
 
@@ -70,9 +71,9 @@ class ForeverGuild:
 
 
 GUILDS: tuple[ForeverGuild, ...] = (
-    ForeverGuild("silent-lotus", "Silent Lotus", 1556277083880038501, "⬛"),
-    ForeverGuild("crimson-lotus", "Crimson Lotus", 1556276890853965884, "🟥"),
-    ForeverGuild("golden-lotus", "Golden Lotus", 1556276986580566027, "🟨"),
+    ForeverGuild("silent-lotus", "Silent Lotus", 1556277083880038501, "🩷"),
+    ForeverGuild("crimson-lotus", "Crimson Lotus", 1556276890853965884, "❤️"),
+    ForeverGuild("golden-lotus", "Golden Lotus", 1556276986580566027, "💙"),
 )
 GUILDS_BY_SLUG = {g.slug: g for g in GUILDS}
 
