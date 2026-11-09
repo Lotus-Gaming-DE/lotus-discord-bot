@@ -77,7 +77,9 @@ GUILDS: tuple[ForeverGuild, ...] = (
     ForeverGuild(
         "crimson-lotus", "Crimson Lotus", 1556276890853965884, "❤️", CRIMSON_LAYOUT
     ),
-    ForeverGuild("golden-lotus", "Golden Lotus", 1556276986580566027, "💙"),
+    ForeverGuild(
+        "golden-lotus", "Golden Lotus", 1556276986580566027, "💙", CRIMSON_LAYOUT
+    ),
 )
 GUILDS_BY_SLUG = {g.slug: g for g in GUILDS}
 
