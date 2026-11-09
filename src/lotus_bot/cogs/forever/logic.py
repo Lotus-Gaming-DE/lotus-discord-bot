@@ -29,23 +29,21 @@ class RankLayout:
     officer_twink: int | None = None
 
 
-# Wie bei Black Lotus. Sobald die Ränge der Forever-Gilden feststehen, hier je
-# Gilde eintragen.
-DEFAULT_LAYOUT = RankLayout(
+# Crimson Lotus laut Gilden-Einstellungen (Screenshot von Gerrit, 9.11.2026).
+# Im Spiel heißen sie „Rank 1“ bis „Rank 7“, die API zählt ab 0.
+CRIMSON_LAYOUT = RankLayout(
     names={
-        0: "Gildenmeister",
-        1: "Offizier",
+        0: "Guild Master",
+        1: "Officer",
         2: "Officer Twink",
         3: "Veteran",
         4: "Member",
-        5: "Bank",
-        6: "Twink",
-        7: "Initiate",
+        5: "Twink",
+        6: "Initiate",
     },
     member=4,
-    twink=6,
-    initiate=7,
-    bank=5,
+    twink=5,
+    initiate=6,
     officer_twink=2,
 )
 
@@ -54,15 +52,19 @@ DEFAULT_LAYOUT = RankLayout(
 class ForeverGuild:
     slug: str
     name: str
-    layout: RankLayout = DEFAULT_LAYOUT
+    # ``None``: Ränge noch nicht abgestimmt. Dann gibt es für diese Gilde keinen
+    # Sync-Report, denn ohne Bedeutung der Nummern wäre er falsch.
+    layout: RankLayout | None = None
 
     def rank_name(self, rank: int) -> str:
-        return self.layout.names.get(rank, f"Rang {rank}")
+        if self.layout is None:
+            return f"Rang {rank + 1}"
+        return self.layout.names.get(rank, f"Rang {rank + 1}")
 
 
 GUILDS: tuple[ForeverGuild, ...] = (
     ForeverGuild("silent-lotus", "Silent Lotus"),
-    ForeverGuild("crimson-lotus", "Crimson Lotus"),
+    ForeverGuild("crimson-lotus", "Crimson Lotus", CRIMSON_LAYOUT),
     ForeverGuild("golden-lotus", "Golden Lotus"),
 )
 GUILDS_BY_SLUG = {g.slug: g for g in GUILDS}
@@ -115,6 +117,8 @@ def build_report(
     """
     layout = guild.layout
     report = GuildReport(guild)
+    if layout is None:
+        return report
     by_user: dict[int, list[GuildMember]] = {}
     for member in members:
         owner = owner_of.get(member.blizzard_id)

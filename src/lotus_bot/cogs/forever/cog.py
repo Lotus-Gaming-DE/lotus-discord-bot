@@ -194,7 +194,7 @@ class ForeverCog(ManagedTaskCog):
         owner_of = {c.blizzard_id: c.discord_user_id for c in snapshot.linked}
         sections: list[tuple[str | None, list[str]]] = []
         for guild in GUILDS:
-            if guild.slug not in snapshot.rosters_loaded:
+            if guild.layout is None or guild.slug not in snapshot.rosters_loaded:
                 continue
             members = [m for m in snapshot.members if m.guild_slug == guild.slug]
             report = build_report(guild, members, owner_of)
