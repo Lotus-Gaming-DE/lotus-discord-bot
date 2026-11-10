@@ -3776,6 +3776,7 @@ async def test_sync_report_flags_all_categories(tmp_path, patch_logged_task):
     assert posted >= 1
     msg = "\n".join(sent[0] for sent in officer.sent)
     assert "Offi-Sync-Report" in msg
+    assert msg.startswith(wow_cog_mod.BLACK_LOTUS_TAG)
     # Claimed-but-Initiate → promote reminder (explicitly NOT a kick candidate).
     assert "Neulor" in msg and "<@200>" in msg
     # Initiates are new/probation and must NEVER be listed for kicking.
@@ -3954,6 +3955,8 @@ async def test_prune_departed_claims_removes_absent_users(
     msg = "\n".join(sent[0] for sent in officer.sent)
     assert "Discord verlassen" in msg
     assert "Wegchar" in msg and "<@500>" in msg
+    # Forever guilds post in the same channel: the note names its guild.
+    assert officer.sent[0][0].startswith(wow_cog_mod.BLACK_LOTUS_TAG)
 
 
 @pytest.mark.asyncio

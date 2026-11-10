@@ -216,11 +216,7 @@ def build_report(
         by_user.setdefault(owner, []).append(member)
 
     for owner, chars in by_user.items():
-        mains = [
-            m
-            for m in chars
-            if m.rank <= layout.member and m.rank != layout.officer_twink
-        ]
+        mains = [m for m in chars if is_main_rank(m.rank, layout)]
         if len(mains) > 1:
             report.multi_main.append((owner, sorted(mains, key=lambda m: m.rank)))
         if any(m.rank <= layout.member for m in chars):
@@ -325,16 +321,34 @@ def link_notice(
         lines.extend(f"- **{m.name}** ({char_details(m, guild)})" for m in others)
     if layout is None:
         return "\n".join(lines)  # Ränge noch nicht abgestimmt, keine Empfehlung
-    has_main = any(
-        m.rank <= layout.member and m.rank != layout.officer_twink for m in others
-    )
-    if has_main:
+    has_main = any(is_main_rank(m.rank, layout) for m in others)
+    on_main = member is not None and is_main_rank(member.rank, layout)
+    if on_main and has_main:
+        lines.append(
+            "➡️ Hat schon einen Main-Platz, dieser Char steht aber auch auf einem "
+            f"Main-Rang (**{guild.rank_name(member.rank)}**). Einer von beiden "
+            "sollte **Twink** werden."
+        )
+    elif on_main:
+        lines.append(
+            "✅ Steht schon auf einem Main-Rang "
+            f"(**{guild.rank_name(member.rank)}**), der Rang passt so."
+        )
+    elif has_main:
         lines.append(
             "➡️ Hat schon einen Main-Platz, dieser Char ist wohl ein **Twink**."
         )
     else:
         lines.append("➡️ Noch kein Main-Platz, dieser Char wird der **Member**-Char.")
     return "\n".join(lines)
+
+
+def is_main_rank(rank: int, layout: RankLayout) -> bool:
+    """Gildenmeister, Officer, Veteran und Member sind Main-Ränge.
+
+    Officer Twink steht zwar über Member, ist aber ein Twink.
+    """
+    return rank <= layout.member and rank != layout.officer_twink
 
 
 def guild_left_notice(
