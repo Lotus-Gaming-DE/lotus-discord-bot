@@ -11,6 +11,8 @@ from lotus_bot.cogs.forever.logic import (
     GUILDS,
     GUILDS_BY_SLUG,
     build_report,
+    is_main_rank,
+    link_notice,
     milestones_reached,
 )
 from lotus_bot.cogs.forever.registry import (
@@ -508,3 +510,34 @@ async def test_done_button_needs_guild_leadership_and_works_once(world):
     click = _click(1, bot.channel.sent[0], leader)
     await cog.handle_done(click, "In Offi-Note eingetragen")
     click.response.edit_message.assert_not_awaited()
+
+
+def test_main_ranks_are_guild_master_to_member_without_officer_twink():
+    assert [r for r in range(7) if is_main_rank(r, CRIMSON_LAYOUT)] == [0, 1, 3, 4]
+
+
+def _advice(text):
+    return text.splitlines()[-1]
+
+
+def test_claimed_char_already_on_a_main_rank_needs_no_new_rank():
+    crimson = GUILDS_BY_SLUG[CRIMSON]
+    advice = _advice(link_notice(char(1), crimson, member(1, rank=1)))
+    assert "**Officer**" in advice
+    assert "**Member**" not in advice and "**Twink**" not in advice
+
+
+def test_claimed_char_on_main_rank_next_to_another_main_suggests_a_twink():
+    crimson = GUILDS_BY_SLUG[CRIMSON]
+    others = [member(2, rank=4)]
+    advice = _advice(link_notice(char(1), crimson, member(1, rank=3), others=others))
+    assert "**Veteran**" in advice and "**Twink**" in advice
+
+
+def test_new_char_without_main_rank_becomes_the_member_char():
+    crimson = GUILDS_BY_SLUG[CRIMSON]
+    for rank in (2, 5, 6):  # Officer Twink, Twink, Initiate
+        advice = _advice(link_notice(char(1), crimson, member(1, rank=rank)))
+        assert "**Member**" in advice
+    advice = _advice(link_notice(char(1), crimson, None))
+    assert "**Member**" in advice

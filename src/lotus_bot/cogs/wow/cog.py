@@ -45,6 +45,10 @@ logger = get_logger(__name__)
 DEFAULT_REALM_SLUG = "soulseeker"
 DEFAULT_GUILD_SLUG = "black-lotus"
 DEFAULT_GUILD_NAME = "Black Lotus"
+# Guild mark in front of every Black Lotus note in the officer channel. The
+# Forever guilds post there too (🩷 Silent, ❤️ Crimson, 💙 Golden), so each
+# note says which guild it belongs to.
+BLACK_LOTUS_TAG = "🖤 **Black Lotus**"
 DEFAULT_POLL_INTERVAL = 3 * 60 * 60
 # Officer bot channel — receives ALL officer-facing bot output: claim reviews,
 # the sync report, gbank requests, departed-claim / main-died / promote notes.
@@ -1416,7 +1420,7 @@ class WoWCog(ManagedTaskCog):
         posted = 0
         for note in notes:
             try:
-                await channel.send(f"⚠️ {note.message}")
+                await channel.send(f"{BLACK_LOTUS_TAG} · ⚠️ {note.message}")
             except (discord.Forbidden, discord.HTTPException) as exc:
                 logger.warning(
                     "[WoWCog] Could not post officer note to channel %s: %s",
@@ -1545,7 +1549,8 @@ class WoWCog(ManagedTaskCog):
                     parts.append(f"**{claim.character_name}**")
             body.append(f"- <@{user_id}>: " + ", ".join(parts))
         header = (
-            "🚪 **Claims automatisch entfernt** — diese User haben Discord "
+            f"{BLACK_LOTUS_TAG} · 🚪 **Claims automatisch entfernt** — "
+            "diese User haben Discord "
             "verlassen. Bitte Member+-Chars in-game runterstufen:"
         )
         for chunk in _pack_digest_sections_into_chunks([(header, body)]):
@@ -1715,7 +1720,10 @@ class WoWCog(ManagedTaskCog):
         sections = self._sync_report_sections(report)
         if not sections:
             return []
-        header: tuple[str | None, list[str]] = (None, ["🔄 **Offi-Sync-Report**"])
+        header: tuple[str | None, list[str]] = (
+            None,
+            [f"{BLACK_LOTUS_TAG} · 🔄 **Offi-Sync-Report**"],
+        )
         return _pack_digest_sections_into_chunks([header] + sections)
 
     async def _post_sync_report(self, members: list[RosterMember]) -> int:
@@ -1895,7 +1903,7 @@ class WoWCog(ManagedTaskCog):
         remaining.sort(key=lambda m: (-m.level, m.guild_rank, m.name.casefold()))
         top = remaining[0]
         lines = [
-            f"⚰️ **Main gefallen** — <@{owner_id}> hat mit "
+            f"{BLACK_LOTUS_TAG} · ⚰️ **Main gefallen** — <@{owner_id}> hat mit "
             f"**{dead_member.name}** ({self._rank_label(dead_member.guild_rank)}) "
             "seinen Main verloren und hat jetzt keinen Member-Char mehr.",
             "Verbleibende Chars:",
@@ -2656,7 +2664,9 @@ class WoWCog(ManagedTaskCog):
             if claim is None
             else "DM an den Owner fehlgeschlagen"
         )
-        await self._post_gbank_to_officer_channel(f"_({reason})_\n{body}")
+        await self._post_gbank_to_officer_channel(
+            f"{BLACK_LOTUS_TAG} · _({reason})_\n{body}"
+        )
 
     async def _post_gbank_to_officer_channel(self, content: str) -> None:
         channel_id = await self.get_claim_review_channel_id()
@@ -2752,7 +2762,8 @@ class WoWCog(ManagedTaskCog):
 
     def format_claim_review(self, claim: CharacterClaim) -> str:
         return (
-            f"<@{claim.discord_user_id}> möchte **{claim.character_name}** verbinden "
+            f"{BLACK_LOTUS_TAG} · <@{claim.discord_user_id}> möchte "
+            f"**{claim.character_name}** verbinden "
             f"— bitte bestätigen oder ablehnen."
         )
 
