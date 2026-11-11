@@ -66,6 +66,12 @@ PING_INTERVAL = timedelta(hours=1)
 # Wer die Rolle bisher selbst gewählt hat, bekommt so lange Zeit zum Verbinden.
 ROLE_GRACE = timedelta(days=3)
 NO_PINGS = discord.AllowedMentions.none()
+# Für Bearbeitungen: Discord benachrichtigt bei Edits nie, liefert aber die
+# Nutzerdaten der Erwähnungen mit. Ohne die zeigt der Client jeden, den er
+# nicht geladen hat, als „@unknown-user“ an.
+RESOLVE_USERS = discord.AllowedMentions(
+    everyone=False, users=True, roles=False, replied_user=False
+)
 
 
 class ForeverCog(ManagedTaskCog):
@@ -487,7 +493,7 @@ class ForeverCog(ManagedTaskCog):
         await interaction.response.edit_message(
             content=f"{message.content}\n✅ {verb} von <@{interaction.user.id}>",
             view=None,
-            allowed_mentions=NO_PINGS,
+            allowed_mentions=RESOLVE_USERS,
         )
 
     # -------------------------------------------------------------- discord
@@ -629,6 +635,7 @@ class ForeverCog(ManagedTaskCog):
         except (discord.Forbidden, discord.HTTPException) as exc:
             logger.warning("[ForeverCog] Meldung nicht gesendet: %s", exc)
             return
+        await self._resolve_mentions(message)
         await self.store.add_notice(message.id, kind, guild.slug, label, stamp)
 
     async def _channel(self):
@@ -646,12 +653,28 @@ class ForeverCog(ManagedTaskCog):
         posted = 0
         for chunk in chunks:
             try:
-                await channel.send(chunk, allowed_mentions=NO_PINGS)
+                message = await channel.send(chunk, allowed_mentions=NO_PINGS)
             except (discord.Forbidden, discord.HTTPException) as exc:
                 logger.warning("[ForeverCog] Meldung nicht gesendet: %s", exc)
                 break
             posted += 1
+            await self._resolve_mentions(message)
         return posted
+
+    @staticmethod
+    async def _resolve_mentions(message) -> None:
+        """Ohne Ping senden, dann unverändert bearbeiten (``RESOLVE_USERS``).
+
+        Erst durch die Bearbeitung kennt Discord die erwähnten Nutzer, und
+        jeder Client zeigt Namen statt „@unknown-user“. Bearbeitungen lösen
+        keine Benachrichtigung aus. Klappt das nicht, bleibt die Meldung lesbar.
+        """
+        if "<@" not in (getattr(message, "content", None) or ""):
+            return
+        try:
+            await message.edit(content=message.content, allowed_mentions=RESOLVE_USERS)
+        except (discord.Forbidden, discord.HTTPException) as exc:
+            logger.warning("[ForeverCog] Erwähnungen nicht aufgelöst: %s", exc)
 
     async def cog_unload(self) -> None:
         super().cog_unload()
