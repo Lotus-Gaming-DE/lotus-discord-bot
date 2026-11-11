@@ -552,21 +552,23 @@ def test_new_char_without_main_rank_becomes_the_member_char():
 
 async def test_lists_add_the_name_because_discord_hides_unloaded_mentions(world):
     cog, bot, registry, guild = world
-    guild.add(ME, CRIMSON_ROLE).display_name = "*Kalmará*"
+    added = guild.add(ME, CRIMSON_ROLE)
+    added.name, added.display_name = "*kalmara*", "Anzeigename"
     registry.members = [member(1, rank=4)]
     snapshot = await registry.snapshot([], 0)
     await cog.post_report(snapshot, T0)
     listed = [m for m in bot.channel.sent if f"<@{ME}>" in m]
-    assert listed and "\\*Kalmará\\*" in listed[0]  # Markdown im Namen bleibt Text
+    assert listed and "\\*kalmara\\*" in listed[0]  # Markdown im Namen bleibt Text
+    assert "Anzeigename" not in listed[0]  # nur der feste Nutzername
     assert all(k["allowed_mentions"] is forever.NO_PINGS for k in bot.channel.kwargs)
     assert cog.who(OTHER) == f"<@{OTHER}>"  # unbekannt: nur die Erwähnung
 
 
 async def test_report_names_the_owner_next_to_the_mention(world):
     cog, bot, registry, guild = world
-    guild.add(ME).display_name = "Besitzer"
+    guild.add(ME).name = "besitzer"
     registry.linked = [char(1)]
     registry.members = [member(1, rank=CRIMSON_LAYOUT.initiate, name="Neu")]
     snapshot = await registry.snapshot([], 0)
     chunks = cog.report_chunks(snapshot)
-    assert f"<@{ME}> (Besitzer)" in chunks[0]
+    assert f"<@{ME}> (besitzer)" in chunks[0]
