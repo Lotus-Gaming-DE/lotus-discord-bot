@@ -121,3 +121,28 @@ async def dev_emojis(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(chunks[0], ephemeral=True)
     for chunk in chunks[1:]:
         await interaction.followup.send(chunk, ephemeral=True)
+
+
+@dev_group.command(
+    name="forever-report",
+    description="Offi-Sync-Report WoW Forever jetzt in #wow-logs posten",
+)
+@owner_only()
+async def dev_forever_report(interaction: discord.Interaction) -> None:
+    cog = interaction.client.get_cog("ForeverCog")
+    if cog is None:
+        await interaction.response.send_message(
+            "ForeverCog ist nicht geladen.", ephemeral=True
+        )
+        return
+    await interaction.response.defer(ephemeral=True, thinking=True)
+    snapshot = await cog.sync()
+    if snapshot is None:
+        await interaction.followup.send(
+            "Lotus Link nicht erreichbar, kein Report.", ephemeral=True
+        )
+        return
+    posted = await cog.post_report(snapshot)
+    await interaction.followup.send(
+        f"Report gepostet ({posted} Nachricht(en)).", ephemeral=True
+    )
