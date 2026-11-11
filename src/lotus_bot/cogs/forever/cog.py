@@ -505,11 +505,13 @@ class ForeverCog(ManagedTaskCog):
         return guild if hasattr(guild, "get_role") else None
 
     def who(self, user_id: int) -> str:
-        """Erwähnung plus Name. Discord zeigt Erwähnungen nur für Nutzer, die
-        die App des Betrachters gerade geladen hat, alle anderen als
-        „@unknown-user“. Der Name dahinter bleibt immer lesbar."""
+        """Erwähnung plus Discord-Nutzername (nicht der änderbare Anzeigename).
+
+        Discord zeigt Erwähnungen nur für Nutzer, die die App des Betrachters
+        gerade geladen hat, alle anderen als „@unknown-user“. Der Name dahinter
+        bleibt immer lesbar."""
         member = self._member(user_id)
-        name = getattr(member, "display_name", None) or getattr(member, "name", None)
+        name = getattr(member, "name", None)
         if not name:
             return mention(user_id)
         name = discord.utils.escape_mentions(discord.utils.escape_markdown(name))
