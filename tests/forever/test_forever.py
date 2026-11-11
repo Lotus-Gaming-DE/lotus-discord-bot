@@ -550,28 +550,23 @@ def test_new_char_without_main_rank_becomes_the_member_char():
     assert "**Member**" in advice
 
 
-async def test_mentions_are_sent_silently_then_resolved_by_an_edit(world):
+async def test_lists_add_the_name_because_discord_hides_unloaded_mentions(world):
     cog, bot, registry, guild = world
-    guild.add(ME, CRIMSON_ROLE)
-    guild.add(OTHER, CRIMSON_ROLE)
+    guild.add(ME, CRIMSON_ROLE).display_name = "*Kalmará*"
     registry.members = [member(1, rank=4)]
     snapshot = await registry.snapshot([], 0)
     await cog.post_report(snapshot, T0)
-
-    listed = [m for m in bot.channel.messages if f"<@{ME}>" in m.content]
-    assert listed
+    listed = [m for m in bot.channel.sent if f"<@{ME}>" in m]
+    assert listed and "\\*Kalmará\\*" in listed[0]  # Markdown im Namen bleibt Text
     assert all(k["allowed_mentions"] is forever.NO_PINGS for k in bot.channel.kwargs)
-    for message in listed:
-        (edit,) = message.edits
-        assert edit["content"] == message.content
-        mentions = edit["allowed_mentions"]
-        assert mentions.users is True and mentions.roles is False
-        assert mentions.everyone is False
+    assert cog.who(OTHER) == f"<@{OTHER}>"  # unbekannt: nur die Erwähnung
 
 
-async def test_messages_without_user_mentions_are_not_edited(setup):
-    cog, bot, registry = setup
-    registry.members = [member(1, rank=4, name="Ohneclaim")]
+async def test_report_names_the_owner_next_to_the_mention(world):
+    cog, bot, registry, guild = world
+    guild.add(ME).display_name = "Besitzer"
+    registry.linked = [char(1)]
+    registry.members = [member(1, rank=CRIMSON_LAYOUT.initiate, name="Neu")]
     snapshot = await registry.snapshot([], 0)
-    await cog.post_report(snapshot, T0)
-    assert bot.channel.messages and all(not m.edits for m in bot.channel.messages)
+    chunks = cog.report_chunks(snapshot)
+    assert f"<@{ME}> (Besitzer)" in chunks[0]

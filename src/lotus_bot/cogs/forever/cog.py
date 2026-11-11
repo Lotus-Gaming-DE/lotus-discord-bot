@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -42,6 +43,7 @@ from .logic import (
     link_notice,
     lotus_guild_of,
     milestones_reached,
+    mention,
     ping_text,
     report_sections,
     role_holders,
@@ -66,12 +68,6 @@ PING_INTERVAL = timedelta(hours=1)
 # Wer die Rolle bisher selbst gewählt hat, bekommt so lange Zeit zum Verbinden.
 ROLE_GRACE = timedelta(days=3)
 NO_PINGS = discord.AllowedMentions.none()
-# Für Bearbeitungen: Discord benachrichtigt bei Edits nie, liefert aber die
-# Nutzerdaten der Erwähnungen mit. Ohne die zeigt der Client jeden, den er
-# nicht geladen hat, als „@unknown-user“ an.
-RESOLVE_USERS = discord.AllowedMentions(
-    everyone=False, users=True, roles=False, replied_user=False
-)
 
 
 class ForeverCog(ManagedTaskCog):
@@ -398,7 +394,7 @@ class ForeverCog(ManagedTaskCog):
                         removed.append(member.id)
             if granted or removed:
                 changes[guild.slug] = (granted, removed)
-                await self._send([role_change_text(guild, granted, removed)])
+                await self._send([role_change_text(guild, granted, removed, self.who)])
         return changes
 
     async def _change_role(self, member, role, *, add: bool) -> bool:
@@ -493,7 +489,7 @@ class ForeverCog(ManagedTaskCog):
         await interaction.response.edit_message(
             content=f"{message.content}\n✅ {verb} von <@{interaction.user.id}>",
             view=None,
-            allowed_mentions=RESOLVE_USERS,
+            allowed_mentions=NO_PINGS,
         )
 
     # -------------------------------------------------------------- discord
@@ -507,6 +503,17 @@ class ForeverCog(ManagedTaskCog):
                 return guild
         guild = getattr(self.bot, "main_guild", None)
         return guild if hasattr(guild, "get_role") else None
+
+    def who(self, user_id: int) -> str:
+        """Erwähnung plus Name. Discord zeigt Erwähnungen nur für Nutzer, die
+        die App des Betrachters gerade geladen hat, alle anderen als
+        „@unknown-user“. Der Name dahinter bleibt immer lesbar."""
+        member = self._member(user_id)
+        name = getattr(member, "display_name", None) or getattr(member, "name", None)
+        if not name:
+            return mention(user_id)
+        name = discord.utils.escape_mentions(discord.utils.escape_markdown(name))
+        return f"{mention(user_id)} ({name})"
 
     def _member(self, user_id: int):
         guild = self._main_guild()
@@ -560,7 +567,7 @@ class ForeverCog(ManagedTaskCog):
                 continue
             members = [m for m in snapshot.members if m.guild_slug == guild.slug]
             report = build_report(guild, members, owner_of)
-            sections.extend(report_sections(report))
+            sections.extend(report_sections(report, self.who))
         sections.extend(extra or [])
         if not sections:
             return []
@@ -609,7 +616,7 @@ class ForeverCog(ManagedTaskCog):
                     (
                         f"{guild.icon} **{guild.name}: Rolle ohne verbundenen Char**, "
                         f"wird ab {day} entfernt. Bitte per Battle.net verbinden lassen:",
-                        [", ".join(f"<@{uid}>" for uid in without)],
+                        [", ".join(self.who(uid) for uid in without)],
                     )
                 )
         return sections
@@ -635,7 +642,6 @@ class ForeverCog(ManagedTaskCog):
         except (discord.Forbidden, discord.HTTPException) as exc:
             logger.warning("[ForeverCog] Meldung nicht gesendet: %s", exc)
             return
-        await self._resolve_mentions(message)
         await self.store.add_notice(message.id, kind, guild.slug, label, stamp)
 
     async def _channel(self):
@@ -653,28 +659,12 @@ class ForeverCog(ManagedTaskCog):
         posted = 0
         for chunk in chunks:
             try:
-                message = await channel.send(chunk, allowed_mentions=NO_PINGS)
+                await channel.send(chunk, allowed_mentions=NO_PINGS)
             except (discord.Forbidden, discord.HTTPException) as exc:
                 logger.warning("[ForeverCog] Meldung nicht gesendet: %s", exc)
                 break
             posted += 1
-            await self._resolve_mentions(message)
         return posted
-
-    @staticmethod
-    async def _resolve_mentions(message) -> None:
-        """Ohne Ping senden, dann unverändert bearbeiten (``RESOLVE_USERS``).
-
-        Erst durch die Bearbeitung kennt Discord die erwähnten Nutzer, und
-        jeder Client zeigt Namen statt „@unknown-user“. Bearbeitungen lösen
-        keine Benachrichtigung aus. Klappt das nicht, bleibt die Meldung lesbar.
-        """
-        if "<@" not in (getattr(message, "content", None) or ""):
-            return
-        try:
-            await message.edit(content=message.content, allowed_mentions=RESOLVE_USERS)
-        except (discord.Forbidden, discord.HTTPException) as exc:
-            logger.warning("[ForeverCog] Erwähnungen nicht aufgelöst: %s", exc)
 
     async def cog_unload(self) -> None:
         super().cog_unload()
@@ -691,15 +681,18 @@ def may_handle(user, guild: ForeverGuild) -> bool:
 
 
 def role_change_text(
-    guild: ForeverGuild, granted: list[int], removed: list[int]
+    guild: ForeverGuild,
+    granted: list[int],
+    removed: list[int],
+    name_of: Callable[[int], str] = mention,
 ) -> str:
     lines = [f"{guild.tag} · 🎭 Gildenrolle"]
     if granted:
-        lines.append("Vergeben: " + ", ".join(f"<@{uid}>" for uid in granted))
+        lines.append("Vergeben: " + ", ".join(name_of(uid) for uid in granted))
     if removed:
         lines.append(
             "Entfernt (kein verbundener Char mehr in der Gilde): "
-            + ", ".join(f"<@{uid}>" for uid in removed)
+            + ", ".join(name_of(uid) for uid in removed)
         )
     return "\n".join(lines)
 
