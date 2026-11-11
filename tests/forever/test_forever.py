@@ -283,9 +283,13 @@ async def test_setup_without_database_url_adds_nothing(monkeypatch):
 
 
 def test_guilds_without_agreed_ranks_get_no_report():
-    guild = GUILDS_BY_SLUG["silent-lotus"]
-    report = build_report(guild, [member(1, rank=2, guild="silent-lotus")], {})
+    guild = forever.ForeverGuild("neu", "Neu", 1, "🤍")
+    report = build_report(guild, [member(1, rank=2, guild="neu")], {})
     assert report.empty and guild.rank_name(0) == "Rang 1"
+
+
+def test_silent_lotus_uses_the_shared_rank_names():
+    assert GUILDS_BY_SLUG["silent-lotus"].rank_name(5) == "Twink"
 
 
 # ------------------------------------------------- Rollen, Meldungen, Pings

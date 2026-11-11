@@ -74,7 +74,9 @@ class ForeverGuild:
 
 
 GUILDS: tuple[ForeverGuild, ...] = (
-    ForeverGuild("silent-lotus", "Silent Lotus", 1556277083880038501, "🩷"),
+    ForeverGuild(
+        "silent-lotus", "Silent Lotus", 1556277083880038501, "🩷", CRIMSON_LAYOUT
+    ),
     ForeverGuild(
         "crimson-lotus", "Crimson Lotus", 1556276890853965884, "❤️", CRIMSON_LAYOUT
     ),
