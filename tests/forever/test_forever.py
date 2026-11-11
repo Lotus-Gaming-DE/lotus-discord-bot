@@ -71,6 +71,10 @@ class FakeMessage:
     def __init__(self, message_id, content):
         self.id = message_id
         self.content = content
+        self.edits = []
+
+    async def edit(self, **kwargs):
+        self.edits.append(kwargs)
 
 
 class FakeChannel:
@@ -79,11 +83,14 @@ class FakeChannel:
     def __init__(self):
         self.sent = []
         self.kwargs = []
+        self.messages = []
 
     async def send(self, content, **kwargs):
         self.sent.append(content)
         self.kwargs.append(kwargs)
-        return FakeMessage(len(self.sent), content)
+        message = FakeMessage(len(self.sent), content)
+        self.messages.append(message)
+        return message
 
 
 class FakeBot:
@@ -541,3 +548,30 @@ def test_new_char_without_main_rank_becomes_the_member_char():
         assert "**Member**" in advice
     advice = _advice(link_notice(char(1), crimson, None))
     assert "**Member**" in advice
+
+
+async def test_mentions_are_sent_silently_then_resolved_by_an_edit(world):
+    cog, bot, registry, guild = world
+    guild.add(ME, CRIMSON_ROLE)
+    guild.add(OTHER, CRIMSON_ROLE)
+    registry.members = [member(1, rank=4)]
+    snapshot = await registry.snapshot([], 0)
+    await cog.post_report(snapshot, T0)
+
+    listed = [m for m in bot.channel.messages if f"<@{ME}>" in m.content]
+    assert listed
+    assert all(k["allowed_mentions"] is forever.NO_PINGS for k in bot.channel.kwargs)
+    for message in listed:
+        (edit,) = message.edits
+        assert edit["content"] == message.content
+        mentions = edit["allowed_mentions"]
+        assert mentions.users is True and mentions.roles is False
+        assert mentions.everyone is False
+
+
+async def test_messages_without_user_mentions_are_not_edited(setup):
+    cog, bot, registry = setup
+    registry.members = [member(1, rank=4, name="Ohneclaim")]
+    snapshot = await registry.snapshot([], 0)
+    await cog.post_report(snapshot, T0)
+    assert bot.channel.messages and all(not m.edits for m in bot.channel.messages)
