@@ -7,6 +7,7 @@ Fortschritt nach dem Verbinden: Beim ersten Sehen merkt sich der Bot die Stufe
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from .registry import GuildMember, LinkedCharacter
@@ -233,7 +234,14 @@ def build_report(
     return report
 
 
-def report_sections(report: GuildReport) -> list[tuple[str | None, list[str]]]:
+def mention(user_id: int) -> str:
+    return f"<@{user_id}>"
+
+
+def report_sections(
+    report: GuildReport, name_of: Callable[[int], str] = mention
+) -> list[tuple[str | None, list[str]]]:
+    """``name_of`` macht aus einer Discord-ID den angezeigten Text."""
     guild = report.guild
     sections: list[tuple[str | None, list[str]]] = []
     if report.unlinked_ranked:
@@ -253,7 +261,7 @@ def report_sections(report: GuildReport) -> list[tuple[str | None, list[str]]]:
                 f"{guild.icon} **{guild.name}: verbunden, aber noch Initiate**, auf Twink/Member "
                 "hochstufen (NICHT kicken!):",
                 [
-                    f"- **{m.name}** (Level {m.level}) - <@{owner}>"
+                    f"- **{m.name}** (Level {m.level}) - {name_of(owner)}"
                     for m, owner in report.linked_initiates
                 ],
             )
@@ -264,7 +272,7 @@ def report_sections(report: GuildReport) -> list[tuple[str | None, list[str]]]:
                 f"{guild.icon} **{guild.name}: Twink/Bank ohne Main**, höchsten Char (zuerst "
                 "gelistet) zum Member befördern:",
                 [
-                    f"- <@{owner}>: "
+                    f"- {name_of(owner)}: "
                     + ", ".join(
                         f"**{m.name}** ({guild.rank_name(m.rank)}, Level {m.level})"
                         for m in chars
@@ -279,7 +287,7 @@ def report_sections(report: GuildReport) -> list[tuple[str | None, list[str]]]:
                 f"{guild.icon} **{guild.name}: mehr als ein Main-Char**, nur einer soll Member+ "
                 "sein, Rest auf Twink:",
                 [
-                    f"- <@{owner}>: "
+                    f"- {name_of(owner)}: "
                     + ", ".join(
                         f"**{m.name}** ({guild.rank_name(m.rank)})" for m in chars
                     )
