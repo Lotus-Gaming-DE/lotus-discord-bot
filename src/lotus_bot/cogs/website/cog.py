@@ -1,9 +1,13 @@
 """Meldet der Website lotusgaming.de die Discord-Zahlen.
 
-Übertragen werden nur drei Zahlen: Menschen (keine Bots) in allen Sprach- und
+Übertragen werden drei Zahlen: Menschen (keine Bots) in allen Sprach- und
 Stage-Kanälen außer dem AFK-Kanal, Mitglieder gesamt und Mitglieder online.
-Keine Namen, keine IDs. Discord drosselt Abfragen von Cloudflare aus, deshalb
-liefert der Bot auch Mitglieder- und Online-Zahl.
+Discord drosselt Abfragen von Cloudflare aus, deshalb liefert der Bot auch
+Mitglieder- und Online-Zahl.
+
+Dazu kommen Spieler-Gruppen für die Aktivitätsquote der Forever-Gilden: welche
+Chars (aus Lotus Link) zum selben Spieler gehören. Übertragen werden nur
+Kurzschlüssel der Charakter-IDs, keine Namen und keine Discord-IDs.
 """
 
 from __future__ import annotations
@@ -21,6 +25,8 @@ from lotus_bot.utils.managed_cog import ManagedTaskCog
 logger = get_logger(__name__)
 
 DEFAULT_URL = "https://lotusgaming.de/api/voice"
+MAX_GROUPS = 5000
+MAX_GROUP_SIZE = 50
 INTERVAL_SECONDS = 5 * 60
 
 
@@ -35,6 +41,42 @@ def count_voice(guild: discord.Guild) -> int:
         for member in channel.members
         if not member.bot
     )
+
+
+def char_key(character_id: int) -> str:
+    """Kurzschlüssel einer Charakter-ID, gleich wie charKey() der Website (FNV-1a, base36)."""
+    h = 0x811C9DC5
+    for ch in str(character_id):
+        h ^= ord(ch)
+        h = (h * 0x01000193) & 0xFFFFFFFF
+    digits = "0123456789abcdefghijklmnopqrstuvwxyz"
+    out = ""
+    while True:
+        h, r = divmod(h, 36)
+        out = digits[r] + out
+        if h == 0:
+            return out
+
+
+def player_groups(snapshot) -> list[list[str]]:
+    """Chars je Spieler (Discord-Konto), die in einer unserer Gildenlisten stehen.
+
+    Nur Spieler mit mindestens zwei Chars; ein einzelner Char zählt auf der
+    Website ohnehin als eigener Spieler.
+    """
+    if snapshot is None:
+        return []
+    in_roster = {m.blizzard_id for m in snapshot.members}
+    by_user: dict[int, set[str]] = {}
+    for char in snapshot.linked:
+        if char.blizzard_id in in_roster:
+            by_user.setdefault(char.discord_user_id, set()).add(
+                char_key(char.blizzard_id)
+            )
+    groups = sorted(
+        sorted(keys)[:MAX_GROUP_SIZE] for keys in by_user.values() if len(keys) >= 2
+    )
+    return groups[:MAX_GROUPS]
 
 
 class WebsiteCog(ManagedTaskCog):
@@ -53,14 +95,20 @@ class WebsiteCog(ManagedTaskCog):
         self.create_task(self._loop())
 
     async def report(
-        self, count: int, members: int | None = None, online: int | None = None
+        self,
+        count: int,
+        members: int | None = None,
+        online: int | None = None,
+        groups: list[list[str]] | None = None,
     ) -> bool:
         """Schickt die Zahlen an die Website. Gibt True bei Erfolg zurück."""
-        payload: dict[str, int] = {"count": count}
+        payload: dict[str, object] = {"count": count}
         if members is not None:
             payload["members"] = members
         if online is not None:
             payload["online"] = online
+        if groups:
+            payload["groups"] = groups
         try:
             timeout = aiohttp.ClientTimeout(total=10)
             async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -82,7 +130,9 @@ class WebsiteCog(ManagedTaskCog):
         if guild is None:
             return False
         members, online = await self.member_counts(guild)
-        return await self.report(count_voice(guild), members, online)
+        forever = self.bot.get_cog("ForeverCog")
+        groups = player_groups(getattr(forever, "_last_snapshot", None))
+        return await self.report(count_voice(guild), members, online, groups)
 
     async def member_counts(
         self, guild: discord.Guild
