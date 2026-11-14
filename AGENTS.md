@@ -33,7 +33,7 @@ src/lotus_bot/
     ptcgp/              Pokémon TCG Pocket
     backup/             Daily backup, weekly also to Discord
     dev/                Owner-only helper commands
-    website/            Reports the voice channel head count to lotusgaming.de every 5 min
+    website/            Reports voice head count, member and online count to lotusgaming.de every 5 min
                         (only when WEBSITE_VOICE_TOKEN is set)
 data/
   wow/classic_hc/       Static Classic HC data (items.json, instance_drops.json, …)

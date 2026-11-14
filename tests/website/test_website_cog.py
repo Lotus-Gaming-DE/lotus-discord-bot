@@ -18,6 +18,8 @@ def channel(cid, members):
 
 def guild(voice, stage=(), afk=None):
     return SimpleNamespace(
+        id=1,
+        member_count=1400,
         voice_channels=list(voice),
         stage_channels=list(stage),
         afk_channel=afk,
@@ -43,10 +45,19 @@ def test_count_voice_empty():
 
 
 class FakeBot:
-    def __init__(self, g):
+    def __init__(self, g, counts=(1412, 230)):
         self.main_guild_id = 1
         self._g = g
+        self._counts = counts
         self.added = []
+
+    async def fetch_guild(self, gid, with_counts=False):
+        if self._counts is None:
+            raise OSError("Discord nicht erreichbar")
+        members, online = self._counts
+        return SimpleNamespace(
+            approximate_member_count=members, approximate_presence_count=online
+        )
 
     def get_guild(self, gid):
         return self._g
@@ -62,15 +73,31 @@ class FakeBot:
 async def test_report_once_sends_count(monkeypatch):
     sent = []
 
-    async def fake_report(self, count):
-        sent.append(count)
+    async def fake_report(self, count, members=None, online=None):
+        sent.append((count, members, online))
         return True
 
     monkeypatch.setattr(website.WebsiteCog, "report", fake_report)
     monkeypatch.setattr(website.WebsiteCog, "_loop", lambda self: asyncio.sleep(0))
     cog = website.WebsiteCog(FakeBot(guild([channel(1, [member(), member()])])), "t")
     assert await cog.report_once() is True
-    assert sent == [2]
+    assert sent == [(2, 1412, 230)]
+    cog.cog_unload()
+
+
+@pytest.mark.asyncio
+async def test_report_once_falls_back_to_cached_member_count(monkeypatch):
+    sent = []
+
+    async def fake_report(self, count, members=None, online=None):
+        sent.append((count, members, online))
+        return True
+
+    monkeypatch.setattr(website.WebsiteCog, "report", fake_report)
+    monkeypatch.setattr(website.WebsiteCog, "_loop", lambda self: asyncio.sleep(0))
+    cog = website.WebsiteCog(FakeBot(guild([]), counts=None), "t")
+    assert await cog.report_once() is True
+    assert sent == [(0, 1400, None)]
     cog.cog_unload()
 
 
@@ -130,6 +157,8 @@ async def test_report_status_codes(monkeypatch):
     cog = website.WebsiteCog(FakeBot(None), "geheim", url="https://x/api/voice")
     assert await cog.report(5) is True
     assert calls[0][1] == {"count": 5}
+    assert await cog.report(5, members=1412, online=230) is True
+    assert calls[1][1] == {"count": 5, "members": 1412, "online": 230}
     assert calls[0][2]["Authorization"] == "Bearer geheim"
     Session.status = 401
     assert await cog.report(5) is False
