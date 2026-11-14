@@ -62,6 +62,9 @@ class FakeBot:
     def get_guild(self, gid):
         return self._g
 
+    def get_cog(self, name):
+        return getattr(self, "cogs", {}).get(name)
+
     async def wait_until_ready(self):
         return None
 
@@ -73,7 +76,7 @@ class FakeBot:
 async def test_report_once_sends_count(monkeypatch):
     sent = []
 
-    async def fake_report(self, count, members=None, online=None):
+    async def fake_report(self, count, members=None, online=None, groups=None):
         sent.append((count, members, online))
         return True
 
@@ -89,7 +92,7 @@ async def test_report_once_sends_count(monkeypatch):
 async def test_report_once_falls_back_to_cached_member_count(monkeypatch):
     sent = []
 
-    async def fake_report(self, count, members=None, online=None):
+    async def fake_report(self, count, members=None, online=None, groups=None):
         sent.append((count, members, online))
         return True
 
@@ -160,6 +163,8 @@ async def test_report_status_codes(monkeypatch):
     assert await cog.report(5, members=1412, online=230) is True
     assert calls[1][1] == {"count": 5, "members": 1412, "online": 230}
     assert calls[0][2]["Authorization"] == "Bearer geheim"
+    assert await cog.report(5, groups=[["a", "b"]]) is True
+    assert calls[2][1]["groups"] == [["a", "b"]]
     Session.status = 401
     assert await cog.report(5) is False
     cog.cog_unload()
@@ -198,3 +203,45 @@ async def test_setup_with_token_registers(monkeypatch):
     await website.setup(bot)
     assert len(bot.added) == 1
     bot.added[0].cog_unload()
+
+
+def test_char_key_matches_website():
+    # Gleiche Werte wie charKey() in lotus-website/src/activity.js
+    assert website.char_key(123456789) == "1g159ng"
+    assert website.char_key(1) == "efwnq4"
+
+
+def snap(linked, roster):
+    return SimpleNamespace(
+        linked=[SimpleNamespace(blizzard_id=b, discord_user_id=u) for b, u in linked],
+        members=[SimpleNamespace(blizzard_id=b) for b in roster],
+    )
+
+
+def test_player_groups_only_players_with_several_chars_in_our_guilds():
+    s = snap([(1, 10), (2, 10), (3, 20), (4, 30), (5, 30)], roster=[1, 2, 3, 4])
+    # Spieler 10: zwei Chars; Spieler 20: nur einer; Spieler 30: zweiter Char nicht in der Gilde
+    assert website.player_groups(s) == [
+        sorted([website.char_key(1), website.char_key(2)])
+    ]
+    assert website.player_groups(None) == []
+
+
+@pytest.mark.asyncio
+async def test_report_once_sends_player_groups(monkeypatch):
+    sent = []
+
+    async def fake_report(self, count, members=None, online=None, groups=None):
+        sent.append(groups)
+        return True
+
+    monkeypatch.setattr(website.WebsiteCog, "report", fake_report)
+    monkeypatch.setattr(website.WebsiteCog, "_loop", lambda self: asyncio.sleep(0))
+    bot = FakeBot(guild([]))
+    bot.cogs = {
+        "ForeverCog": SimpleNamespace(_last_snapshot=snap([(1, 9), (2, 9)], [1, 2]))
+    }
+    cog = website.WebsiteCog(bot, "t")
+    await cog.report_once()
+    assert len(sent[0]) == 1 and len(sent[0][0]) == 2
+    cog.cog_unload()
