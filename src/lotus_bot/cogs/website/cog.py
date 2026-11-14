@@ -1,7 +1,8 @@
-"""Meldet der Website lotusgaming.de, wie viele Leute gerade im Voice sind.
+"""Meldet der Website lotusgaming.de die Live-Zahlen des Servers.
 
-Es wird nur eine einzige Zahl übertragen: die Anzahl der Menschen (keine Bots)
-in allen Sprach- und Stage-Kanälen außer dem AFK-Kanal. Keine Namen, keine IDs.
+Übertragen werden nur drei Zahlen: Menschen im Voice (keine Bots, ohne AFK-Kanal),
+Mitglieder gesamt und gerade online. Keine Namen, keine IDs.
+Die Website fragt Discord nicht selbst, weil Discord Cloudflare-Server drosselt.
 """
 
 from __future__ import annotations
@@ -50,14 +51,21 @@ class WebsiteCog(ManagedTaskCog):
         self.interval = interval
         self.create_task(self._loop())
 
-    async def report(self, count: int) -> bool:
-        """Schickt die Zahl an die Website. Gibt True bei Erfolg zurück."""
+    async def report(
+        self, count: int, members: int | None = None, online: int | None = None
+    ) -> bool:
+        """Schickt die Zahlen an die Website. Gibt True bei Erfolg zurück."""
+        payload = {"count": count}
+        if members is not None:
+            payload["members"] = members
+        if online is not None:
+            payload["online"] = online
         try:
             timeout = aiohttp.ClientTimeout(total=10)
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.post(
                     self.url,
-                    json={"count": count},
+                    json=payload,
                     headers={"Authorization": f"Bearer {self.token}"},
                 ) as resp:
                     if resp.status != 200:
@@ -72,7 +80,22 @@ class WebsiteCog(ManagedTaskCog):
         guild = self.bot.get_guild(self.bot.main_guild_id)
         if guild is None:
             return False
-        return await self.report(count_voice(guild))
+        members, online = await self.server_counts(guild)
+        return await self.report(count_voice(guild), members, online)
+
+    async def server_counts(
+        self, guild: discord.Guild
+    ) -> tuple[int | None, int | None]:
+        """Mitglieder und Online-Zahl. Online gibt es nur über einen REST-Abruf."""
+        members = guild.member_count
+        online = None
+        try:
+            fresh = await self.bot.fetch_guild(guild.id, with_counts=True)
+            members = fresh.approximate_member_count or members
+            online = fresh.approximate_presence_count
+        except Exception as exc:  # Zahlen sind nett, aber nie wichtig genug für Fehler
+            logger.warning("[WebsiteCog] Server-Zahlen nicht abrufbar: %s", exc)
+        return members, online
 
     async def _loop(self) -> None:
         await self.bot.wait_until_ready()
