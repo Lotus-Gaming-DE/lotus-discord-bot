@@ -429,3 +429,103 @@ def ping_text(
     if open_total > len(rows):
         lines.append(f"-# Insgesamt offen: {open_total}")
     return "\n".join(lines)
+
+
+def daily_sections(
+    guild: ForeverGuild,
+    events: list,
+    roster_size: int,
+    linked_count: int,
+    name_of: Callable[[int], str] = mention,
+) -> list[tuple[str | None, list[str]]]:
+    """Tagesbericht einer Gilde für den Daily-Report-Kanal.
+
+    ``events`` sind die ``DailyEvent`` seit dem letzten Bericht. Ohne Ereignis
+    gibt es keinen Bericht (leere Liste), damit der Kanal ruhig bleibt.
+    """
+    if not events:
+        return []
+
+    def tail(user_id: int | None, points: int = 0) -> str:
+        if user_id is None:
+            return ""
+        bonus = f" (+{points} Champion-Punkte)" if points else ""
+        return f" - {name_of(user_id)}{bonus}"
+
+    head = [f"{guild.tag} · 📰 **Tagesbericht**"]
+    if roster_size:
+        head.append(
+            f"-# {roster_size} Chars in der Gilde, {linked_count} davon "
+            "per Lotus Link verbunden"
+        )
+    sections: list[tuple[str | None, list[str]]] = [(None, head)]
+
+    joined = sorted(
+        (e for e in events if e.kind == "joined"),
+        key=lambda e: (-e.value, e.name.casefold()),
+    )
+    if joined:
+        sections.append(
+            (
+                "**Herzlich willkommen in der Gilde** 👋",
+                [
+                    f"- **{e.name}** (Level {e.value}"
+                    + (f" {e.detail}" if e.detail else "")
+                    + ")"
+                    + tail(e.discord_user_id)
+                    for e in joined
+                ],
+            )
+        )
+
+    linked = sorted(
+        (e for e in events if e.kind == "link"), key=lambda e: e.name.casefold()
+    )
+    if linked:
+        sections.append(
+            (
+                "**Neu mit Lotus Link verbunden** 🔗",
+                [f"- **{e.name}**{tail(e.discord_user_id)}" for e in linked],
+            )
+        )
+
+    # Mehrere Meilensteine eines Chars in einer Zeile, Punkte zusammengezählt.
+    levels: dict[tuple[str, int | None], list] = {}
+    for e in events:
+        if e.kind == "level":
+            levels.setdefault((e.name, e.discord_user_id), []).append(e)
+    if levels:
+        rows = sorted(
+            (
+                (max(x.value for x in group), sum(x.points for x in group), name, uid)
+                for (name, uid), group in levels.items()
+            ),
+            key=lambda row: (-row[0], row[2].casefold()),
+        )
+        sections.append(
+            (
+                "**Glückwunsch zu diesen Meilensteinen** 🏆",
+                [
+                    f"- **{name}** hat Level **{level}** erreicht{tail(uid, pts)}"
+                    for level, pts, name, uid in rows
+                ],
+            )
+        )
+
+    runs: dict[int, list] = {}
+    for e in events:
+        if e.kind == "run" and e.discord_user_id is not None:
+            runs.setdefault(e.discord_user_id, []).append(e)
+    if runs:
+        lines = []
+        for uid, group in sorted(runs.items(), key=lambda item: -len(item[1])):
+            led = sum(1 for e in group if e.value)
+            count = "1 Run" if len(group) == 1 else f"{len(group)} Runs"
+            if led:
+                count += f", davon {led} geleitet"
+            pts = sum(e.points for e in group)
+            lines.append(
+                f"- {name_of(uid)}: {count} (+{pts} Champion-Punkte)",
+            )
+        sections.append(("**Dungeon-Runs mit Lotus Link** ⚔️", lines))
+    return sections

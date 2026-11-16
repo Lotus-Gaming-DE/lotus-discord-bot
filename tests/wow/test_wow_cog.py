@@ -3974,6 +3974,7 @@ async def test_prune_departed_claims_no_guild_is_safe(tmp_path, patch_logged_tas
 @pytest.mark.asyncio
 async def test_on_member_remove_drops_claims(tmp_path, patch_logged_task, monkeypatch):
     monkeypatch.setattr(wow_cog_mod.discord, "Guild", FakeGuild)
+    monkeypatch.setattr(wow_cog_mod, "BLACK_LOTUS_ACTIVE", True)
     officer = DummyChannel()
     bot = MultiChannelBot(public_channel=None, officer_channel=officer)
     patch_logged_task(wow_cog_mod, log_setup)
@@ -3994,6 +3995,40 @@ async def test_on_member_remove_drops_claims(tmp_path, patch_logged_task, monkey
 
     assert await cog.data.claims_for_user(500) == []
     assert "Verlassen" in "\n".join(sent[0] for sent in officer.sent)
+
+
+@pytest.mark.asyncio
+async def test_black_lotus_inactive_stays_silent(
+    tmp_path, patch_logged_task, monkeypatch
+):
+    """Black Lotus is dead: no claim pruning, no digest scan, no role sync."""
+    monkeypatch.setattr(wow_cog_mod, "BLACK_LOTUS_ACTIVE", False)
+    officer = DummyChannel()
+    bot = MultiChannelBot(public_channel=None, officer_channel=officer)
+    bot.wait_until_ready = AsyncMock()
+    patch_logged_task(wow_cog_mod, log_setup)
+    cog = WoWCog(bot)
+    cog.data = WoWData(str(tmp_path / "wow.db"))
+    CREATED_COGS.append(cog)
+    char = ranked("id:1", "Verlassen", 4)
+    await cog.data.replace_snapshot([char])
+    await _verify(cog, char, 500)
+    cog.bot.main_guild_id = 4242
+    leaving = type("M", (), {"id": 500, "guild": type("G", (), {"id": 4242})()})()
+
+    await cog.on_member_remove(leaving)
+    cog.sync_guild_role = AsyncMock()
+    cog._run_scheduled_digest = AsyncMock()
+    cog._auto_publish_panel = AsyncMock()
+    cog._auto_publish_dungeons_guide = AsyncMock()
+    cog._startup_health_check = AsyncMock()
+    await cog._roster_refresh_loop()
+    await cog._poll_loop()
+
+    assert len(await cog.data.claims_for_user(500)) == 1
+    assert officer.sent == []
+    cog.sync_guild_role.assert_not_awaited()
+    cog._run_scheduled_digest.assert_not_awaited()
 
 
 async def _main_died_cog(tmp_path, patch_logged_task):

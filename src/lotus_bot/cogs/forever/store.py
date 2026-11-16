@@ -3,7 +3,7 @@
 Gespeichert wird nur, was Punkte und Meldungen brauchen: Ausgangsstand je
 verbundenem Char, welche Punkte schon vergeben sind, die zuletzt gesehene
 Gildenliste (für Austritte), die Meldungen in #wow-logs (für Button und Ping)
-und wer den Discord verlassen hat. Verschwindet ein Char aus Lotus Link oder
+wer den Discord verlassen hat und was seit dem letzten Tagesbericht passiert ist. Verschwindet ein Char aus Lotus Link oder
 aus den Lotus-Gilden, wird sein Stand gelöscht.
 """
 
@@ -16,6 +16,24 @@ from dataclasses import dataclass
 import aiosqlite
 
 from .registry import GuildMember
+
+
+@dataclass(frozen=True)
+class DailyEvent:
+    """Etwas für den Tagesbericht: Beitritt, Verbindung, Meilenstein oder Run.
+
+    ``value`` ist je nach Art die Stufe, der Meilenstein oder 1 für „Run
+    geleitet“. ``discord_user_id`` ist ``None`` bei unverbundenen Chars.
+    """
+
+    event_id: int
+    guild_slug: str
+    kind: str
+    discord_user_id: int | None
+    name: str
+    value: int
+    points: int
+    detail: str = ""
 
 
 @dataclass(frozen=True)
@@ -74,6 +92,17 @@ class ForeverStore:
                     pinged_at TEXT,
                     done_by INTEGER,
                     done_at TEXT
+                );
+                CREATE TABLE IF NOT EXISTS daily_events (
+                    event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    guild_slug TEXT NOT NULL,
+                    kind TEXT NOT NULL,
+                    discord_user_id INTEGER,
+                    name TEXT NOT NULL,
+                    value INTEGER NOT NULL,
+                    points INTEGER NOT NULL,
+                    detail TEXT NOT NULL,
+                    created_at TEXT NOT NULL
                 );
                 CREATE TABLE IF NOT EXISTS departed (
                     discord_user_id INTEGER PRIMARY KEY,
@@ -282,6 +311,48 @@ class ForeverStore:
             await db.executemany(
                 "UPDATE notices SET pinged_at = ? WHERE message_id = ?",
                 [(now, mid) for mid in message_ids],
+            )
+            await db.commit()
+
+    # ------------------------------------------------------- tagesbericht
+
+    async def add_event(
+        self,
+        guild_slug: str,
+        kind: str,
+        discord_user_id: int | None,
+        name: str,
+        value: int,
+        points: int,
+        now: str,
+        detail: str = "",
+    ) -> None:
+        async with self._lock:
+            db = await self._conn()
+            await db.execute(
+                "INSERT INTO daily_events (guild_slug, kind, discord_user_id, name,"
+                " value, points, detail, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (guild_slug, kind, discord_user_id, name, value, points, detail, now),
+            )
+            await db.commit()
+
+    async def pending_events(self, guild_slug: str) -> list[DailyEvent]:
+        """Noch nicht berichtete Ereignisse einer Gilde, älteste zuerst."""
+        db = await self._conn()
+        cur = await db.execute(
+            "SELECT event_id, guild_slug, kind, discord_user_id, name, value, points,"
+            " detail FROM daily_events WHERE guild_slug = ? ORDER BY event_id",
+            (guild_slug,),
+        )
+        return [DailyEvent(*row) for row in await cur.fetchall()]
+
+    async def drop_events(self, event_ids: list[int]) -> None:
+        """Berichtete Ereignisse löschen, damit sie nicht doppelt erscheinen."""
+        async with self._lock:
+            db = await self._conn()
+            await db.executemany(
+                "DELETE FROM daily_events WHERE event_id = ?",
+                [(eid,) for eid in event_ids],
             )
             await db.commit()
 

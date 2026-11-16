@@ -25,7 +25,8 @@ src/lotus_bot/
     forever/            WoW Forever guilds (Silent, Crimson, Golden): reads Battle.net
                         links from Lotus Link, grants/removes the guild roles,
                         #wow-logs notices with buttons, hourly pings, daily rank report,
-                        champion points. No self-pick panel: roles come from links only.
+                        champion points, daily report per guild in the old Black Lotus
+                        digest channel. No self-pick panel: roles come from links only.
     community/          Server-wide info panel in #infos-und-regeln
     champion/           Points and champion roles (data/champion/roles.json)
     quiz/               Quiz (WoW + WCR questions, duels, scheduler)
@@ -58,6 +59,7 @@ wow_crystal_work/       Local scratch, gitignored, not part of the bot
 | Constant | File | State | Why |
 |---|---|---|---|
 | `CLASSIC_PANEL_ENABLED` | `cogs/wow/cog.py` | False | Classic HC guild on hold since the Forever launch |
+| `BLACK_LOTUS_ACTIVE` | `cogs/wow/cog.py` | False | Black Lotus is dead (16.11.2026): no roster scan, daily digest, #wow-logs notes or role sync |
 | `DUNGEONS_GUIDE_ENABLED` | `cogs/wow/cog.py` | False | A separate dungeon bot handles dungeon runs (04.11.2026) |
 | `MARKETPLACE_HUB_ENABLED` | `cogs/wow/marketplace_cog.py` | False | Market hub post switched off (04.11.2026) |
 | `PANEL_LAYOUT` | `cogs/wow/cog.py` | "three-panels-v3" | Bump the string to make the bot delete and repost all hub panels once |
