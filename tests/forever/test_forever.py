@@ -576,3 +576,111 @@ async def test_report_names_the_owner_next_to_the_mention(world):
     snapshot = await registry.snapshot([], 0)
     chunks = cog.report_chunks(snapshot)
     assert f"<@{ME}> (besitzer)" in chunks[0]
+
+
+# ------------------------------------------------------------ tagesbericht
+
+DAILY_ID = 777
+
+
+class FakeWoW:
+    def __init__(self, channel_id=DAILY_ID):
+        self.channel_id = channel_id
+
+    async def get_announcement_channel_id(self):
+        return self.channel_id
+
+    async def get_claim_review_channel_id(self):
+        return forever.DEFAULT_LOG_CHANNEL_ID
+
+
+@pytest.fixture
+async def daily(setup):
+    cog, bot, registry = setup
+    daily_channel = FakeChannel()
+    wow = FakeWoW()
+    bot.get_cog = lambda name: {"ChampionCog": bot.champion, "WoWCog": wow}.get(name)
+    log_channel = bot.channel
+    bot.get_channel = lambda cid: {
+        DAILY_ID: daily_channel,
+        forever.DEFAULT_LOG_CHANNEL_ID: log_channel,
+    }.get(cid)
+    return cog, bot, registry, daily_channel
+
+
+async def test_daily_report_shows_milestone_points_once(daily):
+    cog, bot, registry, channel = daily
+    registry.linked = [char(level=29)]
+    registry.members = [member(level=29), member(cid=2, level=10)]
+    await cog.sync(T0)
+    registry.linked = [char(level=41)]
+    registry.members = [member(level=41), member(cid=2, level=10)]
+    snapshot = await cog.sync(T0 + timedelta(hours=1))
+
+    assert await cog.post_daily(snapshot, T0 + timedelta(hours=2)) == 1
+    text = channel.sent[0]
+    assert "Crimson Lotus" in text and "Char1" in text
+    assert "**40**" in text and "+15" in text  # 30 und 40 in einer Zeile
+    assert "2 Chars" in text and "1 davon" in text
+    assert channel.kwargs[0]["allowed_mentions"] is forever.NO_PINGS
+
+    # gepostet heißt erledigt: am nächsten Tag nichts doppelt
+    assert await cog.post_daily(snapshot, T0 + timedelta(days=1)) == 0
+
+
+async def test_daily_report_greets_new_members_but_not_the_first_roster(daily):
+    cog, bot, registry, channel = daily
+    registry.members = [member(cid=1)]
+    snapshot = await cog.sync(T0)
+    assert await cog.post_daily(snapshot, T0) == 0
+
+    registry.members = [member(cid=1), member(cid=2, level=12, name="Neuling")]
+    snapshot = await cog.sync(T0 + timedelta(hours=1))
+    await cog.post_daily(snapshot, T0 + timedelta(hours=1))
+    assert len(channel.sent) == 1 and "Neuling" in channel.sent[0]
+
+
+async def test_daily_report_lists_new_links_and_runs_in_the_home_guild(daily):
+    cog, bot, registry, channel = daily
+    golden = "golden-lotus"
+    registry.loaded = {CRIMSON, golden}
+    registry.linked = [char(cid=1, level=50), char(cid=2, level=20, guild=golden)]
+    registry.members = [member(cid=1, level=50), member(cid=2, level=20, guild=golden)]
+    await cog.sync(T0)
+    registry.runs = [
+        RunAttendance(1, ME, True, T0 + timedelta(minutes=5)),
+        RunAttendance(2, ME, False, T0 + timedelta(minutes=5)),
+    ]
+    snapshot = await cog.sync(T0 + timedelta(hours=1))
+    await cog.post_daily(snapshot, T0 + timedelta(hours=2))
+
+    crimson = [t for t in channel.sent if "Crimson Lotus" in t]
+    gold = [t for t in channel.sent if "Golden Lotus" in t]
+    assert len(crimson) == 1 and len(gold) == 1
+    assert "2 Runs" in crimson[0] and "+8" in crimson[0]
+    assert "Runs" not in gold[0] and "Char2" in gold[0]
+
+
+async def test_daily_report_keeps_events_when_posting_fails(daily):
+    cog, bot, registry, channel = daily
+    registry.linked = [char()]
+    registry.members = [member()]
+    snapshot = await cog.sync(T0)
+
+    async def broken(content, **kwargs):
+        raise discord.HTTPException(MagicMock(status=500), "down")
+
+    channel.send = broken
+    assert await cog.post_daily(snapshot, T0) == 0
+    assert await cog._report_due(T0 + timedelta(hours=10), key=forever.LAST_DAILY_KEY)
+    assert len(await cog.store.pending_events(CRIMSON)) == 1
+
+
+async def test_daily_report_without_channel_posts_nothing(daily):
+    cog, bot, registry, channel = daily
+    bot.get_cog = lambda name: None
+    registry.linked = [char()]
+    registry.members = [member()]
+    snapshot = await cog.sync(T0)
+    assert await cog.post_daily(snapshot, T0) == 0
+    assert len(await cog.store.pending_events(CRIMSON)) == 1

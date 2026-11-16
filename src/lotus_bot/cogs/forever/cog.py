@@ -11,6 +11,9 @@ verbunden hat, und die Gildenlisten von Silent, Crimson und Golden Lotus.
 * Discord verlassen → Meldung mit Button „Runtergestuft“.
 * Pings an die Gildenrolle höchstens einmal pro Stunde, gesammelt.
 * Täglich um 9 Uhr → Offi-Sync-Report je Gilde (Ränge, die nicht passen).
+* Täglich um 9 Uhr → Tagesbericht je Gilde im Daily-Report-Kanal (derselbe
+  Kanal wie früher der Black-Lotus-Digest): Neuzugänge, neu verbundene Chars,
+  Stufen-Meilensteine und Dungeon-Runs mit Champion-Punkten.
 * Champion-Punkte nur für Fortschritt nach dem Verbinden: Stufen-Meilensteine
   über dem Ausgangsstand und Dungeon-Runs auf diesem Server, die nach dem Start
   dieses Systems stattgefunden haben. Twinks zählen voll.
@@ -38,6 +41,8 @@ from .logic import (
     RUN_POINTS,
     ForeverGuild,
     build_report,
+    class_name,
+    daily_sections,
     discord_left_notice,
     guild_left_notice,
     link_notice,
@@ -61,6 +66,7 @@ BERLIN = ZoneInfo("Europe/Berlin")
 DEFAULT_LOG_CHANNEL_ID = 1544601948169314324
 RUNS_SINCE_KEY = "runs_since"
 LAST_REPORT_KEY = "last_report_date"
+LAST_DAILY_KEY = "last_daily_date"
 LAST_PING_KEY = "last_ping_at"
 ROLE_STRIP_KEY = "role_strip_after"
 # Pings an die Gildenrolle sammeln, damit die Leitung nicht zugespammt wird.
@@ -100,16 +106,20 @@ class ForeverCog(ManagedTaskCog):
                 snapshot = await self.sync()
                 if snapshot is not None and await self._report_due():
                     await self.post_report(snapshot)
+                if snapshot is not None and await self._report_due(key=LAST_DAILY_KEY):
+                    await self.post_daily(snapshot)
                 await self.ping_if_due()
             except Exception as exc:  # eine Runde darf den Bot nie stören
                 logger.warning("[ForeverCog] Abgleich fehlgeschlagen: %s", exc)
             await asyncio.sleep(SYNC_INTERVAL)
 
-    async def _report_due(self, now: datetime | None = None) -> bool:
+    async def _report_due(
+        self, now: datetime | None = None, key: str = LAST_REPORT_KEY
+    ) -> bool:
         local = (now or datetime.now(timezone.utc)).astimezone(BERLIN)
         if local.hour < REPORT_HOUR:
             return False
-        return await self.store.get_setting(LAST_REPORT_KEY) != local.date().isoformat()
+        return await self.store.get_setting(key) != local.date().isoformat()
 
     # ------------------------------------------------------------------ sync
 
@@ -131,6 +141,8 @@ class ForeverCog(ManagedTaskCog):
             tracked = await self.store.tracked()
             links: list[tuple[LinkedCharacter, ForeverGuild, GuildMember | None]] = []
             seen: set[int] = set()
+            # Gilde je Nutzer für den Tagesbericht: die seines höchsten Chars.
+            home: dict[int, tuple[int, str]] = {}
 
             for char in snapshot.linked:
                 guild = lotus_guild_of(char, roster_guild)
@@ -139,6 +151,8 @@ class ForeverCog(ManagedTaskCog):
                 seen.add(char.character_id)
                 member = member_by_id.get(char.blizzard_id)
                 level = max(char.level, member.level if member else 0)
+                if level > home.get(char.discord_user_id, (-1, ""))[0]:
+                    home[char.discord_user_id] = (level, guild.slug)
                 known = tracked.get(char.character_id)
                 if known is None:
                     # Ausgangsstand: was bis jetzt erreicht ist, zählt nicht.
@@ -149,6 +163,7 @@ class ForeverCog(ManagedTaskCog):
                         stamp,
                     )
                     links.append((char, guild, member))
+                    await self._note_link(char, guild, stamp)
                     continue
                 if (known.guild_slug, known.discord_user_id) != (
                     guild.slug,
@@ -164,15 +179,26 @@ class ForeverCog(ManagedTaskCog):
                         stamp,
                     )
                     links.append((char, guild, member))
+                    await self._note_link(char, guild, stamp)
                 for milestone in milestones_reached(known.baseline_level, level):
-                    await self._award(
+                    points = LEVEL_MILESTONE_POINTS[milestone]
+                    if await self._award(
                         "level",
                         f"{char.character_id}:{milestone}",
                         char.discord_user_id,
-                        LEVEL_MILESTONE_POINTS[milestone],
+                        points,
                         f"WoW Forever: {char.name} Level {milestone}",
                         stamp,
-                    )
+                    ):
+                        await self.store.add_event(
+                            guild.slug,
+                            "level",
+                            char.discord_user_id,
+                            char.name,
+                            milestone,
+                            points,
+                            stamp,
+                        )
 
             for character_id in set(tracked) - seen:
                 await self.store.untrack(character_id)
@@ -183,7 +209,7 @@ class ForeverCog(ManagedTaskCog):
                     continue
                 points = RUN_ORGANIZER_POINTS if run.is_organizer else RUN_POINTS
                 role = "geleitet" if run.is_organizer else "gespielt"
-                await self._award(
+                awarded = await self._award(
                     "run",
                     f"{run.run_id}:{run.discord_user_id}",
                     run.discord_user_id,
@@ -191,6 +217,17 @@ class ForeverCog(ManagedTaskCog):
                     f"WoW Forever: Dungeon-Run {role}",
                     stamp,
                 )
+                user_home = home.get(run.discord_user_id)
+                if awarded and user_home is not None:
+                    await self.store.add_event(
+                        user_home[1],
+                        "run",
+                        run.discord_user_id,
+                        "",
+                        int(run.is_organizer),
+                        points,
+                        stamp,
+                    )
 
             departures, absent = await self._check_presence(snapshot, stamp)
             left = await self._roster_changes(snapshot, stamp)
@@ -257,6 +294,20 @@ class ForeverCog(ManagedTaskCog):
                 )
                 continue
             ids = {m.blizzard_id for m in current}
+            if previous:  # erste Liste: alle wären „neu“
+                for m in sorted(current, key=lambda m: m.name.casefold()):
+                    if m.blizzard_id in previous:
+                        continue
+                    await self.store.add_event(
+                        guild.slug,
+                        "joined",
+                        owner_of.get(m.blizzard_id),
+                        m.name,
+                        m.level,
+                        0,
+                        stamp,
+                        detail=class_name(m.class_key),
+                    )
             for blizzard_id, (old, since) in sorted(
                 previous.items(), key=lambda item: item[1][0].name.casefold()
             ):
@@ -533,19 +584,29 @@ class ForeverCog(ManagedTaskCog):
         except discord.HTTPException:
             return True
 
+    async def _note_link(
+        self, char: LinkedCharacter, guild: ForeverGuild, stamp: str
+    ) -> None:
+        await self.store.add_event(
+            guild.slug, "link", char.discord_user_id, char.name, char.level, 0, stamp
+        )
+
     async def _award(
         self, kind: str, key: str, user_id: int, points: int, reason: str, stamp: str
-    ) -> None:
+    ) -> bool:
+        """``True`` nur, wenn die Punkte gerade eben vergeben wurden."""
         champion = self.bot.get_cog("ChampionCog")
         if champion is None:
-            return  # später erneut versuchen, nichts reservieren
+            return False  # später erneut versuchen, nichts reservieren
         if not await self.store.claim_award(kind, key, stamp):
-            return
+            return False
         try:
             await champion.update_user_score(user_id, points, reason)
         except Exception as exc:
             logger.warning("[ForeverCog] Punkte nicht vergeben (%s): %s", key, exc)
             await self.store.release_award(kind, key)
+            return False
+        return True
 
     # ---------------------------------------------------------------- report
 
@@ -590,6 +651,51 @@ class ForeverCog(ManagedTaskCog):
                 return posted  # morgen nicht überspringen, nächste Runde erneut
         await self.store.set_setting(LAST_REPORT_KEY, local.date().isoformat())
         return posted
+
+    async def post_daily(self, snapshot: Snapshot, now: datetime | None = None) -> int:
+        """Tagesbericht je Gilde in den Daily-Report-Kanal.
+
+        Gilden ohne Ereignis seit dem letzten Bericht bleiben still. Was
+        gepostet ist, wird gelöscht. Scheitert ein Post, bleibt der Rest für
+        die nächste Runde liegen.
+        """
+        from lotus_bot.cogs.wow.cog import _pack_digest_sections_into_chunks
+
+        now = now or datetime.now(timezone.utc)
+        channel = await self._daily_channel()
+        if channel is None:
+            logger.warning("[ForeverCog] Daily-Report-Kanal nicht gefunden.")
+            return 0
+        linked_ids = {c.blizzard_id for c in snapshot.linked}
+        posted = 0
+        for guild in GUILDS:
+            events = await self.store.pending_events(guild.slug)
+            members = [m for m in snapshot.members if m.guild_slug == guild.slug]
+            sections = daily_sections(
+                guild,
+                events,
+                len(members),
+                sum(1 for m in members if m.blizzard_id in linked_ids),
+                self.who,
+            )
+            if not sections:
+                continue
+            chunks = _pack_digest_sections_into_chunks(sections)
+            sent = await self._send(chunks, channel)
+            posted += sent
+            if sent < len(chunks):
+                return posted  # nicht abhaken, nächste Runde erneut
+            await self.store.drop_events([e.event_id for e in events])
+        local = now.astimezone(BERLIN)
+        await self.store.set_setting(LAST_DAILY_KEY, local.date().isoformat())
+        return posted
+
+    async def _daily_channel(self):
+        wow = self.bot.get_cog("WoWCog")
+        if wow is None or not hasattr(wow, "get_announcement_channel_id"):
+            return None
+        channel_id = await wow.get_announcement_channel_id()
+        return self.bot.get_channel(channel_id) if channel_id else None
 
     async def _grace_sections(
         self, snapshot: Snapshot, absent: set[int], now: datetime
@@ -653,8 +759,8 @@ class ForeverCog(ManagedTaskCog):
             channel_id = await wow.get_claim_review_channel_id()
         return self.bot.get_channel(channel_id)
 
-    async def _send(self, chunks: list[str]) -> int:
-        channel = await self._channel()
+    async def _send(self, chunks: list[str], channel=None) -> int:
+        channel = channel or await self._channel()
         if channel is None:
             logger.warning("[ForeverCog] Log-Kanal nicht gefunden.")
             return 0

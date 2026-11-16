@@ -61,6 +61,11 @@ PANEL_LAYOUT = "three-panels-v3"
 # The Black Lotus Classic HC guild is on hold (WoW Forever launch). While this
 # is False the Classic hub is not posted and an existing message is removed.
 CLASSIC_PANEL_ENABLED = False
+# Black Lotus is dead (Gerrit, 16.11.2026). While this is False the bot no
+# longer scans the Classic roster: no daily digest, no officer notes or sync
+# report in #wow-logs, no hourly role sync and no claim pruning. The Forever
+# guilds post their own daily report into the same digest channel.
+BLACK_LOTUS_ACTIVE = False
 # Role changes are batched so a rush of clicks edits the counter panel once.
 DEFAULT_DIGEST_HOUR = 9
 # Forum channel where Raid-Helper posts dungeon-run events. Raid-Helper is a
@@ -487,6 +492,8 @@ class WoWCog(ManagedTaskCog):
             await self._startup_health_check()
         except Exception as exc:  # pragma: no cover - defensive logging
             logger.error("[WoWCog] Bot-Check fehlgeschlagen: %s", exc, exc_info=True)
+        if not BLACK_LOTUS_ACTIVE:
+            return
         while True:
             try:
                 if await self._scheduled_digest_due():
@@ -506,6 +513,8 @@ class WoWCog(ManagedTaskCog):
         events, manual role edits, members who left and rejoined).
         """
         await self.bot.wait_until_ready()
+        if not BLACK_LOTUS_ACTIVE:
+            return
         # Reconcile once at startup before entering the hourly cadence so a
         # restart picks up role changes that happened while the bot was down.
         try:
@@ -1570,6 +1579,8 @@ class WoWCog(ManagedTaskCog):
         member's claims the moment they leave the Discord server."""
         main_guild_id = getattr(self.bot, "main_guild_id", None)
         if main_guild_id is not None and member.guild.id != main_guild_id:
+            return
+        if not BLACK_LOTUS_ACTIVE:
             return
         removed = await self._remove_user_claims(member.id)
         if removed:
