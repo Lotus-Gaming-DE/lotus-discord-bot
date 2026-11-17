@@ -2,8 +2,10 @@
 
 Alle zehn Minuten liest der Bot aus Lotus Link, wer welchen Char per Battle.net
 verbunden hat, und die Gildenlisten von Silent, Crimson und Golden Lotus.
+Jede Minute prüft eine kleine Abfrage, ob sich die Verbindungen geändert haben;
+dann läuft der Abgleich sofort, damit die Leitung neue Verbindungen gleich sieht.
 
-* Neue Verbindung → Meldung in #wow-logs mit Button „In Offi-Note eingetragen“.
+* Neue Verbindung → nach etwa einer Minute Meldung in #wow-logs mit Button „In Offi-Note eingetragen“.
   Bestätigen muss niemand mehr, der Login beweist den Besitz.
 * Gildenrolle: Wer einen Char einer Lotus-Gilde verbunden hat, bekommt ihre
   Discord-Rolle. Steht kein verbundener Char mehr in der Gilde, fällt sie weg.
@@ -70,7 +72,9 @@ from .store import ForeverStore, Tracked
 
 logger = get_logger(__name__)
 
-SYNC_INTERVAL = 10 * 60
+SYNC_INTERVAL = timedelta(minutes=10)
+# So oft fragt der Bot nach neuen Verbindungen (nur ein Fingerabdruck).
+CHECK_INTERVAL = 60
 REPORT_HOUR = 9
 BERLIN = ZoneInfo("Europe/Berlin")
 # #wow-logs, derselbe Kanal wie die Claim-Meldungen von Black Lotus.
@@ -102,6 +106,8 @@ class ForeverCog(ManagedTaskCog):
         self.store = store
         self._sync_lock = asyncio.Lock()
         self._last_snapshot: Snapshot | None = None
+        self._last_round: datetime | None = None
+        self._link_marker: tuple | None = None
         if hasattr(bot, "add_view"):
             bot.add_view(ClaimNoticeView(self))
             bot.add_view(DemoteNoticeView(self))
@@ -114,15 +120,39 @@ class ForeverCog(ManagedTaskCog):
         await self.bot.wait_until_ready()
         while True:
             try:
-                snapshot = await self.sync()
-                if snapshot is not None and await self._report_due():
-                    await self.post_report(snapshot)
-                if snapshot is not None and await self._report_due(key=LAST_DAILY_KEY):
-                    await self.post_daily(snapshot)
-                await self.ping_if_due()
+                await self.tick()
             except Exception as exc:  # eine Runde darf den Bot nie stören
                 logger.warning("[ForeverCog] Abgleich fehlgeschlagen: %s", exc)
-            await asyncio.sleep(SYNC_INTERVAL)
+            await asyncio.sleep(CHECK_INTERVAL)
+
+    async def tick(self, now: datetime | None = None) -> bool:
+        """Ein voller Abgleich alle zehn Minuten oder sofort bei neuer Verbindung."""
+        now = now or datetime.now(timezone.utc)
+        marker = await self._fetch_marker()
+        due = (
+            self._last_round is None
+            or now - self._last_round >= SYNC_INTERVAL
+            or (marker is not None and marker != self._link_marker)
+        )
+        if not due:
+            return False
+        self._last_round = now
+        snapshot = await self.sync(now)
+        if marker is not None:
+            self._link_marker = marker
+        if snapshot is not None and await self._report_due(now):
+            await self.post_report(snapshot, now)
+        if snapshot is not None and await self._report_due(now, key=LAST_DAILY_KEY):
+            await self.post_daily(snapshot, now)
+        await self.ping_if_due(now)
+        return True
+
+    async def _fetch_marker(self) -> tuple | None:
+        try:
+            return await self.registry.link_marker()
+        except Exception as exc:  # dann eben nur der Zehn-Minuten-Takt
+            logger.info("[ForeverCog] Schnellprüfung fehlgeschlagen: %s", exc)
+            return None
 
     async def _report_due(
         self, now: datetime | None = None, key: str = LAST_REPORT_KEY
