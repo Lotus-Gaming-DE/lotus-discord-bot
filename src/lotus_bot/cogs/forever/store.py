@@ -104,6 +104,12 @@ class ForeverStore:
                     detail TEXT NOT NULL,
                     created_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS baselines (
+                    character_id INTEGER NOT NULL,
+                    metric TEXT NOT NULL,
+                    value INTEGER NOT NULL,
+                    PRIMARY KEY (character_id, metric)
+                );
                 CREATE TABLE IF NOT EXISTS departed (
                     discord_user_id INTEGER PRIMARY KEY,
                     noted_at TEXT NOT NULL
@@ -151,6 +157,28 @@ class ForeverStore:
             db = await self._conn()
             await db.execute(
                 "DELETE FROM tracked WHERE character_id = ?", (character_id,)
+            )
+            await db.execute(
+                "DELETE FROM baselines WHERE character_id = ?", (character_id,)
+            )
+            await db.commit()
+
+    async def baselines(self, character_id: int) -> dict[str, int]:
+        """Ausgangsstand je Fortschrittswert (Beruf, PvP, Itemlevel)."""
+        db = await self._conn()
+        cur = await db.execute(
+            "SELECT metric, value FROM baselines WHERE character_id = ?",
+            (character_id,),
+        )
+        return {row[0]: row[1] for row in await cur.fetchall()}
+
+    async def set_baseline(self, character_id: int, metric: str, value: int) -> None:
+        async with self._lock:
+            db = await self._conn()
+            await db.execute(
+                "INSERT OR IGNORE INTO baselines (character_id, metric, value)"
+                " VALUES (?, ?, ?)",
+                (character_id, metric, value),
             )
             await db.commit()
 
