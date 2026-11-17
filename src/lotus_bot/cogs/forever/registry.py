@@ -83,6 +83,8 @@ class Registry(Protocol):
         self, guild_slugs: list[str], host_discord_guild_id: int
     ) -> Snapshot: ...
 
+    async def link_marker(self) -> tuple: ...
+
     async def close(self) -> None: ...
 
 
@@ -109,6 +111,15 @@ SELECT slug FROM registry_api.guilds
 PROGRESS_SQL = """
 SELECT character_id, average_item_level, honorable_kills, pvp_rank, professions
   FROM registry_api.character_progress
+"""
+
+# Billiger Fingerabdruck der verbundenen Chars: ändert sich, sobald jemand
+# einen Char verbindet, trennt oder ein verbundener Char die Gilde wechselt.
+MARKER_SQL = """
+SELECT count(*), coalesce(max(c.id), 0), coalesce(sum(c.player_id), 0),
+       coalesce(sum(c.guild_id), 0)
+  FROM registry_api.characters c
+ WHERE c.region = 'eu' AND c.player_id IS NOT NULL
 """
 
 RUNS_SQL = """
@@ -162,6 +173,12 @@ class PgRegistry:
             rosters_loaded=frozenset(r[0] for r in loaded),
             progress=progress,
         )
+
+    async def link_marker(self) -> tuple:
+        pool = await self._get_pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(MARKER_SQL)
+        return tuple(row)
 
     @staticmethod
     async def _progress(conn) -> dict[int, Progress]:

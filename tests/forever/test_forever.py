@@ -46,6 +46,7 @@ class FakeRegistry:
         self.runs = []
         self.loaded = {CRIMSON}
         self.progress = {}
+        self.marker_fails = False
 
     async def snapshot(self, guild_slugs, host):
         return Snapshot(
@@ -55,6 +56,11 @@ class FakeRegistry:
             frozenset(self.loaded),
             dict(self.progress),
         )
+
+    async def link_marker(self):
+        if self.marker_fails:
+            raise RuntimeError("db down")
+        return (len(self.linked), tuple(c.character_id for c in self.linked))
 
     async def close(self):
         pass
@@ -757,3 +763,75 @@ async def test_an_older_lotus_link_without_progress_still_works():
             raise RuntimeError("relation does not exist")
 
     assert await PgRegistry._progress(Conn()) == {}
+
+
+async def quiet_ticks(cog):
+    cog._report_due = AsyncMock(return_value=False)
+    cog.ping_if_due = AsyncMock(return_value=0)
+    cog.sync = AsyncMock(wraps=cog.sync)
+    return cog.sync
+
+
+async def test_a_new_link_is_reported_within_a_minute(setup):
+    cog, bot, registry = setup
+    sync = await quiet_ticks(cog)
+    assert await cog.tick(T0) is True
+    assert await cog.tick(T0 + timedelta(minutes=1)) is False
+    registry.linked = [char()]
+    assert await cog.tick(T0 + timedelta(minutes=2)) is True
+    assert sync.await_count == 2
+    assert len(bot.channel.sent) == 1
+    assert bot.channel.kwargs[0]["allowed_mentions"].users is False
+
+
+async def test_without_changes_the_full_round_still_runs_every_ten_minutes(setup):
+    cog, bot, registry = setup
+    await quiet_ticks(cog)
+    assert await cog.tick(T0) is True
+    assert await cog.tick(T0 + timedelta(minutes=9)) is False
+    assert await cog.tick(T0 + timedelta(minutes=10)) is True
+
+
+async def test_a_failing_quick_check_falls_back_to_the_ten_minute_round(setup):
+    cog, bot, registry = setup
+    await quiet_ticks(cog)
+    registry.marker_fails = True
+    assert await cog.tick(T0) is True
+    registry.linked = [char()]
+    assert await cog.tick(T0 + timedelta(minutes=1)) is False
+    assert await cog.tick(T0 + timedelta(minutes=10)) is True
+    assert len(bot.channel.sent) == 1
+
+
+async def test_a_failed_round_is_retried_at_the_next_check(setup):
+    cog, bot, registry = setup
+    await quiet_ticks(cog)
+    assert await cog.tick(T0) is True
+    registry.linked = [char()]
+    cog.sync = AsyncMock(side_effect=RuntimeError("boom"))
+    with pytest.raises(RuntimeError):
+        await cog.tick(T0 + timedelta(minutes=1))
+    cog.sync = AsyncMock(return_value=None)
+    assert await cog.tick(T0 + timedelta(minutes=2)) is True
+
+
+async def test_pg_link_marker_returns_the_fingerprint():
+    class Conn:
+        async def fetchrow(self, sql):
+            assert "player_id IS NOT NULL" in sql
+            return (3, 17, 9, 0)
+
+    class Acquire:
+        async def __aenter__(self):
+            return Conn()
+
+        async def __aexit__(self, *exc):
+            return False
+
+    class Pool:
+        def acquire(self):
+            return Acquire()
+
+    registry = PgRegistry("postgres://unused")
+    registry._pool = Pool()
+    assert await registry.link_marker() == (3, 17, 9, 0)
