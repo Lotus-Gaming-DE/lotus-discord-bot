@@ -104,6 +104,78 @@ LEVEL_MILESTONE_POINTS = {20: 3, 30: 5, 40: 10, 50: 20, 60: 50}
 RUN_POINTS = 3
 RUN_ORGANIZER_POINTS = 5
 
+# Fortschritt aus Lotus Link (Gerrit, 17.11.2026: „alle vier“). Berufe und
+# Itemlevel wie früher bei Black Lotus. Punkte gibt es nur über dem Ausgangsstand.
+PROFESSION_SKILL_POINTS = {75: 3, 150: 6, 225: 12, 300: 25}
+ITEM_LEVEL_POINTS = {50: 2, 55: 2, 60: 5, 65: 8, 70: 15, 75: 25}
+HONORABLE_KILL_POINTS = {100: 3, 500: 6, 1000: 12, 5000: 25, 10000: 50}
+# Jeder neue PvP-Rang zählt, höhere mehr.
+PVP_RANK_POINTS = {
+    r: 3 if r <= 4 else 6 if r <= 8 else 12 if r <= 11 else 25 for r in range(1, 15)
+}
+
+# Blizzard liefert englische Berufsnamen.
+PROFESSION_NAMES_DE = {
+    129: "Erste Hilfe",
+    164: "Schmiedekunst",
+    165: "Lederverarbeitung",
+    171: "Alchemie",
+    182: "Kräuterkunde",
+    185: "Kochkunst",
+    186: "Bergbau",
+    197: "Schneiderei",
+    202: "Ingenieurskunst",
+    333: "Verzauberkunst",
+    356: "Angeln",
+    393: "Kürschnerei",
+}
+
+
+@dataclass(frozen=True)
+class Metric:
+    """Ein Fortschrittswert eines Chars, für den es Meilenstein-Punkte gibt.
+
+    ``key`` ist eindeutig je Char (z. B. ``prof:197``), ``kind`` die Art im
+    Tagesbericht, ``label`` der Berufsname (sonst leer).
+    """
+
+    key: str
+    kind: str
+    label: str
+    value: int
+    points: dict[int, int]
+
+
+def progress_metrics(progress) -> list[Metric]:
+    """Alle bekannten Werte. Unbekanntes (``None``) fehlt, statt als 0 zu zählen."""
+    if progress is None:
+        return []
+    metrics: list[Metric] = []
+    if progress.average_item_level is not None:
+        metrics.append(
+            Metric("ilvl", "ilvl", "", progress.average_item_level, ITEM_LEVEL_POINTS)
+        )
+    if progress.honorable_kills is not None:
+        metrics.append(
+            Metric("hk", "hk", "", progress.honorable_kills, HONORABLE_KILL_POINTS)
+        )
+    if progress.pvp_rank is not None:
+        metrics.append(
+            Metric("pvprank", "pvprank", "", progress.pvp_rank, PVP_RANK_POINTS)
+        )
+    for profession_id, name, skill in progress.professions:
+        label = PROFESSION_NAMES_DE.get(profession_id, name)
+        metrics.append(
+            Metric(
+                f"prof:{profession_id}", "skill", label, skill, PROFESSION_SKILL_POINTS
+            )
+        )
+    return metrics
+
+
+def thresholds_reached(points: dict[int, int], baseline: int, value: int) -> list[int]:
+    return [t for t in sorted(points) if baseline < t <= value]
+
 
 def lotus_guild_of(
     char: LinkedCharacter, roster_guild: dict[int, str]
@@ -512,6 +584,8 @@ def daily_sections(
             )
         )
 
+    sections.extend(_progress_sections(events, tail))
+
     runs: dict[int, list] = {}
     for e in events:
         if e.kind == "run" and e.discord_user_id is not None:
@@ -528,4 +602,54 @@ def daily_sections(
                 f"- {name_of(uid)}: {count} (+{pts} Champion-Punkte)",
             )
         sections.append(("**Dungeon-Runs mit Lotus Link** ⚔️", lines))
+    return sections
+
+
+PROGRESS_HEADERS = (
+    ("skill", "**Berufe-Meilensteine** ⚒️"),
+    ("hk", "**PvP: ehrenhafte Siege** ⚔️"),
+    ("pvprank", "**PvP: neuer Rang** 🎖️"),
+    ("ilvl", "**Ausrüstungs-Meilensteine** 🛡️"),
+)
+
+
+def _progress_sections(events: list, tail) -> list[tuple[str | None, list[str]]]:
+    """Eine Zeile je Char und Wert: höchster Meilenstein, Punkte zusammengezählt."""
+    sections: list[tuple[str | None, list[str]]] = []
+    for kind, header in PROGRESS_HEADERS:
+        grouped: dict[tuple[str, str, int | None], list] = {}
+        for e in events:
+            if e.kind == kind:
+                grouped.setdefault((e.name, e.detail, e.discord_user_id), []).append(e)
+        if not grouped:
+            continue
+        rows = sorted(
+            (
+                (
+                    max(x.value for x in group),
+                    sum(x.points for x in group),
+                    name,
+                    detail,
+                    uid,
+                )
+                for (name, detail, uid), group in grouped.items()
+            ),
+            key=lambda row: (-row[0], row[2].casefold()),
+        )
+        lines = []
+        for value, pts, name, detail, uid in rows:
+            if kind == "skill":
+                text = f"**{name}**: {detail} auf **{value}**"
+            elif kind == "hk":
+                text = f"**{name}** hat **{value:,}** ehrenhafte Siege".replace(
+                    ",", "."
+                )
+            elif kind == "pvprank":
+                text = f"**{name}** hat PvP-Rang **{value}** erreicht"
+            else:
+                text = (
+                    f"**{name}** hat ein durchschnittliches Itemlevel von **{value}**"
+                )
+            lines.append(f"- {text}{tail(uid, pts)}")
+        sections.append((header, lines))
     return sections

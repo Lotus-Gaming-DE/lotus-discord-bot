@@ -8,7 +8,8 @@ Ansichten lesen darf.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import json
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Protocol
 
@@ -52,6 +53,20 @@ class RunAttendance:
 
 
 @dataclass(frozen=True)
+class Progress:
+    """Fortschritt eines verbundenen Chars (Lotus Link, design D31).
+
+    ``None`` heißt „unbekannt“, nicht null. ``professions`` bildet die
+    Berufs-ID auf (Name, Skill) ab.
+    """
+
+    average_item_level: int | None = None
+    honorable_kills: int | None = None
+    pvp_rank: int | None = None
+    professions: tuple[tuple[int, str, int], ...] = ()
+
+
+@dataclass(frozen=True)
 class Snapshot:
     linked: tuple[LinkedCharacter, ...]
     members: tuple[GuildMember, ...]
@@ -59,6 +74,8 @@ class Snapshot:
     # Gilden, deren Liste Lotus Link schon einmal geladen hat. Ohne Liste gibt
     # es keinen Sync-Report, sonst stünde dort jeder als „ohne Claim“.
     rosters_loaded: frozenset[str]
+    # Lotus-Link-Char-ID → Fortschritt. Leer, solange Lotus Link ihn nicht liefert.
+    progress: dict[int, Progress] = field(default_factory=dict)
 
 
 class Registry(Protocol):
@@ -87,6 +104,11 @@ SELECT g.slug, m.blizzard_character_id, m.name, m.level, m.rank, m.class_key
 ROSTERS_SQL = """
 SELECT slug FROM registry_api.guilds
  WHERE region = 'eu' AND slug = ANY($1::text[]) AND roster_synced_at IS NOT NULL
+"""
+
+PROGRESS_SQL = """
+SELECT character_id, average_item_level, honorable_kills, pvp_rank, professions
+  FROM registry_api.character_progress
 """
 
 RUNS_SQL = """
@@ -123,6 +145,8 @@ class PgRegistry:
                 members = await conn.fetch(MEMBERS_SQL, guild_slugs)
                 loaded = await conn.fetch(ROSTERS_SQL, guild_slugs)
                 runs = await conn.fetch(RUNS_SQL, host_discord_guild_id)
+            # Außerhalb der Transaktion: Ein Fehler hier darf sie nicht abbrechen.
+            progress = await self._progress(conn)
         return Snapshot(
             linked=tuple(
                 LinkedCharacter(r[0], r[1], r[2], r[3], r[4], r[5]) for r in linked
@@ -136,7 +160,32 @@ class PgRegistry:
                 if r[1] is not None  # gelöschte Spieler sind anonymisiert
             ),
             rosters_loaded=frozenset(r[0] for r in loaded),
+            progress=progress,
         )
+
+    @staticmethod
+    async def _progress(conn) -> dict[int, Progress]:
+        """Eigene Abfrage: Ein älteres Lotus Link ohne diese Ansicht stört nichts."""
+        try:
+            rows = await conn.fetch(PROGRESS_SQL)
+        except Exception as exc:  # z. B. UndefinedTableError vor dem Update
+            logger.info("[ForeverCog] Kein Fortschritt aus Lotus Link: %s", exc)
+            return {}
+        return {r[0]: progress_of(r[1], r[2], r[3], r[4]) for r in rows}
+
+
+def progress_of(item_level, kills, rank, professions) -> Progress:
+    if isinstance(professions, str):
+        professions = json.loads(professions)
+    skills = []
+    for entry in professions or ():
+        try:
+            skills.append(
+                (int(entry["id"]), str(entry.get("name") or ""), int(entry["skill"]))
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    return Progress(item_level, kills, rank, tuple(skills))
 
     async def close(self) -> None:
         if self._pool is not None:

@@ -14,6 +14,8 @@ verbunden hat, und die Gildenlisten von Silent, Crimson und Golden Lotus.
 * Täglich um 9 Uhr → Tagesbericht je Gilde im Daily-Report-Kanal (derselbe
   Kanal wie früher der Black-Lotus-Digest): Neuzugänge, neu verbundene Chars,
   Stufen-Meilensteine und Dungeon-Runs mit Champion-Punkten.
+* Champion-Punkte auch für Berufe-Skill, ehrenhafte Siege, PvP-Rang und
+  Itemlevel (Lotus Link liefert sie täglich, nur über dem ersten Wert).
 * Champion-Punkte nur für Fortschritt nach dem Verbinden: Stufen-Meilensteine
   über dem Ausgangsstand und Dungeon-Runs auf diesem Server, die nach dem Start
   dieses Systems stattgefunden haben. Twinks zählen voll.
@@ -48,13 +50,22 @@ from .logic import (
     link_notice,
     lotus_guild_of,
     milestones_reached,
+    progress_metrics,
+    thresholds_reached,
     mention,
     ping_text,
     report_sections,
     role_holders,
     roster_is_plausible,
 )
-from .registry import GuildMember, LinkedCharacter, PgRegistry, Registry, Snapshot
+from .registry import (
+    GuildMember,
+    LinkedCharacter,
+    PgRegistry,
+    Progress,
+    Registry,
+    Snapshot,
+)
 from .store import ForeverStore, Tracked
 
 logger = get_logger(__name__)
@@ -164,6 +175,9 @@ class ForeverCog(ManagedTaskCog):
                     )
                     links.append((char, guild, member))
                     await self._note_link(char, guild, stamp)
+                    await self._progress_awards(
+                        char, guild, snapshot.progress.get(char.character_id), stamp
+                    )
                     continue
                 if (known.guild_slug, known.discord_user_id) != (
                     guild.slug,
@@ -199,6 +213,9 @@ class ForeverCog(ManagedTaskCog):
                             points,
                             stamp,
                         )
+                await self._progress_awards(
+                    char, guild, snapshot.progress.get(char.character_id), stamp
+                )
 
             for character_id in set(tracked) - seen:
                 await self.store.untrack(character_id)
@@ -583,6 +600,47 @@ class ForeverCog(ManagedTaskCog):
             return False
         except discord.HTTPException:
             return True
+
+    async def _progress_awards(
+        self,
+        char: LinkedCharacter,
+        guild: ForeverGuild,
+        progress: Progress | None,
+        stamp: str,
+    ) -> None:
+        """Berufe, PvP und Itemlevel: Punkte nur über dem ersten gesehenen Wert."""
+        metrics = progress_metrics(progress)
+        if not metrics:
+            return
+        baselines = await self.store.baselines(char.character_id)
+        for metric in metrics:
+            baseline = baselines.get(metric.key)
+            if baseline is None:
+                await self.store.set_baseline(
+                    char.character_id, metric.key, metric.value
+                )
+                continue
+            for threshold in thresholds_reached(metric.points, baseline, metric.value):
+                points = metric.points[threshold]
+                what = metric.label or metric.kind
+                if await self._award(
+                    "progress",
+                    f"{char.character_id}:{metric.key}:{threshold}",
+                    char.discord_user_id,
+                    points,
+                    f"WoW Forever: {char.name} {what} {threshold}",
+                    stamp,
+                ):
+                    await self.store.add_event(
+                        guild.slug,
+                        metric.kind,
+                        char.discord_user_id,
+                        char.name,
+                        threshold,
+                        points,
+                        stamp,
+                        detail=metric.label,
+                    )
 
     async def _note_link(
         self, char: LinkedCharacter, guild: ForeverGuild, stamp: str

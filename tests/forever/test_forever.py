@@ -18,6 +18,9 @@ from lotus_bot.cogs.forever.logic import (
 from lotus_bot.cogs.forever.registry import (
     GuildMember,
     LinkedCharacter,
+    PgRegistry,
+    Progress,
+    progress_of,
     RunAttendance,
     Snapshot,
 )
@@ -42,6 +45,7 @@ class FakeRegistry:
         self.members = []
         self.runs = []
         self.loaded = {CRIMSON}
+        self.progress = {}
 
     async def snapshot(self, guild_slugs, host):
         return Snapshot(
@@ -49,6 +53,7 @@ class FakeRegistry:
             tuple(self.members),
             tuple(self.runs),
             frozenset(self.loaded),
+            dict(self.progress),
         )
 
     async def close(self):
@@ -684,3 +689,71 @@ async def test_daily_report_without_channel_posts_nothing(daily):
     snapshot = await cog.sync(T0)
     assert await cog.post_daily(snapshot, T0) == 0
     assert len(await cog.store.pending_events(CRIMSON)) == 1
+
+
+# --------------------------------------------------------------- fortschritt
+
+
+def prog(ilvl=None, hk=None, rank=None, skills=()):
+    return Progress(ilvl, hk, rank, tuple(skills))
+
+
+async def test_progress_counts_only_above_the_first_seen_value(daily):
+    cog, bot, registry, channel = daily
+    registry.linked = [char()]
+    registry.members = [member()]
+    registry.progress = {
+        1: prog(ilvl=48, hk=90, rank=0, skills=[(197, "Tailoring", 140)])
+    }
+    await cog.sync(T0)
+    assert bot.champion.calls == []
+
+    registry.progress = {
+        1: prog(
+            ilvl=56,
+            hk=520,
+            rank=2,
+            skills=[(197, "Tailoring", 230), (185, "Cooking", 80)],
+        )
+    }
+    snapshot = await cog.sync(T0 + timedelta(hours=1))
+    await cog.sync(T0 + timedelta(hours=2))  # nichts doppelt
+    # Itemlevel 50+55 = 4, Siege 100+500 = 9, Rang 1+2 = 6, Schneiderei 150+225 = 18.
+    # Kochen ist neu: nur Ausgangsstand.
+    assert sum(d for _, d, _ in bot.champion.calls) == 4 + 9 + 6 + 18
+
+    await cog.post_daily(snapshot, T0 + timedelta(hours=3))
+    text = "\n".join(channel.sent)
+    assert "Schneiderei auf **225**" in text and "+18" in text
+    assert "**500**" in text and "Rang **2**" in text and "**55**" in text
+    assert "Kochkunst" not in text
+
+
+async def test_unknown_progress_is_not_zero(daily):
+    cog, bot, registry, channel = daily
+    registry.linked = [char()]
+    registry.members = [member()]
+    registry.progress = {1: prog()}
+    await cog.sync(T0)
+    registry.progress = {1: prog(hk=150)}
+    await cog.sync(T0 + timedelta(hours=1))
+    assert bot.champion.calls == []  # erster bekannter Wert ist der Ausgangsstand
+
+
+def test_progress_rows_from_lotus_link_are_read_safely():
+    p = progress_of(
+        31,
+        69,
+        0,
+        '[{"id": 197, "name": "Tailoring", "skill": 200}, {"name": "kaputt"}]',
+    )
+    assert p == Progress(31, 69, 0, ((197, "Tailoring", 200),))
+    assert progress_of(None, None, None, None) == Progress()
+
+
+async def test_an_older_lotus_link_without_progress_still_works():
+    class Conn:
+        async def fetch(self, sql):
+            raise RuntimeError("relation does not exist")
+
+    assert await PgRegistry._progress(Conn()) == {}
