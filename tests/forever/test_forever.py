@@ -89,9 +89,8 @@ class FakeMessage:
 
 
 class FakeChannel:
-    id = forever.DEFAULT_LOG_CHANNEL_ID
-
-    def __init__(self):
+    def __init__(self, channel_id=forever.DEFAULT_LOG_CHANNEL_ID):
+        self.id = channel_id
         self.sent = []
         self.kwargs = []
         self.messages = []
@@ -99,7 +98,11 @@ class FakeChannel:
     async def send(self, content, **kwargs):
         self.sent.append(content)
         self.kwargs.append(kwargs)
-        message = FakeMessage(len(self.sent), content)
+        # Erster Kanal zählt 1, 2, …; weitere Kanäle eigene Bereiche (IDs eindeutig).
+        offset = (
+            0 if self.id == forever.DEFAULT_LOG_CHANNEL_ID else self.id % 1000 * 1000
+        )
+        message = FakeMessage(offset + len(self.sent), content)
         self.messages.append(message)
         return message
 
@@ -110,13 +113,22 @@ class FakeBot:
     def __init__(self):
         self.champion = FakeChampion()
         self.channel = FakeChannel()
+        # Eigene Log-Kanäle der Gilden (Silent, Golden), Crimson = gemeinsamer.
+        self.channels = {self.channel.id: self.channel}
+        for guild in GUILDS_BY_SLUG.values():
+            if guild.log_channel_id is not None:
+                self.channels[guild.log_channel_id] = FakeChannel(guild.log_channel_id)
         self.guild = None
 
     def get_cog(self, name):
         return self.champion if name == "ChampionCog" else None
 
     def get_channel(self, channel_id):
-        return self.channel if channel_id == forever.DEFAULT_LOG_CHANNEL_ID else None
+        return self.channels.get(channel_id)
+
+    def log_of(self, slug):
+        guild = GUILDS_BY_SLUG[slug]
+        return self.channels[guild.log_channel_id or forever.DEFAULT_LOG_CHANNEL_ID]
 
     def get_guild(self, guild_id):
         return self.guild
@@ -611,11 +623,10 @@ async def daily(setup):
     daily_channel = FakeChannel()
     wow = FakeWoW()
     bot.get_cog = lambda name: {"ChampionCog": bot.champion, "WoWCog": wow}.get(name)
-    log_channel = bot.channel
-    bot.get_channel = lambda cid: {
-        DAILY_ID: daily_channel,
-        forever.DEFAULT_LOG_CHANNEL_ID: log_channel,
-    }.get(cid)
+    bot.channels[DAILY_ID] = daily_channel
+    for guild in GUILDS_BY_SLUG.values():
+        if guild.daily_channel_id is not None:
+            bot.channels[guild.daily_channel_id] = FakeChannel(guild.daily_channel_id)
     return cog, bot, registry, daily_channel
 
 
@@ -666,8 +677,9 @@ async def test_daily_report_lists_new_links_and_runs_in_the_home_guild(daily):
     await cog.post_daily(snapshot, T0 + timedelta(hours=2))
 
     crimson = [t for t in channel.sent if "Crimson Lotus" in t]
-    gold = [t for t in channel.sent if "Golden Lotus" in t]
-    assert len(crimson) == 1 and len(gold) == 1
+    gold = bot.channels[GUILDS_BY_SLUG[golden].daily_channel_id].sent
+    assert all("Golden Lotus" not in t for t in channel.sent)
+    assert len(crimson) == 1 and len(gold) == 1 and "Golden Lotus" in gold[0]
     assert "2 Runs" in crimson[0] and "+8" in crimson[0]
     assert "Runs" not in gold[0] and "Char2" in gold[0]
 
@@ -835,3 +847,58 @@ async def test_pg_link_marker_returns_the_fingerprint():
     registry = PgRegistry("postgres://unused")
     registry._pool = Pool()
     assert await registry.link_marker() == (3, 17, 9, 0)
+
+
+# ------------------------------------------------------------ kanäle je gilde
+
+SILENT = "silent-lotus"
+
+
+async def test_each_guild_posts_notices_and_pings_in_its_own_log_channel(world):
+    cog, bot, registry, guild = world
+    registry.loaded = {CRIMSON, SILENT}
+    guild.add(ME)
+    await cog.ping_if_due(T0)
+    registry.linked = [char(1), char(2, guild=SILENT)]
+    registry.members = [member(1, rank=4), member(2, rank=4, guild=SILENT)]
+    await cog.sync(T0)
+
+    silent = bot.log_of(SILENT)
+    assert silent is not bot.channel
+    assert any("Silent Lotus" in t and "Char2" in t for t in silent.sent)
+    assert all("Silent Lotus" not in t for t in bot.channel.sent)
+    assert any("Crimson Lotus" in t and "Char1" in t for t in bot.channel.sent)
+
+    assert await cog.ping_if_due(T0 + forever.PING_INTERVAL) == 2
+    ping = silent.sent[-1]
+    silent_role = GUILDS_BY_SLUG[SILENT].role_id
+    assert f"<@&{silent_role}>" in ping and f"/{silent.id}/" in ping
+
+
+async def test_guild_departure_and_report_go_to_the_guild_channel(world):
+    cog, bot, registry, guild = world
+    registry.loaded = {CRIMSON, SILENT}
+    registry.members = [
+        member(1, rank=4, name="Rot"),
+        member(2, rank=4, name="Leise", guild=SILENT),
+    ]
+    snapshot = await cog.sync(T0)
+    await cog.post_report(snapshot, T0)
+    silent = bot.log_of(SILENT)
+    assert any("Leise" in t for t in silent.sent)
+    assert all("Leise" not in t for t in bot.channel.sent)
+    assert any("Rot" in t for t in bot.channel.sent)
+
+    registry.members = [member(1, rank=4, name="Rot")] + [
+        member(c, guild=SILENT) for c in range(3, 6)
+    ]
+    registry.members.append(member(6, guild=SILENT))
+    await cog.sync(T0 + timedelta(minutes=10))
+    assert any("Leise" in t for t in silent.sent[1:])
+
+
+async def test_log_channels_lists_each_channel_once(setup):
+    cog, bot, registry = setup
+    channels = await cog.log_channels()
+    assert channels[0] is bot.channel
+    assert len(channels) == len({c.id for c in channels}) == 3

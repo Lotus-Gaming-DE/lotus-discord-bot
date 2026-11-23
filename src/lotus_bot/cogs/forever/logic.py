@@ -62,6 +62,10 @@ class ForeverGuild:
     # ``None``: Ränge noch nicht abgestimmt. Dann gibt es für diese Gilde keinen
     # Sync-Report, denn ohne Bedeutung der Nummern wäre er falsch.
     layout: RankLayout | None = None
+    # Eigene Kanäle der Gilde (Gerrit 23.11.2026). ``None``: der gemeinsame
+    # Kanal (#wow-logs bzw. der Daily-Report-Kanal aus den WoW-Einstellungen).
+    log_channel_id: int | None = None
+    daily_channel_id: int | None = None
 
     def rank_name(self, rank: int) -> str:
         if self.layout is None:
@@ -73,15 +77,28 @@ class ForeverGuild:
         return f"{self.icon} **{self.name}**"
 
 
+# Crimson nutzt die bisherigen gemeinsamen Kanäle, Silent und Golden eigene.
 GUILDS: tuple[ForeverGuild, ...] = (
     ForeverGuild(
-        "silent-lotus", "Silent Lotus", 1556277083880038501, "🩷", CRIMSON_LAYOUT
+        "silent-lotus",
+        "Silent Lotus",
+        1556277083880038501,
+        "🩷",
+        CRIMSON_LAYOUT,
+        log_channel_id=1574469109578465310,
+        daily_channel_id=1574466773611184281,
     ),
     ForeverGuild(
         "crimson-lotus", "Crimson Lotus", 1556276890853965884, "❤️", CRIMSON_LAYOUT
     ),
     ForeverGuild(
-        "golden-lotus", "Golden Lotus", 1556276986580566027, "💙", CRIMSON_LAYOUT
+        "golden-lotus",
+        "Golden Lotus",
+        1556276986580566027,
+        "💙",
+        CRIMSON_LAYOUT,
+        log_channel_id=1574469381667299398,
+        daily_channel_id=1574465048682831892,
     ),
 )
 GUILDS_BY_SLUG = {g.slug: g for g in GUILDS}

@@ -156,8 +156,8 @@ class FakeCog:
         self.members = set(members)
         self.synced = 0
 
-    async def _channel(self):
-        return self.channel
+    async def log_channels(self):
+        return [self.channel] if self.channel is not None else []
 
     async def sync(self):
         self.synced += 1
@@ -280,12 +280,19 @@ async def test_without_cog_or_roster_the_reply_says_so():
 @pytest.mark.parametrize("channel", [None, object()])
 async def test_no_log_channel_means_no_leader(channel):
     cog = FakeCog(SNAP)
-
-    async def get():
-        return channel
-
-    cog._channel = get
+    cog.channel = channel
     assert await cmds.is_leader(interaction(cog), cog) is False
+
+
+async def test_seeing_any_guild_log_channel_makes_a_leader():
+    cog = FakeCog(SNAP)
+    other = FakeChannel({ME})
+
+    async def channels():
+        return [FakeChannel(set()), other]
+
+    cog.log_channels = channels
+    assert await cmds.is_leader(interaction(cog), cog) is True
 
 
 async def test_package_setup_registers_the_forever_commands(monkeypatch):
