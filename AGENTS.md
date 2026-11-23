@@ -24,9 +24,11 @@ src/lotus_bot/
                         partners (duo_*.py), marketplace forum (marketplace_*.py)
     forever/            WoW Forever guilds (Silent, Crimson, Golden): reads Battle.net
                         links from Lotus Link, grants/removes the guild roles,
-                        #wow-logs notices with buttons, hourly pings, daily rank report,
-                        champion points, daily report per guild in the old Black Lotus
-                        digest channel. No self-pick panel: roles come from links only.
+                        log notices with buttons, hourly pings, daily rank report,
+                        champion points, daily report. Each guild posts to its own
+                        log/daily channel (ForeverGuild.log_channel_id/daily_channel_id
+                        in logic.py; None = shared #wow-logs / old digest channel, used
+                        by Crimson). No self-pick panel: roles come from links only.
     community/          Server-wide info panel in #infos-und-regeln
     champion/           Points and champion roles (data/champion/roles.json)
     quiz/               Quiz (WoW + WCR questions, duels, scheduler)

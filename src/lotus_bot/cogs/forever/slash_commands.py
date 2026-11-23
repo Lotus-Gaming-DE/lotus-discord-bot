@@ -4,7 +4,7 @@
 * ``/forever charakter``: Char → Discord-Nutzer und dessen weitere Chars.
 * ``/forever spieler``: Discord-Nutzer → seine verbundenen Chars.
 
-Wer zu wem gehört, sehen nur die Leitungen (wer #wow-logs sieht, oder Admins),
+Wer zu wem gehört, sehen nur die Leitungen (wer einen Log-Kanal der Gilden sieht, oder Admins),
 so sagt es die Datenschutzerklärung von Lotus Link. Antworten sind nur für
 den Fragenden sichtbar.
 """
@@ -38,13 +38,15 @@ async def is_leader(interaction: discord.Interaction, cog) -> bool:
     permissions = getattr(user, "guild_permissions", None)
     if permissions is not None and permissions.manage_guild:
         return True
-    channel = await cog._channel()
-    if channel is None or not hasattr(channel, "permissions_for"):
-        return False
-    try:
-        return channel.permissions_for(user).view_channel
-    except (AttributeError, TypeError):
-        return False
+    for channel in await cog.log_channels():
+        if not hasattr(channel, "permissions_for"):
+            continue
+        try:
+            if channel.permissions_for(user).view_channel:
+                return True
+        except (AttributeError, TypeError):
+            continue
+    return False
 
 
 async def _snapshot(cog):

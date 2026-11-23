@@ -5,7 +5,10 @@ verbunden hat, und die Gildenlisten von Silent, Crimson und Golden Lotus.
 Jede Minute prüft eine kleine Abfrage, ob sich die Verbindungen geändert haben;
 dann läuft der Abgleich sofort, damit die Leitung neue Verbindungen gleich sieht.
 
-* Neue Verbindung → nach etwa einer Minute Meldung in #wow-logs mit Button „In Offi-Note eingetragen“.
+* Jede Gilde hat eigene Kanäle für Meldungen und Tagesbericht
+  (``ForeverGuild.log_channel_id``/``daily_channel_id``); ohne eigenen Kanal
+  gilt der gemeinsame (#wow-logs bzw. der Daily-Report-Kanal).
+* Neue Verbindung → nach etwa einer Minute Meldung im Log-Kanal der Gilde mit Button „In Offi-Note eingetragen“.
   Bestätigen muss niemand mehr, der Login beweist den Besitz.
 * Gildenrolle: Wer einen Char einer Lotus-Gilde verbunden hat, bekommt ihre
   Discord-Rolle. Steht kein verbundener Char mehr in der Gilde, fällt sie weg.
@@ -282,8 +285,8 @@ class ForeverCog(ManagedTaskCog):
 
         for char, guild, member in links:
             await self._post_link(snapshot, char, guild, member, stamp)
-        for text in left:
-            await self._send([text])
+        for guild, text in left:
+            await self._send([text], guild=guild)
         for user_id in departures:
             await self._post_departure(snapshot, user_id, stamp)
         await self.sync_roles(snapshot, absent, now)
@@ -322,11 +325,13 @@ class ForeverCog(ManagedTaskCog):
             text, ClaimNoticeView(self), "link", guild, char.name, stamp
         )
 
-    async def _roster_changes(self, snapshot: Snapshot, stamp: str) -> list[str]:
+    async def _roster_changes(
+        self, snapshot: Snapshot, stamp: str
+    ) -> list[tuple[ForeverGuild, str]]:
         """Vergleicht die Gildenlisten mit dem letzten Stand: Wer fehlt, ist raus."""
         owner_of = {c.blizzard_id: c.discord_user_id for c in snapshot.linked}
         guild_of = {m.blizzard_id: m.guild_slug for m in snapshot.members}
-        notices: list[str] = []
+        notices: list[tuple[ForeverGuild, str]] = []
         for guild in GUILDS:
             if guild.slug not in snapshot.rosters_loaded:
                 continue
@@ -362,12 +367,15 @@ class ForeverCog(ManagedTaskCog):
                     continue
                 moved = GUILDS_BY_SLUG.get(guild_of.get(blizzard_id, ""))
                 notices.append(
-                    guild_left_notice(
+                    (
                         guild,
-                        old,
-                        owner_id=owner_of.get(blizzard_id),
-                        listed_since=since,
-                        moved_to=moved,
+                        guild_left_notice(
+                            guild,
+                            old,
+                            owner_id=owner_of.get(blizzard_id),
+                            listed_since=since,
+                            moved_to=moved,
+                        ),
                     )
                 )
             await self.store.replace_roster(guild.slug, current, stamp)
@@ -492,7 +500,9 @@ class ForeverCog(ManagedTaskCog):
                         removed.append(member.id)
             if granted or removed:
                 changes[guild.slug] = (granted, removed)
-                await self._send([role_change_text(guild, granted, removed, self.who)])
+                await self._send(
+                    [role_change_text(guild, granted, removed, self.who)], guild=guild
+                )
         return changes
 
     async def _change_role(self, member, role, *, add: bool) -> bool:
@@ -524,13 +534,13 @@ class ForeverCog(ManagedTaskCog):
         await self.store.set_setting(LAST_PING_KEY, now.isoformat())
         if raw is None:
             return 0  # erst eine Stunde sammeln
-        channel = await self._channel()
-        if channel is None:
-            return 0
         sent = 0
         for guild in GUILDS:
             rows = await self.store.unpinged(guild.slug)
             if not rows:
+                continue
+            channel = await self._channel(guild)
+            if channel is None:
                 continue
             text = ping_text(
                 guild,
@@ -703,6 +713,7 @@ class ForeverCog(ManagedTaskCog):
         snapshot: Snapshot,
         absent: set[int] | frozenset[int] = frozenset(),
         extra: list[tuple[str | None, list[str]]] | None = None,
+        guilds: tuple[ForeverGuild, ...] = GUILDS,
     ) -> list[str]:
         from lotus_bot.cogs.wow.cog import _pack_digest_sections_into_chunks
 
@@ -713,7 +724,7 @@ class ForeverCog(ManagedTaskCog):
             if c.discord_user_id not in absent
         }
         sections: list[tuple[str | None, list[str]]] = []
-        for guild in GUILDS:
+        for guild in guilds:
             if guild.layout is None or guild.slug not in snapshot.rosters_loaded:
                 continue
             members = [m for m in snapshot.members if m.guild_slug == guild.slug]
@@ -729,13 +740,17 @@ class ForeverCog(ManagedTaskCog):
         now = now or datetime.now(timezone.utc)
         local = now.astimezone(BERLIN)
         absent = await self.store.departed()
-        chunks = self.report_chunks(
-            snapshot, absent, await self._grace_sections(snapshot, absent, now)
-        )
+        grace = await self._grace_sections(snapshot, absent, now)
         posted = 0
-        if chunks:
-            posted = await self._send(chunks)
-            if posted < len(chunks):
+        for guild in GUILDS:
+            chunks = self.report_chunks(
+                snapshot, absent, grace.get(guild.slug), guilds=(guild,)
+            )
+            if not chunks:
+                continue
+            sent = await self._send(chunks, guild=guild)
+            posted += sent
+            if sent < len(chunks):
                 return posted  # morgen nicht überspringen, nächste Runde erneut
         await self.store.set_setting(LAST_REPORT_KEY, local.date().isoformat())
         return posted
@@ -750,10 +765,6 @@ class ForeverCog(ManagedTaskCog):
         from lotus_bot.cogs.wow.cog import _pack_digest_sections_into_chunks
 
         now = now or datetime.now(timezone.utc)
-        channel = await self._daily_channel()
-        if channel is None:
-            logger.warning("[ForeverCog] Daily-Report-Kanal nicht gefunden.")
-            return 0
         linked_ids = {c.blizzard_id for c in snapshot.linked}
         posted = 0
         for guild in GUILDS:
@@ -768,6 +779,12 @@ class ForeverCog(ManagedTaskCog):
             )
             if not sections:
                 continue
+            channel = await self._daily_channel(guild)
+            if channel is None:
+                logger.warning(
+                    "[ForeverCog] Daily-Report-Kanal für %s nicht gefunden.", guild.slug
+                )
+                return posted  # Ereignisse bleiben liegen
             chunks = _pack_digest_sections_into_chunks(sections)
             sent = await self._send(chunks, channel)
             posted += sent
@@ -778,7 +795,9 @@ class ForeverCog(ManagedTaskCog):
         await self.store.set_setting(LAST_DAILY_KEY, local.date().isoformat())
         return posted
 
-    async def _daily_channel(self):
+    async def _daily_channel(self, guild: ForeverGuild | None = None):
+        if guild is not None and guild.daily_channel_id is not None:
+            return self.bot.get_channel(guild.daily_channel_id)
         wow = self.bot.get_cog("WoWCog")
         if wow is None or not hasattr(wow, "get_announcement_channel_id"):
             return None
@@ -787,17 +806,17 @@ class ForeverCog(ManagedTaskCog):
 
     async def _grace_sections(
         self, snapshot: Snapshot, absent: set[int], now: datetime
-    ) -> list[tuple[str | None, list[str]]]:
+    ) -> dict[str, list[tuple[str | None, list[str]]]]:
         """Solange die Übergangsfrist läuft: Wer hat die Rolle ohne Verbindung?"""
         strip, after = await self._strip_allowed(now)
         discord_guild = self._main_guild()
         if strip or discord_guild is None:
-            return []
+            return {}
         holders = role_holders(
             snapshot.linked, snapshot.members, snapshot.rosters_loaded, absent
         )
         day = after.astimezone(BERLIN).strftime("%d.%m.")
-        sections: list[tuple[str | None, list[str]]] = []
+        sections: dict[str, list[tuple[str | None, list[str]]]] = {}
         for guild in GUILDS:
             role = discord_guild.get_role(guild.role_id)
             if role is None:
@@ -808,7 +827,7 @@ class ForeverCog(ManagedTaskCog):
                 if m.id not in holders[guild.slug] and not getattr(m, "bot", False)
             )
             if without:
-                sections.append(
+                sections.setdefault(guild.slug, []).append(
                     (
                         f"{guild.icon} **{guild.name}: Rolle ohne verbundenen Char**, "
                         f"wird ab {day} entfernt. Bitte per Battle.net verbinden lassen:",
@@ -829,9 +848,9 @@ class ForeverCog(ManagedTaskCog):
         stamp: str,
     ) -> None:
         """Eine Meldung mit Button. Gepingt wird später gesammelt (``ping_if_due``)."""
-        channel = await self._channel()
+        channel = await self._channel(guild)
         if channel is None:
-            logger.warning("[ForeverCog] Log-Kanal nicht gefunden.")
+            logger.warning("[ForeverCog] Log-Kanal für %s nicht gefunden.", guild.slug)
             return
         try:
             message = await channel.send(text, view=view, allowed_mentions=NO_PINGS)
@@ -840,15 +859,29 @@ class ForeverCog(ManagedTaskCog):
             return
         await self.store.add_notice(message.id, kind, guild.slug, label, stamp)
 
-    async def _channel(self):
+    async def _channel(self, guild: ForeverGuild | None = None):
+        """Log-Kanal der Gilde, ohne Gilde oder eigenen Kanal der gemeinsame."""
+        if guild is not None and guild.log_channel_id is not None:
+            return self.bot.get_channel(guild.log_channel_id)
         wow = self.bot.get_cog("WoWCog")
         channel_id = DEFAULT_LOG_CHANNEL_ID
         if wow is not None and hasattr(wow, "get_claim_review_channel_id"):
             channel_id = await wow.get_claim_review_channel_id()
         return self.bot.get_channel(channel_id)
 
-    async def _send(self, chunks: list[str], channel=None) -> int:
-        channel = channel or await self._channel()
+    async def log_channels(self) -> list:
+        """Alle Log-Kanäle (gemeinsamer zuerst), ohne doppelte."""
+        channels = []
+        for guild in (None, *GUILDS):
+            channel = await self._channel(guild)
+            if channel is not None and channel not in channels:
+                channels.append(channel)
+        return channels
+
+    async def _send(
+        self, chunks: list[str], channel=None, guild: ForeverGuild | None = None
+    ) -> int:
+        channel = channel or await self._channel(guild)
         if channel is None:
             logger.warning("[ForeverCog] Log-Kanal nicht gefunden.")
             return 0
@@ -869,7 +902,7 @@ class ForeverCog(ManagedTaskCog):
 
 
 def may_handle(user, guild: ForeverGuild) -> bool:
-    """Leitung der Gilde: wer #wow-logs sieht und die Gildenrolle hat, oder Admins."""
+    """Leitung der Gilde: wer den Log-Kanal sieht und die Gildenrolle hat, oder Admins."""
     permissions = getattr(user, "guild_permissions", None)
     if permissions is not None and permissions.manage_guild:
         return True
