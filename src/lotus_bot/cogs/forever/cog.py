@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -111,6 +111,7 @@ class ForeverCog(ManagedTaskCog):
         self._last_snapshot: Snapshot | None = None
         self._last_round: datetime | None = None
         self._link_marker: tuple | None = None
+        self._names: dict[int, str] = {}  # Discord-Nutzernamen, auch von Gegangenen
         if hasattr(bot, "add_view"):
             bot.add_view(ClaimNoticeView(self))
             bot.add_view(DemoteNoticeView(self))
@@ -320,6 +321,7 @@ class ForeverCog(ManagedTaskCog):
             member,
             discord_name=getattr(discord_member, "name", None),
             others=others,
+            name_of=self.who,
         )
         await self._send_notice(
             text, ClaimNoticeView(self), "link", guild, char.name, stamp
@@ -366,15 +368,19 @@ class ForeverCog(ManagedTaskCog):
                 if blizzard_id in ids:
                     continue
                 moved = GUILDS_BY_SLUG.get(guild_of.get(blizzard_id, ""))
+                owner = owner_of.get(blizzard_id)
+                if owner is not None:
+                    await self.learn_names([owner])
                 notices.append(
                     (
                         guild,
                         guild_left_notice(
                             guild,
                             old,
-                            owner_id=owner_of.get(blizzard_id),
+                            owner_id=owner,
                             listed_since=since,
                             moved_to=moved,
+                            name_of=self.who,
                         ),
                     )
                 )
@@ -413,6 +419,7 @@ class ForeverCog(ManagedTaskCog):
         self, snapshot: Snapshot, user_id: int, stamp: str
     ) -> None:
         mine = {c.blizzard_id for c in snapshot.linked if c.discord_user_id == user_id}
+        await self.learn_names([user_id])
         for guild in GUILDS:
             chars = [
                 m
@@ -425,7 +432,7 @@ class ForeverCog(ManagedTaskCog):
                 continue
             label = ", ".join(sorted(m.name for m in chars))
             await self._send_notice(
-                discord_left_notice(guild, user_id, chars),
+                discord_left_notice(guild, user_id, chars, self.who),
                 DemoteNoticeView(self),
                 "discord_left",
                 guild,
@@ -444,6 +451,7 @@ class ForeverCog(ManagedTaskCog):
             return  # der nächste Abgleich holt es nach
         if not any(c.discord_user_id == member.id for c in snapshot.linked):
             return
+        self.remember(member)
         stamp = datetime.now(timezone.utc).isoformat()
         if await self.store.mark_departed(member.id, stamp):
             await self._post_departure(snapshot, member.id, stamp)
@@ -500,6 +508,7 @@ class ForeverCog(ManagedTaskCog):
                         removed.append(member.id)
             if granted or removed:
                 changes[guild.slug] = (granted, removed)
+                await self.learn_names(granted + removed)
                 await self._send(
                     [role_change_text(guild, granted, removed, self.who)], guild=guild
                 )
@@ -595,7 +604,7 @@ class ForeverCog(ManagedTaskCog):
             )
             return
         await interaction.response.edit_message(
-            content=f"{message.content}\n✅ {verb} von <@{interaction.user.id}>",
+            content=f"{message.content}\n✅ {verb} von {self.who(interaction.user.id)}",
             view=None,
             allowed_mentions=NO_PINGS,
         )
@@ -618,12 +627,48 @@ class ForeverCog(ManagedTaskCog):
         Discord zeigt Erwähnungen nur für Nutzer, die die App des Betrachters
         gerade geladen hat, alle anderen als „@unknown-user“. Der Name dahinter
         bleibt immer lesbar."""
-        member = self._member(user_id)
-        name = getattr(member, "name", None)
+        name = self._known_name(user_id)
         if not name:
             return mention(user_id)
         name = discord.utils.escape_mentions(discord.utils.escape_markdown(name))
         return f"{mention(user_id)} ({name})"
+
+    def _known_name(self, user_id: int) -> str | None:
+        """Server-Mitglied, dann Nutzer-Cache des Bots, dann früher Gelerntes."""
+        for user in (self._member(user_id), self._cached_user(user_id)):
+            name = getattr(user, "name", None)
+            if name:
+                self._names[user_id] = name
+                return name
+        return self._names.get(user_id)
+
+    def _cached_user(self, user_id: int):
+        get_user = getattr(self.bot, "get_user", None)
+        return get_user(user_id) if callable(get_user) else None
+
+    def remember(self, user) -> None:
+        name = getattr(user, "name", None)
+        if name:
+            self._names[user.id] = name
+
+    async def learn_names(self, user_ids: Iterable[int]) -> None:
+        """Holt Namen von Nutzern, die nicht (mehr) auf dem Server sind.
+
+        Wer den Server verlassen hat, steht in keinem Cache mehr. Discord
+        liefert den Nutzer per ID trotzdem, damit „Claim“ & Co. lesbar bleiben.
+        """
+        fetch_user = getattr(self.bot, "fetch_user", None)
+        if not callable(fetch_user):
+            return
+        for user_id in dict.fromkeys(user_ids):
+            if self._known_name(user_id):
+                continue
+            try:
+                self.remember(await fetch_user(user_id))
+            except discord.HTTPException as exc:
+                logger.info(
+                    "[ForeverCog] Discord-Name von %s unbekannt: %s", user_id, exc
+                )
 
     def _member(self, user_id: int):
         guild = self._main_guild()
@@ -769,6 +814,9 @@ class ForeverCog(ManagedTaskCog):
         posted = 0
         for guild in GUILDS:
             events = await self.store.pending_events(guild.slug)
+            await self.learn_names(
+                [e.discord_user_id for e in events if e.discord_user_id is not None]
+            )
             members = [m for m in snapshot.members if m.guild_slug == guild.slug]
             sections = daily_sections(
                 guild,

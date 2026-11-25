@@ -141,6 +141,7 @@ async def charakter(interaction: discord.Interaction, name: str) -> None:
         return
     cog, snapshot = prepared
     hits = find_characters(name, snapshot, _visible(cog))
+    await cog.learn_names([h.owner for h in hits if h.owner is not None])
     await _send(interaction, search_text(name, hits, snapshot, cog.who))
 
 
@@ -168,6 +169,7 @@ async def spieler(interaction: discord.Interaction, nutzer: discord.User) -> Non
         return
     cog, snapshot = prepared
     chars = characters_of(nutzer.id, snapshot)
+    cog.remember(nutzer)
     await _send(interaction, player_text(cog.who(nutzer.id), chars))
 
 
