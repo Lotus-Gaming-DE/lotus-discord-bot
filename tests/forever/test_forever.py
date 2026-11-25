@@ -119,6 +119,8 @@ class FakeBot:
             if guild.log_channel_id is not None:
                 self.channels[guild.log_channel_id] = FakeChannel(guild.log_channel_id)
         self.guild = None
+        self.users: dict[int, str] = {}
+        self.fetched: list[int] = []
 
     def get_cog(self, name):
         return self.champion if name == "ChampionCog" else None
@@ -132,6 +134,13 @@ class FakeBot:
 
     def get_guild(self, guild_id):
         return self.guild
+
+    async def fetch_user(self, user_id):
+        """Discord kennt jeden Nutzer per ID, auch wenn er den Server verlassen hat."""
+        self.fetched.append(user_id)
+        if user_id not in self.users:
+            raise discord.NotFound(MagicMock(status=404), "unknown user")
+        return SimpleNamespace(id=user_id, name=self.users[user_id])
 
 
 @pytest.fixture
@@ -444,6 +453,30 @@ async def test_guild_leave_is_reported_with_listed_since_and_new_guild(world):
     assert "2026-11-08" in left[0]
 
 
+async def test_guild_leave_names_a_claim_owner_who_left_the_server(world):
+    cog, bot, registry, guild = world
+    bot.users[ME] = "ehemalig"  # nicht mehr auf dem Server, nur per ID abrufbar
+    registry.linked = [char(1, name="Weg")]
+    registry.members = [member(1, rank=4, name="Weg"), member(2), member(3)]
+    await cog.sync(T0)
+    bot.channel.sent.clear()
+
+    registry.members = [member(2), member(3)]
+    await cog.sync(T0 + timedelta(days=3))
+    left = [m for m in bot.channel.sent if "Weg" in m]
+    assert len(left) == 1 and f"<@{ME}> (ehemalig)" in left[0]
+
+
+async def test_names_are_fetched_once_and_unknown_users_keep_the_bare_mention(setup):
+    cog, bot, _ = setup
+    bot.users[ME] = "einmal"
+    await cog.learn_names([ME, ME, OTHER])
+    await cog.learn_names([ME])
+    assert bot.fetched == [ME, OTHER]
+    assert cog.who(ME) == f"<@{ME}> (einmal)"
+    assert cog.who(OTHER) == f"<@{OTHER}>"
+
+
 async def test_implausible_roster_drop_reports_nothing(world):
     cog, bot, registry, guild = world
     registry.members = [member(i) for i in range(1, 21)]
@@ -470,6 +503,7 @@ async def test_discord_leave_asks_to_demote_once_and_rejoin_resets(world):
     await cog.sync(T0)
     demote = [m for m in bot.channel.sent if "Discord verlassen" in m]
     assert len(demote) == 1 and "Main" in demote[0] and "Neu" not in demote[0]
+    assert f"<@{ME}> (user{ME})" in demote[0]  # Name trotz Austritt
     assert any(
         isinstance(k.get("view"), forever.DemoteNoticeView) for k in bot.channel.kwargs
     )

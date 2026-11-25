@@ -396,6 +396,7 @@ def link_notice(
     *,
     discord_name: str | None = None,
     others: list[GuildMember] | None = None,
+    name_of: Callable[[int], str] = mention,
 ) -> str:
     """Meldung für einen neu verbundenen Char, mit Rang-Empfehlung.
 
@@ -408,7 +409,7 @@ def link_notice(
         details = f"Level {char.level}, noch nicht in der Gildenliste"
     lines = [
         f"{guild.tag} · 🔗 Neuer Claim",
-        f"<@{char.discord_user_id}> hat **{char.name}** per Battle.net verbunden "
+        f"{name_of(char.discord_user_id)} hat **{char.name}** per Battle.net verbunden "
         f"({details}).",
     ]
     if discord_name:
@@ -457,12 +458,13 @@ def guild_left_notice(
     owner_id: int | None,
     listed_since: str | None,
     moved_to: ForeverGuild | None,
+    name_of: Callable[[int], str] = mention,
 ) -> str:
     """Ein Char steht nicht mehr in der Gildenliste (gekickt, gegangen, gewechselt)."""
     lines = [
         f"{guild.tag} · 🚪 **{member.name}** ist nicht mehr in der Gilde.",
         f"• {char_details(member, guild)}",
-        f"• Claim: <@{owner_id}>" if owner_id else "• Claim: _nicht verbunden_",
+        f"• Claim: {name_of(owner_id)}" if owner_id else "• Claim: _nicht verbunden_",
     ]
     if moved_to is not None:
         lines.append(f"• Jetzt in: {moved_to.tag}")
@@ -472,13 +474,16 @@ def guild_left_notice(
 
 
 def discord_left_notice(
-    guild: ForeverGuild, user_id: int, chars: list[GuildMember]
+    guild: ForeverGuild,
+    user_id: int,
+    chars: list[GuildMember],
+    name_of: Callable[[int], str] = mention,
 ) -> str:
     """Wer Discord verlässt, verliert seine Plätze in der Gilde."""
     ordered = sorted(chars, key=lambda m: (m.rank, m.name.casefold()))
     return "\n".join(
         [
-            f"{guild.tag} · ⬇️ <@{user_id}> hat den Discord verlassen.",
+            f"{guild.tag} · ⬇️ {name_of(user_id)} hat den Discord verlassen.",
             "Bitte diese Chars in-game auf den niedrigsten Rang runterstufen:",
             *(f"- **{m.name}** ({char_details(m, guild)})" for m in ordered),
         ]

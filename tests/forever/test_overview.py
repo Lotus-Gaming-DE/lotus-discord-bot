@@ -169,6 +169,12 @@ class FakeCog:
     def who(self, user_id):
         return f"<@{user_id}>"
 
+    def remember(self, user):
+        pass
+
+    async def learn_names(self, user_ids):
+        pass
+
 
 class FakeResponse:
     def __init__(self):
